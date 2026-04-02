@@ -102,7 +102,6 @@
 .cellActive {
 }
 .cellActive .cellContent {
-  background: rgba(212, 168, 83, 0.03);
 }
 .cellTag {
   font-family: var(--mono);
@@ -180,7 +179,6 @@
 .bottomCell.cellActive {
 }
 .bottomCell.cellActive .bottomCellContent {
-  background: rgba(212, 168, 83, 0.03);
 }
 .bottomLabel {
   font-family: var(--mono);
