@@ -1,0 +1,254 @@
+"use client";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Logo from "@/components/shared/Logo";
+import styles from "./Footer.module.css";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const COLUMNS = [
+  {
+    title: "Product",
+    links: [
+      { text: "AI Engine", href: "/#ai-engine" },
+      { text: "Features", href: "/#features" },
+      { text: "Warehouse", href: "/#warehouse" },
+      { text: "Integrations", href: "/#integrations" },
+      { text: "Industries", href: "/#industries" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { text: "Blog", href: "/blog" },
+      { text: "Help Center", href: "/help" },
+      { text: "API Docs", href: "/api-docs" },
+      { text: "Status", href: "/api-status" },
+      { text: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { text: "Privacy Policy", href: "/legal/privacy" },
+      { text: "Terms of Service", href: "/legal/terms" },
+      { text: "Security", href: "/legal/security" },
+    ],
+  },
+];
+
+const HELIX_COUNT = 3000;
+
+export default function Footer() {
+  const footerRef = useRef(null);
+  const brandRef = useRef(null);
+  const colRefs = useRef([]);
+  const bottomRef = useRef(null);
+  const helixRef = useRef(null);
+  const helixWrapRef = useRef(null);
+  const helixFormation = useRef(0);
+
+  useEffect(() => {
+    const footer = footerRef.current;
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: footer, start: "top 80%" },
+      defaults: { ease: "power3.out" },
+    });
+    tl.to(brandRef.current, { opacity: 1, y: 0, duration: 0.5 });
+    colRefs.current.forEach((col) => {
+      if (!col) return;
+      tl.to(col, { opacity: 1, y: 0, duration: 0.4 }, `-=${0.3}`);
+    });
+    tl.to(bottomRef.current, { opacity: 1, duration: 0.4 }, "-=0.2");
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+  }, []);
+
+  useEffect(() => {
+    const canvas = helixRef.current;
+    const wrap = helixWrapRef.current;
+    if (!canvas || !wrap) return;
+    const ctx = canvas.getContext("2d");
+    let frameId;
+
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    const resize = () => {
+      const w = wrap.clientWidth,
+        h = wrap.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    // Pre-compute scattered + helix target positions
+    const particles = [];
+    for (let i = 0; i < HELIX_COUNT; i++) {
+      const t = i / HELIX_COUNT;
+      const strand = i % 2 === 0 ? 1 : -1;
+      particles.push({
+        // Scattered position (random across canvas)
+        sx: Math.random(), // 0-1 normalized
+        sy: Math.random(),
+        // Helix params
+        t,
+        strand,
+        radius: 30 + Math.random() * 45,
+        phase: Math.random() * 0.62,
+        size: 0.5 + Math.random() * 0.75,
+        alpha: 0.15 + Math.random() * 0.4,
+      });
+    }
+
+    // Scroll tracking — simple: how close are we to the bottom of the page?
+    const onScroll = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight;
+      const vh = window.innerHeight;
+      // 0 when helix first enters viewport, 1 at page bottom
+      const maxScroll = docHeight - vh;
+      const distFromBottom = maxScroll - scrollTop;
+      // helix wrap height worth of scroll to go from 0→1
+      const f = Math.max(
+        0,
+        Math.min(1, 1 - distFromBottom / (wrap.clientHeight * 3))
+      );
+      helixFormation.current = f;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // Only animate when near viewport
+    const visibleRef = { current: false };
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        visibleRef.current = e.isIntersecting;
+      },
+      { rootMargin: "200px" }
+    );
+    obs.observe(wrap);
+
+    function animate() {
+      frameId = requestAnimationFrame(animate);
+      if (!visibleRef.current) return;
+      const time = performance.now() * 0.001;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      const cy = h / 2;
+      const f = helixFormation.current;
+      // Smooth the formation
+      const smoothF = f * f * (3 - 2 * f); // smoothstep
+
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < HELIX_COUNT; i++) {
+        const p = particles[i];
+
+        // Helix position
+        const hx = p.t * (w + 200) - 100;
+        const wave = time * 0.2 + p.t * Math.PI * 6 + p.phase;
+        const hy = cy + Math.sin(wave) * p.radius * p.strand;
+
+        // Scattered position
+        const scatX = p.sx * w;
+        const scatY = p.sy * h;
+
+        // Lerp between scattered and helix
+        const x = scatX + (hx - scatX) * smoothF;
+        const y = scatY + (hy - scatY) * smoothF;
+
+        // Depth (only meaningful when formed)
+        const depth = Math.cos(wave);
+        const depthFactor = 0.25 + depth * 0.25 + 0.25;
+        const finalAlpha = p.alpha * (0.15 + smoothF * depthFactor * 0.85);
+        const finalSize = p.size * (0.4 + smoothF * depthFactor * 0.6);
+
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(0.3, finalSize), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 168, 83, ${finalAlpha})`;
+        ctx.fill();
+      }
+    }
+    animate();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      obs.disconnect();
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  return (
+    <>
+      <footer ref={footerRef} className={styles.footer}>
+        <div className={styles.inner}>
+          <div ref={brandRef} className={styles.brand}>
+            <div className={styles.brandRow}>
+              <Logo size={22} />
+              <div>
+                <div className={styles.brandName}>Nimbus</div>
+                <div className={styles.brandSub}>
+                  Inventory Management Systems
+                </div>
+              </div>
+            </div>
+            <p className={styles.brandDesc}>
+              AI-powered warehouse intelligence for modern operations teams.
+            </p>
+            <div className={styles.badges}>
+              <a
+                href="https://apps.apple.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.badge}
+              >
+                App Store
+              </a>
+              <a
+                href="https://play.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.badge}
+              >
+                Google Play
+              </a>
+            </div>
+          </div>
+          {COLUMNS.map((col, i) => (
+            <div
+              key={col.title}
+              ref={(el) => (colRefs.current[i] = el)}
+              className={styles.col}
+            >
+              <div className={styles.colTitle}>{col.title}</div>
+              <div className={styles.colLinks}>
+                {col.links.map((link) => (
+                  <a
+                    key={link.text}
+                    href={link.href}
+                    className={styles.colLink}
+                  >
+                    {link.text}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div ref={bottomRef} className={styles.bottom}>
+          <div className={styles.copy}>
+            &copy; 2026 Nimbus WMS. All rights reserved.
+          </div>
+        </div>
+      </footer>
+
+      <div ref={helixWrapRef} className={styles.helixWrap}>
+        <canvas ref={helixRef} />
+      </div>
+    </>
+  );
+}

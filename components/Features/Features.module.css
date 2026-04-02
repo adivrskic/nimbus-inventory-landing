@@ -1,0 +1,219 @@
+.section {
+  position: relative;
+  background: var(--text);
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Header */
+.header {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 48px 60px;
+  text-align: center;
+}
+
+/* Full-width rows */
+.rows {
+  position: relative;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  padding: 64px 80px;
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: background 0.5s, box-shadow 0.5s;
+}
+.row:last-child {
+  border-bottom: none;
+}
+.row.active {
+  background: rgba(212, 168, 83, 0.04);
+  box-shadow: inset 0 0 80px rgba(212, 168, 83, 0.03);
+}
+
+/* Text side */
+.textSide {
+  max-width: 520px;
+}
+.rowNumber {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  opacity: 0.5;
+  transition: opacity 0.4s;
+}
+.row.active .rowNumber {
+  opacity: 1;
+}
+.rowTitle {
+  font-family: var(--display);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: var(--dark);
+  margin-bottom: 12px;
+  transition: color 0.4s;
+}
+.row.active .rowTitle {
+  color: var(--accent);
+}
+.rowDesc {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--dark-secondary);
+}
+.rowStats {
+  display: flex;
+  gap: 28px;
+  margin-top: 24px;
+}
+.rowStatVal {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.rowStatLabel {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--dark-secondary);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* Visual side */
+.visualSide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.visualSide svg {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+}
+
+/* Corner frame overlay — fixed while section is in view */
+.frameOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.frameSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  pointer-events: none;
+}
+
+/* Corner SVGs */
+.cornerSvg {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  opacity: 0;
+}
+.cTL {
+  top: 32px;
+  left: 32px;
+}
+.cTR {
+  top: 32px;
+  right: 32px;
+  transform: scaleX(-1);
+}
+.cBL {
+  bottom: 32px;
+  left: 32px;
+  transform: scaleY(-1);
+}
+.cBR {
+  bottom: 32px;
+  right: 32px;
+  transform: scale(-1, -1);
+}
+
+/* Connecting border lines */
+.borderLine {
+  position: absolute;
+  background: var(--accent);
+  opacity: 0;
+}
+.bTop {
+  top: 32px;
+  left: 80px;
+  right: 80px;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+}
+.bBottom {
+  bottom: 32px;
+  left: 80px;
+  right: 80px;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+}
+.bLeft {
+  left: 32px;
+  top: 80px;
+  bottom: 80px;
+  width: 2px;
+  transform: scaleY(0);
+  transform-origin: center;
+}
+.bRight {
+  right: 32px;
+  top: 80px;
+  bottom: 80px;
+  width: 2px;
+  transform: scaleY(0);
+  transform-origin: center;
+}
+
+/* Accent fill — grows from center at the end */
+.accentFill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 48px 24px 32px;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    padding: 40px 24px;
+    gap: 32px;
+  }
+  .textSide {
+    max-width: 100%;
+  }
+  .frameOverlay {
+    display: none;
+  }
+}

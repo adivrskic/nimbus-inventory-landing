@@ -1,0 +1,321 @@
+.section {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  margin-bottom: -150vh;
+}
+.canvasWrap {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  z-index: 0;
+  pointer-events: none;
+}
+.canvasWrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.textWrap {
+  position: relative;
+  z-index: 1;
+  margin-top: -100vh;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 48px;
+}
+
+/* Intro */
+.intro {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.introInner {
+  max-width: 900px;
+}
+.introLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.introLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+  color: var(--dark);
+}
+.introLetterAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+.introSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+.introDesc {
+  margin-top: 24px;
+}
+.introDescLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 2px;
+}
+.introDescLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(110%);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--dark-secondary);
+  font-weight: 300;
+}
+.introDescSpace {
+  display: inline-block;
+  width: 0.3em;
+}
+
+/* Feature blocks */
+.block {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
+}
+.blockLeft {
+  justify-content: flex-start;
+}
+.blockRight {
+  justify-content: flex-end;
+}
+
+.textCard {
+  max-width: 440px;
+}
+
+/* Card header — starts hidden for GSAP */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(16px);
+}
+.cardNumber {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.cardBadge {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 3px 10px;
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: rgba(212, 168, 83, 0.05);
+}
+
+/* Card title — per letter, same technique as intro */
+.cardTitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--dark);
+  margin-bottom: 16px;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.cardTitleLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+}
+.cardTitleSpace {
+  display: inline-block;
+  width: 0.25em;
+}
+
+/* Card desc — per letter */
+.cardDesc {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--dark-secondary);
+  font-weight: 400;
+  margin-bottom: 24px;
+}
+.cardDescLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 2px;
+}
+.cardDescLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(110%);
+}
+.cardDescSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+
+/* Details + stats — start hidden */
+.cardDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(16px);
+}
+.detailItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.detailDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.detailText {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dark-secondary);
+  line-height: 1.5;
+}
+.cardStats {
+  display: flex;
+  gap: 28px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  transform: translateY(16px);
+}
+.statVal {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.statLabel {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--dark-secondary);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.trailingSpacer {
+  min-height: 150vh;
+}
+
+.progressWrap {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 24px 48px 20px;
+}
+.progressInner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.progressLabels {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  margin-bottom: 10px;
+}
+.progressLabel {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+.progressTrack {
+  width: 100%;
+  height: 2px;
+  background: var(--divider-subtle);
+  position: relative;
+}
+.progressFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.15s linear;
+}
+.progressDot {
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--light);
+  transition: background 0.3s;
+}
+
+@media (max-width: 768px) {
+  .textWrap {
+    padding: 0 20px;
+  }
+  .textCard {
+    max-width: 100%;
+  }
+  .block {
+    min-height: 80vh;
+    align-items: flex-start;
+    padding-top: 100px;
+  }
+  .blockLeft,
+  .blockRight {
+    justify-content: center;
+  }
+  .cardTitle {
+    font-size: 24px;
+  }
+  .progressWrap {
+    padding: 20px 16px 16px;
+  }
+  .progressLabels {
+    display: none;
+  }
+  .intro {
+    min-height: 80vh;
+  }
+}
