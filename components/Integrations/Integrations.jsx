@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import Link from "next/link";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useGlowCards from "@/lib/useGlowCards";
@@ -68,8 +68,8 @@ const H_LINES = [
   ],
   [
     { t: "everything", a: true },
-    { t: "you", a: false },
-    { t: "use.", a: false },
+    { t: "you", a: true },
+    { t: "use", a: true },
   ],
 ];
 
@@ -250,7 +250,7 @@ export default function Integrations() {
                 <p className={styles.cellDesc}>{cat.desc}</p>
                 <div className={styles.items}>
                   {cat.items.map((item) => (
-                    <Link
+                    <TransitionLink
                       key={item}
                       href={`/integration/${item
                         .toLowerCase()
@@ -259,7 +259,7 @@ export default function Integrations() {
                       style={{ textDecoration: "none" }}
                     >
                       <span>{item}</span>
-                    </Link>
+                    </TransitionLink>
                   ))}
                 </div>
               </div>

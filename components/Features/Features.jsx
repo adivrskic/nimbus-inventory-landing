@@ -166,19 +166,17 @@ function animateVisual(rowEl, index) {
     }
     case 2: {
       const h = [30, 52, 42, 72, 48, 64, 36, 80, 56, 68];
-      svg
-        .querySelectorAll(".feat-bar")
-        .forEach((b, i) =>
-          tl.to(
-            b,
-            {
-              attr: { height: h[i], y: 180 - h[i] },
-              duration: 0.3,
-              ease: "back.out(1.2)",
-            },
-            i * 0.03
-          )
-        );
+      svg.querySelectorAll(".feat-bar").forEach((b, i) =>
+        tl.to(
+          b,
+          {
+            attr: { height: h[i], y: 180 - h[i] },
+            duration: 0.3,
+            ease: "back.out(1.2)",
+          },
+          i * 0.03
+        )
+      );
       svg
         .querySelectorAll(".feat-bar-accent")
         .forEach((b, i) =>
@@ -465,7 +463,7 @@ export default function Features() {
     <section id="features" ref={sectionRef} className={styles.section}>
       <div ref={headerRef} className={styles.header}>
         <h2 className="heading-lg gsap-hidden" style={{ color: "var(--bg)" }}>
-          Engineered for the <em className="accent-italic">warehouse floor.</em>
+          Engineered for the <em className="accent-italic">warehouse floor</em>
         </h2>
         <p className="body-text--display gsap-hidden-sm">
           Every feature powered by AI, built for operations teams, tested in

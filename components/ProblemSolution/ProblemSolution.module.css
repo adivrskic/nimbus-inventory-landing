@@ -170,7 +170,7 @@
   color: transparent;
   -webkit-text-stroke: 1.5px var(--black);
   paint-order: stroke fill;
-  background: linear-gradient(135deg, var(--black) 40%, var(--accent) 100%);
+  background: transparent;
   -webkit-background-clip: text;
   background-clip: text;
 }

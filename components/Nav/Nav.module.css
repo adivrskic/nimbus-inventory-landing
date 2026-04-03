@@ -103,6 +103,7 @@
   background: var(--white);
   padding: 8px 24px;
   border: 1px solid transparent;
+  cursor: pointer;
   transition: background 0.3s, border-color 0.3s;
 }
 .cta:hover {

@@ -61,7 +61,7 @@ export default function Testimonials() {
       <div className={styles.inner}>
         <div ref={headRef} className={styles.header}>
           <h2 className="heading-md gsap-hidden">
-            Trusted on the <em className="accent-italic">warehouse floor.</em>
+            Trusted on the <em className="accent-italic">warehouse floor</em>
           </h2>
           <p className="body-text--display gsap-hidden-sm">
             Real teams. Real operations. Real results.

@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { INDUSTRIES as INDUSTRY_DATA } from "@/components/IndustryPage/industryData";
+import useGlowCards from "@/lib/useGlowCards";
+import { usePageTransition } from "@/components/TransitionProvider/TransitionProvider";
 import styles from "./Industries.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -20,8 +21,8 @@ const H_LINES = [
     { t: "for", a: false },
   ],
   [
-    { t: "your", a: false },
-    { t: "industry.", a: true },
+    { t: "your", a: true },
+    { t: "industry", a: true },
   ],
 ];
 
@@ -32,7 +33,8 @@ export default function Industries() {
   const itemRefs = useRef([]);
   const [active, setActive] = useState(null);
   const isMobileRef = useRef(false);
-  const router = useRouter();
+  const navigateTo = usePageTransition();
+  const glowRef = useGlowCards();
 
   function handleEnter(idx) {
     if (isMobileRef.current) return;
@@ -114,23 +116,24 @@ export default function Industries() {
       </div>
 
       <div className={styles.listWrap}>
-        <div ref={listRef} className={styles.list}>
+        <div
+          ref={(el) => {
+            listRef.current = el;
+            glowRef.current = el;
+          }}
+          className={`${styles.list} glow-cards`}
+        >
           {INDUSTRIES.map((ind, i) => (
             <div
               key={i}
               ref={(el) => (itemRefs.current[i] = el)}
-              className={`${styles.item} ${active === i ? styles.active : ""}`}
+              className={`${styles.item} glow-card ${
+                active === i ? styles.active : ""
+              }`}
               onMouseEnter={() => handleEnter(i)}
               onMouseLeave={handleLeave}
-              onClick={(e) => {
-                if ("ontouchstart" in window) {
-                  if (active !== i) {
-                    e.preventDefault();
-                    handleEnter(i);
-                    return;
-                  }
-                }
-                router.push(`/industry/${ind.slug}`);
+              onClick={() => {
+                navigateTo(`/industry/${ind.slug}`);
               }}
               style={{ cursor: "pointer" }}
             >

@@ -1,19 +1,28 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import DemoModal from "@/components/DemoModal/DemoModal";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { BLOG_POSTS } from "@/lib/blogData";
 gsap.registerPlugin(ScrollTrigger);
 
+const TAGS = ["All", ...Array.from(new Set(BLOG_POSTS.map((p) => p.tag)))];
+
 export default function BlogPage() {
   const heroRef = useRef(null);
-  const postRefs = useRef([]);
+  const gridRef = useRef(null);
   const [demoOpen, setDemoOpen] = useState(false);
+  const [activeTag, setActiveTag] = useState("All");
   const openDemo = useCallback(() => setDemoOpen(true), []);
+
+  const filtered =
+    activeTag === "All"
+      ? BLOG_POSTS
+      : BLOG_POSTS.filter((p) => p.tag === activeTag);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const hero = heroRef.current;
@@ -31,24 +40,33 @@ export default function BlogPage() {
       ease: "power3.out",
       delay: 0.35,
     });
-    postRefs.current.forEach((post) => {
-      if (!post) return;
-      gsap.to(post, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: post, start: "top 82%" },
-      });
+    gsap.to(hero.querySelector("[data-filters]"), {
+      opacity: 1,
+      y: 0,
+      duration: 0.5,
+      ease: "power3.out",
+      delay: 0.45,
     });
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
+
+  // Animate posts when filter changes
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const posts = gridRef.current.querySelectorAll("[data-post]");
+    gsap.fromTo(
+      posts,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: "power2.out" }
+    );
+  }, [activeTag]);
+
   return (
     <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
       <Nav onDemo={openDemo} />
       <div
         ref={heroRef}
-        style={{ padding: "160px 48px 80px", maxWidth: 900, margin: "0 auto" }}
+        style={{ padding: "160px 48px 0", maxWidth: 900, margin: "0 auto" }}
       >
         <h1
           style={{
@@ -77,21 +95,64 @@ export default function BlogPage() {
           Product updates, engineering deep dives, and warehouse intelligence
           insights.
         </p>
+
+        <div
+          data-filters=""
+          style={{
+            display: "flex",
+            gap: 8,
+            marginTop: 36,
+            marginBottom: 48,
+            opacity: 0,
+            transform: "translateY(12px)",
+            flexWrap: "wrap",
+          }}
+        >
+          {TAGS.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(tag)}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 100,
+                border:
+                  activeTag === tag
+                    ? "1px solid rgba(212,168,83,0.4)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                background:
+                  activeTag === tag ? "rgba(212,168,83,0.08)" : "transparent",
+                color:
+                  activeTag === tag
+                    ? "var(--accent)"
+                    : "rgba(255,255,255,0.35)",
+                fontFamily: "var(--mono)",
+                fontSize: 11,
+                letterSpacing: 0.5,
+                cursor: "pointer",
+                transition: "all 0.3s",
+              }}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </div>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 48px 120px" }}>
-        {BLOG_POSTS.map((post, i) => (
-          <Link
+
+      <div
+        ref={gridRef}
+        style={{ maxWidth: 900, margin: "0 auto", padding: "0 48px 120px" }}
+      >
+        {filtered.map((post) => (
+          <TransitionLink
             key={post.slug}
             href={`/blog/${post.slug}`}
             style={{ textDecoration: "none", display: "block" }}
           >
             <div
-              ref={(el) => (postRefs.current[i] = el)}
+              data-post=""
               style={{
-                padding: "40px 0",
+                padding: "36px 0",
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
-                opacity: 0,
-                transform: "translateY(20px)",
                 cursor: "pointer",
               }}
               onMouseEnter={(e) =>
@@ -108,7 +169,7 @@ export default function BlogPage() {
                   display: "flex",
                   gap: 16,
                   alignItems: "center",
-                  marginBottom: 16,
+                  marginBottom: 14,
                 }}
               >
                 <span
@@ -166,8 +227,21 @@ export default function BlogPage() {
                 {post.desc}
               </p>
             </div>
-          </Link>
+          </TransitionLink>
         ))}
+        {filtered.length === 0 && (
+          <div
+            style={{
+              padding: "80px 0",
+              textAlign: "center",
+              fontFamily: "var(--display)",
+              fontSize: 15,
+              color: "rgba(255,255,255,0.2)",
+            }}
+          >
+            No posts found for this filter.
+          </div>
+        )}
       </div>
       <Footer />
       <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />

@@ -132,7 +132,7 @@
 /* Helix particle band */
 .helixWrap {
   width: 100%;
-  height: 200px;
+  height: 220px;
   background: var(--dark);
   position: relative;
   overflow: hidden;

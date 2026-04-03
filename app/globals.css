@@ -428,6 +428,7 @@ body::after {
   top: 0;
   transition: opacity 500ms;
   width: 100%;
+  pointer-events: none;
 }
 .glow-card::before {
   background: radial-gradient(
@@ -440,7 +441,7 @@ body::after {
 .glow-card > .glow-card-border {
   background: radial-gradient(
     600px circle at var(--mouse-x) var(--mouse-y),
-    rgba(212, 168, 83, 0.1),
+    rgba(212, 168, 83, 0.15),
     transparent 40%
   );
   z-index: 1;

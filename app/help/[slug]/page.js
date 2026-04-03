@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, use } from "react";
-import Link from "next/link";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
@@ -65,7 +65,7 @@ export default function HelpArticlePage({ params }) {
           >
             Article not found
           </h1>
-          <Link
+          <TransitionLink
             href="/help"
             style={{
               fontFamily: "var(--mono)",
@@ -77,7 +77,7 @@ export default function HelpArticlePage({ params }) {
             }}
           >
             Back to help center
-          </Link>
+          </TransitionLink>
         </div>
         <Footer />
       </div>
@@ -96,7 +96,7 @@ export default function HelpArticlePage({ params }) {
         ref={heroRef}
         style={{ padding: "160px 48px 40px", maxWidth: 720, margin: "0 auto" }}
       >
-        <Link
+        <TransitionLink
           href="/help"
           style={{
             fontFamily: "var(--mono)",
@@ -109,7 +109,7 @@ export default function HelpArticlePage({ params }) {
           }}
         >
           ← Back to help center
-        </Link>
+        </TransitionLink>
         <div
           data-meta=""
           style={{
@@ -224,7 +224,7 @@ export default function HelpArticlePage({ params }) {
               Related articles
             </div>
             {related.map((r) => (
-              <Link
+              <TransitionLink
                 key={r.slug}
                 href={`/help/${r.slug}`}
                 style={{
@@ -243,7 +243,7 @@ export default function HelpArticlePage({ params }) {
                 }
               >
                 {r.title}
-              </Link>
+              </TransitionLink>
             ))}
           </div>
         )}

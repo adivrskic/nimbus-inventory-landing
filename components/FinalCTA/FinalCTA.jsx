@@ -15,8 +15,8 @@ const H_LINES = [
   ],
   [
     { t: "evolve", a: true },
-    { t: "with", a: false },
-    { t: "it.", a: false },
+    { t: "with", a: true },
+    { t: "it", a: true },
   ],
 ];
 const DESC_LINES = [

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
@@ -204,13 +204,13 @@ export default function Nav({ onDemo, dark }) {
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
       >
-        <a href="/" className={styles.logo}>
+        <TransitionLink href="/" className={styles.logo}>
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nimbus</span>
             <span className={styles.logoSub}>Inventory Management</span>
           </div>
-        </a>
+        </TransitionLink>
 
         <div className={`${styles.links} hide-mobile`}>
           {links.map((l) =>
@@ -220,7 +220,7 @@ export default function Nav({ onDemo, dark }) {
                 className={styles.linkWrap}
                 onMouseEnter={() => handleEnter(l.mega)}
               >
-                <a
+                <TransitionLink
                   href={l.href}
                   className={`bracket-hover bracket-hover--sm ${
                     openMenu === l.mega ? styles.linkActive : ""
@@ -244,16 +244,16 @@ export default function Nav({ onDemo, dark }) {
                       strokeLinejoin="round"
                     />
                   </svg>
-                </a>
+                </TransitionLink>
               </div>
             ) : (
-              <a
+              <TransitionLink
                 key={l.text}
                 href={l.href}
                 className="bracket-hover bracket-hover--sm"
               >
                 {l.text}
-              </a>
+              </TransitionLink>
             )
           )}
         </div>
@@ -289,16 +289,12 @@ export default function Nav({ onDemo, dark }) {
               </svg>
             )}
           </button>
-          <a
-            href="#"
+          <button
             className={`bracket-hover ${styles.cta}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onDemo?.();
-            }}
+            onClick={() => onDemo?.()}
           >
             Request a Demo
-          </a>
+          </button>
         </div>
       </nav>
 
@@ -322,7 +318,7 @@ export default function Nav({ onDemo, dark }) {
               <p className={styles.megaDesc}>
                 Nimbus connects to your existing tools. No rip-and-replace.
               </p>
-              <a
+              <TransitionLink
                 href="/#integrations"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
@@ -343,21 +339,21 @@ export default function Nav({ onDemo, dark }) {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </a>
+              </TransitionLink>
             </div>
             <div className={styles.megaCols}>
               {INTEGRATION_CATEGORIES.map((cat) => (
                 <div key={cat.label} className={styles.megaCol}>
                   <div className={styles.megaColLabel}>{cat.label}</div>
                   {cat.items.map((item) => (
-                    <Link
+                    <TransitionLink
                       key={item.slug}
                       href={`/integration/${item.slug}`}
                       className={styles.megaItem}
                       onClick={() => setOpenMenu(null)}
                     >
                       {item.title}
-                    </Link>
+                    </TransitionLink>
                   ))}
                 </div>
               ))}
@@ -378,7 +374,7 @@ export default function Nav({ onDemo, dark }) {
               <p className={styles.megaDesc}>
                 Purpose-built warehouse intelligence for your vertical.
               </p>
-              <a
+              <TransitionLink
                 href="/#industries"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
@@ -399,18 +395,18 @@ export default function Nav({ onDemo, dark }) {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </a>
+              </TransitionLink>
             </div>
             <div className={styles.megaGrid}>
               {INDUSTRY_ITEMS.map((ind) => (
-                <Link
+                <TransitionLink
                   key={ind.slug}
                   href={`/industry/${ind.slug}`}
                   className={styles.megaItem}
                   onClick={() => setOpenMenu(null)}
                 >
                   {ind.title}
-                </Link>
+                </TransitionLink>
               ))}
             </div>
           </div>

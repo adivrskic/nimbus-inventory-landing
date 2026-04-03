@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Logo from "@/components/shared/Logo";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import styles from "./Footer.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -22,10 +23,9 @@ const COLUMNS = [
     title: "Company",
     links: [
       { text: "Blog", href: "/blog" },
-      { text: "Help Center", href: "/help" },
-      { text: "API Docs", href: "/api-docs" },
-      { text: "Status", href: "/api-status" },
       { text: "Contact", href: "/contact" },
+      { text: "Help Center", href: "/help" },
+      { text: "Status", href: "/api-status" },
     ],
   },
   {
@@ -96,10 +96,10 @@ export default function Footer() {
         // Helix params
         t,
         strand,
-        radius: 30 + Math.random() * 45,
-        phase: Math.random() * 0.62,
-        size: 0.5 + Math.random() * 0.75,
-        alpha: 0.15 + Math.random() * 0.4,
+        radius: 30 + Math.random() * 50,
+        phase: Math.random() * 0.9,
+        size: 0.5 + Math.random() * 0.775,
+        alpha: 0.15 + Math.random() * 0.44,
       });
     }
 
@@ -226,15 +226,27 @@ export default function Footer() {
             >
               <div className={styles.colTitle}>{col.title}</div>
               <div className={styles.colLinks}>
-                {col.links.map((link) => (
-                  <a
-                    key={link.text}
-                    href={link.href}
-                    className={styles.colLink}
-                  >
-                    {link.text}
-                  </a>
-                ))}
+                {col.links.map((link) =>
+                  link.href.startsWith("http") ? (
+                    <a
+                      key={link.text}
+                      href={link.href}
+                      className={styles.colLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.text}
+                    </a>
+                  ) : (
+                    <TransitionLink
+                      key={link.text}
+                      href={link.href}
+                      className={styles.colLink}
+                    >
+                      {link.text}
+                    </TransitionLink>
+                  )
+                )}
               </div>
             </div>
           ))}

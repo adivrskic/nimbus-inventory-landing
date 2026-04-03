@@ -1,5 +1,6 @@
 import { JetBrains_Mono } from "next/font/google";
 import LenisProvider from "@/components/LenisProvider";
+import TransitionProvider from "@/components/TransitionProvider/TransitionProvider";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -25,7 +26,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <LenisProvider>{children}</LenisProvider>
+        <LenisProvider>
+          <TransitionProvider>{children}</TransitionProvider>
+        </LenisProvider>
       </body>
     </html>
   );

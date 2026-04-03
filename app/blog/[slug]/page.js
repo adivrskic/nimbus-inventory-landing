@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, use } from "react";
-import Link from "next/link";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
@@ -56,7 +56,7 @@ export default function BlogArticlePage({ params }) {
           >
             Article not found
           </h1>
-          <Link
+          <TransitionLink
             href="/blog"
             style={{
               fontFamily: "var(--mono)",
@@ -68,7 +68,7 @@ export default function BlogArticlePage({ params }) {
             }}
           >
             Back to blog
-          </Link>
+          </TransitionLink>
         </div>
         <Footer />
       </div>
@@ -82,7 +82,7 @@ export default function BlogArticlePage({ params }) {
         ref={heroRef}
         style={{ padding: "160px 48px 40px", maxWidth: 720, margin: "0 auto" }}
       >
-        <Link
+        <TransitionLink
           href="/blog"
           style={{
             fontFamily: "var(--mono)",
@@ -95,7 +95,7 @@ export default function BlogArticlePage({ params }) {
           }}
         >
           ← Back to blog
-        </Link>
+        </TransitionLink>
         <div
           data-meta=""
           style={{

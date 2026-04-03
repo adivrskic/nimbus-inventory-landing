@@ -27,7 +27,7 @@ const PHASES = [
       ],
       [
         { t: "command", a: true },
-        { t: "center.", a: true },
+        { t: "center", a: true },
       ],
     ],
     bodyLines: [
@@ -73,7 +73,7 @@ const PHASES = [
       ],
       [
         { t: "manual", a: true },
-        { t: "operations.", a: true },
+        { t: "operations", a: true },
       ],
     ],
     bodyLines: [
@@ -117,7 +117,7 @@ const PHASES = [
       ],
       [
         { t: "every", a: true },
-        { t: "shelf.", a: true },
+        { t: "shelf", a: true },
       ],
     ],
     bodyLines: [

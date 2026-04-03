@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Link from "next/link";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
@@ -124,7 +124,7 @@ export default function HelpPage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {cat.articles.map((a, ai) => (
-                  <Link
+                  <TransitionLink
                     key={a.slug}
                     href={`/help/${a.slug}`}
                     style={{
@@ -148,7 +148,7 @@ export default function HelpPage() {
                     }
                   >
                     {a.title}
-                  </Link>
+                  </TransitionLink>
                 ))}
               </div>
             </div>

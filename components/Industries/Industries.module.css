@@ -137,7 +137,7 @@
   color: var(--white);
 }
 
-/* Gold corner accents — top-right and bottom-left */
+/* Gold corner accents — override glow-card ::before/::after */
 .item::before,
 .item::after {
   content: "";
@@ -148,16 +148,23 @@
   transition: opacity 0.35s ease, width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
     height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  background: none !important;
+  border-radius: 0 !important;
+  inset: auto !important;
 }
 .item::before {
-  top: -1px;
-  right: -1px;
+  top: -1px !important;
+  right: -1px !important;
+  left: auto !important;
+  bottom: auto !important;
   border-top: 1.5px solid var(--accent);
   border-right: 1.5px solid var(--accent);
 }
 .item::after {
-  bottom: -1px;
-  left: -1px;
+  bottom: -1px !important;
+  left: -1px !important;
+  top: auto !important;
+  right: auto !important;
   border-bottom: 1.5px solid var(--accent);
   border-left: 1.5px solid var(--accent);
 }

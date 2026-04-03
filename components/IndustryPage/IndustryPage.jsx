@@ -1,93 +1,78 @@
 "use client";
-
-import { useEffect, useRef } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import useGlowCards from "@/lib/useGlowCards";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const WORKFLOW = [
+  {
+    label: "Receive",
+    desc: "Goods arrive. Scan to verify quantities against PO, flag discrepancies instantly.",
+  },
+  {
+    label: "Putaway",
+    desc: "AI suggests optimal locations based on velocity, weight, and spatial proximity.",
+  },
+  {
+    label: "Pick",
+    desc: "Orders come in. Nimbus generates the shortest pick route across your floor.",
+  },
+  {
+    label: "Pack & Ship",
+    desc: "Verify items by scan, print labels, push tracking to sales channels.",
+  },
+];
+
 export default function IndustryPage({ slug, onDemo }) {
   const industry = INDUSTRIES.find((i) => i.slug === slug);
   const heroRef = useRef(null);
-  const challengeRefs = useRef([]);
-  const solutionRefs = useRef([]);
   const ctaRef = useRef(null);
+  const challengeGlow = useGlowCards();
+  const solutionGlow = useGlowCards();
+  const workflowGlow = useGlowCards();
+  const [activeWorkflow, setActiveWorkflow] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
     if (!industry) return;
     const hero = heroRef.current;
     if (!hero) return;
 
-    // Hero letters
     const hLetters = hero.querySelectorAll(`.${styles.heroLetter}`);
-    const desc = hero.querySelector(`.${styles.heroDesc}`);
-    const stats = hero.querySelector(`.${styles.heroStats}`);
-
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
     tl.to(
       hLetters,
       { opacity: 1, y: "0%", rotateX: 0, duration: 0.5, stagger: 0.016 },
       0.2
-    )
-      .to(desc, { opacity: 1, y: 0, duration: 0.6 }, 0.5)
-      .to(stats, { opacity: 1, y: 0, duration: 0.5 }, 0.7);
+    );
+    tl.to(
+      hero.querySelector(`.${styles.heroDesc}`),
+      { opacity: 1, y: 0, duration: 0.6 },
+      0.5
+    );
+    tl.to(
+      hero.querySelector(`.${styles.heroStats}`),
+      { opacity: 1, y: 0, duration: 0.5 },
+      0.7
+    );
 
-    // Challenge cards stagger
-    challengeRefs.current.forEach((card) => {
-      if (!card) return;
-      gsap.to(card, {
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      gsap.to(el, {
         opacity: 1,
         y: 0,
         duration: 0.5,
         ease: "power3.out",
-        scrollTrigger: { trigger: card, start: "top 80%" },
+        scrollTrigger: { trigger: el, start: "top 82%" },
       });
     });
-
-    // Solution cards stagger
-    solutionRefs.current.forEach((card) => {
-      if (!card) return;
-      gsap.to(card, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: card, start: "top 80%" },
-      });
-    });
-
-    // CTA
-    if (ctaRef.current) {
-      const ctaTitle = ctaRef.current.querySelector(`.${styles.ctaTitle}`);
-      const ctaDesc = ctaRef.current.querySelector(`.${styles.ctaDesc}`);
-      const ctaBtn = ctaRef.current.querySelector(`.${styles.ctaBtn}`);
-      gsap.to(ctaTitle, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        scrollTrigger: { trigger: ctaRef.current, start: "top 70%" },
-      });
-      gsap.to(ctaDesc, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        scrollTrigger: { trigger: ctaRef.current, start: "top 65%" },
-      });
-      gsap.to(ctaBtn, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        scrollTrigger: { trigger: ctaRef.current, start: "top 60%" },
-      });
-    }
 
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, [slug, industry]);
@@ -101,14 +86,14 @@ export default function IndustryPage({ slug, onDemo }) {
             style={{
               color: "var(--white)",
               fontFamily: "var(--display)",
-              fontSize: 32,
+              fontSize: 28,
             }}
           >
             Industry not found
           </h1>
-          <Link href="/" className={styles.backLink}>
+          <TransitionLink href="/" className={styles.backLink}>
             Back to home
-          </Link>
+          </TransitionLink>
         </div>
         <Footer />
       </div>
@@ -144,27 +129,23 @@ export default function IndustryPage({ slug, onDemo }) {
     ));
   }
 
+  // Related industries
+  const related = INDUSTRIES.filter((i) => i.slug !== slug).slice(0, 3);
+
   return (
     <div className={styles.page}>
       <Nav onDemo={onDemo} />
 
+      {/* Hero */}
       <div ref={heroRef} className={styles.hero}>
-        <div className={styles.breadcrumb}>
-          <Link href="/">Home</Link>
-          <span className={styles.breadcrumbSep}>/</span>
-          <Link href="/#industries">Industries</Link>
-          <span className={styles.breadcrumbSep}>/</span>
-          <span style={{ color: "rgba(255,255,255,0.4)" }}>
-            {industry.title}
-          </span>
-        </div>
-
+        <TransitionLink href="/#industries" className={styles.backNav}>
+          ← Industries
+        </TransitionLink>
         <h1 className="heading-lg">{renderHeadline()}</h1>
         <p className={styles.heroDesc}>{industry.heroDesc}</p>
-
         <div className={styles.heroStats}>
           {industry.stats.map((s, i) => (
-            <div key={i}>
+            <div key={i} className={styles.statItem}>
               <div className={styles.heroStatVal}>{s.val}</div>
               <div className={styles.heroStatLabel}>{s.label}</div>
             </div>
@@ -174,73 +155,175 @@ export default function IndustryPage({ slug, onDemo }) {
 
       {/* Challenges */}
       <div className={styles.gridSection}>
-        <div className={styles.gridTag}>
-          <div className={styles.gridTagDot} />
+        <div className={styles.sectionTag}>
+          <div className={styles.tagDot} />
           <span>The challenges</span>
         </div>
         <h2 className={styles.gridTitle}>
           What makes {industry.title.toLowerCase()} hard.
         </h2>
-        <div className={styles.grid}>
+        <div ref={challengeGlow} className={`${styles.grid} glow-cards`}>
           {industry.challenges.map((c, i) => (
             <div
               key={i}
-              ref={(el) => (challengeRefs.current[i] = el)}
-              className={styles.gridCard}
+              data-reveal=""
+              className={`${styles.gridCard} glow-card`}
+              style={{ opacity: 0, transform: "translateY(24px)" }}
             >
-              <div className={styles.gridCardNum}>0{i + 1}</div>
-              <h3 className={styles.gridCardTitle}>{c.title}</h3>
-              <p className={styles.gridCardDesc}>{c.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.divider}>
-        <div className={styles.dividerLine} />
-      </div>
-
-      {/* Solutions */}
-      <div className={styles.gridSection}>
-        <div className={styles.gridTag}>
-          <div className={styles.gridTagDot} />
-          <span>How Nimbus helps</span>
-        </div>
-        <h2 className={styles.gridTitle}>Purpose-built for your operation.</h2>
-        <div className={styles.grid}>
-          {industry.solutions.map((s, i) => (
-            <div
-              key={i}
-              ref={(el) => (solutionRefs.current[i] = el)}
-              className={styles.gridCard}
-            >
-              <div className={styles.gridCardNum}>0{i + 1}</div>
-              <h3 className={styles.gridCardTitle}>{s.title}</h3>
-              <p className={styles.gridCardDesc}>{s.desc}</p>
-              <div className={styles.gridCardStat}>
-                <div className={styles.gridCardStatVal}>{s.stat}</div>
-                <div className={styles.gridCardStatLabel}>{s.statLabel}</div>
+              <div className="glow-card-border" />
+              <div className={`${styles.gridCardInner} glow-card-content`}>
+                <div className={styles.gridCardNum}>0{i + 1}</div>
+                <h3 className={styles.gridCardTitle}>{c.title}</h3>
+                <p className={styles.gridCardDesc}>{c.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Workflow */}
+      <div className={styles.gridSection}>
+        <div className={styles.sectionTag}>
+          <div className={styles.tagDot} />
+          <span>Warehouse workflow</span>
+        </div>
+        <h2 className={styles.gridTitle}>
+          How Nimbus handles your daily operations.
+        </h2>
+        <div ref={workflowGlow} className={`${styles.workflowGrid} glow-cards`}>
+          {WORKFLOW.map((w, i) => (
+            <div
+              key={i}
+              data-reveal=""
+              className={`${styles.workflowCard} glow-card ${
+                activeWorkflow === i ? styles.workflowActive : ""
+              }`}
+              style={{
+                opacity: 0,
+                transform: "translateY(20px)",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setActiveWorkflow(i)}
+            >
+              <div className="glow-card-border" />
+              <div className={`${styles.workflowInner} glow-card-content`}>
+                <div className={styles.workflowNum}>0{i + 1}</div>
+                <div className={styles.workflowLabel}>{w.label}</div>
+                <p className={styles.workflowDesc}>{w.desc}</p>
+                {/* Progress connector */}
+                {i < WORKFLOW.length - 1 && (
+                  <div className={styles.workflowConnector}>
+                    <div
+                      className={styles.workflowConnectorLine}
+                      style={{
+                        background:
+                          activeWorkflow > i
+                            ? "var(--accent)"
+                            : "rgba(255,255,255,0.06)",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Solutions */}
+      <div className={styles.gridSection}>
+        <div className={styles.sectionTag}>
+          <div className={styles.tagDot} />
+          <span>How Nimbus helps</span>
+        </div>
+        <h2 className={styles.gridTitle}>Purpose-built for your operation.</h2>
+        <div ref={solutionGlow} className={`${styles.grid} glow-cards`}>
+          {industry.solutions.map((s, i) => (
+            <div
+              key={i}
+              data-reveal=""
+              className={`${styles.gridCard} glow-card`}
+              style={{ opacity: 0, transform: "translateY(24px)" }}
+            >
+              <div className="glow-card-border" />
+              <div className={`${styles.gridCardInner} glow-card-content`}>
+                <div className={styles.gridCardNum}>0{i + 1}</div>
+                <h3 className={styles.gridCardTitle}>{s.title}</h3>
+                <p className={styles.gridCardDesc}>{s.desc}</p>
+                <div className={styles.gridCardStat}>
+                  <span className={styles.gridCardStatVal}>{s.stat}</span>
+                  <span className={styles.gridCardStatLabel}>
+                    {s.statLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ROI snapshot */}
+      <div
+        className={styles.roiSection}
+        data-reveal=""
+        style={{ opacity: 0, transform: "translateY(20px)" }}
+      >
+        <div className={styles.sectionTag}>
+          <div className={styles.tagDot} />
+          <span>ROI snapshot</span>
+        </div>
+        <div className={styles.roiGrid}>
+          {[
+            { val: "73%", label: "Fewer mispicks in 90 days" },
+            { val: "60%", label: "Faster cycle counts" },
+            { val: "2.5x", label: "ROI within first year" },
+            { val: "< 1 day", label: "Team onboarding time" },
+          ].map((r, i) => (
+            <div key={i} className={styles.roiCard}>
+              <div className={styles.roiVal}>{r.val}</div>
+              <div className={styles.roiLabel}>{r.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Related */}
+      <div className={styles.relatedSection}>
+        <div className={styles.sectionTag}>
+          <div className={styles.tagDot} />
+          <span>Other industries</span>
+        </div>
+        <div className={styles.relatedGrid}>
+          {related.map((r) => (
+            <TransitionLink
+              key={r.slug}
+              href={`/industry/${r.slug}`}
+              className={styles.relatedCard}
+            >
+              <div className={styles.relatedTitle}>{r.title}</div>
+              <p className={styles.relatedDesc}>{r.heroDesc}</p>
+            </TransitionLink>
+          ))}
+        </div>
+      </div>
+
       {/* CTA */}
-      <div ref={ctaRef} className={styles.ctaBanner}>
+      <div
+        ref={ctaRef}
+        className={styles.ctaBanner}
+        data-reveal=""
+        style={{ opacity: 0, transform: "translateY(24px)" }}
+      >
         <h2 className={styles.ctaTitle}>{industry.cta}</h2>
         <p className={styles.ctaDesc}>
-          Get a personalized demo showing how Nimbus works for{" "}
-          {industry.title.toLowerCase()} operations.
+          See how Nimbus works for {industry.title.toLowerCase()} operations.
         </p>
-        <div className={styles.ctaBtn}>
-          <CornerButton variant="primary" onClick={onDemo}>
-            Request a Demo
-          </CornerButton>
-        </div>
-        <Link href="/" className={styles.backLink}>
-          Back to all industries
-        </Link>
+        <CornerButton variant="primary" onClick={onDemo}>
+          Request a Demo
+        </CornerButton>
+        <TransitionLink href="/#industries" className={styles.backLink}>
+          View all industries
+        </TransitionLink>
       </div>
 
       <Footer />

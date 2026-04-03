@@ -107,8 +107,8 @@ const INTRO_H2_LINES = [
     { text: "noise", accent: false },
   ],
   [
-    { text: "to", accent: false },
-    { text: "clarity.", accent: true },
+    { text: "to", accent: true },
+    { text: "clarity", accent: true },
   ],
 ];
 const INTRO_DESC_LINES = [
@@ -191,8 +191,8 @@ export default function AISection() {
         const r = block.getBoundingClientRect();
         const center = r.top + r.height / 2;
         const dist = Math.abs(center - vcenter) / vh;
-        if (dist < 0.9) {
-          const w = Math.pow(Math.cos((dist / 0.9) * Math.PI * 0.5), 2);
+        if (dist < 0.6) {
+          const w = Math.pow(Math.cos((dist / 0.6) * Math.PI * 0.5), 2);
           weights[i] = w;
           if (w > maxWeight) {
             maxWeight = w;
@@ -201,7 +201,7 @@ export default function AISection() {
         }
       });
 
-      const blockFormation = smoothstep(Math.min(1, maxWeight * 1.4));
+      const blockFormation = smoothstep(Math.min(1, maxWeight * 1.6));
       const formation = Math.max(introFormation, blockFormation);
       const wSum = weights[0] + weights[1] + weights[2] + weights[3];
       if (wSum > 0.001) {
@@ -245,7 +245,7 @@ export default function AISection() {
         letterOriginsRef.current = origins;
       }
 
-      if (formation > 0.3) setActiveIdx(maxIdx);
+      if (formation > 0.5) setActiveIdx(maxIdx);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll(); // initial call
@@ -282,7 +282,7 @@ export default function AISection() {
       const stats = card.querySelector(`.${styles.cardStats}`);
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: card, start: "top 65%" },
+        scrollTrigger: { trigger: card, start: "top 50%" },
         defaults: { ease: "power4.out" },
       });
       tl.to(header, { opacity: 1, y: 0, duration: 0.3 });
@@ -416,15 +416,23 @@ export default function AISection() {
       const points = new THREE.Points(geometry, material);
       scene.add(points);
 
-      /* ── Smooth followers (one-pole filters on scroll-derived values) ──
-         These add just enough smoothing to eliminate scroll-event jitter
-         while staying < 3 frames behind. NOT the old 0.09 laggy lerp. */
+      /* ── Smooth morphing: elastic easing, per-particle stagger, gentle rotation ── */
       let sFormation = 0;
       let sAlpha = 0.12;
       let sColorMix = 0;
       let sActiveShape = 0;
-      let sTransition = 0;
-      const SMOOTH = 0.18; // slower catch-up for gentler transitions
+      let prevShapeIdx = 0;
+      let morphProgress = 1;
+      const SMOOTH = 0.15;
+
+      // Elastic ease out (like GSAP Elastic.easeOut)
+      function elasticOut(x) {
+        if (x === 0 || x === 1) return x;
+        return (
+          Math.pow(2, -10 * x) * Math.sin(((x - 0.075) * (2 * Math.PI)) / 0.3) +
+          1
+        );
+      }
 
       function animate() {
         frameId = requestAnimationFrame(animate);
@@ -433,13 +441,11 @@ export default function AISection() {
         const t = performance.now() * 0.001;
         const ps = particleState.current;
 
-        /* ── Tight smoothing ── */
         sFormation += (ps.formation - sFormation) * SMOOTH;
         sAlpha += (ps.globalAlpha - sAlpha) * SMOOTH;
-        const colorTarget = sFormation;
-        sColorMix += (colorTarget - sColorMix) * SMOOTH;
+        sColorMix += (sFormation - sColorMix) * SMOOTH;
 
-        /* ── Find dominant shape ── */
+        /* ── Dominant shape detection + morph trigger ── */
         let maxW = 0,
           maxIdx = 0;
         for (let w = 0; w < 4; w++) {
@@ -449,53 +455,80 @@ export default function AISection() {
           }
         }
 
-        // When active shape changes, trigger a brief scatter
         if (maxIdx !== sActiveShape && maxW > 0.3) {
+          prevShapeIdx = sActiveShape;
           sActiveShape = maxIdx;
-          sTransition = 1.0;
+          morphProgress = 0;
         }
-        sTransition *= 0.96; // slower decay — scatter lingers
 
-        // Formation dips gently during transitions
-        const effectiveFormation = sFormation * (1 - sTransition * 0.45);
-        const f = effectiveFormation;
+        // Morph advances ~60 frames (~1s)
+        if (morphProgress < 1)
+          morphProgress = Math.min(1, morphProgress + 0.018);
 
-        /* ── Compute shape target: ONLY the active shape ── */
-        const activeShape = shapes[sActiveShape];
-        const jitterAmp = 0.025 * (1 - f * 0.92);
+        const f = sFormation;
+        const oldShape = shapes[prevShapeIdx];
+        const newShape = shapes[sActiveShape];
+        const morphBoost = morphProgress < 1 ? (1 - morphProgress) * 0.03 : 0;
+        const jitterAmp = 0.02 * (1 - f * 0.9) + morphBoost;
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          // Per-particle staggered formation
+          // Formation stagger
           const rawF = Math.max(
             0,
             Math.min(1, (f - stagger[i]) / (1 - stagger[i]))
           );
-          const pf = rawF * rawF * (3 - 2 * rawF); // smoothstep
+          const pf = rawF * rawF * (3 - 2 * rawF);
 
-          // Target: single active shape (no weighted average)
-          const sx = activeShape[i3];
-          const sy = activeShape[i3 + 1];
-          const sz = activeShape[i3 + 2];
+          // Per-particle morph with wave stagger + elastic overshoot
+          const delay = seeds[i3] * 0.4;
+          const rawM = Math.max(
+            0,
+            Math.min(1, (morphProgress - delay) / (1 - delay))
+          );
+          const mp = elasticOut(rawM);
 
-          // Lerp: scattered → shape target
-          currentPos[i3] = scattered[i3] * (1 - pf) + sx * pf;
-          currentPos[i3 + 1] = scattered[i3 + 1] * (1 - pf) + sy * pf;
-          currentPos[i3 + 2] = scattered[i3 + 2] * (1 - pf) + sz * pf;
+          // Blend old → new shape target
+          const tx = oldShape[i3] * (1 - mp) + newShape[i3] * mp;
+          const ty = oldShape[i3 + 1] * (1 - mp) + newShape[i3 + 1] * mp;
+          const tz = oldShape[i3 + 2] * (1 - mp) + newShape[i3 + 2] * mp;
 
-          // Subtle organic motion
+          // Scattered → shape
+          let px = scattered[i3] * (1 - pf) + tx * pf;
+          let py = scattered[i3 + 1] * (1 - pf) + ty * pf;
+          let pz = scattered[i3 + 2] * (1 - pf) + tz * pf;
+
+          // Gentle tilt — subtle sine oscillation, never turns edge-on
+          const tiltY = Math.sin(t * 0.15) * 0.08 * pf; // max ±0.08 rad (~4.5°)
+          const tiltX = Math.sin(t * 0.1 + 1.5) * 0.04 * pf;
+          if (pf > 0.1) {
+            const cy = Math.cos(tiltY),
+              sy = Math.sin(tiltY);
+            const cx = Math.cos(tiltX),
+              sx = Math.sin(tiltX);
+            const rx = px * cy - pz * sy;
+            const rz = px * sy + pz * cy;
+            const ry = py * cx - rz * sx;
+            const rz2 = py * sx + rz * cx;
+            px = rx;
+            py = ry;
+            pz = rz2;
+          }
+
+          // Organic motion
           const s1 = seeds[i3],
             s2 = seeds[i3 + 1],
             s3 = seeds[i3 + 2];
           const freq = 0.2 + s1 * 0.2;
           const phase = s3 * 6.28;
-          currentPos[i3] +=
-            Math.sin(t * freq + phase) * jitterAmp * (0.7 + s2 * 0.6);
-          currentPos[i3 + 1] +=
-            Math.sin(t * freq * 0.9 + phase + 2.1) * jitterAmp * 0.6;
-          currentPos[i3 + 2] +=
-            Math.cos(t * freq * 0.8 + phase + 4.2) * jitterAmp * 0.5;
+          px += Math.sin(t * freq + phase) * jitterAmp * (0.7 + s2 * 0.6);
+          py += Math.sin(t * freq * 0.9 + phase + 2.1) * jitterAmp * 0.6;
+          pz += Math.cos(t * freq * 0.8 + phase + 4.2) * jitterAmp * 0.5;
+
+          currentPos[i3] = px;
+          currentPos[i3 + 1] = py;
+          currentPos[i3 + 2] = pz;
         }
         geometry.attributes.position.needsUpdate = true;
 
