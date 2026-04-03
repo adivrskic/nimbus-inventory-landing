@@ -304,3 +304,166 @@
     display: none;
   }
 }
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+.hamburgerLine {
+  display: block;
+  width: 100%;
+  height: 1.5px;
+  background: var(--white);
+  transition: transform 0.3s, opacity 0.3s;
+  transform-origin: center;
+}
+.hamburgerOpen1 {
+  transform: translateY(3.25px) rotate(45deg);
+}
+.hamburgerOpen2 {
+  transform: translateY(-3.25px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* Mobile menu overlay */
+.mobileMenu {
+  position: fixed;
+  inset: 0;
+  top: 60px;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobileInner {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 28px 48px;
+  min-height: 100%;
+}
+
+.mobileSection {
+  margin-bottom: 8px;
+}
+.mobileSectionLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding-left: 4px;
+}
+
+.mobileLink {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  padding: 18px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.3s;
+}
+.mobileLink:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+.mobileLinkNum {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  opacity: 0.5;
+  width: 20px;
+  flex-shrink: 0;
+}
+.mobileLinkText {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: -0.3px;
+  flex: 1;
+}
+.mobileLinkArrow {
+  color: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+  transition: color 0.3s, transform 0.3s;
+}
+.mobileLink:active .mobileLinkArrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+.mobileDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 20px 0 24px;
+  transform-origin: left;
+}
+
+.mobileExtraLink {
+  display: block;
+  text-decoration: none;
+  font-family: var(--display);
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 12px 4px;
+  transition: color 0.3s;
+}
+.mobileExtraLink:active {
+  color: var(--accent);
+}
+
+.mobileCta {
+  margin-top: 32px;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--black);
+  background: var(--white);
+  padding: 16px 0;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.mobileCta:active {
+  background: var(--accent);
+}
+
+.mobileFooter {
+  margin-top: auto;
+  padding-top: 32px;
+  text-align: center;
+}
+.mobileFooterLink {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.mobileFooterLink:active {
+  color: var(--accent);
+}

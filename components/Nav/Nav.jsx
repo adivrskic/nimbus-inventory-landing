@@ -55,10 +55,160 @@ const INTEGRATION_CATEGORIES = [
   },
 ];
 
+/* ── Mobile Menu with GSAP ── */
+const EXTRA_LINKS = [
+  { text: "Blog", href: "/blog" },
+  { text: "Help Center", href: "/help" },
+  { text: "Contact", href: "/contact" },
+];
+
+function MobileMenu({ open, links, onClose, onDemo }) {
+  const menuRef = useRef(null);
+  const tlRef = useRef(null);
+
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+
+    const items = el.querySelectorAll("[data-mobile-item]");
+    const divider = el.querySelector("[data-divider]");
+    const extras = el.querySelectorAll("[data-extra]");
+    const cta = el.querySelector("[data-cta]");
+    const footer = el.querySelector("[data-footer]");
+
+    if (tlRef.current) tlRef.current.kill();
+
+    if (open) {
+      el.style.display = "flex";
+      document.body.style.overflow = "hidden";
+      const tl = gsap.timeline();
+      tl.fromTo(
+        el,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power2.out" }
+      );
+      tl.fromTo(
+        items,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.4, stagger: 0.06, ease: "power3.out" },
+        0.15
+      );
+      tl.fromTo(
+        divider,
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power3.out" },
+        0.35
+      );
+      tl.fromTo(
+        extras,
+        { opacity: 0, x: -12 },
+        { opacity: 1, x: 0, duration: 0.3, stagger: 0.04, ease: "power3.out" },
+        0.4
+      );
+      tl.fromTo(
+        cta,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        0.55
+      );
+      if (footer)
+        tl.fromTo(footer, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.6);
+      tlRef.current = tl;
+    } else {
+      document.body.style.overflow = "";
+      const tl = gsap.timeline({
+        onComplete: () => {
+          el.style.display = "none";
+        },
+      });
+      tl.to(el, { opacity: 0, duration: 0.25, ease: "power2.in" });
+      tlRef.current = tl;
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const allLinks = [...links, ...EXTRA_LINKS];
+
+  return (
+    <div
+      ref={menuRef}
+      className={styles.mobileMenu}
+      style={{ display: "none" }}
+    >
+      <div className={styles.mobileInner}>
+        <div className={styles.mobileSection}>
+          <div className={styles.mobileSectionLabel}>Navigate</div>
+          {links.map((l, i) => (
+            <TransitionLink
+              key={l.text}
+              href={l.href}
+              data-mobile-item=""
+              className={styles.mobileLink}
+              onClick={onClose}
+            >
+              <span className={styles.mobileLinkNum}>0{i + 1}</span>
+              <span className={styles.mobileLinkText}>{l.text}</span>
+              <svg
+                className={styles.mobileLinkArrow}
+                width="14"
+                height="10"
+                viewBox="0 0 14 10"
+                fill="none"
+              >
+                <path
+                  d="M1 5H12M9 1L13 5L9 9"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </TransitionLink>
+          ))}
+        </div>
+
+        <div data-divider="" className={styles.mobileDivider} />
+
+        <div className={styles.mobileSection}>
+          <div className={styles.mobileSectionLabel}>Resources</div>
+          {EXTRA_LINKS.map((l) => (
+            <TransitionLink
+              key={l.text}
+              href={l.href}
+              data-extra=""
+              className={styles.mobileExtraLink}
+              onClick={onClose}
+            >
+              {l.text}
+            </TransitionLink>
+          ))}
+        </div>
+
+        <button data-cta="" className={styles.mobileCta} onClick={onDemo}>
+          Request a Demo
+        </button>
+
+        <div data-footer="" className={styles.mobileFooter}>
+          <a
+            href="mailto:sales@nimbuswms.com"
+            className={styles.mobileFooterLink}
+          >
+            sales@nimbuswms.com
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Nav({ onDemo, dark }) {
   const [scrolled, setScrolled] = useState(false);
   const [paused, setPaused] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const closeTimer = useRef(null);
   const megaRef = useRef(null);
   const scrimRef = useRef(null);
@@ -198,6 +348,7 @@ export default function Nav({ onDemo, dark }) {
   return (
     <>
       <nav
+        aria-label="Main navigation"
         className={`${styles.nav} ${
           scrolled || megaActive ? styles.scrolled : ""
         } ${dark ? styles.dark : ""}`}
@@ -260,7 +411,7 @@ export default function Nav({ onDemo, dark }) {
 
         <div className={styles.rightGroup}>
           <button
-            className={`bracket-hover ${styles.stopBtn}`}
+            className={`bracket-hover ${styles.stopBtn} hide-mobile`}
             onClick={toggleAnimations}
             title={paused ? "Resume animations" : "Pause animations"}
           >
@@ -290,13 +441,42 @@ export default function Nav({ onDemo, dark }) {
             )}
           </button>
           <button
-            className={`bracket-hover ${styles.cta}`}
+            className={`bracket-hover ${styles.cta} hide-mobile`}
             onClick={() => onDemo?.()}
           >
             Request a Demo
           </button>
+
+          {/* Hamburger */}
+          <button
+            className={styles.hamburger}
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            <span
+              className={`${styles.hamburgerLine} ${
+                mobileOpen ? styles.hamburgerOpen1 : ""
+              }`}
+            />
+            <span
+              className={`${styles.hamburgerLine} ${
+                mobileOpen ? styles.hamburgerOpen2 : ""
+              }`}
+            />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile menu overlay */}
+      <MobileMenu
+        open={mobileOpen}
+        links={links}
+        onClose={() => setMobileOpen(false)}
+        onDemo={() => {
+          setMobileOpen(false);
+          onDemo?.();
+        }}
+      />
 
       {/* Full-width mega panel */}
       <div
