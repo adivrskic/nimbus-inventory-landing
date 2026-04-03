@@ -87,7 +87,7 @@
 
 /* Single scroll space — controls total scroll distance */
 .scrollSpace {
-  height: 220vh;
+  height: 180vh;
   pointer-events: none;
 }
 
@@ -96,6 +96,6 @@
     padding: 40px 20px 28px;
   }
   .scrollSpace {
-    height: 180vh;
+    height: 150vh;
   }
 }

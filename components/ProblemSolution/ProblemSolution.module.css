@@ -147,6 +147,9 @@
 .phaseIntro .headline {
   color: var(--white);
 }
+.phaseIntro .headlineAccent {
+  color: var(--accent);
+}
 .phaseIntro .body {
   color: rgba(255, 255, 255, 0.4);
 }
@@ -164,7 +167,12 @@
   color: var(--black);
 }
 .phaseProblem .headlineAccent {
-  color: var(--black);
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--black);
+  paint-order: stroke fill;
+  background: linear-gradient(135deg, var(--black) 40%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 .phaseProblem .body {
   color: rgba(0, 0, 0, 0.55);

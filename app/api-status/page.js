@@ -25,57 +25,80 @@ const INCIDENTS = [
     date: "Mar 25, 2026",
     title: "Elevated webhook latency",
     status: "resolved",
-    desc: "Webhook delivery experienced 2-3s latency for approximately 18 minutes. Root cause: connection pool saturation during traffic spike. Resolved by scaling delivery workers.",
+    desc: "Webhook delivery experienced 2-3s latency for approximately 18 minutes. Resolved by scaling delivery workers.",
     duration: "18 min",
   },
   {
     date: "Mar 12, 2026",
     title: "Intermittent scanning delays",
     status: "resolved",
-    desc: "Barcode scanning API responded with P95 latency of 800ms (vs normal 180ms) for 7 minutes. Caused by a cache invalidation event. No data loss.",
+    desc: "Barcode scanning API responded with elevated P95 latency for 7 minutes. Caused by cache invalidation. No data loss.",
     duration: "7 min",
   },
   {
     date: "Feb 28, 2026",
     title: "Scheduled maintenance",
     status: "completed",
-    desc: "Planned database migration to improve query performance. All services were available during migration with read-only mode for 4 minutes.",
+    desc: "Planned database migration. All services available with 4 minutes of read-only mode.",
     duration: "4 min",
   },
 ];
 
-const STATUS_COLORS = {
+const STATUS_DOT = {
   operational: "#5a9a4a",
   degraded: "#D4A853",
   down: "#cc5555",
 };
 
 function UptimeBar() {
-  const bars = [];
+  const days = [];
   for (let i = 0; i < 90; i++) {
     const isIncident = i === 65 || i === 78 || i === 87;
-    bars.push(
-      <div
-        key={i}
-        style={{
-          flex: 1,
-          height: 28,
-          background: isIncident
-            ? "rgba(212,168,83,0.5)"
-            : "rgba(90,154,74,0.35)",
-          borderRadius: 2,
-        }}
-      />
+    days.push(
+      <div key={i} style={{ position: "relative", flex: 1, height: 32 }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: isIncident
+              ? "linear-gradient(180deg, rgba(212,168,83,0.6) 0%, rgba(212,168,83,0.15) 100%)"
+              : "linear-gradient(180deg, rgba(90,154,74,0.4) 0%, rgba(90,154,74,0.08) 100%)",
+            borderRadius: 1,
+            transition: "opacity 0.2s",
+          }}
+        />
+      </div>
     );
   }
   return (
-    <div style={{ display: "flex", gap: 1.5, marginTop: 24, marginBottom: 8 }}>
-      {bars}
+    <div
+      style={{
+        background: "rgba(255,255,255,0.02)",
+        borderRadius: 12,
+        padding: "16px 20px",
+        border: "1px solid rgba(255,255,255,0.04)",
+      }}
+    >
+      <div style={{ display: "flex", gap: 1.5 }}>{days}</div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontFamily: "var(--mono)",
+          fontSize: 9,
+          color: "rgba(255,255,255,0.15)",
+          marginTop: 10,
+        }}
+      >
+        <span>90 days ago</span>
+        <span style={{ color: "#5a9a4a", opacity: 0.8 }}>99.97% uptime</span>
+        <span>Today</span>
+      </div>
     </div>
   );
 }
 
-export default function ApiStatusPage() {
+export default function StatusPage() {
   const heroRef = useRef(null);
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
@@ -83,24 +106,20 @@ export default function ApiStatusPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
-    const title = heroRef.current.querySelector("h1");
-    const badge = heroRef.current.querySelector("span[data-badge]");
-    if (title)
-      gsap.to(title, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        delay: 0.2,
-      });
-    if (badge)
-      gsap.to(badge, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        delay: 0.35,
-      });
+    gsap.to(heroRef.current.querySelector("h1"), {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      ease: "power3.out",
+      delay: 0.2,
+    });
+    gsap.to(heroRef.current.querySelector("[data-badge]"), {
+      opacity: 1,
+      y: 0,
+      duration: 0.5,
+      ease: "power3.out",
+      delay: 0.35,
+    });
   }, []);
 
   return (
@@ -110,8 +129,8 @@ export default function ApiStatusPage() {
       <div
         ref={heroRef}
         style={{
-          padding: "160px 48px 60px",
-          maxWidth: 900,
+          padding: "160px 48px 48px",
+          maxWidth: 800,
           margin: "0 auto",
           textAlign: "center",
         }}
@@ -119,7 +138,7 @@ export default function ApiStatusPage() {
         <h1
           style={{
             fontFamily: "var(--display)",
-            fontSize: "clamp(36px, 5vw, 56px)",
+            fontSize: "clamp(36px, 5vw, 52px)",
             fontWeight: 700,
             color: "var(--white)",
             letterSpacing: "-1.5px",
@@ -129,15 +148,16 @@ export default function ApiStatusPage() {
         >
           System Status
         </h1>
-        <span
-          data-badge="true"
+        <div
+          data-badge=""
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: 10,
             marginTop: 24,
-            padding: "12px 24px",
-            border: "1px solid rgba(90,154,74,0.3)",
+            padding: "10px 20px",
+            background: "rgba(90,154,74,0.06)",
+            border: "1px solid rgba(90,154,74,0.15)",
             borderRadius: 100,
             opacity: 0,
             transform: "translateY(12px)",
@@ -145,8 +165,8 @@ export default function ApiStatusPage() {
         >
           <span
             style={{
-              width: 8,
-              height: 8,
+              width: 6,
+              height: 6,
               borderRadius: "50%",
               background: "#5a9a4a",
               boxShadow: "0 0 8px rgba(90,154,74,0.5)",
@@ -156,33 +176,21 @@ export default function ApiStatusPage() {
           <span
             style={{
               fontFamily: "var(--mono)",
-              fontSize: 12,
+              fontSize: 11,
               letterSpacing: 0.5,
               color: "#5a9a4a",
             }}
           >
             All systems operational
           </span>
-        </span>
+        </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 48px" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 48px 0" }}>
         <UptimeBar />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontFamily: "var(--mono)",
-            fontSize: 10,
-            color: "rgba(255,255,255,0.2)",
-            marginBottom: 60,
-          }}
-        >
-          <span>90 days ago</span>
-          <span>99.97% uptime</span>
-          <span>Today</span>
-        </div>
+      </div>
 
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 48px 0" }}>
         <div
           style={{
             fontFamily: "var(--mono)",
@@ -190,78 +198,69 @@ export default function ApiStatusPage() {
             letterSpacing: 2,
             textTransform: "uppercase",
             color: "var(--accent)",
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
+            marginBottom: 20,
           }}
         >
-          <span
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--accent)",
-              display: "inline-block",
-            }}
-          />
-          Current Status
+          Services
         </div>
-        {SERVICES.map((svc, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 0",
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
-            }}
-          >
-            <span
+        <div
+          style={{
+            border: "1px solid rgba(255,255,255,0.04)",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          {SERVICES.map((svc, i) => (
+            <div
+              key={i}
               style={{
-                fontFamily: "var(--display)",
-                fontSize: 14,
-                color: "var(--white)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "14px 20px",
+                borderBottom:
+                  i < SERVICES.length - 1
+                    ? "1px solid rgba(255,255,255,0.03)"
+                    : "none",
+                background:
+                  i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
               }}
             >
-              {svc.name}
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span
                 style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 10,
-                  color: "rgba(255,255,255,0.2)",
+                  fontFamily: "var(--display)",
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.7)",
                 }}
               >
-                {svc.uptime}
+                {svc.name}
               </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: STATUS_COLORS[svc.status],
-                    display: "inline-block",
-                  }}
-                />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span
                   style={{
                     fontFamily: "var(--mono)",
                     fontSize: 10,
-                    color: STATUS_COLORS[svc.status],
-                    textTransform: "capitalize",
+                    color: "rgba(255,255,255,0.15)",
                   }}
                 >
-                  {svc.status}
+                  {svc.uptime}
                 </span>
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: STATUS_DOT[svc.status],
+                    display: "inline-block",
+                  }}
+                />
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
 
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 48px 0" }}>
         <div
           style={{
             fontFamily: "var(--mono)",
@@ -269,45 +268,32 @@ export default function ApiStatusPage() {
             letterSpacing: 2,
             textTransform: "uppercase",
             color: "var(--accent)",
-            marginTop: 60,
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
+            marginBottom: 20,
           }}
         >
-          <span
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--accent)",
-              display: "inline-block",
-            }}
-          />
           Recent Incidents
         </div>
         {INCIDENTS.map((inc, i) => (
           <div
             key={i}
             style={{
-              padding: "24px 0",
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              padding: "20px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.03)",
             }}
           >
             <div
               style={{
                 display: "flex",
-                gap: 16,
+                gap: 12,
                 alignItems: "center",
-                marginBottom: 10,
+                marginBottom: 8,
               }}
             >
               <span
                 style={{
                   fontFamily: "var(--mono)",
                   fontSize: 10,
-                  color: "rgba(255,255,255,0.2)",
+                  color: "rgba(255,255,255,0.15)",
                 }}
               >
                 {inc.date}
@@ -319,6 +305,9 @@ export default function ApiStatusPage() {
                   letterSpacing: 1,
                   textTransform: "uppercase",
                   color: "#5a9a4a",
+                  padding: "2px 8px",
+                  background: "rgba(90,154,74,0.08)",
+                  borderRadius: 4,
                 }}
               >
                 {inc.status}
@@ -327,7 +316,7 @@ export default function ApiStatusPage() {
                 style={{
                   fontFamily: "var(--mono)",
                   fontSize: 10,
-                  color: "rgba(255,255,255,0.15)",
+                  color: "rgba(255,255,255,0.1)",
                 }}
               >
                 {inc.duration}
@@ -336,10 +325,10 @@ export default function ApiStatusPage() {
             <div
               style={{
                 fontFamily: "var(--display)",
-                fontSize: 16,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 500,
                 color: "var(--white)",
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               {inc.title}
@@ -349,7 +338,7 @@ export default function ApiStatusPage() {
                 fontFamily: "var(--display)",
                 fontSize: 13,
                 lineHeight: 1.8,
-                color: "rgba(255,255,255,0.3)",
+                color: "rgba(255,255,255,0.25)",
               }}
             >
               {inc.desc}

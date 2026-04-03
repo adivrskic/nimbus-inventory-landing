@@ -11,14 +11,13 @@ import {
   generateBarChart,
   offsetShape,
   offsetShapeY,
-  isoShape,
 } from "@/lib/shapes";
 import { vertexShader, fragmentShader } from "@/lib/shaders";
 import styles from "./AISection.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PARTICLE_COUNT = 35000;
+const PARTICLE_COUNT = 50000;
 const OFFSET = 5.5;
 
 const SECTIONS = [
@@ -165,32 +164,29 @@ export default function AISection() {
     );
     sectionObs.observe(section);
 
-    /* ── Scroll handler: ALL particle values derived from scroll position ── */
+    /* ── Scroll handler ── */
     const onScroll = () => {
-      const sRect = section.getBoundingClientRect();
-      const total = section.offsetHeight - vh - vh;
-      const p = Math.max(0, Math.min(1, -sRect.top / total));
-      setProgress(p);
+      // Progress: 0% when first block center at viewport center, 100% when last block top at viewport center
+      if (blocks.length > 1) {
+        const fTop =
+          blocks[0].getBoundingClientRect().top + blocks[0].offsetHeight * 0.5;
+        const lTop = blocks[blocks.length - 1].getBoundingClientRect().top;
+        setProgress(Math.max(0, Math.min(1, (vcenter - fTop) / (lTop - fTop))));
+      }
 
-      // Alpha: ramp up as intro scrolls past center
       const iRect = intro.getBoundingClientRect();
       const introCenter = iRect.top + iRect.height / 2;
-      const introNorm = (introCenter - vcenter) / vh; // positive = below center
+      const introNorm = (introCenter - vcenter) / vh;
       const alpha =
         introNorm > 0 ? 0.12 + smoothstep(1 - introNorm / 0.6) * 0.73 : 0.85;
 
-      // Intro exit → early particle stirring toward shape 0
-      // introNorm goes from positive (below center) → 0 (centered) → negative (above center)
-      // Start particles moving once intro passes center and begins exiting
       const introExit =
         introNorm < 0 ? smoothstep(Math.min(1, Math.abs(introNorm) / 0.5)) : 0;
-      const introFormation = introExit * 0.35; // up to 35% formation from intro alone
+      const introFormation = introExit * 0.35;
 
-      // Per-block weight: cosine falloff from viewport center
       const weights = [0, 0, 0, 0];
       let maxWeight = 0;
       let maxIdx = 0;
-
       blocks.forEach((block, i) => {
         const r = block.getBoundingClientRect();
         const center = r.top + r.height / 2;
@@ -205,16 +201,12 @@ export default function AISection() {
         }
       });
 
-      // Formation: max of intro-driven and block-driven
       const blockFormation = smoothstep(Math.min(1, maxWeight * 1.4));
       const formation = Math.max(introFormation, blockFormation);
-
-      // Blend intro formation toward shape 0, block formation toward active shape
       const wSum = weights[0] + weights[1] + weights[2] + weights[3];
       if (wSum > 0.001) {
         for (let i = 0; i < 4; i++) weights[i] /= wSum;
       } else if (introFormation > 0.01) {
-        // No blocks visible yet, but intro is exiting → drift toward shape 0
         weights[0] = 1;
       }
 
@@ -222,30 +214,33 @@ export default function AISection() {
       particleState.current.weights = weights;
       particleState.current.globalAlpha = Math.max(0.1, Math.min(0.85, alpha));
 
-      // Intro exit progress for burst effect (0 = fully visible, 1 = fully gone)
-      // Starts when intro top is at 15% of viewport, ends when top is at -35%
+      // Burst exit progress
       const introTop = iRect.top / vh;
       const exitP = Math.max(0, Math.min(1, (0.15 - introTop) / 0.5));
       introExitRef.current = exitP;
-
-      // Set intro opacity directly (text fades as particles take over)
       if (intro) intro.style.opacity = String(Math.max(0, 1 - exitP * 2.5));
 
-      // Capture letter positions once at the start of exit
+      // Capture: create MANY particles per letter for dense burst
       if (exitP > 0.01 && !letterOriginsRef.current) {
         const origins = [];
         const allLetters = intro.querySelectorAll(
           `.${styles.introLetter}, .${styles.introDescLetter}`
         );
+        const perLetter = 8;
         allLetters.forEach((el) => {
           const r = el.getBoundingClientRect();
-          origins.push({
-            x: r.left + r.width / 2,
-            y: r.top + r.height / 2,
-            size: Math.max(r.width, r.height),
-            burstX: (Math.random() - 0.5) * 400,
-            burstY: (Math.random() - 0.5) * 300 - 100,
-          });
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          for (let j = 0; j < perLetter; j++) {
+            origins.push({
+              x: cx + (Math.random() - 0.5) * r.width * 1.4,
+              y: cy + (Math.random() - 0.5) * r.height * 1.4,
+              burstX: (Math.random() - 0.5) * 600,
+              burstY: (Math.random() - 0.5) * 500 - 60,
+              size: 0.6 + Math.random() * 1.6,
+              delay: Math.random() * 0.12,
+            });
+          }
         });
         letterOriginsRef.current = origins;
       }
@@ -373,16 +368,14 @@ export default function AISection() {
         generateMagnifier(PARTICLE_COUNT),
         generateBarChart(PARTICLE_COUNT),
       ];
-      const off = isMobile ? 3 : OFFSET;
       const shapes = isMobile
-        ? baseShapes.map((s, i) => {
-            const base = i === 1 ? isoShape(s) : s;
-            const scaled = new Float32Array(base.length);
-            for (let j = 0; j < base.length; j++) scaled[j] = base[j] * 0.75;
+        ? baseShapes.map((s) => {
+            const scaled = new Float32Array(s.length);
+            for (let j = 0; j < s.length; j++) scaled[j] = s[j] * 0.75;
             return offsetShapeY(scaled, -3.5);
           })
         : baseShapes.map((s, i) =>
-            offsetShape(i === 1 ? isoShape(s) : s, i % 2 === 0 ? off : -off)
+            offsetShape(s, i % 2 === 0 ? OFFSET : -OFFSET)
           );
 
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
@@ -427,10 +420,11 @@ export default function AISection() {
          These add just enough smoothing to eliminate scroll-event jitter
          while staying < 3 frames behind. NOT the old 0.09 laggy lerp. */
       let sFormation = 0;
-      let sWeights = [0, 0, 0, 0];
       let sAlpha = 0.12;
       let sColorMix = 0;
-      const SMOOTH = 0.35; // catches up to 95% in ~6 frames
+      let sActiveShape = 0;
+      let sTransition = 0;
+      const SMOOTH = 0.18; // slower catch-up for gentler transitions
 
       function animate() {
         frameId = requestAnimationFrame(animate);
@@ -439,49 +433,58 @@ export default function AISection() {
         const t = performance.now() * 0.001;
         const ps = particleState.current;
 
-        /* ── Tight smoothing pass ── */
+        /* ── Tight smoothing ── */
         sFormation += (ps.formation - sFormation) * SMOOTH;
         sAlpha += (ps.globalAlpha - sAlpha) * SMOOTH;
-        for (let w = 0; w < 4; w++) {
-          sWeights[w] += (ps.weights[w] - sWeights[w]) * SMOOTH;
-        }
         const colorTarget = sFormation;
         sColorMix += (colorTarget - sColorMix) * SMOOTH;
 
-        const f = sFormation; // formation 0-1
+        /* ── Find dominant shape ── */
+        let maxW = 0,
+          maxIdx = 0;
+        for (let w = 0; w < 4; w++) {
+          if (ps.weights[w] > maxW) {
+            maxW = ps.weights[w];
+            maxIdx = w;
+          }
+        }
 
-        /* ── Compute blended shape target for each particle ── */
-        // Organic motion amplitude: strong when scattered, very subtle when formed
+        // When active shape changes, trigger a brief scatter
+        if (maxIdx !== sActiveShape && maxW > 0.3) {
+          sActiveShape = maxIdx;
+          sTransition = 1.0;
+        }
+        sTransition *= 0.96; // slower decay — scatter lingers
+
+        // Formation dips gently during transitions
+        const effectiveFormation = sFormation * (1 - sTransition * 0.45);
+        const f = effectiveFormation;
+
+        /* ── Compute shape target: ONLY the active shape ── */
+        const activeShape = shapes[sActiveShape];
         const jitterAmp = 0.025 * (1 - f * 0.92);
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          // Per-particle staggered formation (subtle, max 0.18 delay)
+          // Per-particle staggered formation
           const rawF = Math.max(
             0,
             Math.min(1, (f - stagger[i]) / (1 - stagger[i]))
           );
           const pf = rawF * rawF * (3 - 2 * rawF); // smoothstep
 
-          // Blend shape target from all 4 shapes using scroll-derived weights
-          let sx = 0,
-            sy = 0,
-            sz = 0;
-          for (let s = 0; s < 4; s++) {
-            if (sWeights[s] > 0.001) {
-              sx += shapes[s][i3] * sWeights[s];
-              sy += shapes[s][i3 + 1] * sWeights[s];
-              sz += shapes[s][i3 + 2] * sWeights[s];
-            }
-          }
+          // Target: single active shape (no weighted average)
+          const sx = activeShape[i3];
+          const sy = activeShape[i3 + 1];
+          const sz = activeShape[i3 + 2];
 
-          // Lerp: scattered → blended shape
+          // Lerp: scattered → shape target
           currentPos[i3] = scattered[i3] * (1 - pf) + sx * pf;
           currentPos[i3 + 1] = scattered[i3 + 1] * (1 - pf) + sy * pf;
           currentPos[i3 + 2] = scattered[i3 + 2] * (1 - pf) + sz * pf;
 
-          // Subtle organic motion (deterministic per-particle, time-based only for life)
+          // Subtle organic motion
           const s1 = seeds[i3],
             s2 = seeds[i3 + 1],
             s3 = seeds[i3 + 2];
@@ -515,7 +518,7 @@ export default function AISection() {
     };
   }, []);
 
-  /* ── Third useEffect: 2D burst canvas (text → particles → corner shape) ── */
+  /* ── Third useEffect: 2D burst canvas (text → particles → nav orb) ── */
   useEffect(() => {
     const canvas = burstCanvasRef.current;
     if (!canvas) return;
@@ -537,21 +540,15 @@ export default function AISection() {
     resize();
     window.addEventListener("resize", resize);
 
-    // Target: small AI-sparkle shape in top-right
+    // Target: tight orb next to the pause button in nav
     function getTargets(count) {
-      const cx = window.innerWidth - 120;
-      const cy = 110;
+      const cx = window.innerWidth - 140;
+      const cy = 36;
       const targets = [];
-      const arms = 6;
       for (let i = 0; i < count; i++) {
-        const angle = (i / count) * Math.PI * 2;
-        const arm = i % arms;
-        const along = (Math.floor(i / arms) + 1) / Math.ceil(count / arms);
-        const r = along * 28 + Math.random() * 8;
-        targets.push({
-          x: cx + Math.cos(angle + arm * 0.3) * r,
-          y: cy + Math.sin(angle + arm * 0.3) * r,
-        });
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.pow(Math.random(), 0.5) * 14;
+        targets.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
       }
       return targets;
     }
@@ -564,75 +561,85 @@ export default function AISection() {
       const origins = letterOriginsRef.current;
       const exitP = introExitRef.current;
 
-      // Tight smoothing for buttery motion
-      smoothExit += (exitP - smoothExit) * 0.18;
+      smoothExit += (exitP - smoothExit) * 0.15;
+
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
 
       if (!origins || smoothExit < 0.005) {
-        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+        ctx.clearRect(0, 0, w, h);
         return;
       }
 
       if (!targets) targets = getTargets(origins.length);
 
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
       ctx.clearRect(0, 0, w, h);
-
       const p = smoothExit;
+      const t0 = performance.now() * 0.001;
 
       for (let i = 0; i < origins.length; i++) {
         const o = origins[i];
-        const t = targets[i];
+        const tgt = targets[i];
+        // Per-particle delay for stagger
+        const d = o.delay || 0;
+        const pp = Math.max(0, Math.min(1, (p - d) / (1 - d)));
 
-        // 3-phase interpolation
-        let x, y, alpha, size;
+        let x, y, alpha, sz;
 
-        if (p < 0.3) {
-          // Phase 1: appear at letter position, start drifting
-          const pp = p / 0.3;
-          const ease = pp * pp;
-          x = o.x + o.burstX * ease * 0.3;
-          y = o.y + o.burstY * ease * 0.3;
-          alpha = pp * 0.8;
-          size = 1.5 + pp * 1;
-        } else if (p < 0.65) {
-          // Phase 2: burst outward
-          const pp = (p - 0.3) / 0.35;
-          const ease = pp * pp * (3 - 2 * pp);
-          const bx = o.x + o.burstX;
-          const by = o.y + o.burstY;
-          x = (o.x + o.burstX * 0.3) * (1 - ease) + bx * ease;
-          y = (o.y + o.burstY * 0.3) * (1 - ease) + by * ease;
-          alpha = 0.8 - pp * 0.1;
-          size = 2.5 - pp * 0.5;
+        if (pp < 0.25) {
+          // Appear at letter pos, tiny drift
+          const t = pp / 0.25;
+          const e = t * t;
+          x = o.x + o.burstX * e * 0.15;
+          y = o.y + o.burstY * e * 0.15;
+          alpha = t * 0.85;
+          sz = o.size * 0.6 + t * 0.4;
+        } else if (pp < 0.55) {
+          // Burst outward
+          const t = (pp - 0.25) / 0.3;
+          const e = t * t * (3 - 2 * t);
+          const startX = o.x + o.burstX * 0.15;
+          const startY = o.y + o.burstY * 0.15;
+          const fullX = o.x + o.burstX;
+          const fullY = o.y + o.burstY;
+          x = startX + (fullX - startX) * e;
+          y = startY + (fullY - startY) * e;
+          alpha = 0.85 - t * 0.15;
+          sz = o.size;
         } else {
-          // Phase 3: converge to corner
-          const pp = (p - 0.65) / 0.35;
-          const ease = pp * pp * (3 - 2 * pp);
-          const bx = o.x + o.burstX;
-          const by = o.y + o.burstY;
-          x = bx * (1 - ease) + t.x * ease;
-          y = by * (1 - ease) + t.y * ease;
-          alpha = 0.7 * (1 - pp * 0.3);
-          size = 2 - pp * 0.8;
+          // Converge to nav target
+          const t = (pp - 0.55) / 0.45;
+          const e = t * t * (3 - 2 * t);
+          const fullX = o.x + o.burstX;
+          const fullY = o.y + o.burstY;
+          x = fullX + (tgt.x - fullX) * e;
+          y = fullY + (tgt.y - fullY) * e;
+          alpha = 0.7 * (1 - t * 0.5);
+          sz = o.size * (1 - e * 0.6);
         }
 
+        // Subtle organic wobble
+        x += Math.sin(t0 * 2 + i * 0.7) * (1 - pp) * 0.8;
+        y += Math.cos(t0 * 1.7 + i * 0.5) * (1 - pp) * 0.6;
+
         ctx.beginPath();
-        ctx.arc(x, y, Math.max(0.5, size), 0, Math.PI * 2);
+        ctx.arc(x, y, Math.max(0.3, sz), 0, Math.PI * 2);
         ctx.fillStyle = `rgba(212, 168, 83, ${alpha})`;
         ctx.fill();
       }
 
-      // Glow at the corner target when converging
-      if (p > 0.7) {
-        const gp = (p - 0.7) / 0.3;
-        const cx = window.innerWidth - 120;
-        const cy = 110;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40 * gp);
-        grad.addColorStop(0, `rgba(212, 168, 83, ${gp * 0.15})`);
+      // Glow orb at target when particles converge
+      if (p > 0.6) {
+        const gp = (p - 0.6) / 0.4;
+        const cx = window.innerWidth - 140;
+        const cy = 36;
+        const r = 20 + gp * 10;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grad.addColorStop(0, `rgba(212, 168, 83, ${gp * 0.2})`);
+        grad.addColorStop(0.5, `rgba(212, 168, 83, ${gp * 0.06})`);
         grad.addColorStop(1, "rgba(212, 168, 83, 0)");
         ctx.fillStyle = grad;
-        ctx.fillRect(cx - 50, cy - 50, 100, 100);
+        ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
       }
     }
     animateBurst();

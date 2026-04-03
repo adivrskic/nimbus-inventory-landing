@@ -1,34 +1,33 @@
 "use client";
-
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import DemoModal from "@/components/DemoModal/DemoModal";
-
+import useGlowCards from "@/lib/useGlowCards";
 gsap.registerPlugin(ScrollTrigger);
 
 const CONTACTS = [
   {
     label: "Sales",
     email: "sales@nimbuswms.com",
-    desc: "Get pricing, schedule a demo, or discuss how Nimbus fits your operation.",
+    desc: "Pricing, demos, and custom deployments.",
   },
   {
     label: "Support",
     email: "support@nimbuswms.com",
-    desc: "Technical help, bug reports, and account assistance. Response within 4 hours.",
+    desc: "Technical help. Response within 4 hours.",
   },
   {
     label: "Partnerships",
     email: "partners@nimbuswms.com",
-    desc: "Integration partnerships, reseller programs, and strategic alliances.",
+    desc: "Integrations, reseller programs, alliances.",
   },
   {
     label: "Press",
     email: "press@nimbuswms.com",
-    desc: "Media inquiries, press kits, and interview requests.",
+    desc: "Media inquiries and press kits.",
   },
 ];
 
@@ -36,32 +35,40 @@ const OFFICES = [
   {
     city: "San Francisco",
     address: "548 Market St, Suite 92100",
-    region: "Headquarters",
+    region: "HQ",
   },
   { city: "London", address: "1 Finsbury Ave, EC2M 2PF", region: "EMEA" },
   { city: "Singapore", address: "80 Robinson Rd, #02-00", region: "APAC" },
 ];
 
 const FIELDS = [
-  { label: "Full name", placeholder: "Jane Smith", type: "text" },
-  { label: "Work email", placeholder: "jane@company.com", type: "email" },
-  { label: "Company", placeholder: "Company name", type: "text" },
-  { label: "Subject", placeholder: "How can we help?", type: "text" },
+  { label: "Name", placeholder: "Jane Smith", type: "text", half: true },
+  {
+    label: "Email",
+    placeholder: "jane@company.com",
+    type: "email",
+    half: true,
+  },
+  { label: "Company", placeholder: "Company name", type: "text", half: true },
+  {
+    label: "Subject",
+    placeholder: "How can we help?",
+    type: "text",
+    half: true,
+  },
 ];
 
 export default function ContactPage() {
   const heroRef = useRef(null);
-  const formRef = useRef(null);
-  const cardRefs = useRef([]);
-  const officeRefs = useRef([]);
+  const contentRef = useRef(null);
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
+  const glowRef = useGlowCards();
 
   useEffect(() => {
     window.scrollTo(0, 0);
     const hero = heroRef.current;
     if (!hero) return;
-
     gsap.to(hero.querySelector("h1"), {
       opacity: 1,
       y: 0,
@@ -69,69 +76,50 @@ export default function ContactPage() {
       ease: "power3.out",
       delay: 0.2,
     });
-    gsap.to(hero.querySelector("p"), {
+    gsap.to(hero.querySelector("[data-sub]"), {
       opacity: 1,
       y: 0,
       duration: 0.5,
       ease: "power3.out",
       delay: 0.35,
     });
-
-    cardRefs.current.forEach((card) => {
-      if (!card) return;
-      gsap.to(card, {
+    if (contentRef.current)
+      gsap.to(contentRef.current, {
         opacity: 1,
         y: 0,
-        duration: 0.5,
+        duration: 0.7,
         ease: "power3.out",
-        scrollTrigger: { trigger: card, start: "top 82%" },
+        delay: 0.45,
       });
-    });
-
-    if (formRef.current) {
-      gsap.to(formRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        scrollTrigger: { trigger: formRef.current, start: "top 80%" },
-      });
-    }
-
-    officeRefs.current.forEach((office) => {
-      if (!office) return;
-      gsap.to(office, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: office, start: "top 85%" },
-      });
-    });
-
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  const inputStyle = {
+  const inputBase = {
     width: "100%",
-    padding: "12px 16px",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 8,
+    padding: "14px 16px",
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 10,
     color: "var(--white)",
-    fontFamily: "var(--mono)",
-    fontSize: 13,
+    fontFamily: "var(--display)",
+    fontSize: 14,
     outline: "none",
-    transition: "border-color 0.2s",
+    transition: "border-color 0.3s",
   };
 
   return (
     <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
       <Nav onDemo={openDemo} />
 
+      {/* Hero */}
       <div
         ref={heroRef}
-        style={{ padding: "160px 48px 80px", maxWidth: 1400, margin: "0 auto" }}
+        style={{
+          padding: "160px 48px 20px",
+          maxWidth: 900,
+          margin: "0 auto",
+          textAlign: "center",
+        }}
       >
         <h1
           style={{
@@ -144,53 +132,219 @@ export default function ContactPage() {
             transform: "translateY(20px)",
           }}
         >
-          Get in touch
+          Let&apos;s talk
         </h1>
         <p
+          data-sub=""
           style={{
             fontFamily: "var(--display)",
             fontSize: 17,
             lineHeight: 1.8,
-            color: "rgba(255,255,255,0.4)",
-            maxWidth: 560,
-            marginTop: 20,
+            color: "rgba(255,255,255,0.35)",
+            maxWidth: 460,
+            margin: "20px auto 0",
             opacity: 0,
-            transform: "translateY(16px)",
+            transform: "translateY(14px)",
           }}
         >
-          Whether you need a demo, have a support question, or want to explore a
-          partnership — we would love to hear from you.
+          Whether it&apos;s a demo, a question, or an idea — we&apos;d love to
+          hear from you.
         </p>
       </div>
 
+      {/* Main content: 2-col layout */}
       <div
+        ref={contentRef}
         style={{
-          maxWidth: 1400,
-          margin: "0 auto",
-          padding: "0 48px 80px",
+          maxWidth: 1100,
+          margin: "60px auto 0",
+          padding: "0 48px 100px",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 20,
+          gridTemplateColumns: "1fr 1fr",
+          gap: 40,
+          opacity: 0,
+          transform: "translateY(20px)",
         }}
       >
-        {CONTACTS.map((c, i) => (
+        {/* Left: Form */}
+        <div
+          style={{
+            padding: "40px 36px",
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            borderRadius: 24,
+          }}
+        >
           <div
-            key={i}
-            ref={(el) => (cardRefs.current[i] = el)}
             style={{
-              padding: "32px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 20,
-              opacity: 0,
-              transform: "translateY(24px)",
-              transition: "border-color 0.4s",
+              fontFamily: "var(--mono)",
+              fontSize: 9,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              color: "var(--accent)",
+              marginBottom: 28,
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.borderColor = "rgba(212,168,83,0.2)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")
-            }
+          >
+            Send a message
+          </div>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+          >
+            {FIELDS.map((f, i) => (
+              <div key={i}>
+                <label
+                  style={{
+                    display: "block",
+                    fontFamily: "var(--mono)",
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.25)",
+                    marginBottom: 6,
+                  }}
+                >
+                  {f.label}
+                </label>
+                <input
+                  type={f.type}
+                  placeholder={f.placeholder}
+                  style={inputBase}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "rgba(212,168,83,0.3)")
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(255,255,255,0.06)")
+                  }
+                />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <label
+              style={{
+                display: "block",
+                fontFamily: "var(--mono)",
+                fontSize: 9,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.25)",
+                marginBottom: 6,
+              }}
+            >
+              Message
+            </label>
+            <textarea
+              placeholder="Tell us about your warehouse..."
+              rows={4}
+              style={{ ...inputBase, resize: "vertical", minHeight: 100 }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "rgba(212,168,83,0.3)")
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = "rgba(255,255,255,0.06)")
+              }
+            />
+          </div>
+          <button
+            style={{
+              marginTop: 24,
+              width: "100%",
+              padding: "14px 0",
+              background: "var(--white)",
+              color: "var(--black)",
+              fontFamily: "var(--mono)",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              border: "none",
+              borderRadius: 10,
+              cursor: "pointer",
+              transition: "background 0.3s, color 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = "var(--accent)";
+              e.target.style.color = "var(--black)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "var(--white)";
+              e.target.style.color = "var(--black)";
+            }}
+          >
+            Send message
+          </button>
+        </div>
+
+        {/* Right: Contact info + offices */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Contact cards */}
+          <div
+            ref={glowRef}
+            className="glow-cards"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
+            {CONTACTS.map((c, i) => (
+              <div key={i} className="glow-card" style={{ borderRadius: 16 }}>
+                <div className="glow-card-border" />
+                <div
+                  className="glow-card-content"
+                  style={{ padding: "20px 18px", borderRadius: "inherit" }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 9,
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      color: "var(--accent)",
+                      marginBottom: 10,
+                    }}
+                  >
+                    {c.label}
+                  </div>
+                  <a
+                    href={`mailto:${c.email}`}
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 11,
+                      color: "var(--white)",
+                      textDecoration: "none",
+                      display: "block",
+                      marginBottom: 8,
+                      transition: "color 0.3s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.color = "var(--accent)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.color = "var(--white)")
+                    }
+                  >
+                    {c.email}
+                  </a>
+                  <p
+                    style={{
+                      fontFamily: "var(--display)",
+                      fontSize: 12,
+                      lineHeight: 1.6,
+                      color: "rgba(255,255,255,0.25)",
+                    }}
+                  >
+                    {c.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Offices */}
+          <div
+            style={{
+              padding: "28px 24px",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 20,
+            }}
           >
             <div
               style={{
@@ -199,228 +353,108 @@ export default function ContactPage() {
                 letterSpacing: 2,
                 textTransform: "uppercase",
                 color: "var(--accent)",
-                marginBottom: 16,
+                marginBottom: 20,
               }}
             >
-              {c.label}
+              Offices
             </div>
-            <a
-              href={`mailto:${c.email}`}
-              style={{
-                fontFamily: "var(--mono)",
-                fontSize: 13,
-                color: "var(--white)",
-                textDecoration: "none",
-                display: "block",
-                marginBottom: 12,
-                transition: "color 0.3s",
-              }}
-              onMouseEnter={(e) => (e.target.style.color = "var(--accent)")}
-              onMouseLeave={(e) => (e.target.style.color = "var(--white)")}
-            >
-              {c.email}
-            </a>
-            <p
-              style={{
-                fontFamily: "var(--display)",
-                fontSize: 13,
-                lineHeight: 1.7,
-                color: "rgba(255,255,255,0.3)",
-              }}
-            >
-              {c.desc}
-            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {OFFICES.map((o, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    paddingBottom: i < OFFICES.length - 1 ? 16 : 0,
+                    borderBottom:
+                      i < OFFICES.length - 1
+                        ? "1px solid rgba(255,255,255,0.04)"
+                        : "none",
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: "var(--display)",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: "var(--white)",
+                      }}
+                    >
+                      {o.city}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "var(--display)",
+                        fontSize: 12,
+                        color: "rgba(255,255,255,0.2)",
+                        marginTop: 2,
+                      }}
+                    >
+                      {o.address}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      color: "rgba(255,255,255,0.12)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {o.region}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
 
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "0 48px 100px" }}>
-        <div
-          ref={formRef}
-          style={{
-            padding: "48px 40px",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 20,
-            opacity: 0,
-            transform: "translateY(24px)",
-          }}
-        >
+          {/* Response time */}
           <div
             style={{
-              fontFamily: "var(--display)",
-              fontSize: 22,
-              fontWeight: 700,
-              color: "var(--white)",
-              marginBottom: 8,
+              padding: "20px 24px",
+              background: "rgba(212,168,83,0.03)",
+              border: "1px solid rgba(212,168,83,0.08)",
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
             }}
           >
-            Send us a message
-          </div>
-          <p
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 12,
-              lineHeight: 1.6,
-              color: "rgba(255,255,255,0.3)",
-              marginBottom: 36,
-            }}
-          >
-            Fill in the details and our team will get back to you within 24
-            hours.
-          </p>
-          {FIELDS.map((field, i) => (
-            <div key={i} style={{ marginBottom: 20 }}>
-              <label
-                style={{
-                  display: "block",
-                  fontFamily: "var(--mono)",
-                  fontSize: 10,
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.4)",
-                  marginBottom: 8,
-                }}
-              >
-                {field.label}
-              </label>
-              <input
-                type={field.type}
-                placeholder={field.placeholder}
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
-                onBlur={(e) =>
-                  (e.target.style.borderColor = "rgba(255,255,255,0.08)")
-                }
-              />
-            </div>
-          ))}
-          <div style={{ marginBottom: 20 }}>
-            <label
-              style={{
-                display: "block",
-                fontFamily: "var(--mono)",
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.4)",
-                marginBottom: 8,
-              }}
-            >
-              Message
-            </label>
-            <textarea
-              placeholder="Tell us more..."
-              rows={4}
-              style={{ ...inputStyle, resize: "vertical", minHeight: 80 }}
-              onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
-              onBlur={(e) =>
-                (e.target.style.borderColor = "rgba(255,255,255,0.08)")
-              }
-            />
-          </div>
-          <button
-            style={{
-              width: "100%",
-              padding: 14,
-              background: "var(--white)",
-              color: "var(--black)",
-              fontFamily: "var(--mono)",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: 0.5,
-              border: "none",
-              cursor: "pointer",
-              transition: "background 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "var(--accent)")}
-            onMouseLeave={(e) => (e.target.style.background = "var(--white)")}
-          >
-            Send message
-          </button>
-        </div>
-      </div>
-
-      <div
-        style={{ maxWidth: 1400, margin: "0 auto", padding: "0 48px 100px" }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--mono)",
-            fontSize: 9,
-            letterSpacing: 2,
-            textTransform: "uppercase",
-            color: "var(--accent)",
-            marginBottom: 32,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <div
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--accent)",
-            }}
-          />
-          Offices
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-          }}
-        >
-          {OFFICES.map((o, i) => (
             <div
-              key={i}
-              ref={(el) => (officeRefs.current[i] = el)}
               style={{
-                padding: "28px 32px",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 20,
-                opacity: 0,
-                transform: "translateY(20px)",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                flexShrink: 0,
               }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 9,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.2)",
-                  marginBottom: 12,
-                }}
-              >
-                {o.region}
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--display)",
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: "var(--white)",
-                  marginBottom: 6,
-                }}
-              >
-                {o.city}
-              </div>
+            />
+            <div>
               <div
                 style={{
                   fontFamily: "var(--display)",
                   fontSize: 13,
-                  color: "rgba(255,255,255,0.3)",
+                  fontWeight: 500,
+                  color: "var(--white)",
                 }}
               >
-                {o.address}
+                Typical response within 4 hours
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--display)",
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.25)",
+                  marginTop: 2,
+                }}
+              >
+                Enterprise plans include dedicated support channels.
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 

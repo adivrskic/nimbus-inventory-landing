@@ -6,14 +6,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import DemoModal from "@/components/DemoModal/DemoModal";
+import useGlowCards from "@/lib/useGlowCards";
 import { HELP_CATEGORIES } from "@/lib/helpData";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function HelpPage() {
   const heroRef = useRef(null);
-  const cardRefs = useRef([]);
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
+  const glowRef = useGlowCards();
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const hero = heroRef.current;
@@ -31,18 +33,20 @@ export default function HelpPage() {
       ease: "power3.out",
       delay: 0.35,
     });
-    cardRefs.current.forEach((card) => {
-      if (!card) return;
+    const cards = document.querySelectorAll("[data-help-card]");
+    cards.forEach((card, i) => {
       gsap.to(card, {
         opacity: 1,
         y: 0,
         duration: 0.5,
         ease: "power3.out",
-        scrollTrigger: { trigger: card, start: "top 80%" },
+        delay: 0.1 * i,
+        scrollTrigger: { trigger: card, start: "top 82%" },
       });
     });
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
+
   return (
     <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
       <Nav onDemo={openDemo} />
@@ -75,11 +79,12 @@ export default function HelpPage() {
             transform: "translateY(16px)",
           }}
         >
-          Everything you need to get the most out of Nimbus. Guides, tutorials,
-          and reference documentation for every feature.
+          Everything you need to get the most out of Nimbus.
         </p>
       </div>
       <div
+        ref={glowRef}
+        className="glow-cards"
         style={{
           maxWidth: 1400,
           margin: "0 auto",
@@ -92,53 +97,60 @@ export default function HelpPage() {
         {HELP_CATEGORIES.map((cat, ci) => (
           <div
             key={ci}
-            ref={(el) => (cardRefs.current[ci] = el)}
+            data-help-card
+            className="glow-card"
             style={{
-              padding: "36px 32px",
-              border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 20,
               opacity: 0,
               transform: "translateY(24px)",
             }}
           >
+            <div className="glow-card-border" />
             <div
-              style={{
-                fontFamily: "var(--mono)",
-                fontSize: 9,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                marginBottom: 20,
-              }}
+              className="glow-card-content"
+              style={{ padding: "36px 32px", borderRadius: "inherit" }}
             >
-              {cat.title}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {cat.articles.map((a, ai) => (
-                <Link
-                  key={a.slug}
-                  href={`/help/${a.slug}`}
-                  style={{
-                    padding: "12px 0",
-                    borderBottom:
-                      ai < cat.articles.length - 1
-                        ? "1px solid rgba(255,255,255,0.04)"
-                        : "none",
-                    fontFamily: "var(--display)",
-                    fontSize: 14,
-                    color: "rgba(255,255,255,0.35)",
-                    textDecoration: "none",
-                    transition: "color 0.3s",
-                    display: "block",
-                  }}
-                  onMouseEnter={(e) => (e.target.style.color = "var(--accent)")}
-                  onMouseLeave={(e) =>
-                    (e.target.style.color = "rgba(255,255,255,0.35)")
-                  }
-                >
-                  {a.title}
-                </Link>
-              ))}
+              <div
+                style={{
+                  fontFamily: "var(--mono)",
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: "var(--accent)",
+                  marginBottom: 20,
+                }}
+              >
+                {cat.title}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {cat.articles.map((a, ai) => (
+                  <Link
+                    key={a.slug}
+                    href={`/help/${a.slug}`}
+                    style={{
+                      padding: "12px 0",
+                      borderBottom:
+                        ai < cat.articles.length - 1
+                          ? "1px solid rgba(255,255,255,0.04)"
+                          : "none",
+                      fontFamily: "var(--display)",
+                      fontSize: 14,
+                      color: "rgba(255,255,255,0.35)",
+                      textDecoration: "none",
+                      transition: "color 0.3s",
+                      display: "block",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.color = "var(--accent)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.color = "rgba(255,255,255,0.35)")
+                    }
+                  >
+                    {a.title}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         ))}

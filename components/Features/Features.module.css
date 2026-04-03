@@ -9,7 +9,7 @@
 .header {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 100px 48px 60px;
+  padding: 80px 48px 60px;
   text-align: center;
 }
 
@@ -19,11 +19,11 @@
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  display: flex;
   align-items: center;
-  padding: 64px 80px;
+  justify-content: center;
+  gap: 40px;
+  padding: 56px 64px;
   width: 100%;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   position: relative;
@@ -41,7 +41,8 @@
 
 /* Text side */
 .textSide {
-  max-width: 520px;
+  flex: 1;
+  max-width: 480px;
 }
 .rowNumber {
   font-family: var(--mono);
@@ -97,9 +98,11 @@
 
 /* Visual side */
 .visualSide {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  max-width: 420px;
 }
 .visualSide svg {
   width: 100%;
@@ -206,11 +209,14 @@
     padding: 48px 24px 32px;
   }
   .row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     padding: 40px 24px;
-    gap: 32px;
+    gap: 24px;
   }
   .textSide {
+    max-width: 100%;
+  }
+  .visualSide {
     max-width: 100%;
   }
   .frameOverlay {
