@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import { useAnimationPaused } from "@/lib/AnimationContext";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
@@ -60,6 +61,7 @@ const EXTRA_LINKS = [
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
   { text: "Contact", href: "/contact" },
+  { text: "API Docs", href: "/api-docs" },
 ];
 
 function MobileMenu({ open, links, onClose, onDemo }) {
@@ -206,7 +208,7 @@ function MobileMenu({ open, links, onClose, onDemo }) {
 
 export default function Nav({ onDemo, dark }) {
   const [scrolled, setScrolled] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const { paused, togglePaused } = useAnimationPaused();
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeTimer = useRef(null);
@@ -219,16 +221,6 @@ export default function Nav({ onDemo, dark }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const toggleAnimations = useCallback(() => {
-    if (paused) {
-      gsap.globalTimeline.resume();
-      setPaused(false);
-    } else {
-      gsap.globalTimeline.pause();
-      setPaused(true);
-    }
-  }, [paused]);
 
   const handleEnter = (menu) => {
     clearTimeout(closeTimer.current);
@@ -412,7 +404,7 @@ export default function Nav({ onDemo, dark }) {
         <div className={styles.rightGroup}>
           <button
             className={`bracket-hover ${styles.stopBtn} hide-mobile`}
-            onClick={toggleAnimations}
+            onClick={togglePaused}
             title={paused ? "Resume animations" : "Pause animations"}
           >
             {paused ? (

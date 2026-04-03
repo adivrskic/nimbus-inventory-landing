@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useAnimationPaused } from "@/lib/AnimationContext";
 import CornerButton from "@/components/shared/CornerButton";
 import styles from "./Hero.module.css";
 
@@ -10,15 +11,15 @@ gsap.registerPlugin(ScrollTrigger);
 const HEADLINE_LINES = [
   {
     words: [
-      { text: "Your", accent: false },
-      { text: "complete", accent: false },
-      { text: "solution", accent: false },
+      { text: "The", accent: false },
+      { text: "operating", accent: false },
+      { text: "system", accent: false },
       { text: "for", accent: false },
     ],
   },
   {
     words: [
-      { text: "warehouse", accent: true },
+      { text: "warehouse", accent: false },
       { text: "intelligence", accent: true },
     ],
   },
@@ -47,6 +48,15 @@ export default function Hero({ onDemo }) {
   const sideRef = useRef(null);
   const statRefs = useRef([]);
   const valRefs = useRef([]);
+  const { paused } = useAnimationPaused();
+
+  // Pause/resume video
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (paused) v.pause();
+    else v.play().catch(() => {});
+  }, [paused]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.play().catch(() => {});

@@ -1,6 +1,7 @@
 import { JetBrains_Mono } from "next/font/google";
 import LenisProvider from "@/components/LenisProvider";
 import TransitionProvider from "@/components/TransitionProvider/TransitionProvider";
+import { AnimationProvider } from "@/lib/AnimationContext";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -82,9 +83,11 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>
-        <LenisProvider>
-          <TransitionProvider>{children}</TransitionProvider>
-        </LenisProvider>
+        <AnimationProvider>
+          <LenisProvider>
+            <TransitionProvider>{children}</TransitionProvider>
+          </LenisProvider>
+        </AnimationProvider>
       </body>
     </html>
   );

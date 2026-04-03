@@ -17,10 +17,8 @@ export default function LenisProvider({ children }) {
       touchInertiaMultiplier: 25,
       wheelMultiplier: 0.8,
     });
-    // Expose for ProblemSolution to stop/start
     window.__lenis = lenis;
 
-    // Sync Lenis with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000);

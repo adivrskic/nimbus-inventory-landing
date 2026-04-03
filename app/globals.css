@@ -455,3 +455,15 @@ body::after {
   width: calc(100% - 2px);
   z-index: 2;
 }
+
+/* ═══ STATIC MODE — reveals all animated content ═══ */
+body.animations-paused [style*="opacity"]:not([data-transition-overlay]),
+body.animations-paused [style*="transform"]:not([data-transition-overlay]) {
+  opacity: 1 !important;
+  transform: none !important;
+}
+body.animations-paused [class*="Letter"],
+body.animations-paused [class*="letter"] {
+  opacity: 1 !important;
+  transform: none !important;
+}

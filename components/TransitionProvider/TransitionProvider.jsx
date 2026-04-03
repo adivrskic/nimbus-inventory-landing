@@ -127,6 +127,7 @@ export default function TransitionProvider({ children }) {
       </div>
       <div
         ref={overlayRef}
+        data-transition-overlay=""
         style={{
           position: "fixed",
           inset: 0,

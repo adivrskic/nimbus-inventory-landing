@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useAnimationPaused } from "@/lib/AnimationContext";
 import {
   generateScattered,
   generateSoundRings,
@@ -107,8 +108,8 @@ const INTRO_H2_LINES = [
     { text: "noise", accent: false },
   ],
   [
-    { text: "to", accent: true },
-    { text: "clarity", accent: true },
+    { text: "to", accent: false },
+    { text: "clarity.", accent: true },
   ],
 ];
 const INTRO_DESC_LINES = [
@@ -132,6 +133,46 @@ export default function AISection() {
   const [activeIdx, setActiveIdx] = useState(-1);
   const [progress, setProgress] = useState(0);
   const sectionVisibleRef = useRef(false);
+  const { paused } = useAnimationPaused();
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  /* ── Tunable config (all particle params) ── */
+  const DEFAULT_CFG = {
+    weightRadius: 1,
+    formationMul: 2.5,
+    introAlphaBase: 0.11,
+    introAlphaRange: 0.66,
+    introExitFade: 0.9,
+    introFormMax: 0.45,
+    activeThreshold: 0.7,
+    smooth: 0.5,
+    morphSpeed: 0.005,
+    morphStaggerMax: 0.15,
+    shapeThreshold: 0.8,
+    morphBoostMax: 0,
+    tiltYSpeed: 0.12,
+    tiltYAmp: 0.18,
+    tiltXSpeed: 0.03,
+    tiltXAmp: 0.07,
+    tiltThreshold: 0.1,
+    jitterBase: 0.02,
+    jitterFormDamp: 0.4,
+    jitterFreqBase: 0.15,
+    jitterFreqRange: 0.2,
+    staggerMax: 0.18,
+    sheenThreshold: 0.85,
+    sheenMax: 0.4,
+    sheenSmooth: 0.26,
+    elasticDecay: 20,
+    elasticFreq: 1,
+    elasticOffset: 0.2,
+    camZ: 16,
+    camZMobile: 22,
+  };
+  const cfgRef = useRef({ ...DEFAULT_CFG });
 
   /* ── Scroll-driven particle state ── */
   const particleState = useRef({
@@ -178,21 +219,29 @@ export default function AISection() {
       const introCenter = iRect.top + iRect.height / 2;
       const introNorm = (introCenter - vcenter) / vh;
       const alpha =
-        introNorm > 0 ? 0.12 + smoothstep(1 - introNorm / 0.6) * 0.73 : 0.85;
+        introNorm > 0
+          ? cfgRef.current.introAlphaBase +
+            smoothstep(1 - introNorm / 0.6) * cfgRef.current.introAlphaRange
+          : 0.85;
 
       const introExit =
-        introNorm < 0 ? smoothstep(Math.min(1, Math.abs(introNorm) / 0.5)) : 0;
-      const introFormation = introExit * 0.35;
+        introNorm < 0
+          ? smoothstep(
+              Math.min(1, Math.abs(introNorm) / cfgRef.current.introExitFade)
+            )
+          : 0;
+      const introFormation = introExit * cfgRef.current.introFormMax;
 
       const weights = [0, 0, 0, 0];
       let maxWeight = 0;
       let maxIdx = 0;
+      const wr = cfgRef.current.weightRadius;
       blocks.forEach((block, i) => {
         const r = block.getBoundingClientRect();
         const center = r.top + r.height / 2;
         const dist = Math.abs(center - vcenter) / vh;
-        if (dist < 0.6) {
-          const w = Math.pow(Math.cos((dist / 0.6) * Math.PI * 0.5), 2);
+        if (dist < wr) {
+          const w = Math.pow(Math.cos((dist / wr) * Math.PI * 0.5), 2);
           weights[i] = w;
           if (w > maxWeight) {
             maxWeight = w;
@@ -201,7 +250,9 @@ export default function AISection() {
         }
       });
 
-      const blockFormation = smoothstep(Math.min(1, maxWeight * 1.6));
+      const blockFormation = smoothstep(
+        Math.min(1, maxWeight * cfgRef.current.formationMul)
+      );
       const formation = Math.max(introFormation, blockFormation);
       const wSum = weights[0] + weights[1] + weights[2] + weights[3];
       if (wSum > 0.001) {
@@ -245,7 +296,7 @@ export default function AISection() {
         letterOriginsRef.current = origins;
       }
 
-      if (formation > 0.5) setActiveIdx(maxIdx);
+      if (formation > cfgRef.current.activeThreshold) setActiveIdx(maxIdx);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll(); // initial call
@@ -282,7 +333,7 @@ export default function AISection() {
       const stats = card.querySelector(`.${styles.cardStats}`);
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: card, start: "top 50%" },
+        scrollTrigger: { trigger: card, start: "top 85%" },
         defaults: { ease: "power4.out" },
       });
       tl.to(header, { opacity: 1, y: 0, duration: 0.3 });
@@ -423,27 +474,20 @@ export default function AISection() {
       let sActiveShape = 0;
       let prevShapeIdx = 0;
       let morphProgress = 1;
-      const SMOOTH = 0.15;
-
-      // Elastic ease out (like GSAP Elastic.easeOut)
-      function elasticOut(x) {
-        if (x === 0 || x === 1) return x;
-        return (
-          Math.pow(2, -10 * x) * Math.sin(((x - 0.075) * (2 * Math.PI)) / 0.3) +
-          1
-        );
-      }
 
       function animate() {
         frameId = requestAnimationFrame(animate);
-        if (!sectionVisibleRef.current) return;
+        if (!sectionVisibleRef.current || pausedRef.current) return;
 
-        const t = performance.now() * 0.001;
+        const now = performance.now();
+
+        const C = cfgRef.current;
+        const t = now * 0.001;
         const ps = particleState.current;
 
-        sFormation += (ps.formation - sFormation) * SMOOTH;
-        sAlpha += (ps.globalAlpha - sAlpha) * SMOOTH;
-        sColorMix += (sFormation - sColorMix) * SMOOTH;
+        sFormation += (ps.formation - sFormation) * C.smooth;
+        sAlpha += (ps.globalAlpha - sAlpha) * C.smooth;
+        sColorMix += (sFormation - sColorMix) * C.smooth;
 
         /* ── Dominant shape detection + morph trigger ── */
         let maxW = 0,
@@ -455,54 +499,63 @@ export default function AISection() {
           }
         }
 
-        if (maxIdx !== sActiveShape && maxW > 0.3) {
+        if (maxIdx !== sActiveShape && maxW > C.shapeThreshold) {
           prevShapeIdx = sActiveShape;
           sActiveShape = maxIdx;
           morphProgress = 0;
         }
 
-        // Morph advances ~60 frames (~1s)
         if (morphProgress < 1)
-          morphProgress = Math.min(1, morphProgress + 0.018);
+          morphProgress = Math.min(1, morphProgress + C.morphSpeed);
 
         const f = sFormation;
         const oldShape = shapes[prevShapeIdx];
         const newShape = shapes[sActiveShape];
-        const morphBoost = morphProgress < 1 ? (1 - morphProgress) * 0.03 : 0;
-        const jitterAmp = 0.02 * (1 - f * 0.9) + morphBoost;
+        const morphBoost =
+          morphProgress < 1 ? (1 - morphProgress) * C.morphBoostMax : 0;
+        const jitterAmp =
+          C.jitterBase * (1 - f * C.jitterFormDamp) + morphBoost;
+
+        // Elastic ease out (configurable)
+        function elasticOut(x) {
+          if (x === 0 || x === 1) return x;
+          return (
+            Math.pow(2, -C.elasticDecay * x) *
+              Math.sin(
+                ((x - C.elasticOffset) * (2 * Math.PI)) / C.elasticFreq
+              ) +
+            1
+          );
+        }
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          // Formation stagger
           const rawF = Math.max(
             0,
             Math.min(1, (f - stagger[i]) / (1 - stagger[i]))
           );
           const pf = rawF * rawF * (3 - 2 * rawF);
 
-          // Per-particle morph with wave stagger + elastic overshoot
-          const delay = seeds[i3] * 0.4;
+          const delay = seeds[i3] * C.morphStaggerMax;
           const rawM = Math.max(
             0,
             Math.min(1, (morphProgress - delay) / (1 - delay))
           );
           const mp = elasticOut(rawM);
 
-          // Blend old → new shape target
           const tx = oldShape[i3] * (1 - mp) + newShape[i3] * mp;
           const ty = oldShape[i3 + 1] * (1 - mp) + newShape[i3 + 1] * mp;
           const tz = oldShape[i3 + 2] * (1 - mp) + newShape[i3 + 2] * mp;
 
-          // Scattered → shape
           let px = scattered[i3] * (1 - pf) + tx * pf;
           let py = scattered[i3 + 1] * (1 - pf) + ty * pf;
           let pz = scattered[i3 + 2] * (1 - pf) + tz * pf;
 
-          // Gentle tilt — subtle sine oscillation, never turns edge-on
-          const tiltY = Math.sin(t * 0.15) * 0.08 * pf; // max ±0.08 rad (~4.5°)
-          const tiltX = Math.sin(t * 0.1 + 1.5) * 0.04 * pf;
-          if (pf > 0.1) {
+          // Tilt
+          const tiltY = Math.sin(t * C.tiltYSpeed) * C.tiltYAmp * pf;
+          const tiltX = Math.sin(t * C.tiltXSpeed + 1.5) * C.tiltXAmp * pf;
+          if (pf > C.tiltThreshold) {
             const cy = Math.cos(tiltY),
               sy = Math.sin(tiltY);
             const cx = Math.cos(tiltX),
@@ -520,7 +573,7 @@ export default function AISection() {
           const s1 = seeds[i3],
             s2 = seeds[i3 + 1],
             s3 = seeds[i3 + 2];
-          const freq = 0.2 + s1 * 0.2;
+          const freq = C.jitterFreqBase + s1 * C.jitterFreqRange;
           const phase = s3 * 6.28;
           px += Math.sin(t * freq + phase) * jitterAmp * (0.7 + s2 * 0.6);
           py += Math.sin(t * freq * 0.9 + phase + 2.1) * jitterAmp * 0.6;
@@ -535,10 +588,12 @@ export default function AISection() {
         /* ── Uniforms ── */
         material.uniforms.uColorMix.value = sColorMix;
         material.uniforms.uGlobalAlpha.value = sAlpha;
-        // Sheen: gentle pulse at high formation
-        const sheenTarget = f > 0.85 ? ((f - 0.85) / 0.15) * 0.3 : 0;
+        const sheenTarget =
+          f > C.sheenThreshold
+            ? ((f - C.sheenThreshold) / (1 - C.sheenThreshold)) * C.sheenMax
+            : 0;
         material.uniforms.uSheen.value +=
-          (sheenTarget - material.uniforms.uSheen.value) * 0.1;
+          (sheenTarget - material.uniforms.uSheen.value) * C.sheenSmooth;
 
         renderer.render(scene, camera);
       }
@@ -591,6 +646,7 @@ export default function AISection() {
 
     function animateBurst() {
       burstFrameId = requestAnimationFrame(animateBurst);
+      if (pausedRef.current) return;
       const origins = letterOriginsRef.current;
       const exitP = introExitRef.current;
 
@@ -690,6 +746,8 @@ export default function AISection() {
         <canvas ref={canvasRef} />
         <canvas ref={burstCanvasRef} className={styles.burstCanvas} />
       </div>
+
+      {/* Debug Panel — press P to toggle */}
 
       <div className={styles.textWrap}>
         <div ref={introRef} className={styles.intro}>

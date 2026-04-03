@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useAnimationPaused } from "@/lib/AnimationContext";
 import styles from "./WarehouseShowcase.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -11,49 +12,38 @@ gsap.registerPlugin(ScrollTrigger);
 const SHELF_H = 2.4,
   SHELF_D = 0.8,
   SHELF_W = 2.2;
-
-// Grid math: shelves sit precisely between aisles
-const AISLE_W = 2.0; // aisle width
-const PAIR_GAP = 0.8; // gap between paired shelf rows
-const PAIR_W = SHELF_D * 2 + PAIR_GAP; // 2.4 — width of a double-sided rack
-const PITCH_X = AISLE_W + PAIR_W; // 4.4 — repeating unit in X
-const SHELF_GAP_Z = 0.6; // gap between shelves along Z
-const PITCH_Z = SHELF_W + SHELF_GAP_Z; // 2.8 — repeating unit in Z
-const CROSS_W = 2.0; // cross-aisle width
-
-// Layout: 6 bays wide, 3 shelf-groups deep (3 shelves per group), 4 cross-aisles
+const AISLE_W = 2.0,
+  PAIR_GAP = 0.8;
+const PAIR_W = SHELF_D * 2 + PAIR_GAP;
+const PITCH_X = AISLE_W + PAIR_W;
+const SHELF_GAP_Z = 0.6;
+const PITCH_Z = SHELF_W + SHELF_GAP_Z;
+const CROSS_W = 2.0;
 const BAYS_X = 6,
   GROUPS_Z = 3,
   SHELVES_PER_GROUP = 3;
-const GROUP_DEPTH = SHELVES_PER_GROUP * PITCH_Z; // 8.4
+const GROUP_DEPTH = SHELVES_PER_GROUP * PITCH_Z;
 const TOTAL_W = BAYS_X * PITCH_X;
 const TOTAL_D = GROUPS_Z * GROUP_DEPTH + (GROUPS_Z + 1) * CROSS_W;
-const OX = -TOTAL_W / 2; // origin offset X
-const OZ = -TOTAL_D / 2; // origin offset Z
+const OX = -TOTAL_W / 2,
+  OZ = -TOTAL_D / 2;
 
-// Compute aisle X positions (7 aisles between/around 6 bays)
 const AISLE_X = [];
 for (let i = 0; i <= BAYS_X; i++) AISLE_X.push(OX + i * PITCH_X + AISLE_W / 2);
-
-// Compute cross-aisle Z positions (4 cross-aisles)
 const AISLE_Z = [];
 for (let i = 0; i <= GROUPS_Z; i++)
   AISLE_Z.push(OZ + i * (GROUP_DEPTH + CROSS_W) + CROSS_W / 2);
-
 const DOCK_X = 0,
   DOCK_Z = AISLE_Z[AISLE_Z.length - 1] + 4;
 
-// Generate shelves: 2 rows per bay (paired rack), N deep per group
 const SHELVES = [];
 for (let bx = 0; bx < BAYS_X; bx++) {
-  const bayLeft = OX + bx * PITCH_X + AISLE_W; // left edge of bay (right of aisle)
+  const bayLeft = OX + bx * PITCH_X + AISLE_W;
   for (let gz = 0; gz < GROUPS_Z; gz++) {
-    const groupStart = OZ + gz * (GROUP_DEPTH + CROSS_W) + CROSS_W; // top edge of group
+    const groupStart = OZ + gz * (GROUP_DEPTH + CROSS_W) + CROSS_W;
     for (let sz = 0; sz < SHELVES_PER_GROUP; sz++) {
       const z = groupStart + sz * PITCH_Z;
-      // Left shelf of pair
       SHELVES.push({ x: bayLeft, z, w: SHELF_D, d: SHELF_W });
-      // Right shelf of pair
       SHELVES.push({
         x: bayLeft + SHELF_D + PAIR_GAP,
         z,
@@ -64,7 +54,6 @@ for (let bx = 0; bx < BAYS_X; bx++) {
   }
 }
 
-// Pick items at aisle intersections — z centered on nearby shelf
 const _sz = (gz, s) =>
   OZ + gz * (GROUP_DEPTH + CROSS_W) + CROSS_W + s * PITCH_Z + SHELF_W / 2;
 const PICK_ITEMS = [
@@ -78,73 +67,141 @@ const PICK_ITEMS = [
   { x: AISLE_X[3], z: _sz(2, 1), label: "D3-519" },
 ];
 
-// Optimized route: sweeps through adjacent aisles, uses cross-aisles
-const AZ_BOT = AISLE_Z[AISLE_Z.length - 1]; // bottom cross-aisle
-const AZ_TOP = AISLE_Z[0]; // top cross-aisle
+const AZ_BOT = AISLE_Z[AISLE_Z.length - 1],
+  AZ_TOP = AISLE_Z[0];
+
+// Optimal route
 const OPT_ROUTE = [
   [DOCK_X, DOCK_Z],
   [DOCK_X, AZ_BOT],
   [AISLE_X[0], AZ_BOT],
-  [AISLE_X[0], _sz(0, 1)], // pick 1
+  [AISLE_X[0], _sz(0, 1)],
   [AISLE_X[0], AISLE_Z[1]],
   [AISLE_X[1], AISLE_Z[1]],
-  [AISLE_X[1], _sz(1, 2)], // pick 3
+  [AISLE_X[1], _sz(1, 2)],
   [AISLE_X[1], AISLE_Z[2]],
   [AISLE_X[2], AISLE_Z[2]],
-  [AISLE_X[2], _sz(2, 2)], // pick 6
+  [AISLE_X[2], _sz(2, 2)],
   [AISLE_X[2], AZ_BOT],
   [AISLE_X[3], AZ_BOT],
-  [AISLE_X[3], _sz(2, 1)], // pick 8
+  [AISLE_X[3], _sz(2, 1)],
   [AISLE_X[3], AISLE_Z[1]],
-  [AISLE_X[3], _sz(0, 0)], // pick 4
+  [AISLE_X[3], _sz(0, 0)],
   [AISLE_X[3], AZ_TOP],
   [AISLE_X[4], AZ_TOP],
-  [AISLE_X[4], _sz(0, 2)], // pick 7
+  [AISLE_X[4], _sz(0, 2)],
   [AISLE_X[4], AISLE_Z[2]],
   [AISLE_X[5], AISLE_Z[2]],
-  [AISLE_X[5], _sz(2, 0)], // pick 2
+  [AISLE_X[5], _sz(2, 0)],
   [AISLE_X[5], AZ_BOT],
   [AISLE_X[6], AZ_BOT],
-  [AISLE_X[6], _sz(1, 1)], // pick 5
+  [AISLE_X[6], _sz(1, 1)],
   [AISLE_X[6], AZ_BOT],
   [DOCK_X, AZ_BOT],
   [DOCK_X, DOCK_Z],
 ];
 
-// Naive route: item order 1→2→3→4→5→6→7→8 — zigzags
-const NAIVE_ROUTE = [
-  [DOCK_X, DOCK_Z],
-  [DOCK_X, AZ_BOT],
-  [AISLE_X[0], AZ_BOT],
-  [AISLE_X[0], _sz(0, 1)], // pick 1
-  [AISLE_X[0], AZ_TOP],
-  [AISLE_X[5], AZ_TOP],
-  [AISLE_X[5], AISLE_Z[2]],
-  [AISLE_X[5], _sz(2, 0)], // pick 2
-  [AISLE_X[5], AZ_BOT],
-  [AISLE_X[1], AZ_BOT],
-  [AISLE_X[1], _sz(1, 2)], // pick 3
-  [AISLE_X[1], AZ_TOP],
-  [AISLE_X[3], AZ_TOP],
-  [AISLE_X[3], _sz(0, 0)], // pick 4
-  [AISLE_X[3], AZ_BOT],
-  [AISLE_X[6], AZ_BOT],
-  [AISLE_X[6], _sz(1, 1)], // pick 5
-  [AISLE_X[6], AZ_TOP],
-  [AISLE_X[2], AZ_TOP],
-  [AISLE_X[2], AISLE_Z[2]],
-  [AISLE_X[2], _sz(2, 2)], // pick 6
-  [AISLE_X[2], AZ_BOT],
-  [AISLE_X[4], AZ_BOT],
-  [AISLE_X[4], AZ_TOP],
-  [AISLE_X[4], _sz(0, 2)], // pick 7
-  [AISLE_X[4], AZ_BOT],
-  [AISLE_X[3], AZ_BOT],
-  [AISLE_X[3], _sz(2, 1)], // pick 8
-  [AISLE_X[3], AZ_BOT],
-  [DOCK_X, AZ_BOT],
-  [DOCK_X, DOCK_Z],
+// Naive route — broken into segments per pick
+const NAIVE_SEGMENTS = [
+  {
+    label: "Dock → A1",
+    pts: [
+      [DOCK_X, DOCK_Z],
+      [DOCK_X, AZ_BOT],
+      [AISLE_X[0], AZ_BOT],
+      [AISLE_X[0], _sz(0, 1)],
+    ],
+  },
+  {
+    label: "A1 → F3",
+    pts: [
+      [AISLE_X[0], _sz(0, 1)],
+      [AISLE_X[0], AZ_TOP],
+      [AISLE_X[5], AZ_TOP],
+      [AISLE_X[5], AISLE_Z[2]],
+      [AISLE_X[5], _sz(2, 0)],
+    ],
+  },
+  {
+    label: "F3 → B2",
+    pts: [
+      [AISLE_X[5], _sz(2, 0)],
+      [AISLE_X[5], AZ_BOT],
+      [AISLE_X[1], AZ_BOT],
+      [AISLE_X[1], _sz(1, 2)],
+    ],
+  },
+  {
+    label: "B2 → D1",
+    pts: [
+      [AISLE_X[1], _sz(1, 2)],
+      [AISLE_X[1], AZ_TOP],
+      [AISLE_X[3], AZ_TOP],
+      [AISLE_X[3], _sz(0, 0)],
+    ],
+  },
+  {
+    label: "D1 → G2",
+    pts: [
+      [AISLE_X[3], _sz(0, 0)],
+      [AISLE_X[3], AZ_BOT],
+      [AISLE_X[6], AZ_BOT],
+      [AISLE_X[6], _sz(1, 1)],
+    ],
+  },
+  {
+    label: "G2 → C3",
+    pts: [
+      [AISLE_X[6], _sz(1, 1)],
+      [AISLE_X[6], AZ_TOP],
+      [AISLE_X[2], AZ_TOP],
+      [AISLE_X[2], AISLE_Z[2]],
+      [AISLE_X[2], _sz(2, 2)],
+    ],
+  },
+  {
+    label: "C3 → E1",
+    pts: [
+      [AISLE_X[2], _sz(2, 2)],
+      [AISLE_X[2], AZ_BOT],
+      [AISLE_X[4], AZ_BOT],
+      [AISLE_X[4], AZ_TOP],
+      [AISLE_X[4], _sz(0, 2)],
+    ],
+  },
+  {
+    label: "E1 → D3",
+    pts: [
+      [AISLE_X[4], _sz(0, 2)],
+      [AISLE_X[4], AZ_BOT],
+      [AISLE_X[3], AZ_BOT],
+      [AISLE_X[3], _sz(2, 1)],
+    ],
+  },
+  {
+    label: "D3 → Dock",
+    pts: [
+      [AISLE_X[3], _sz(2, 1)],
+      [AISLE_X[3], AZ_BOT],
+      [DOCK_X, AZ_BOT],
+      [DOCK_X, DOCK_Z],
+    ],
+  },
 ];
+
+// Compute distances per segment (1 unit ≈ 1m, speed ≈ 1.2 m/s)
+function segDist(pts) {
+  let d = 0;
+  for (let i = 1; i < pts.length; i++)
+    d += Math.sqrt(
+      (pts[i][0] - pts[i - 1][0]) ** 2 + (pts[i][1] - pts[i - 1][1]) ** 2
+    );
+  return d;
+}
+NAIVE_SEGMENTS.forEach((s) => {
+  s.dist = segDist(s.pts);
+  s.time = s.dist / 1.2;
+});
 
 const GOLD = 0xd4a853,
   GREEN = 0x5a9a4a,
@@ -152,7 +209,7 @@ const GOLD = 0xd4a853,
 
 /* ── Route helpers ── */
 function buildLinePoints(pts) {
-  return pts.map(([x, z]) => new THREE.Vector3(x, 0.1, z));
+  return pts.map((p) => new THREE.Vector3(p[0], 0.1, p[1]));
 }
 function routeTotalLen(pts) {
   let l = 0;
@@ -164,14 +221,12 @@ function pointOnRoute(pts, t) {
   let target = t * total,
     acc = 0;
   for (let i = 1; i < pts.length; i++) {
-    const s = pts[i].distanceTo(pts[i - 1]);
-    if (acc + s >= target)
-      return new THREE.Vector3().lerpVectors(
-        pts[i - 1],
-        pts[i],
-        (target - acc) / s
-      );
-    acc += s;
+    const seg = pts[i].distanceTo(pts[i - 1]);
+    if (acc + seg >= target) {
+      const f = (target - acc) / seg;
+      return pts[i - 1].clone().lerp(pts[i], f);
+    }
+    acc += seg;
   }
   return pts[pts.length - 1].clone();
 }
@@ -183,14 +238,14 @@ function waypointFraction(pts, idx) {
   return a / t;
 }
 
-/* ═══ Evenly spaced scroll timeline (6 phases) ═══ */
+/* ═══ Timeline defaults ═══ */
 const DEFAULT_T = {
   shelfStart: 0,
-  shelfEnd: 0.15,
-  itemsStart: 0.15,
-  naiveStart: 0.3,
-  naiveEnd: 0.45,
-  routeStart: 0.38,
+  shelfEnd: 0.12,
+  itemsStart: 0.12,
+  naiveStart: 0.22,
+  naiveEnd: 0.5,
+  routeStart: 0.42,
   routeDrawEnd: 0.58,
   pickStart: 0.58,
   returnEnd: 0.84,
@@ -206,22 +261,22 @@ const CAPTIONS = [
     stat: "Scroll to explore",
   },
   {
-    start: 0.15,
+    start: 0.12,
     label: "01 — Order received",
     title: "8 items located across the grid.",
     stat: "< 50ms lookup",
   },
   {
-    start: 0.3,
-    label: "02 — Comparing routes",
-    title: "Naive path vs optimized path.",
-    stat: "Red = naive · Gold = optimal",
+    start: 0.22,
+    label: "02 — Naive path drawn",
+    title: "Sequential pick order — zigzags.",
+    stat: "Watch each leg appear",
   },
   {
-    start: 0.45,
-    label: "03 — Optimal route found",
-    title: "Shortest path calculated.",
-    stat: "43% less travel distance",
+    start: 0.42,
+    label: "03 — Optimal route",
+    title: "AI calculates shortest path.",
+    stat: "43% less distance",
   },
   {
     start: 0.58,
@@ -237,12 +292,47 @@ const CAPTIONS = [
   },
 ];
 
+/* ═══ Stat sprite helper ═══ */
+function makeStatSprite(text, subtext) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 160;
+  canvas.height = 56;
+  const ctx = canvas.getContext("2d");
+  ctx.font = "bold 16px monospace";
+  ctx.fillStyle = "rgba(153,51,51,0.9)";
+  ctx.textAlign = "center";
+  ctx.fillText(text, 80, 20);
+  ctx.font = "11px monospace";
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.fillText(subtext, 80, 40);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthTest: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(3.2, 1.1, 1);
+  sprite.visible = false;
+  return sprite;
+}
+
 export default function WarehouseShowcase() {
   const sectionRef = useRef(null);
   const canvasRef = useRef(null);
   const scrollRef = useRef(null);
   const [caption, setCaption] = useState(CAPTIONS[0]);
+  const tRef = useRef({ ...DEFAULT_T });
+  const { paused } = useAnimationPaused();
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  // Debug
   const [showDebug, setShowDebug] = useState(false);
+  const [debugTick, setDebugTick] = useState(0);
   const [scrollH, setScrollH] = useState(180);
   const [vig, setVig] = useState({
     size: 80,
@@ -252,21 +342,18 @@ export default function WarehouseShowcase() {
     midOp: 3,
     edgeOp: 89,
   });
-  const tRef = useRef({ ...DEFAULT_T });
   const debugRef = useRef({
     p: 0,
     shelfH: 0,
     routeVis: 0,
     routeProgress: 0,
-    naiveVis: 0,
-    naiveProgress: 0,
+    naiveSegIdx: 0,
+    naiveSegProg: 0,
     pickProgress: 0,
     phase: "—",
     camY: 0,
   });
-  const [debugTick, setDebugTick] = useState(0);
 
-  // Toggle debug with 'D' key
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "d" || e.key === "D") setShowDebug((v) => !v);
@@ -274,8 +361,6 @@ export default function WarehouseShowcase() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  // Refresh debug display
   useEffect(() => {
     if (!showDebug) return;
     const id = setInterval(() => setDebugTick((t) => t + 1), 100);
@@ -297,11 +382,9 @@ export default function WarehouseShowcase() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 200);
 
     /* ── Lighting ── */
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
@@ -319,23 +402,32 @@ export default function WarehouseShowcase() {
     scene.add(new THREE.HemisphereLight(0x2a2010, 0x080808, 0.3));
 
     /* ── Floor ── */
-    const GS = 200;
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(GS, GS),
-      new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 0.95 })
+      new THREE.PlaneGeometry(80, 80),
+      new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.95 })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const grid = new THREE.GridHelper(GS, GS, 0x0d0d0d, 0x080808);
-    grid.position.y = 0.01;
-    scene.add(grid);
+    const gMat = new THREE.LineBasicMaterial({ color: 0x151515 });
+    for (let i = -40; i <= 40; i += 2) {
+      const g = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(i, 0.005, -40),
+        new THREE.Vector3(i, 0.005, 40),
+      ]);
+      scene.add(new THREE.Line(g, gMat));
+      const g2 = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-40, 0.005, i),
+        new THREE.Vector3(40, 0.005, i),
+      ]);
+      scene.add(new THREE.Line(g2, gMat));
+    }
 
-    // Aisle floor markings (both directions)
+    /* ── Aisle markings ── */
     const sM = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0x111111,
       transparent: true,
-      opacity: 0.012,
+      opacity: 0.5,
     });
     AISLE_X.forEach((ax) => {
       const s = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 44), sM);
@@ -351,66 +443,58 @@ export default function WarehouseShowcase() {
     });
 
     /* ── Dock ── */
-    const dock = new THREE.Mesh(
-      new THREE.BoxGeometry(6, 0.2, 3),
-      new THREE.MeshStandardMaterial({
-        color: 0x0c0a04,
-        emissive: GOLD,
-        emissiveIntensity: 0.04,
-      })
-    );
-    dock.position.set(DOCK_X, 0.1, DOCK_Z);
-    scene.add(dock);
-    const dE = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(6, 0.2, 3)),
-      new THREE.LineBasicMaterial({
-        color: GOLD,
-        transparent: true,
-        opacity: 0.12,
-      })
-    );
-    dE.position.copy(dock.position);
-    scene.add(dE);
-    // Start ring
-    const sRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.35, 0.5, 32),
+    const dockRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.8, 1.0, 32),
       new THREE.MeshBasicMaterial({
         color: GOLD,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.2,
+        side: THREE.DoubleSide,
+      })
+    );
+    dockRing.rotation.x = -Math.PI / 2;
+    dockRing.position.set(DOCK_X, 0.02, DOCK_Z);
+    scene.add(dockRing);
+    const sRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.1, 1.2, 32),
+      new THREE.MeshBasicMaterial({
+        color: GOLD,
+        transparent: true,
+        opacity: 0.08,
         side: THREE.DoubleSide,
       })
     );
     sRing.rotation.x = -Math.PI / 2;
-    sRing.position.set(DOCK_X, 0.03, DOCK_Z);
+    sRing.position.set(DOCK_X, 0.02, DOCK_Z);
     scene.add(sRing);
 
-    /* ── Shelves (start flat) ── */
-    const shelfGeo = new THREE.BoxGeometry(1, 1, 1);
-    const shelfMat = new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      roughness: 0.75,
-      metalness: 0.12,
-    });
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0x1e1e1e });
+    /* ── Shelves ── */
     const shelfMeshes = [];
     SHELVES.forEach((s) => {
-      const m = new THREE.Mesh(shelfGeo, shelfMat.clone());
-      m.scale.set(s.w, 0.05, s.d);
-      m.position.set(s.x + s.w / 2, 0.025, s.z + s.d / 2);
-      m.castShadow = true;
-      m.receiveShadow = true;
-      scene.add(m);
-      const e = new THREE.LineSegments(
-        new THREE.EdgesGeometry(shelfGeo),
-        edgeMat.clone()
+      const geo = new THREE.BoxGeometry(s.w, SHELF_H, s.d);
+      const mesh = new THREE.Mesh(
+        geo,
+        new THREE.MeshStandardMaterial({
+          color: 0x1c1c1c,
+          roughness: 0.6,
+          metalness: 0.3,
+        })
       );
-      e.scale.copy(m.scale);
-      e.position.copy(m.position);
-      scene.add(e);
-      shelfMeshes.push({ mesh: m, edges: e });
+      mesh.position.set(s.x + s.w / 2, SHELF_H / 2, s.z + s.d / 2);
+      mesh.castShadow = true;
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({
+          color: 0x333333,
+          transparent: true,
+          opacity: 0.4,
+        })
+      );
+      edges.position.copy(mesh.position);
+      scene.add(mesh);
+      scene.add(edges);
+      shelfMeshes.push({ mesh, edges });
     });
-    const shelfState = { height: 0 };
 
     /* ── Pick markers with text labels ── */
     const PICK_TIMES = [
@@ -423,31 +507,27 @@ export default function WarehouseShowcase() {
       "0:28",
       "0:20",
     ];
-
     function makeTextSprite(text, subtext) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 128;
-      canvas.height = 64;
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, 128, 64);
-      // Label
-      ctx.font = "bold 18px monospace";
-      ctx.fillStyle = "rgba(212,168,83,0.9)";
-      ctx.textAlign = "center";
-      ctx.fillText(text, 64, 24);
-      // Time
-      ctx.font = "12px monospace";
-      ctx.fillStyle = "rgba(255,255,255,0.5)";
-      ctx.fillText(subtext, 64, 44);
-
-      const tex = new THREE.CanvasTexture(canvas);
+      const cv = document.createElement("canvas");
+      cv.width = 128;
+      cv.height = 64;
+      const cx = cv.getContext("2d");
+      cx.font = "bold 18px monospace";
+      cx.fillStyle = "rgba(212,168,83,0.9)";
+      cx.textAlign = "center";
+      cx.fillText(text, 64, 24);
+      cx.font = "12px monospace";
+      cx.fillStyle = "rgba(255,255,255,0.5)";
+      cx.fillText(subtext, 64, 44);
+      const tex = new THREE.CanvasTexture(cv);
       tex.minFilter = THREE.LinearFilter;
-      const mat = new THREE.SpriteMaterial({
-        map: tex,
-        transparent: true,
-        depthTest: false,
-      });
-      const sprite = new THREE.Sprite(mat);
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: tex,
+          transparent: true,
+          depthTest: false,
+        })
+      );
       sprite.scale.set(2.5, 1.25, 1);
       return sprite;
     }
@@ -506,12 +586,9 @@ export default function WarehouseShowcase() {
       const light = new THREE.PointLight(GOLD, 0, 6);
       light.position.set(item.x, 1, cz);
       group.add(light);
-
-      // Text label sprite
       const sprite = makeTextSprite(item.label, PICK_TIMES[idx]);
       sprite.position.set(item.x, SHELF_H + 2.8, cz);
       group.add(sprite);
-
       scene.add(group);
       markers.push({
         group,
@@ -527,7 +604,45 @@ export default function WarehouseShowcase() {
       });
     });
 
-    /* ── Routes ── */
+    /* ── Naive route: per-segment lines + stat sprites ── */
+    const naiveSegs = NAIVE_SEGMENTS.map((seg) => {
+      const pts = buildLinePoints(seg.pts);
+      const pairs = [];
+      for (let i = 0; i < pts.length - 1; i++)
+        pairs.push(pts[i].clone(), pts[i + 1].clone());
+      const geo = new THREE.BufferGeometry().setFromPoints(pairs);
+      const mat = new THREE.LineDashedMaterial({
+        color: RED_DIM,
+        transparent: true,
+        opacity: 0,
+        dashSize: 0.4,
+        gapSize: 0.25,
+      });
+      const line = new THREE.LineSegments(geo, mat);
+      line.computeLineDistances();
+      scene.add(line);
+
+      // Stat sprite at midpoint of segment
+      const mid = pts[Math.floor(pts.length / 2)];
+      const statSprite = makeStatSprite(
+        `${seg.dist.toFixed(1)}m`,
+        `${seg.time.toFixed(1)}s · ${seg.label}`
+      );
+      statSprite.position.set(mid.x, 4.5, mid.z);
+      scene.add(statSprite);
+
+      return {
+        geo,
+        mat,
+        line,
+        pairs,
+        statSprite,
+        dist: seg.dist,
+        time: seg.time,
+      };
+    });
+
+    /* ── Optimal route ── */
     const optPts = buildLinePoints(OPT_ROUTE);
     const optPairs = [];
     for (let i = 0; i < optPts.length - 1; i++)
@@ -540,23 +655,6 @@ export default function WarehouseShowcase() {
     });
     scene.add(new THREE.LineSegments(optGeo, optMat));
 
-    const naivePts = buildLinePoints(NAIVE_ROUTE);
-    const naivePairs = [];
-    for (let i = 0; i < naivePts.length - 1; i++)
-      naivePairs.push(naivePts[i].clone(), naivePts[i + 1].clone());
-    const naiveGeo = new THREE.BufferGeometry().setFromPoints(naivePairs);
-    const naiveMat = new THREE.LineDashedMaterial({
-      color: RED_DIM,
-      transparent: true,
-      opacity: 0,
-      dashSize: 0.4,
-      gapSize: 0.25,
-    });
-    const naiveLine = new THREE.LineSegments(naiveGeo, naiveMat);
-    naiveLine.computeLineDistances();
-    scene.add(naiveLine);
-
-    // Pick fractions: which route waypoint index each item is reached at
     const pickWaypoints = [3, 20, 6, 14, 23, 9, 17, 12];
     const pickFracs = pickWaypoints.map((idx) => waypointFraction(optPts, idx));
 
@@ -594,8 +692,8 @@ export default function WarehouseShowcase() {
       shelfH: 0,
       routeVis: 0,
       routeProgress: 0,
-      naiveVis: 0,
-      naiveProgress: 0,
+      naiveSegIdx: 0,
+      naiveSegProg: 0,
       pickProgress: 0,
     };
 
@@ -608,7 +706,6 @@ export default function WarehouseShowcase() {
         const T = tRef.current;
         const p = (state.p = self.progress);
 
-        // Shelf height: grows 0→0.15, flattens in outro
         state.shelfH =
           p < T.shelfEnd
             ? p / T.shelfEnd
@@ -616,21 +713,26 @@ export default function WarehouseShowcase() {
             ? Math.max(0, 1 - (p - T.outroStart) / (T.outroEnd - T.outroStart))
             : 1;
 
-        // Naive route: fade in during compare phase, draw progressively, fade out as optimal takes over
-        if (p >= T.naiveStart && p < T.routeDrawEnd) {
-          const fadeIn = Math.min(1, (p - T.naiveStart) / 0.04);
-          const fadeOut = p > 0.48 ? Math.max(0, 1 - (p - 0.48) / 0.08) : 1;
-          state.naiveVis = fadeIn * fadeOut * 0.35;
-          state.naiveProgress = Math.min(
-            1,
-            (p - T.naiveStart) / (T.naiveEnd - T.naiveStart)
+        // Naive segments: draw one at a time across naiveStart→naiveEnd
+        const naiveSpan = T.naiveEnd - T.naiveStart;
+        const numSegs = NAIVE_SEGMENTS.length;
+        if (p >= T.naiveStart && p < T.naiveEnd + 0.05) {
+          const naiveLocal = (p - T.naiveStart) / naiveSpan;
+          state.naiveSegIdx = Math.min(
+            numSegs - 1,
+            Math.floor(naiveLocal * numSegs)
           );
+          const segLocal = naiveLocal * numSegs - state.naiveSegIdx;
+          state.naiveSegProg = Math.min(1, segLocal);
+        } else if (p >= T.naiveEnd + 0.05) {
+          state.naiveSegIdx = numSegs - 1;
+          state.naiveSegProg = 1;
         } else {
-          state.naiveVis = 0;
-          state.naiveProgress = 0;
+          state.naiveSegIdx = -1;
+          state.naiveSegProg = 0;
         }
 
-        // Optimized route: draw during phases 3-4, fully drawn by pickStart
+        // Optimal route
         if (p >= T.routeStart) {
           state.routeVis = Math.min(1, (p - T.routeStart) / 0.04) * 0.65;
           state.routeProgress = Math.min(
@@ -642,7 +744,7 @@ export default function WarehouseShowcase() {
           state.routeProgress = 0;
         }
 
-        // Pick progress: picker moves during phase 5
+        // Pick progress
         if (p >= T.pickStart && p <= T.returnEnd) {
           state.pickProgress = Math.min(
             1,
@@ -650,7 +752,7 @@ export default function WarehouseShowcase() {
           );
         }
 
-        // Outro: fade route
+        // Outro
         if (p > T.outroStart)
           state.routeVis *= Math.max(
             0,
@@ -667,14 +769,13 @@ export default function WarehouseShowcase() {
           }
         }
 
-        // Debug
         Object.assign(debugRef.current, {
           p,
           shelfH: state.shelfH,
           routeVis: state.routeVis,
           routeProgress: state.routeProgress,
-          naiveVis: state.naiveVis,
-          naiveProgress: state.naiveProgress,
+          naiveSegIdx: state.naiveSegIdx,
+          naiveSegProg: state.naiveSegProg,
           pickProgress: state.pickProgress,
           phase: phaseName,
         });
@@ -689,12 +790,12 @@ export default function WarehouseShowcase() {
 
     function animate() {
       frameId = requestAnimationFrame(animate);
+      if (pausedRef.current) return;
       const T = tRef.current;
       const t = clock.getElapsedTime();
       const p = state.p;
       const curH = SHELF_H * Math.max(0, Math.min(1, state.shelfH));
 
-      // Shelves
       shelfMeshes.forEach(({ mesh, edges }) => {
         const h = Math.max(0.05, curH);
         mesh.scale.y = h;
@@ -703,7 +804,6 @@ export default function WarehouseShowcase() {
         edges.position.y = h / 2;
       });
 
-      // Markers
       const showItems = p >= T.itemsStart && p < T.outroStart;
       markers.forEach((m, i) => {
         const vis = showItems && p >= T.itemsStart + i * 0.005;
@@ -726,7 +826,6 @@ export default function WarehouseShowcase() {
           m.light.color.setHex(GOLD);
         }
         if (!m.group.visible) return;
-
         if (
           !m.picked &&
           state.pickProgress > 0 &&
@@ -738,7 +837,6 @@ export default function WarehouseShowcase() {
           m.ring.material.color.setHex(GREEN);
           m.light.color.setHex(GREEN);
         }
-
         const my = curH + 0.9 + Math.sin(t * 1.4 + i * 1.3) * 0.08;
         m.diamond.position.y = my;
         m.dEdges.position.y = my;
@@ -754,23 +852,50 @@ export default function WarehouseShowcase() {
 
       sRing.rotation.z = t * 0.12;
 
-      // Routes
+      // Naive segments — draw one at a time, fade out old ones when optimal appears
+      const optOverlap = p >= T.routeStart;
+      naiveSegs.forEach((seg, i) => {
+        if (i < state.naiveSegIdx) {
+          // Completed segment: show fully, fade when optimal draws
+          seg.mat.opacity = optOverlap
+            ? Math.max(0, 0.35 - (p - T.routeStart) * 2)
+            : 0.35;
+          seg.geo.setDrawRange(0, seg.pairs.length);
+          seg.statSprite.visible = !optOverlap && p >= T.naiveStart;
+          seg.statSprite.material.opacity = optOverlap ? 0 : 0.8;
+        } else if (i === state.naiveSegIdx) {
+          // Currently drawing segment
+          seg.mat.opacity = optOverlap
+            ? Math.max(0, 0.35 - (p - T.routeStart) * 2)
+            : 0.35;
+          seg.geo.setDrawRange(
+            0,
+            Math.max(2, Math.floor(state.naiveSegProg * seg.pairs.length))
+          );
+          seg.statSprite.visible = state.naiveSegProg > 0.8 && !optOverlap;
+          seg.statSprite.material.opacity =
+            state.naiveSegProg > 0.8
+              ? Math.min(0.8, (state.naiveSegProg - 0.8) * 4)
+              : 0;
+        } else {
+          // Not yet drawn
+          seg.mat.opacity = 0;
+          seg.geo.setDrawRange(0, 0);
+          seg.statSprite.visible = false;
+        }
+      });
+
+      // Optimal route
       optMat.opacity = state.routeVis;
       optGeo.setDrawRange(
         0,
         Math.max(2, Math.floor(state.routeProgress * optPairs.length))
       );
-      naiveMat.opacity = state.naiveVis;
-      naiveGeo.setDrawRange(
-        0,
-        Math.max(2, Math.floor(state.naiveProgress * naivePairs.length))
-      );
 
-      // Picker — smooth progress, snap to route (never leaves the line)
+      // Picker
       const pickerMoving = p >= T.pickStart && p <= T.returnEnd;
       picker.visible = pickerMoving;
       if (pickerMoving) {
-        // Smooth the progress value, not the position — picker stays on route
         if (!picker.userData.smoothP)
           picker.userData.smoothP = state.pickProgress;
         picker.userData.smoothP +=
@@ -788,9 +913,8 @@ export default function WarehouseShowcase() {
         if (pLight.intensity < 0.01) pLight.intensity = 0;
       }
 
-      // ═══ CAMERA ═══
+      // Camera
       if (pickerMoving) {
-        // Picking: direct overhead following picker
         camPos.lerp(
           new THREE.Vector3(picker.position.x, 42, picker.position.z),
           0.03
@@ -800,11 +924,9 @@ export default function WarehouseShowcase() {
           0.03
         );
       } else if (p > T.returnEnd) {
-        // Outro: return to initial position
         camPos.lerp(new THREE.Vector3(0, 50, 44), 0.025);
         camTarget.lerp(new THREE.Vector3(0, 0, 0), 0.025);
       } else {
-        // Pre-pick: cinematic orbit — sweeps around the warehouse
         const orbitT = Math.min(1, p / Math.max(0.01, T.pickStart));
         const angle = orbitT * Math.PI * 0.4;
         const radius = 44 - orbitT * 14;
@@ -867,7 +989,6 @@ export default function WarehouseShowcase() {
           </div>
         </div>
 
-        {/* Debug panel — toggle with 'D' key */}
         {showDebug && (
           <div
             style={{
@@ -875,15 +996,15 @@ export default function WarehouseShowcase() {
               top: 12,
               left: 12,
               zIndex: 100,
-              background: "rgba(0,0,0,0.85)",
+              background: "rgba(0,0,0,0.88)",
               backdropFilter: "blur(8px)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: 12,
-              padding: "16px 20px",
+              padding: "14px 16px",
               fontFamily: "var(--mono)",
               fontSize: 10,
               color: "rgba(255,255,255,0.7)",
-              lineHeight: 1.8,
+              lineHeight: 1.7,
               minWidth: 280,
               maxHeight: "90vh",
               overflowY: "auto",
@@ -899,15 +1020,15 @@ export default function WarehouseShowcase() {
             >
               Warehouse Debug{" "}
               <span style={{ fontWeight: 400, opacity: 0.4 }}>
-                (press D to close)
+                (D to close)
               </span>
             </div>
 
-            {/* Live state */}
+            {/* Live */}
             <div
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                paddingBottom: 8,
+                paddingBottom: 6,
                 marginBottom: 8,
               }}
             >
@@ -925,10 +1046,10 @@ export default function WarehouseShowcase() {
                 {d.shelfH.toFixed(3)}
               </div>
               <div>
-                <span style={{ opacity: 0.4 }}>naiveVis:</span>{" "}
-                {d.naiveVis.toFixed(3)}{" "}
+                <span style={{ opacity: 0.4 }}>naiveSeg:</span> {d.naiveSegIdx}/
+                {NAIVE_SEGMENTS.length - 1}{" "}
                 <span style={{ opacity: 0.3 }}>prog:</span>{" "}
-                {d.naiveProgress.toFixed(3)}
+                {d.naiveSegProg.toFixed(3)}
               </div>
               <div>
                 <span style={{ opacity: 0.4 }}>routeVis:</span>{" "}
@@ -945,14 +1066,10 @@ export default function WarehouseShowcase() {
               </div>
             </div>
 
-            {/* Scroll height */}
-            <div style={{ marginBottom: 10 }}>
+            {/* ScrollHeight */}
+            <div style={{ marginBottom: 8 }}>
               <label
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+                style={{ display: "flex", justifyContent: "space-between" }}
               >
                 <span style={{ opacity: 0.4 }}>scrollSpace:</span>
                 <span style={{ color: "var(--accent)" }}>{scrollH}vh</span>
@@ -964,17 +1081,17 @@ export default function WarehouseShowcase() {
                 step={10}
                 value={scrollH}
                 onChange={(e) => setScrollH(Number(e.target.value))}
-                style={{ width: "100%", marginTop: 4 }}
+                style={{ width: "100%", marginTop: 2 }}
               />
             </div>
 
-            {/* Timeline controls */}
+            {/* Timeline */}
             <div
               style={{
                 fontSize: 9,
                 fontWeight: 600,
                 color: "var(--accent)",
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
               Timeline (0–1)
@@ -985,11 +1102,18 @@ export default function WarehouseShowcase() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  marginBottom: 3,
+                  gap: 4,
+                  marginBottom: 2,
                 }}
               >
-                <span style={{ width: 85, opacity: 0.4, flexShrink: 0 }}>
+                <span
+                  style={{
+                    width: 80,
+                    opacity: 0.4,
+                    flexShrink: 0,
+                    fontSize: 9,
+                  }}
+                >
                   {key}:
                 </span>
                 <input
@@ -1006,9 +1130,10 @@ export default function WarehouseShowcase() {
                 />
                 <span
                   style={{
-                    width: 32,
+                    width: 30,
                     textAlign: "right",
                     color: "var(--accent)",
+                    fontSize: 9,
                   }}
                 >
                   {(T[key] * 100).toFixed(0)}%
@@ -1016,18 +1141,17 @@ export default function WarehouseShowcase() {
               </div>
             ))}
 
-            {/* Timeline visual */}
+            {/* Timeline vis */}
             <div
               style={{
-                marginTop: 10,
-                height: 20,
+                marginTop: 6,
+                height: 16,
                 background: "rgba(255,255,255,0.03)",
-                borderRadius: 4,
+                borderRadius: 3,
                 position: "relative",
                 overflow: "hidden",
               }}
             >
-              {/* Phase regions */}
               <div
                 style={{
                   position: "absolute",
@@ -1043,7 +1167,7 @@ export default function WarehouseShowcase() {
                   left: `${T.naiveStart * 100}%`,
                   width: `${(T.naiveEnd - T.naiveStart) * 100}%`,
                   height: "100%",
-                  background: "rgba(153,51,51,0.2)",
+                  background: "rgba(153,51,51,0.25)",
                 }}
               />
               <div
@@ -1073,7 +1197,6 @@ export default function WarehouseShowcase() {
                   background: "rgba(255,255,255,0.04)",
                 }}
               />
-              {/* Playhead */}
               <div
                 style={{
                   position: "absolute",
@@ -1082,7 +1205,6 @@ export default function WarehouseShowcase() {
                   width: 2,
                   height: "100%",
                   background: "var(--accent)",
-                  transition: "left 0.1s",
                 }}
               />
             </div>
@@ -1090,50 +1212,48 @@ export default function WarehouseShowcase() {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                fontSize: 8,
-                opacity: 0.25,
-                marginTop: 2,
+                fontSize: 7,
+                opacity: 0.2,
+                marginTop: 1,
               }}
             >
-              <span>0%</span>
               <span>shelf</span>
               <span>naive</span>
               <span>route</span>
               <span>pick</span>
               <span>outro</span>
-              <span>100%</span>
             </div>
 
-            {/* Vignette controls */}
+            {/* Vignette */}
             <div
               style={{
                 fontSize: 9,
                 fontWeight: 600,
                 color: "var(--accent)",
-                marginTop: 12,
-                marginBottom: 6,
+                marginTop: 8,
+                marginBottom: 4,
               }}
             >
               Vignette
             </div>
             {[
-              { key: "size", label: "size (vmin)", min: 20, max: 80 },
-              { key: "cx", label: "center X %", min: 0, max: 100 },
-              { key: "cy", label: "center Y %", min: 0, max: 100 },
-              { key: "stop1", label: "transparent %", min: 20, max: 90 },
-              { key: "midOp", label: "mid opacity %", min: 0, max: 100 },
-              { key: "edgeOp", label: "edge opacity %", min: 0, max: 100 },
+              { key: "size", label: "size", min: 20, max: 100 },
+              { key: "cx", label: "cx %", min: 0, max: 100 },
+              { key: "cy", label: "cy %", min: 0, max: 100 },
+              { key: "stop1", label: "transparent", min: 20, max: 100 },
+              { key: "midOp", label: "mid op", min: 0, max: 100 },
+              { key: "edgeOp", label: "edge op", min: 0, max: 100 },
             ].map(({ key, label, min, max }) => (
               <div
                 key={key}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  marginBottom: 3,
+                  gap: 4,
+                  marginBottom: 2,
                 }}
               >
-                <span style={{ width: 95, opacity: 0.4, flexShrink: 0 }}>
+                <span style={{ width: 60, opacity: 0.4, fontSize: 9 }}>
                   {label}:
                 </span>
                 <input
@@ -1149,27 +1269,62 @@ export default function WarehouseShowcase() {
                 />
                 <span
                   style={{
-                    width: 28,
+                    width: 24,
                     textAlign: "right",
                     color: "var(--accent)",
+                    fontSize: 9,
                   }}
                 >
                   {vig[key]}
                 </span>
               </div>
             ))}
+
+            {/* JSON export */}
+            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+              <button
+                onClick={() =>
+                  navigator.clipboard?.writeText(
+                    JSON.stringify(
+                      { timeline: tRef.current, vignette: vig, scrollH },
+                      null,
+                      2
+                    )
+                  )
+                }
+                style={{
+                  flex: 1,
+                  padding: "5px 0",
+                  background: "rgba(212,168,83,0.08)",
+                  border: "1px solid rgba(212,168,83,0.15)",
+                  color: "var(--accent)",
+                  fontFamily: "var(--mono)",
+                  fontSize: 9,
+                  cursor: "pointer",
+                  borderRadius: 4,
+                }}
+              >
+                Copy JSON
+              </button>
+            </div>
             <div
               style={{
-                marginTop: 6,
-                fontFamily: "var(--mono)",
-                fontSize: 8,
-                color: "rgba(255,255,255,0.25)",
+                marginTop: 4,
+                padding: 6,
+                background: "rgba(255,255,255,0.02)",
+                borderRadius: 4,
+                fontSize: 7,
+                color: "rgba(255,255,255,0.2)",
                 wordBreak: "break-all",
+                maxHeight: 60,
+                overflowY: "auto",
               }}
             >
-              {`{${Object.entries(vig)
-                .map(([k, v]) => `"${k}":${v}`)
-                .join(",")}}`}
+              {JSON.stringify({
+                timeline: tRef.current,
+                vignette: vig,
+                scrollH,
+              })}
             </div>
           </div>
         )}
