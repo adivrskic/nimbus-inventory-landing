@@ -1,37 +1,19 @@
-"use client";
+import HomeClient from "./HomeClient";
+import JsonLd, { orgSchema, softwareSchema } from "@/components/SEO/JsonLd";
 
-import { useState, useCallback } from "react";
-import Nav from "@/components/Nav/Nav";
-import Hero from "@/components/Hero/Hero";
-import AISection from "@/components/AISection/AISection";
-import ProblemSolution from "@/components/ProblemSolution/ProblemSolution";
-import Features from "@/components/Features/Features";
-import WarehouseShowcase from "@/components/WarehouseShowcase/WarehouseShowcase";
-import Testimonials from "@/components/Testimonials/Testimonials";
-import Integrations from "@/components/Integrations/Integrations";
-import Industries from "@/components/Industries/Industries";
-import Footer from "@/components/Footer/Footer";
-import FinalCTA from "@/components/FinalCTA/FinalCTA";
-import DemoModal from "@/components/DemoModal/DemoModal";
+export const metadata = {
+  title: "Nimbus WMS — AI-Powered Warehouse Management",
+  description:
+    "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
+  alternates: { canonical: "https://nimbuswms.com" },
+};
 
 export default function HomePage() {
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
-
   return (
     <>
-      <Nav onDemo={openDemo} />
-      <Hero onDemo={openDemo} />
-      <AISection />
-      <Features />
-      <ProblemSolution onDemo={openDemo} />
-      <WarehouseShowcase onDemo={openDemo} />
-      <Testimonials />
-      <Integrations />
-      <Industries />
-      <FinalCTA onDemo={openDemo} />
-      <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
+      <JsonLd data={orgSchema()} />
+      <JsonLd data={softwareSchema()} />
+      <HomeClient />
     </>
   );
 }

@@ -1,18 +1,29 @@
-"use client";
+import LegalClient from "./LegalClient";
+import { LEGAL_PAGES } from "@/components/LegalPage/legalData";
 
-import { useState, useCallback, use } from "react";
-import LegalPageContent from "@/components/LegalPage/LegalPage";
-import DemoModal from "@/components/DemoModal/DemoModal";
+const TITLES = {
+  privacy: "Privacy Policy",
+  terms: "Terms of Service",
+  security: "Security",
+  status: "System Status",
+};
 
-export default function LegalRoute({ params }) {
-  const { slug } = use(params);
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const title = TITLES[slug] || "Legal";
+  return {
+    title,
+    description: `${title} for Nimbus WMS warehouse management platform.`,
+    alternates: { canonical: `https://nimbuswms.com/legal/${slug}` },
+    robots: { index: slug !== "status", follow: true },
+  };
+}
 
-  return (
-    <>
-      <LegalPageContent slug={slug} onDemo={openDemo} />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
-    </>
-  );
+export async function generateStaticParams() {
+  return Object.keys(LEGAL_PAGES).map((slug) => ({ slug }));
+}
+
+export default async function LegalPage({ params }) {
+  const { slug } = await params;
+  return <LegalClient slug={slug} />;
 }

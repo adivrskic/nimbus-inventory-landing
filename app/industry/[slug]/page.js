@@ -1,18 +1,44 @@
-"use client";
+import IndustryClient from "./IndustryClient";
+import { INDUSTRIES } from "@/components/IndustryPage/industryData";
+import JsonLd, { breadcrumbSchema } from "@/components/SEO/JsonLd";
 
-import { useState, useCallback, use } from "react";
-import IndustryPageContent from "@/components/IndustryPage/IndustryPage";
-import DemoModal from "@/components/DemoModal/DemoModal";
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const industry = INDUSTRIES.find((i) => i.slug === slug);
+  if (!industry) return { title: "Industry Not Found" };
+  return {
+    title: `${industry.title} Warehouse Management`,
+    description: `Nimbus WMS for ${industry.title.toLowerCase()} operations. ${
+      industry.heroDesc
+    }`,
+    alternates: { canonical: `https://nimbuswms.com/industry/${slug}` },
+    openGraph: {
+      title: `${industry.title} Warehouse Management | Nimbus WMS`,
+      description: industry.heroDesc,
+      url: `https://nimbuswms.com/industry/${slug}`,
+    },
+  };
+}
 
-export default function IndustryRoute({ params }) {
-  const { slug } = use(params);
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+export async function generateStaticParams() {
+  return INDUSTRIES.map((i) => ({ slug: i.slug }));
+}
 
+export default async function IndustryPage({ params }) {
+  const { slug } = await params;
+  const industry = INDUSTRIES.find((i) => i.slug === slug);
+  const crumbs = [
+    { name: "Home", url: "https://nimbuswms.com" },
+    { name: "Industries", url: "https://nimbuswms.com/#industries" },
+    {
+      name: industry?.title || slug,
+      url: `https://nimbuswms.com/industry/${slug}`,
+    },
+  ];
   return (
     <>
-      <IndustryPageContent slug={slug} onDemo={openDemo} />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
+      <JsonLd data={breadcrumbSchema(crumbs)} />
+      <IndustryClient slug={slug} />
     </>
   );
 }
