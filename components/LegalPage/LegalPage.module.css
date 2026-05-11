@@ -1,142 +1,413 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   LEGAL PAGE TYPE — Marginalia / contract aesthetic (DARK)
+   ───────────────────────────────────────────────────────────────────────
+   Apply to: Privacy Policy, Terms of Service, Security
+   
+   Same layout as the light marginalia version, with the dark palette.
+   Feel: A serious digital agreement. Contract chrome on a dark stage.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .page {
-  background: var(--light);
+  background: var(--dark);
   min-height: 100vh;
+  color: var(--white);
 }
 
-.hero {
-  padding: 160px 48px 80px;
-  max-width: 900px;
+/* ─────────────────────────────────────────────────────
+     DOCUMENT SHELL
+  ───────────────────────────────────────────────────── */
+.shell {
+  position: relative;
+  max-width: 1240px;
   margin: 0 auto;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-.breadcrumb {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: rgba(0, 0, 0, 0.3);
-  margin-bottom: 40px;
-}
-.breadcrumb a {
-  color: rgba(0, 0, 0, 0.3);
-  text-decoration: none;
-  transition: color 0.3s;
-}
-.breadcrumb a:hover {
-  color: var(--accent);
-}
-.breadcrumbSep {
-  margin: 0 8px;
+  padding: 140px 64px 80px;
 }
 
+/* ─────────────────────────────────────────────────────
+     DOC HEADER
+  ───────────────────────────────────────────────────── */
+.docHeader {
+  position: relative;
+  padding-bottom: 48px;
+}
+
+/* Decorative seal floating top-right */
+.seal {
+  position: absolute;
+  top: -8px;
+  right: 64px;
+  color: rgba(242, 240, 239, 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Document metadata block — like a contract header */
+.docMeta {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  column-gap: 56px;
+  row-gap: 16px;
+  margin-bottom: 56px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.1);
+  opacity: 0;
+}
+.docMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.docMetaLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.4);
+}
+.docMetaValue {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--white);
+  letter-spacing: -0.1px;
+}
+
+/* Title sits in a narrower column aligned with the prose */
+.titleBlock {
+  max-width: 720px;
+}
 .title {
   font-family: var(--display);
-  font-size: clamp(36px, 5vw, 56px);
+  font-size: clamp(48px, 7vw, 88px);
   font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -1.5px;
-  color: var(--dark);
-  opacity: 0;
-  transform: translateY(20px);
+  line-height: 0.98;
+  letter-spacing: -2.5px;
+  color: var(--white);
+  margin-bottom: 28px;
 }
-.updated {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: rgba(0, 0, 0, 0.3);
-  margin-top: 16px;
+.headLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+.headLetter {
+  display: inline-block;
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+  color: var(--white);
+}
+.headSpace {
+  display: inline-block;
+  width: 0.28em;
 }
 
-/* Sections */
-.content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 48px 120px;
-}
-.section {
-  padding: 48px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+/* Recital — the "plain-English column" preamble */
+.recital {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.5);
+  font-style: italic;
+  max-width: 560px;
+  margin: 0;
   opacity: 0;
-  transform: translateY(20px);
 }
-.section:last-child {
-  border-bottom: none;
+
+/* Animated full-width rule under the header — gold accent moment */
+.rule {
+  height: 1px;
+  background: var(--accent);
+  margin-top: 48px;
+  transform-origin: left;
+  opacity: 0.6;
 }
-.sectionNum {
+
+/* ─────────────────────────────────────────────────────
+     DOC BODY — 3 columns: gutter, prose, marginalia
+  ───────────────────────────────────────────────────── */
+.docBody {
+  margin-top: 24px;
+}
+
+.section {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 640px) minmax(0, 240px);
+  column-gap: 56px;
+  padding: 56px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  scroll-margin-top: 100px;
+}
+
+/* Left gutter holds § marker */
+.sectionGutter {
+  text-align: right;
+  opacity: 0;
+}
+.sectionRoman {
+  display: inline-block;
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
   color: var(--accent);
-  margin-bottom: 16px;
+  text-transform: uppercase;
+  padding-top: 6px;
+  white-space: nowrap;
+}
+
+/* Center: legal prose */
+.sectionMain {
+  min-width: 0;
 }
 .sectionHeading {
+  position: relative;
   font-family: var(--display);
-  font-size: clamp(20px, 2.5vw, 28px);
-  font-weight: 600;
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--white);
   line-height: 1.2;
-  letter-spacing: -0.3px;
-  color: var(--dark);
-  margin-bottom: 16px;
+  margin: 0 0 20px;
+  opacity: 0;
 }
 .sectionBody {
   font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.9;
-  color: rgba(0, 0, 0, 0.5);
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(242, 240, 239, 0.78);
+  margin: 0;
+  opacity: 0;
+  text-wrap: pretty;
 }
 
-/* CTA at bottom */
-.ctaBanner {
-  padding: 80px 48px;
-  text-align: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+/* Right: marginalia (plain-English summary) */
+.marginalia {
+  position: relative;
+  padding-left: 18px;
+  padding-top: 4px;
+  border-left: 1px solid rgba(242, 240, 239, 0.12);
+  opacity: 0;
 }
-.ctaText {
+.marginaliaLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.marginaliaText {
   font-family: var(--display);
-  font-size: 15px;
-  color: rgba(0, 0, 0, 0.35);
-  margin-bottom: 24px;
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+  text-wrap: pretty;
 }
-.ctaLink {
+
+/* ─────────────────────────────────────────────────────
+     SIGNATURE BLOCK
+  ───────────────────────────────────────────────────── */
+.signature {
+  margin-top: 80px;
+  padding-top: 0;
+  opacity: 0;
+}
+.signatureRule {
+  height: 1px;
+  background: rgba(242, 240, 239, 0.18);
+  margin-bottom: 56px;
+}
+.signatureGrid {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.signatureBlock {
+  grid-column: 2;
+}
+.signatureContact {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.signatureLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.4);
+  margin-bottom: 14px;
+}
+.signatureName {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--white);
+  margin-bottom: 32px;
+}
+.signatureLine {
+  width: 280px;
+  max-width: 100%;
+  height: 1px;
+  background: rgba(242, 240, 239, 0.55);
+  margin-bottom: 12px;
+}
+.signatureMeta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(242, 240, 239, 0.45);
+  letter-spacing: -0.1px;
+}
+.signatureEmail {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.25);
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: 16px;
+}
+.signatureEmail:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.signatureBack {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.5);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.signatureBack:hover {
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+     NOT FOUND
+  ───────────────────────────────────────────────────── */
+.notFound {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 80px 24px;
+}
+.notFoundInner {
+  text-align: center;
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.notFoundTitle {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin: 0 0 32px;
+}
+.backLink {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.5px;
   color: var(--accent);
   text-decoration: none;
-  transition: color 0.3s;
-}
-.ctaLink:hover {
-  color: var(--dark);
-}
-
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: rgba(0, 0, 0, 0.3);
-  text-decoration: none;
-  margin-top: 20px;
-  transition: color 0.3s;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.4);
+  transition: border-color 0.2s;
 }
 .backLink:hover {
-  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
-@media (max-width: 768px) {
-  .hero {
-    padding: 120px 24px 48px;
+/* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .section {
+    grid-template-columns: 60px minmax(0, 1fr) minmax(0, 220px);
+    column-gap: 36px;
   }
-  .content {
-    padding: 0 24px 80px;
+  .seal {
+    right: 48px;
+  }
+  .docMeta {
+    column-gap: 36px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    padding: 120px 32px 60px;
+  }
+  .seal {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 28px;
+    color: rgba(242, 240, 239, 0.2);
+  }
+  .docMeta {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 24px;
+  }
+
+  /* Stack marginalia below body content */
+  .section {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .sectionGutter {
+    text-align: left;
+  }
+  .marginalia {
+    border-left: none;
+    border-top: 1px solid rgba(242, 240, 239, 0.08);
+    padding-left: 0;
+    padding-top: 16px;
+    margin-top: 8px;
+  }
+  .signatureGrid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .signatureBlock,
+  .signatureContact {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 110px 20px 60px;
+  }
+  .docMeta {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    row-gap: 14px;
+    margin-bottom: 40px;
+  }
+  .recital {
+    font-size: 14px;
   }
   .section {
-    padding: 32px 0;
+    padding: 36px 0;
   }
-  .ctaBanner {
-    padding: 48px 24px;
+  .sectionBody {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .signatureName {
+    font-size: 20px;
   }
 }

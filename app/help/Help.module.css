@@ -1,0 +1,246 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HELP CENTER (list) — page-specific styles only.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────
+   SEARCH BAR
+───────────────────────────────────────────────────── */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 0 28px;
+  border: 1px solid rgba(242, 240, 239, 0.1);
+  background: rgba(255, 255, 255, 0.018);
+  transition: border-color 0.25s, background 0.25s;
+}
+.searchWrap:focus-within {
+  border-color: rgba(212, 168, 83, 0.4);
+  background: rgba(212, 168, 83, 0.02);
+}
+.searchIcon {
+  flex-shrink: 0;
+  margin: 0 14px 0 18px;
+  color: rgba(242, 240, 239, 0.4);
+}
+.searchWrap:focus-within .searchIcon {
+  color: var(--accent);
+}
+.searchInput {
+  flex: 1;
+  padding: 14px 14px 14px 0;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 14px;
+  outline: none;
+}
+.searchInput::placeholder {
+  color: rgba(242, 240, 239, 0.3);
+}
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+.searchClear {
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(242, 240, 239, 0.4);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.searchClear:hover {
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+   COUNT HEAD
+───────────────────────────────────────────────────── */
+.browseHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding-bottom: 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────
+   CATEGORIES
+───────────────────────────────────────────────────── */
+.categoriesWrap {
+  display: flex;
+  flex-direction: column;
+}
+.categoryGroup {
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+}
+.categoryGroup:last-child {
+  border-bottom: none;
+}
+.categoryHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.categoryNum {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.categoryTitle {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--white);
+  line-height: 1.2;
+  margin: 0;
+  flex: 1;
+}
+.categoryCount {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.35);
+  flex-shrink: 0;
+}
+
+.articleList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.articleLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px 12px 36px;
+  text-decoration: none;
+  transition: background 0.2s, padding 0.2s;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+}
+.articleLink:hover {
+  background: rgba(255, 255, 255, 0.025);
+  border-left-color: var(--accent);
+  padding-left: 40px;
+}
+.articleTitle {
+  font-family: var(--display);
+  font-size: 15px;
+  color: rgba(242, 240, 239, 0.8);
+  letter-spacing: -0.2px;
+  transition: color 0.2s;
+}
+.articleLink:hover .articleTitle {
+  color: var(--white);
+}
+.articleArrow {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: rgba(242, 240, 239, 0.3);
+  transition: color 0.2s, transform 0.25s;
+  flex-shrink: 0;
+}
+.articleLink:hover .articleArrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+/* ─────────────────────────────────────────────────────
+   EMPTY STATE
+───────────────────────────────────────────────────── */
+.emptyState {
+  padding: 64px 0;
+  text-align: center;
+}
+.emptyStateLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.emptyStateText {
+  font-family: var(--display);
+  font-size: 15px;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+}
+.emptyStateText strong {
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────
+   BOTTOM CTA
+───────────────────────────────────────────────────── */
+.bottomCta {
+  margin-top: 60px;
+  padding: 32px;
+  background: rgba(212, 168, 83, 0.03);
+  border: 1px solid rgba(212, 168, 83, 0.15);
+  border-left: 2px solid var(--accent);
+  text-align: center;
+}
+.bottomCtaLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.bottomCtaText {
+  font-family: var(--display);
+  font-size: 15px;
+  color: rgba(242, 240, 239, 0.7);
+  margin: 0 0 18px;
+}
+.bottomCtaLink {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.3);
+  padding-bottom: 4px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.bottomCtaLink:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .articleLink {
+    padding: 12px 12px 12px 16px;
+  }
+  .articleLink:hover {
+    padding-left: 20px;
+  }
+  .categoryHeader {
+    flex-wrap: wrap;
+  }
+}

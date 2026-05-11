@@ -8,9 +8,15 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 10px;
   border-radius: 0;
   overflow: visible;
-  transition: background 0.3s, color 0.3s, border-color 0.3s;
+  transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s;
+}
+.label {
+  display: inline-flex;
+  align-items: center;
 }
 .primary {
   background: var(--white);
@@ -28,4 +34,29 @@
 }
 .ghost:hover {
   border-color: var(--accent);
+}
+
+/* Disabled / loading state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Inline spinner */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: cb-spin 0.7s linear infinite;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+@keyframes cb-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

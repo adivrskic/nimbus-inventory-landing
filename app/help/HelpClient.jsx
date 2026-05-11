@@ -1,162 +1,199 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
-import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
-import Footer from "@/components/Footer/Footer";
+import { ResourceShell } from "@/components/ResourceShell";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import DemoModal from "@/components/DemoModal/DemoModal";
-import useGlowCards from "@/lib/useGlowCards";
+import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
+import pageStyles from "./Help.module.css";
 import { HELP_CATEGORIES } from "@/lib/helpData";
-gsap.registerPlugin(ScrollTrigger);
 
 export default function HelpClient() {
-  const heroRef = useRef(null);
+  const groupsRef = useRef(null);
+
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
-  const glowRef = useGlowCards();
 
+  const [query, setQuery] = useState("");
+
+  /* Filter categories + articles by query. A match in the title is kept;
+     categories with no matching articles drop out entirely. */
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return HELP_CATEGORIES;
+    return HELP_CATEGORIES.map((cat) => {
+      const articles = cat.articles.filter((a) =>
+        a.title.toLowerCase().includes(q)
+      );
+      return articles.length > 0 ? { ...cat, articles } : null;
+    }).filter(Boolean);
+  }, [query]);
+
+  const totalArticles = HELP_CATEGORIES.reduce(
+    (a, c) => a + c.articles.length,
+    0
+  );
+
+  /* Stagger groups on mount */
   useEffect(() => {
-    window.scrollTo(0, 0);
-    const hero = heroRef.current;
-    gsap.to(hero.querySelector("h1"), {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: "power3.out",
-      delay: 0.2,
-    });
-    gsap.to(hero.querySelector("p"), {
-      opacity: 1,
-      y: 0,
-      duration: 0.5,
-      ease: "power3.out",
-      delay: 0.35,
-    });
-    const cards = document.querySelectorAll("[data-help-card]");
-    cards.forEach((card, i) => {
-      gsap.to(card, {
+    if (!groupsRef.current) return;
+    const groups = groupsRef.current.querySelectorAll(
+      `.${pageStyles.categoryGroup}`
+    );
+    gsap.fromTo(
+      groups,
+      { opacity: 0, y: 14 },
+      {
         opacity: 1,
         y: 0,
         duration: 0.5,
+        stagger: 0.08,
         ease: "power3.out",
-        delay: 0.1 * i,
-        scrollTrigger: { trigger: card, start: "top 82%" },
-      });
-    });
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+        delay: 0.7,
+      }
+    );
   }, []);
 
+  /* Re-animate when search filters change */
+  const isFirst = useRef(true);
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
+    if (!groupsRef.current) return;
+    const groups = groupsRef.current.querySelectorAll(
+      `.${pageStyles.categoryGroup}`
+    );
+    gsap.fromTo(
+      groups,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, ease: "power2.out" }
+    );
+  }, [query]);
+
   return (
-    <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
-      <Nav onDemo={openDemo} />
-      <div
-        ref={heroRef}
-        style={{ padding: "160px 48px 80px", maxWidth: 1400, margin: "0 auto" }}
+    <>
+      <ResourceShell
+        eyebrow="Help Center"
+        title="How can we help?"
+        subtitle="Setup guides, troubleshooting, and answers to common questions. Search above or browse by category."
+        onDemo={openDemo}
       >
-        <h1
-          style={{
-            fontFamily: "var(--display)",
-            fontSize: "clamp(36px, 5vw, 56px)",
-            fontWeight: 700,
-            color: "var(--white)",
-            letterSpacing: "-1.5px",
-            opacity: 0,
-            transform: "translateY(20px)",
-          }}
-        >
-          Help Center
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--display)",
-            fontSize: 17,
-            lineHeight: 1.8,
-            color: "rgba(255,255,255,0.4)",
-            maxWidth: 560,
-            marginTop: 20,
-            opacity: 0,
-            transform: "translateY(16px)",
-          }}
-        >
-          Everything you need to get the most out of Nimbus.
-        </p>
-      </div>
-      <div
-        ref={glowRef}
-        className="glow-cards"
-        style={{
-          maxWidth: 1400,
-          margin: "0 auto",
-          padding: "0 48px 120px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-          gap: 20,
-        }}
-      >
-        {HELP_CATEGORIES.map((cat, ci) => (
-          <div
-            key={ci}
-            data-help-card
-            className="glow-card"
-            style={{
-              borderRadius: 20,
-              opacity: 0,
-              transform: "translateY(24px)",
-            }}
+        {/* Search bar */}
+        <div className={pageStyles.searchWrap}>
+          <svg
+            className={pageStyles.searchIcon}
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
           >
-            <div className="glow-card-border" />
-            <div
-              className="glow-card-content"
-              style={{ padding: "36px 32px", borderRadius: "inherit" }}
+            <circle
+              cx="7"
+              cy="7"
+              r="5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M11 11L14 14"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search articles..."
+            className={pageStyles.searchInput}
+            aria-label="Search help articles"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className={pageStyles.searchClear}
+              aria-label="Clear search"
             >
-              <div
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 9,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  color: "var(--accent)",
-                  marginBottom: 20,
-                }}
-              >
-                {cat.title}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {cat.articles.map((a, ai) => (
-                  <TransitionLink
-                    key={a.slug}
-                    href={`/help/${a.slug}`}
-                    style={{
-                      padding: "12px 0",
-                      borderBottom:
-                        ai < cat.articles.length - 1
-                          ? "1px solid rgba(255,255,255,0.04)"
-                          : "none",
-                      fontFamily: "var(--display)",
-                      fontSize: 14,
-                      color: "rgba(255,255,255,0.35)",
-                      textDecoration: "none",
-                      transition: "color 0.3s",
-                      display: "block",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.target.style.color = "var(--accent)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.target.style.color = "rgba(255,255,255,0.35)")
-                    }
-                  >
-                    {a.title}
-                  </TransitionLink>
-                ))}
-              </div>
+              ×
+            </button>
+          )}
+        </div>
+
+        <div className={pageStyles.browseHead}>
+          <span className={shellStyles.browseCount}>
+            {query
+              ? `${filtered.reduce(
+                  (a, c) => a + c.articles.length,
+                  0
+                )} of ${totalArticles} articles`
+              : `${totalArticles} articles · ${HELP_CATEGORIES.length} categories`}
+          </span>
+        </div>
+
+        <div ref={groupsRef} className={pageStyles.categoriesWrap}>
+          {filtered.length === 0 && (
+            <div className={pageStyles.emptyState}>
+              <div className={pageStyles.emptyStateLabel}>No results</div>
+              <p className={pageStyles.emptyStateText}>
+                Nothing matched &quot;<strong>{query}</strong>&quot;. Try a
+                different search, or{" "}
+                <TransitionLink href="/contact" className={shellStyles.link}>
+                  contact support
+                </TransitionLink>
+                .
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
-      <Footer />
+          )}
+
+          {filtered.map((cat, ci) => (
+            <section key={cat.slug} className={pageStyles.categoryGroup}>
+              <div className={pageStyles.categoryHeader}>
+                <span className={pageStyles.categoryNum}>
+                  {String(ci + 1).padStart(2, "0")}
+                </span>
+                <h2 className={pageStyles.categoryTitle}>{cat.title}</h2>
+                <span className={pageStyles.categoryCount}>
+                  {cat.articles.length}{" "}
+                  {cat.articles.length === 1 ? "article" : "articles"}
+                </span>
+              </div>
+              <ul className={pageStyles.articleList}>
+                {cat.articles.map((article) => (
+                  <li key={article.slug}>
+                    <TransitionLink
+                      href={`/help/${article.slug}`}
+                      className={pageStyles.articleLink}
+                    >
+                      <span className={pageStyles.articleTitle}>
+                        {article.title}
+                      </span>
+                      <span className={pageStyles.articleArrow}>→</span>
+                    </TransitionLink>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+
+        {/* Bottom CTA — when search doesn't help */}
+        <div className={pageStyles.bottomCta}>
+          <div className={pageStyles.bottomCtaLabel}>Can&apos;t find it?</div>
+          <p className={pageStyles.bottomCtaText}>
+            Our team responds within 4 hours during business hours.
+          </p>
+          <TransitionLink href="/contact" className={pageStyles.bottomCtaLink}>
+            Contact support →
+          </TransitionLink>
+        </div>
+      </ResourceShell>
+
       <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
-    </div>
+    </>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import useGlowCards from "@/lib/useGlowCards";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
@@ -31,88 +30,22 @@ const WORKFLOW = [
   },
 ];
 
-export default function IndustryPage({ slug, onDemo }) {
-  const industry = INDUSTRIES.find((i) => i.slug === slug);
-  const heroRef = useRef(null);
-  const ctaRef = useRef(null);
-  const challengeGlow = useGlowCards();
-  const solutionGlow = useGlowCards();
-  const workflowGlow = useGlowCards();
-  const [activeWorkflow, setActiveWorkflow] = useState(0);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (!industry) return;
-    const hero = heroRef.current;
-    if (!hero) return;
-
-    const hLetters = hero.querySelectorAll(`.${styles.heroLetter}`);
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-    tl.to(
-      hLetters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.5, stagger: 0.016 },
-      0.2
-    );
-    tl.to(
-      hero.querySelector(`.${styles.heroDesc}`),
-      { opacity: 1, y: 0, duration: 0.6 },
-      0.5
-    );
-    tl.to(
-      hero.querySelector(`.${styles.heroStats}`),
-      { opacity: 1, y: 0, duration: 0.5 },
-      0.7
-    );
-
-    document.querySelectorAll("[data-reveal]").forEach((el) => {
-      gsap.to(el, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: el, start: "top 82%" },
-      });
-    });
-
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, [slug, industry]);
-
-  if (!industry) {
-    return (
-      <div className={styles.page}>
-        <Nav onDemo={onDemo} />
-        <div style={{ padding: "200px 48px", textAlign: "center" }}>
-          <h1
-            style={{
-              color: "var(--white)",
-              fontFamily: "var(--display)",
-              fontSize: 28,
-            }}
-          >
-            Industry not found
-          </h1>
-          <TransitionLink href="/" className={styles.backLink}>
-            Back to home
-          </TransitionLink>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  function renderHeadline() {
-    return industry.headline.map((line, li) => (
-      <span key={li} className={styles.heroLine}>
-        {line.split(" ").map((word, wi, arr) => {
+/* Render the headline with optional accent word in italic gold */
+function renderHeadline(lines, accentWord) {
+  return lines.map((line, li) => (
+    <span key={li} className={styles.heroLine}>
+      <span className={styles.heroLineInner}>
+        {line.split(" ").map((word, wi) => {
           const isAccent =
-            word.replace(/[.,]/, "") ===
-            industry.accentWord.replace(/[.,]/, "");
+            accentWord &&
+            word.replace(/[.,!?]/g, "").toLowerCase() ===
+              accentWord.toLowerCase();
           return (
             <span key={wi}>
               <span className="word">
                 {word.split("").map((c, ci) => (
                   <span
-                    key={ci}
+                    key={`${li}-${wi}-${ci}`}
                     className={`${styles.heroLetter} ${
                       isAccent ? styles.heroLetterAccent : ""
                     }`}
@@ -121,210 +54,339 @@ export default function IndustryPage({ slug, onDemo }) {
                   </span>
                 ))}
               </span>
-              {wi < arr.length - 1 && <span className={styles.heroSpace} />}
+              {wi < line.split(" ").length - 1 && (
+                <span className={styles.heroSpace} />
+              )}
             </span>
           );
         })}
       </span>
-    ));
+    </span>
+  ));
+}
+
+export default function IndustryPage({ slug, onDemo }) {
+  const industry = INDUSTRIES.find((i) => i.slug === slug);
+  const pageRef = useRef(null);
+  const heroRef = useRef(null);
+
+  const indexNum = industry
+    ? INDUSTRIES.findIndex((i) => i.slug === slug) + 1
+    : 0;
+  const totalIndustries = INDUSTRIES.length;
+
+  /* 3 other industries to cross-link */
+  const others = industry
+    ? INDUSTRIES.filter((i) => i.slug !== slug).slice(0, 3)
+    : [];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (!industry || !heroRef.current) return;
+
+    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+    /* Hero index strip */
+    tl.fromTo(
+      `.${styles.heroIndex}`,
+      { opacity: 0, y: -8 },
+      { opacity: 1, y: 0, duration: 0.4 },
+      0
+    );
+
+    /* Per-letter title */
+    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+    tl.to(
+      letters,
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+      0.15
+    );
+
+    /* Sub */
+    tl.fromTo(
+      `.${styles.heroSub}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.55 },
+      0.55
+    );
+
+    /* CTAs */
+    tl.fromTo(
+      `.${styles.heroCTA}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.5 },
+      0.7
+    );
+
+    /* Sections — each section's content fades up, the big numeral scales-and-fades */
+    if (!pageRef.current) return;
+    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
+    sections.forEach((sec) => {
+      const num = sec.querySelector(`.${styles.sectionNum}`);
+      const content = sec.querySelectorAll(
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.pair}, .${styles.workflowStep}, .${styles.stat}, .${styles.quote}`
+      );
+
+      if (num) {
+        gsap.fromTo(
+          num,
+          { opacity: 0, x: -20 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.9,
+            ease: "power3.out",
+            scrollTrigger: { trigger: sec, start: "top 80%" },
+          }
+        );
+      }
+      if (content.length > 0) {
+        gsap.fromTo(
+          content,
+          { opacity: 0, y: 16 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.55,
+            stagger: 0.07,
+            ease: "power3.out",
+            scrollTrigger: { trigger: sec, start: "top 78%" },
+          }
+        );
+      }
+    });
+
+    /* Cross-link cards */
+    gsap.fromTo(
+      `.${styles.crossCard}`,
+      { opacity: 0, y: 14 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        stagger: 0.08,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: `.${styles.crossLinks}`,
+          start: "top 80%",
+        },
+      }
+    );
+
+    /* Final CTA */
+    gsap.fromTo(
+      `.${styles.finalCTA}`,
+      { opacity: 0, y: 18 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.7,
+        ease: "power3.out",
+        scrollTrigger: { trigger: `.${styles.finalCTA}`, start: "top 85%" },
+      }
+    );
+
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+  }, [slug, industry]);
+
+  if (!industry) {
+    return (
+      <div className={styles.page}>
+        <Nav onDemo={onDemo} />
+        <div className={styles.notFound}>
+          <div className={styles.notFoundLabel}>404</div>
+          <h1>Industry not found.</h1>
+          <TransitionLink href="/" className={styles.backLink}>
+            ← Back to home
+          </TransitionLink>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
-  // Related industries
-  const related = INDUSTRIES.filter((i) => i.slug !== slug).slice(0, 3);
+  /* Pair challenges with solutions by index */
+  const pairs = industry.challenges.map((ch, i) => ({
+    challenge: ch,
+    solution: industry.solutions[i],
+  }));
 
   return (
-    <div className={styles.page}>
+    <div ref={pageRef} className={styles.page}>
       <Nav onDemo={onDemo} />
 
-      {/* Hero */}
-      <div ref={heroRef} className={styles.hero}>
-        <TransitionLink href="/#industries" className={styles.backNav}>
-          ← Industries
-        </TransitionLink>
-        <h1 className="heading-lg">{renderHeadline()}</h1>
-        <p className={styles.heroDesc}>{industry.heroDesc}</p>
-        <div className={styles.heroStats}>
-          {industry.stats.map((s, i) => (
-            <div key={i} className={styles.statItem}>
-              <div className={styles.heroStatVal}>{s.val}</div>
-              <div className={styles.heroStatLabel}>{s.label}</div>
-            </div>
-          ))}
+      {/* ── HERO ── */}
+      <section ref={heroRef} className={styles.hero}>
+        <div className={styles.heroIndex}>
+          <span>Industries</span>
+          <span className={styles.heroIndexDot} />
+          <span>
+            {String(indexNum).padStart(2, "0")} /{" "}
+            {String(totalIndustries).padStart(2, "0")}
+          </span>
+          <span className={styles.heroIndexDot} />
+          <span className={styles.heroIndexCategory}>{industry.title}</span>
         </div>
-      </div>
 
-      {/* Challenges */}
-      <div className={styles.gridSection}>
-        <div className={styles.sectionTag}>
-          <div className={styles.tagDot} />
-          <span>The challenges</span>
-        </div>
-        <h2 className={styles.gridTitle}>
-          What makes {industry.title.toLowerCase()} hard.
-        </h2>
-        <div ref={challengeGlow} className={`${styles.grid} glow-cards`}>
-          {industry.challenges.map((c, i) => (
-            <div
-              key={i}
-              data-reveal=""
-              className={`${styles.gridCard} glow-card`}
-              style={{ opacity: 0, transform: "translateY(24px)" }}
-            >
-              <div className="glow-card-border" />
-              <div className={`${styles.gridCardInner} glow-card-content`}>
-                <div className={styles.gridCardNum}>0{i + 1}</div>
-                <h3 className={styles.gridCardTitle}>{c.title}</h3>
-                <p className={styles.gridCardDesc}>{c.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+        <h1 className={styles.heroTitle}>
+          {renderHeadline(industry.headline, industry.accentWord)}
+        </h1>
 
-      {/* Workflow */}
-      <div className={styles.gridSection}>
-        <div className={styles.sectionTag}>
-          <div className={styles.tagDot} />
-          <span>Warehouse workflow</span>
+        <p className={styles.heroSub}>{industry.heroDesc}</p>
+
+        <div className={styles.heroCTA}>
+          <CornerButton onClick={onDemo}>Talk to our team</CornerButton>
+          <TransitionLink href="/#pricing" className={styles.heroSecondary}>
+            See pricing →
+          </TransitionLink>
         </div>
-        <h2 className={styles.gridTitle}>
-          How Nimbus handles your daily operations.
-        </h2>
-        <div ref={workflowGlow} className={`${styles.workflowGrid} glow-cards`}>
-          {WORKFLOW.map((w, i) => (
-            <div
-              key={i}
-              data-reveal=""
-              className={`${styles.workflowCard} glow-card ${
-                activeWorkflow === i ? styles.workflowActive : ""
-              }`}
-              style={{
-                opacity: 0,
-                transform: "translateY(20px)",
-                cursor: "pointer",
-              }}
-              onMouseEnter={() => setActiveWorkflow(i)}
-            >
-              <div className="glow-card-border" />
-              <div className={`${styles.workflowInner} glow-card-content`}>
-                <div className={styles.workflowNum}>0{i + 1}</div>
-                <div className={styles.workflowLabel}>{w.label}</div>
-                <p className={styles.workflowDesc}>{w.desc}</p>
-                {/* Progress connector */}
-                {i < WORKFLOW.length - 1 && (
-                  <div className={styles.workflowConnector}>
-                    <div
-                      className={styles.workflowConnectorLine}
-                      style={{
-                        background:
-                          activeWorkflow > i
-                            ? "var(--accent)"
-                            : "rgba(255,255,255,0.06)",
-                      }}
-                    />
+      </section>
+
+      {/* ── 01 · THE FIT ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionNum} aria-hidden="true">
+          01
+        </div>
+        <div className={styles.sectionContent}>
+          <div className={styles.sectionLabel}>The fit</div>
+          <h2 className={styles.sectionTitle}>
+            Every industry has its quirks. Here are yours.
+          </h2>
+          <p className={styles.sectionDesc}>
+            We&apos;ve mapped the operational quirks of{" "}
+            {industry.title.toLowerCase()} against Nimbus capabilities. Each
+            challenge here pairs with how we handle it.
+          </p>
+
+          <div className={styles.pairs}>
+            {pairs.map((pair, i) => (
+              <div key={i} className={styles.pair}>
+                <div className={styles.pairChallenge}>
+                  <div className={styles.pairLabel}>The challenge</div>
+                  <h3 className={styles.pairTitle}>{pair.challenge.title}</h3>
+                  <p className={styles.pairText}>{pair.challenge.desc}</p>
+                </div>
+                <div className={styles.pairDivider}>
+                  <span className={styles.pairArrow}>→</span>
+                </div>
+                <div className={styles.pairSolution}>
+                  <div className={styles.pairLabelAccent}>
+                    How Nimbus handles it
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Solutions */}
-      <div className={styles.gridSection}>
-        <div className={styles.sectionTag}>
-          <div className={styles.tagDot} />
-          <span>How Nimbus helps</span>
-        </div>
-        <h2 className={styles.gridTitle}>Purpose-built for your operation.</h2>
-        <div ref={solutionGlow} className={`${styles.grid} glow-cards`}>
-          {industry.solutions.map((s, i) => (
-            <div
-              key={i}
-              data-reveal=""
-              className={`${styles.gridCard} glow-card`}
-              style={{ opacity: 0, transform: "translateY(24px)" }}
-            >
-              <div className="glow-card-border" />
-              <div className={`${styles.gridCardInner} glow-card-content`}>
-                <div className={styles.gridCardNum}>0{i + 1}</div>
-                <h3 className={styles.gridCardTitle}>{s.title}</h3>
-                <p className={styles.gridCardDesc}>{s.desc}</p>
-                <div className={styles.gridCardStat}>
-                  <span className={styles.gridCardStatVal}>{s.stat}</span>
-                  <span className={styles.gridCardStatLabel}>
-                    {s.statLabel}
-                  </span>
+                  {pair.solution && (
+                    <>
+                      <div className={styles.pairStatRow}>
+                        <span className={styles.pairStatVal}>
+                          {pair.solution.stat}
+                        </span>
+                        <span className={styles.pairStatLabel}>
+                          {pair.solution.statLabel}
+                        </span>
+                      </div>
+                      <h3 className={styles.pairTitle}>
+                        {pair.solution.title}
+                      </h3>
+                      <p className={styles.pairText}>{pair.solution.desc}</p>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* ROI snapshot */}
-      <div
-        className={styles.roiSection}
-        data-reveal=""
-        style={{ opacity: 0, transform: "translateY(20px)" }}
-      >
-        <div className={styles.sectionTag}>
-          <div className={styles.tagDot} />
-          <span>ROI snapshot</span>
+      {/* ── 02 · THE WORKFLOW ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionNum} aria-hidden="true">
+          02
         </div>
-        <div className={styles.roiGrid}>
-          {[
-            { val: "73%", label: "Fewer mispicks in 90 days" },
-            { val: "60%", label: "Faster cycle counts" },
-            { val: "2.5x", label: "ROI within first year" },
-            { val: "< 1 day", label: "Team onboarding time" },
-          ].map((r, i) => (
-            <div key={i} className={styles.roiCard}>
-              <div className={styles.roiVal}>{r.val}</div>
-              <div className={styles.roiLabel}>{r.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+        <div className={styles.sectionContent}>
+          <div className={styles.sectionLabel}>The workflow</div>
+          <h2 className={styles.sectionTitle}>From dock to door.</h2>
+          <p className={styles.sectionDesc}>
+            Every action a {industry.title.toLowerCase()} warehouse takes,
+            mapped to a Nimbus flow.
+          </p>
 
-      {/* Related */}
-      <div className={styles.relatedSection}>
-        <div className={styles.sectionTag}>
-          <div className={styles.tagDot} />
-          <span>Other industries</span>
+          <div className={styles.workflow}>
+            {WORKFLOW.map((w, i) => (
+              <div key={i} className={styles.workflowStep}>
+                <div className={styles.workflowStepNum}>
+                  {String(i + 1).padStart(2, "0")}
+                </div>
+                <h4 className={styles.workflowStepTitle}>{w.label}</h4>
+                <p className={styles.workflowStepDesc}>{w.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className={styles.relatedGrid}>
-          {related.map((r) => (
+      </section>
+
+      {/* ── 03 · BY THE NUMBERS ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionNum} aria-hidden="true">
+          03
+        </div>
+        <div className={styles.sectionContent}>
+          <div className={styles.sectionLabel}>By the numbers</div>
+          <h2 className={styles.sectionTitle}>What customers see.</h2>
+          <p className={styles.sectionDesc}>
+            Averages across {industry.title} customers in their first 12 months.
+          </p>
+
+          <div className={styles.stats}>
+            {industry.stats.map((s, i) => (
+              <div key={i} className={styles.stat}>
+                <div className={styles.statVal}>{s.val}</div>
+                <div className={styles.statLabel}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CROSS-LINKS ── */}
+      <section className={styles.crossLinks}>
+        <div className={styles.crossLinksLabel}>
+          Industries similar to yours
+        </div>
+        <div className={styles.crossLinksGrid}>
+          {others.map((o) => (
             <TransitionLink
-              key={r.slug}
-              href={`/industry/${r.slug}`}
-              className={styles.relatedCard}
+              key={o.slug}
+              href={`/industries/${o.slug}`}
+              className={styles.crossCard}
             >
-              <div className={styles.relatedTitle}>{r.title}</div>
-              <p className={styles.relatedDesc}>{r.heroDesc}</p>
+              <div className={styles.crossCardMeta}>{o.title}</div>
+              <div className={styles.crossCardTitle}>
+                {o.headline.join(" ")}
+              </div>
+              <div className={styles.crossCardArrow}>→</div>
             </TransitionLink>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* CTA */}
-      <div
-        ref={ctaRef}
-        className={styles.ctaBanner}
-        data-reveal=""
-        style={{ opacity: 0, transform: "translateY(24px)" }}
-      >
-        <h2 className={styles.ctaTitle}>{industry.cta}</h2>
-        <p className={styles.ctaDesc}>
-          See how Nimbus works for {industry.title.toLowerCase()} operations.
-        </p>
-        <CornerButton variant="primary" onClick={onDemo}>
-          Request a Demo
-        </CornerButton>
-        <TransitionLink href="/#industries" className={styles.backLink}>
-          View all industries
-        </TransitionLink>
-      </div>
+      {/* ── FINAL CTA ── */}
+      <section className={styles.finalCTA}>
+        <div className={styles.finalCTAInner}>
+          <div className={styles.finalCTALabel}>Ready when you are</div>
+          <h2 className={styles.finalCTATitle}>
+            See Nimbus running in a {industry.title.toLowerCase()} warehouse.
+          </h2>
+          <p className={styles.finalCTADesc}>
+            Live demo with a warehouse engineer. 30 minutes. We bring the data,
+            you bring the questions.
+          </p>
+          <div className={styles.finalCTAButtons}>
+            <CornerButton onClick={onDemo}>Request a demo</CornerButton>
+            <TransitionLink href="/contact" className={styles.heroSecondary}>
+              Or just reach out →
+            </TransitionLink>
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>

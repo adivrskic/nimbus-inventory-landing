@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   BLOG — page-specific styles only.
+   Shell + reading typography in ResourceShell.module.css.
+   
+   Owns: post footer meta row, related posts list, not-found CTA.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────
+   POST FOOTER (publish/category/read-time meta)
+───────────────────────────────────────────────────── */
+.postFooter {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(242, 240, 239, 0.08);
+}
+.postFooterRow {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+.postFooterMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.postFooterLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.35);
+}
+.postFooterValue {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--white);
+  letter-spacing: -0.1px;
+}
+
+/* ─────────────────────────────────────────────────────
+   RELATED POSTS
+───────────────────────────────────────────────────── */
+.related {
+  margin-top: 64px;
+  padding-top: 36px;
+  border-top: 1px solid rgba(242, 240, 239, 0.08);
+}
+.relatedLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.relatedList {
+  display: flex;
+  flex-direction: column;
+}
+.relatedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.05);
+  text-decoration: none;
+  transition: padding 0.2s;
+}
+.relatedItem:last-child {
+  border-bottom: none;
+}
+.relatedItem:hover {
+  padding-left: 8px;
+}
+.relatedItemTitle {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  letter-spacing: -0.3px;
+  transition: color 0.2s;
+  flex: 1;
+  min-width: 0;
+}
+.relatedItem:hover .relatedItemTitle {
+  color: var(--accent);
+}
+.relatedItemMeta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(242, 240, 239, 0.35);
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+   NOT FOUND
+───────────────────────────────────────────────────── */
+.notFoundCta {
+  padding: 32px 0;
+}
+
+@media (max-width: 640px) {
+  .postFooterRow {
+    gap: 24px;
+  }
+  .relatedItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

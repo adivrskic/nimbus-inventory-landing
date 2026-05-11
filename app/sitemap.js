@@ -97,6 +97,18 @@ export default function sitemap() {
       priority: 1.0,
     },
     {
+      url: `${SITE_URL}/pricing`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${SITE_URL}/trust`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${SITE_URL}/blog`,
       lastModified: now,
       changeFrequency: "weekly",

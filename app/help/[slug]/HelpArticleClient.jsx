@@ -1,254 +1,209 @@
 "use client";
-import { useEffect, useRef, useState, useCallback, use } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
+import {
+  ResourceShell,
+  ResourceTOC,
+  useResourceSectionAnimations,
+} from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import gsap from "gsap";
-import Nav from "@/components/Nav/Nav";
-import Footer from "@/components/Footer/Footer";
 import DemoModal from "@/components/DemoModal/DemoModal";
+import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
+import pageStyles from "./HelpArticle.module.css";
 import { HELP_CATEGORIES } from "@/lib/helpData";
 
-// Flatten all articles with their category
-const ALL_ARTICLES = HELP_CATEGORIES.flatMap((cat) =>
-  cat.articles.map((a) => ({
-    ...a,
-    category: cat.title,
-    categorySlug: cat.slug,
-  }))
-);
+const slugify = (s) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/* Flatten + index articles for easy lookup + cross-category links */
+function findArticle(slug) {
+  for (const cat of HELP_CATEGORIES) {
+    const article = cat.articles.find((a) => a.slug === slug);
+    if (article) return { article, category: cat };
+  }
+  return null;
+}
 
 export default function HelpArticleClient({ slug }) {
-  const heroRef = useRef(null);
   const contentRef = useRef(null);
+  useResourceSectionAnimations(contentRef);
+
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
-  const article = ALL_ARTICLES.find((a) => a.slug === slug);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (!heroRef.current) return;
-    gsap.to(heroRef.current.querySelector("h1"), {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: "power3.out",
-      delay: 0.2,
-    });
-    gsap.to(heroRef.current.querySelector("[data-meta]"), {
-      opacity: 1,
-      y: 0,
-      duration: 0.5,
-      ease: "power3.out",
-      delay: 0.3,
-    });
-    if (contentRef.current)
-      gsap.to(contentRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        delay: 0.4,
-      });
-  }, [slug]);
+  const [feedback, setFeedback] = useState(null);
 
-  if (!article) {
+  const found = findArticle(slug);
+  const post = found?.article;
+  const category = found?.category;
+
+  /* Sections derived from h2 blocks */
+  const sections = useMemo(() => {
+    if (!post) return [];
+    return post.content
+      .filter((b) => b.type === "h2")
+      .map((b) => ({ id: slugify(b.text), label: b.text }));
+  }, [post]);
+
+  /* Related articles: same category, excluding current, first 4 */
+  const related = useMemo(() => {
+    if (!category || !post) return [];
+    return category.articles.filter((a) => a.slug !== post.slug).slice(0, 4);
+  }, [category, post]);
+
+  if (!post) {
     return (
-      <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
-        <Nav onDemo={openDemo} />
-        <div style={{ padding: "200px 48px", textAlign: "center" }}>
-          <h1
-            style={{
-              fontFamily: "var(--display)",
-              fontSize: 28,
-              color: "var(--white)",
-            }}
-          >
-            Article not found
-          </h1>
-          <TransitionLink
-            href="/help"
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 12,
-              color: "var(--accent)",
-              textDecoration: "none",
-              marginTop: 20,
-              display: "inline-block",
-            }}
-          >
-            Back to help center
+      <ResourceShell
+        eyebrow="Help Center"
+        title="Article not found."
+        subtitle="The article you're looking for may have moved or been renamed."
+        onDemo={openDemo}
+      >
+        <div className={pageStyles.notFoundCta}>
+          <TransitionLink href="/help" className={shellStyles.link}>
+            ← Back to all articles
           </TransitionLink>
         </div>
-        <Footer />
-      </div>
+      </ResourceShell>
     );
   }
 
-  // Find related articles in same category
-  const related = ALL_ARTICLES.filter(
-    (a) => a.categorySlug === article.categorySlug && a.slug !== slug
-  ).slice(0, 4);
+  /* Group content blocks into sections (intro + one per h2) */
+  const grouped = [];
+  let current = { id: "overview", heading: null, blocks: [] };
+  for (const block of post.content) {
+    if (block.type === "h2") {
+      if (current.blocks.length > 0 || current.heading) grouped.push(current);
+      current = {
+        id: slugify(block.text),
+        heading: block.text,
+        blocks: [],
+      };
+    } else {
+      current.blocks.push(block);
+    }
+  }
+  if (current.blocks.length > 0 || current.heading) grouped.push(current);
 
-  return (
-    <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
-      <Nav onDemo={openDemo} />
-      <div
-        ref={heroRef}
-        style={{ padding: "160px 48px 40px", maxWidth: 720, margin: "0 auto" }}
-      >
-        <TransitionLink
-          href="/help"
-          style={{
-            fontFamily: "var(--mono)",
-            fontSize: 10,
-            letterSpacing: 1,
-            color: "rgba(255,255,255,0.3)",
-            textDecoration: "none",
-            display: "block",
-            marginBottom: 24,
-          }}
-        >
-          ← Back to help center
-        </TransitionLink>
-        <div
-          data-meta=""
-          style={{
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-            marginBottom: 20,
-            opacity: 0,
-            transform: "translateY(10px)",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 9,
-              letterSpacing: 2,
-              textTransform: "uppercase",
-              color: "var(--accent)",
-            }}
-          >
-            {article.category}
-          </span>
-        </div>
-        <h1
-          style={{
-            fontFamily: "var(--display)",
-            fontSize: "clamp(24px, 3.5vw, 38px)",
-            fontWeight: 700,
-            color: "var(--white)",
-            letterSpacing: "-0.5px",
-            lineHeight: 1.2,
-            opacity: 0,
-            transform: "translateY(20px)",
-          }}
-        >
-          {article.title}
-        </h1>
-      </div>
-      <div
-        ref={contentRef}
-        style={{
-          maxWidth: 720,
-          margin: "0 auto",
-          padding: "0 48px 80px",
-          opacity: 0,
-          transform: "translateY(16px)",
-        }}
-      >
-        {article.content.map((block, i) => {
-          if (block.type === "h2")
-            return (
-              <h2
-                key={i}
-                style={{
-                  fontFamily: "var(--display)",
-                  fontSize: 18,
-                  fontWeight: 600,
-                  color: "var(--white)",
-                  marginTop: 36,
-                  marginBottom: 10,
-                }}
-              >
-                {block.text}
-              </h2>
-            );
-          return (
-            <p
-              key={i}
-              style={{
-                fontFamily: "var(--display)",
-                fontSize: 15,
-                lineHeight: 1.9,
-                color: "rgba(255,255,255,0.4)",
-                marginBottom: 16,
-              }}
-            >
-              {block.text}
-            </p>
-          );
-        })}
+  const renderBlock = (b, i) => {
+    if (b.type === "p")
+      return (
+        <p key={i} className={shellStyles.p}>
+          {b.text}
+        </p>
+      );
+    if (b.type === "h3")
+      return (
+        <h3 key={i} className={shellStyles.h3}>
+          {b.text}
+        </h3>
+      );
+    return null;
+  };
 
-        {/* Related articles */}
-        {related.length > 0 && (
-          <div
-            style={{
-              marginTop: 60,
-              paddingTop: 40,
-              borderTop: "1px solid rgba(255,255,255,0.04)",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--mono)",
-                fontSize: 9,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                marginBottom: 20,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: "50%",
-                  background: "var(--accent)",
-                }}
-              />
-              Related articles
+  const hasTOC = sections.length > 0;
+
+  /* Single content block, used in both layouts (with TOC and without) */
+  const content = (
+    <main ref={contentRef} className={shellStyles.content}>
+      {grouped.map((group) => (
+        <section key={group.id} id={group.id} className={shellStyles.section}>
+          {group.heading && <h2 className={shellStyles.h2}>{group.heading}</h2>}
+          {group.blocks.map((b, i) => renderBlock(b, i))}
+        </section>
+      ))}
+
+      {/* Was this helpful? */}
+      <div className={pageStyles.feedback}>
+        {feedback === null ? (
+          <>
+            <div className={pageStyles.feedbackLabel}>
+              Was this article helpful?
             </div>
+            <div className={pageStyles.feedbackButtons}>
+              <button
+                type="button"
+                onClick={() => setFeedback("yes")}
+                className={pageStyles.feedbackBtn}
+              >
+                Yes, it helped
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedback("no")}
+                className={pageStyles.feedbackBtn}
+              >
+                Not really
+              </button>
+            </div>
+          </>
+        ) : feedback === "yes" ? (
+          <div className={pageStyles.feedbackResult}>
+            <span className={pageStyles.feedbackResultDot} />
+            <span>Thanks for the feedback.</span>
+          </div>
+        ) : (
+          <div className={pageStyles.feedbackResultRow}>
+            <div className={pageStyles.feedbackResult}>
+              <span className={pageStyles.feedbackResultDot} />
+              <span>Sorry this didn&apos;t help.</span>
+            </div>
+            <TransitionLink
+              href="/contact"
+              className={pageStyles.feedbackContactLink}
+            >
+              Talk to support →
+            </TransitionLink>
+          </div>
+        )}
+      </div>
+
+      {related.length > 0 && (
+        <div className={pageStyles.related}>
+          <div className={pageStyles.relatedLabel}>
+            Other articles in {category.title}
+          </div>
+          <div className={pageStyles.relatedList}>
             {related.map((r) => (
               <TransitionLink
                 key={r.slug}
                 href={`/help/${r.slug}`}
-                style={{
-                  display: "block",
-                  padding: "12px 0",
-                  borderBottom: "1px solid rgba(255,255,255,0.03)",
-                  fontFamily: "var(--display)",
-                  fontSize: 14,
-                  color: "rgba(255,255,255,0.35)",
-                  textDecoration: "none",
-                  transition: "color 0.3s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "var(--accent)")}
-                onMouseLeave={(e) =>
-                  (e.target.style.color = "rgba(255,255,255,0.35)")
-                }
+                className={pageStyles.relatedItem}
               >
-                {r.title}
+                <span className={pageStyles.relatedItemTitle}>{r.title}</span>
+                <span className={pageStyles.relatedItemArrow}>→</span>
               </TransitionLink>
             ))}
           </div>
+        </div>
+      )}
+    </main>
+  );
+
+  return (
+    <>
+      <ResourceShell
+        topStrip={{
+          text: `Help · ${category.title}`,
+          link: { href: "/help", text: "All articles →" },
+        }}
+        eyebrow={category.title}
+        title={post.title}
+        onDemo={openDemo}
+      >
+        {hasTOC ? (
+          <div className={shellStyles.body}>
+            <ResourceTOC sections={sections} label="In this article" />
+            {content}
+          </div>
+        ) : (
+          content
         )}
-      </div>
-      <Footer />
+      </ResourceShell>
+
       <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
-    </div>
+    </>
   );
 }

@@ -9,6 +9,18 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function LenisProvider({ children }) {
   useEffect(() => {
+    /**
+     * Skip smooth scroll for users who prefer reduced motion.
+     * Native browser scroll is more accessible and predictable for these users.
+     */
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
     const lenis = new Lenis({
       lerp: 0.06,
       smoothWheel: true,

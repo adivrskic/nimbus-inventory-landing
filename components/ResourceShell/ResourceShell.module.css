@@ -1,0 +1,643 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   RESOURCE SHELL — Shared styles
+   ───────────────────────────────────────────────────────────────────────
+   Used by: ResourceShell.jsx, ResourceTOC.jsx, and any Read or Browse
+   page in the Resource page type (API Docs, Blog list/post, Help
+   list/article).
+   
+   Owns:
+   - Page chrome (top strip, shell padding, header)
+   - 2-column body layout (sidebar + content)
+   - Sidebar TOC
+   - Content typography (h2, h3, p, links, inline code)
+   - Code blocks (single + duo)
+   - Definition lists
+   - Browse grid (for list pages)
+   - Card style (for browse items)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────
+   PAGE WRAPPER
+───────────────────────────────────────────────────── */
+.page {
+  background: var(--dark);
+  min-height: 100vh;
+}
+
+/* ─────────────────────────────────────────────────────
+   TOP STATUS STRIP
+   Thin gold-tinted band under nav. Pages opt in.
+───────────────────────────────────────────────────── */
+.topStrip {
+  background: rgba(212, 168, 83, 0.04);
+  border-bottom: 1px solid rgba(212, 168, 83, 0.12);
+  padding: 10px 24px;
+  margin-top: 70px; /* clear fixed nav */
+  opacity: 0;
+}
+.topStripInner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  flex-wrap: wrap;
+}
+.topStripDot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 168, 83, 0.4);
+  flex-shrink: 0;
+}
+.topStripText {
+  color: rgba(242, 240, 239, 0.65);
+}
+.topStripLink {
+  margin-left: auto;
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.25s;
+}
+.topStripLink:hover {
+  opacity: 0.75;
+}
+
+/* ─────────────────────────────────────────────────────
+   SHELL
+───────────────────────────────────────────────────── */
+.shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 48px 100px;
+}
+/* When there's no top strip, shell needs to clear the nav itself */
+.shellNoStrip {
+  padding-top: 140px;
+}
+
+/* ─────────────────────────────────────────────────────
+   HEADER
+───────────────────────────────────────────────────── */
+.header {
+  padding-bottom: 56px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  margin-bottom: 60px;
+}
+.headerEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+  opacity: 0;
+}
+.headerTitle {
+  font-family: var(--display);
+  font-size: clamp(36px, 4.5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  color: var(--white);
+  line-height: 1.05;
+  margin-bottom: 20px;
+}
+/* Per-letter reveal infrastructure */
+.headLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.headLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+  color: var(--white);
+}
+.headSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+.headerSub {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.5);
+  max-width: 620px;
+  margin: 0 0 36px;
+  opacity: 0;
+}
+
+/* Optional metadata grid — pages opt in via the metadata prop */
+.specGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+  border-left: 1px solid rgba(242, 240, 239, 0.06);
+}
+.specCell {
+  padding: 16px 20px;
+  border-right: 1px solid rgba(242, 240, 239, 0.06);
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+  opacity: 0;
+}
+.specLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.35);
+  margin-bottom: 6px;
+}
+.specValue {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--white);
+  letter-spacing: -0.1px;
+}
+
+/* ─────────────────────────────────────────────────────
+   2-COLUMN BODY (used by Read pages)
+───────────────────────────────────────────────────── */
+.body {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+/* ─────────────────────────────────────────────────────
+   SIDEBAR TOC
+───────────────────────────────────────────────────── */
+.sidebar {
+  position: relative;
+  opacity: 0;
+}
+.sidebarSticky {
+  position: sticky;
+  top: 100px;
+}
+.sidebarLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.3);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.05);
+}
+.sidebarList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebarLink {
+  display: block;
+  padding: 7px 12px 7px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(242, 240, 239, 0.45);
+  text-decoration: none;
+  border-left: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  letter-spacing: -0.1px;
+}
+.sidebarLink:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.02);
+}
+.sidebarLinkActive {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(212, 168, 83, 0.04);
+}
+.sidebarLinkActive:hover {
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+   CONTENT COLUMN
+───────────────────────────────────────────────────── */
+.content {
+  min-width: 0;
+  max-width: 760px;
+}
+
+.section {
+  padding-bottom: 64px;
+  margin-bottom: 64px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
+  scroll-margin-top: 90px;
+}
+.section:last-child {
+  border-bottom: none;
+  padding-bottom: 40px;
+  margin-bottom: 0;
+}
+
+.h2 {
+  position: relative;
+  font-family: var(--display);
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  opacity: 0;
+}
+.h2::before {
+  content: "#";
+  position: absolute;
+  left: -28px;
+  top: 0;
+  font-family: var(--display);
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.h2:hover::before {
+  opacity: 0.55;
+}
+
+.h3 {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--white);
+  line-height: 1.3;
+  margin: 32px 0 12px;
+  opacity: 0;
+}
+
+.p {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.75;
+  color: rgba(242, 240, 239, 0.7);
+  margin: 0 0 18px;
+  opacity: 0;
+  text-wrap: pretty;
+}
+.p:last-child {
+  margin-bottom: 0;
+}
+.p strong {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.3);
+  transition: border-color 0.2s, color 0.2s;
+}
+.link:hover {
+  border-bottom-color: var(--accent);
+}
+
+.inlineCode {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(242, 240, 239, 0.06);
+  color: var(--white);
+  letter-spacing: -0.1px;
+}
+
+/* ─────────────────────────────────────────────────────
+   CODE BLOCKS
+───────────────────────────────────────────────────── */
+.codeBlock {
+  margin-top: 24px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(242, 240, 239, 0.07);
+  overflow: hidden;
+  opacity: 0;
+}
+.codeBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  background: rgba(255, 255, 255, 0.015);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+.codeBarLabel {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.4);
+}
+.codeBarMethod {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.codeBarPath {
+  color: rgba(242, 240, 239, 0.75);
+}
+.codePre {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 18px 20px;
+  color: rgba(242, 240, 239, 0.85);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.codeDuo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 24px;
+  opacity: 0;
+}
+.codeDuo .codeBlock {
+  margin-top: 0;
+  opacity: 1;
+}
+
+/* Syntax-color spans */
+.cMethod {
+  color: var(--accent);
+  font-weight: 600;
+}
+.cKey {
+  color: #b8d0ff;
+}
+.cStr {
+  color: #e8c596;
+}
+.cNum {
+  color: #c9a8e8;
+}
+.cBool {
+  color: #c9a8e8;
+  font-style: italic;
+}
+.cComment {
+  color: rgba(242, 240, 239, 0.3);
+  font-style: italic;
+}
+.cMuted {
+  color: rgba(242, 240, 239, 0.55);
+}
+
+/* ─────────────────────────────────────────────────────
+   DEFINITION LIST
+───────────────────────────────────────────────────── */
+.dl {
+  margin: 24px 0 0;
+  padding: 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.05);
+  opacity: 0;
+}
+.dlRow {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 32px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
+}
+.dlRow:last-child {
+  border-bottom: none;
+}
+.dt {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: -0.2px;
+}
+.dd {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+   INLINE NOTE / CALLOUT
+   Gold-tinted box with left accent border. Used for inline CTAs,
+   sidebars, "next-step" prompts embedded inside content.
+───────────────────────────────────────────────────── */
+.inlineNote {
+  margin-top: 28px;
+  padding: 22px 24px;
+  background: rgba(212, 168, 83, 0.03);
+  border: 1px solid rgba(212, 168, 83, 0.15);
+  border-left: 2px solid var(--accent);
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+   BROWSE GRID (for list pages — Blog list, Help list)
+   Single-column wide layout; cards stack with hairlines.
+───────────────────────────────────────────────────── */
+.browse {
+  margin-top: 8px;
+}
+.browseHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding-bottom: 18px;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
+  flex-wrap: wrap;
+}
+.browseCount {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.35);
+}
+.browseFilters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.browseFilter {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.5);
+  background: transparent;
+  border: 1px solid rgba(242, 240, 239, 0.1);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.browseFilter:hover {
+  color: var(--white);
+  border-color: rgba(242, 240, 239, 0.2);
+}
+.browseFilterActive {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.05);
+}
+.browseFilterActive:hover {
+  color: var(--accent);
+}
+
+.browseList {
+  display: flex;
+  flex-direction: column;
+}
+
+.browseItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: 48px;
+  align-items: start;
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  text-decoration: none;
+  transition: background 0.25s;
+  opacity: 0;
+}
+.browseItem:hover {
+  background: rgba(212, 168, 83, 0.02);
+}
+.browseItemMain {
+  min-width: 0;
+}
+.browseItemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  text-align: right;
+}
+.browseItemCategory {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.browseItemTitle {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--white);
+  line-height: 1.25;
+  margin: 0 0 10px;
+  transition: color 0.2s;
+}
+.browseItem:hover .browseItemTitle {
+  color: var(--accent);
+}
+.browseItemDesc {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.5);
+  margin: 0;
+  max-width: 580px;
+}
+.browseItemDate {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(242, 240, 239, 0.45);
+}
+.browseItemReadTime {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .sidebar {
+    display: none;
+  }
+  .codeDuo {
+    grid-template-columns: 1fr;
+  }
+  .dlRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .specGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .h2::before {
+    display: none;
+  }
+  .browseItem {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .browseItemMeta {
+    align-items: flex-start;
+    text-align: left;
+    flex-direction: row;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topStrip {
+    padding: 10px 16px;
+  }
+  .topStripInner {
+    font-size: 10px;
+    gap: 10px;
+  }
+  .shell {
+    padding: 40px 20px 80px;
+  }
+  .shellNoStrip {
+    padding-top: 110px;
+  }
+  .header {
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+  }
+  .section {
+    padding-bottom: 48px;
+    margin-bottom: 48px;
+  }
+  .codePre {
+    font-size: 11.5px;
+    padding: 14px 16px;
+  }
+}

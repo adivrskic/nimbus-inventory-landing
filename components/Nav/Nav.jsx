@@ -333,6 +333,7 @@ export default function Nav({ onDemo, dark }) {
   const links = [
     { text: "AI Engine", href: "/#ai-engine" },
     { text: "Features", href: "/#features" },
+    { text: "Pricing", href: "/pricing" },
     { text: "Integrations", href: "/#integrations", mega: "integrations" },
     { text: "Industries", href: "/#industries", mega: "industries" },
   ];

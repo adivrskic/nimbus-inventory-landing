@@ -1,0 +1,523 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TRUST — Conversion type, evolved with editorial section numerals
+   ───────────────────────────────────────────────────────────────────────
+   Same vocabulary as Contact:
+   - Conversion hero (brackets, per-letter, italic gold accent)
+   - Marketing pattern: huge outlined section numerals
+   - Sharp corners, hairline borders, mono labels
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.page {
+  background: var(--dark);
+  min-height: 100vh;
+  color: var(--white);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────
+     HERO (same chrome as Contact)
+  ───────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 180px 48px 100px;
+  text-align: center;
+}
+.heroBracket {
+  position: absolute;
+  color: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.heroBracketTL {
+  top: 100px;
+  left: 48px;
+}
+.heroBracketBR {
+  bottom: 60px;
+  right: 48px;
+}
+.heroEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
+  opacity: 0;
+}
+.heroTitle {
+  font-family: var(--display);
+  font-size: clamp(64px, 9vw, 132px);
+  font-weight: 700;
+  letter-spacing: -3.5px;
+  line-height: 0.95;
+  margin: 0 0 40px;
+  color: var(--white);
+}
+.heroLine {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.heroLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+}
+.heroLetterAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+.heroSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+.heroSub {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 640px;
+  margin: 0 auto 40px;
+  opacity: 0;
+}
+.heroCTA {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  opacity: 0;
+}
+.heroSecondary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 8px 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+.heroSecondary:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+     SECTIONS — same editorial-numeral pattern
+  ───────────────────────────────────────────────────── */
+.section {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 48px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.section + .section {
+  border-top: 1px solid rgba(242, 240, 239, 0.05);
+}
+.sectionNum {
+  font-family: var(--display);
+  font-size: clamp(140px, 18vw, 260px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -8px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(212, 168, 83, 0.55);
+  text-stroke: 1px rgba(212, 168, 83, 0.55);
+  user-select: none;
+  position: sticky;
+  top: 100px;
+  align-self: start;
+  opacity: 0;
+}
+.sectionContent {
+  min-width: 0;
+}
+.sectionLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.sectionTitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  color: var(--white);
+  margin: 0 0 18px;
+  max-width: 640px;
+  opacity: 0;
+}
+.sectionDesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 48px;
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+     COMPLIANCE GRID
+  ───────────────────────────────────────────────────── */
+.complianceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.complianceItem {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 28px;
+  border: 1px solid rgba(242, 240, 239, 0.08);
+  background: rgba(255, 255, 255, 0.012);
+  transition: border-color 0.25s, background 0.25s;
+  opacity: 0;
+}
+.complianceItem:hover {
+  border-color: rgba(212, 168, 83, 0.3);
+  background: rgba(212, 168, 83, 0.02);
+}
+.complianceHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+}
+.complianceName {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--white);
+}
+.complianceStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #22c55e;
+  white-space: nowrap;
+}
+.complianceStatusDot {
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+.complianceStatusPending {
+  color: var(--accent);
+}
+.complianceStatusPending .complianceStatusDot {
+  background: var(--accent);
+  box-shadow: 0 0 4px rgba(212, 168, 83, 0.5);
+}
+.complianceDesc {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.6);
+  margin: 0;
+  flex: 1;
+}
+.complianceFoot {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.35);
+  padding-top: 10px;
+  border-top: 1px solid rgba(242, 240, 239, 0.04);
+}
+
+/* ─────────────────────────────────────────────────────
+     PRACTICES LIST
+  ───────────────────────────────────────────────────── */
+.practiceList {
+  display: flex;
+  flex-direction: column;
+}
+.practiceItem {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  padding: 28px 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+  align-items: start;
+  opacity: 0;
+}
+.practiceItem:last-child {
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+}
+.practiceNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  padding-top: 6px;
+}
+.practiceTitle {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--white);
+  margin: 0 0 8px;
+}
+.practiceDesc {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.6);
+  margin: 0;
+  max-width: 620px;
+}
+
+/* ─────────────────────────────────────────────────────
+     INFRA SPEC LIST
+  ───────────────────────────────────────────────────── */
+.infraList {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+}
+.infraRow {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 32px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
+  opacity: 0;
+}
+.infraLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.5);
+  margin: 0;
+}
+.infraValue {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--white);
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+     RESPONSIBLE DISCLOSURE
+  ───────────────────────────────────────────────────── */
+.disclosureBlock {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: rgba(212, 168, 83, 0.025);
+  opacity: 0;
+}
+.disclosureCol {
+  padding: 28px 32px 30px;
+  border-right: 1px solid rgba(212, 168, 83, 0.18);
+}
+.disclosureCol:last-child {
+  border-right: none;
+  background: rgba(0, 0, 0, 0.15);
+}
+.disclosureLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.disclosureText {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.7);
+  margin: 0 0 22px;
+}
+.disclosureLink {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.25);
+  padding-bottom: 4px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.disclosureLink:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.disclosureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.disclosureList li {
+  position: relative;
+  padding-left: 22px;
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(242, 240, 239, 0.7);
+}
+.disclosureList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 12px;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+     FINAL CTA
+  ───────────────────────────────────────────────────── */
+.finalCTA {
+  max-width: 1200px;
+  margin: 60px auto 100px;
+  padding: 0 48px;
+  opacity: 0;
+}
+.finalCTAInner {
+  padding: 60px 56px 64px;
+  background: rgba(212, 168, 83, 0.025);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-left: 2px solid var(--accent);
+}
+.finalCTALabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.finalCTATitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 640px;
+}
+.finalCTADesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 32px;
+}
+.finalCTAButtons {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    padding: 80px 32px;
+  }
+  .sectionNum {
+    font-size: clamp(100px, 14vw, 160px);
+    letter-spacing: -4px;
+  }
+}
+
+@media (max-width: 900px) {
+  .complianceGrid {
+    grid-template-columns: 1fr;
+  }
+  .disclosureBlock {
+    grid-template-columns: 1fr;
+  }
+  .disclosureCol {
+    border-right: none;
+    border-bottom: 1px solid rgba(212, 168, 83, 0.18);
+  }
+  .disclosureCol:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 140px 24px 80px;
+  }
+  .heroBracketTL {
+    top: 80px;
+    left: 24px;
+  }
+  .heroBracketBR {
+    bottom: 40px;
+    right: 24px;
+  }
+  .section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 60px 24px;
+  }
+  .sectionNum {
+    position: static;
+    font-size: 96px;
+    letter-spacing: -3px;
+    margin-bottom: -20px;
+  }
+  .practiceItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .infraRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .disclosureCol {
+    padding: 24px 22px 26px;
+  }
+  .finalCTA {
+    margin: 40px auto 80px;
+    padding: 0 24px;
+  }
+  .finalCTAInner {
+    padding: 40px 28px 44px;
+  }
+}

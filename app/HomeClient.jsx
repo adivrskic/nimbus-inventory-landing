@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import Nav from "@/components/Nav/Nav";
 import Hero from "@/components/Hero/Hero";
+import LogoWall from "@/components/LogoWall/LogoWall";
 import AISection from "@/components/AISection/AISection";
 import ProblemSolution from "@/components/ProblemSolution/ProblemSolution";
 import Features from "@/components/Features/Features";
@@ -21,6 +22,7 @@ export default function HomeClient() {
     <>
       <Nav onDemo={openDemo} />
       <Hero onDemo={openDemo} />
+      <LogoWall />
       <AISection />
       <Features />
       <ProblemSolution onDemo={openDemo} />

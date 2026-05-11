@@ -5,6 +5,7 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useState,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import gsap from "gsap";
@@ -23,12 +24,29 @@ export default function TransitionProvider({ children }) {
   const isAnimating = useRef(false);
   const prevPathname = useRef(pathname);
 
-  // Fade content in when pathname changes
+  /**
+   * Track prefers-reduced-motion. When on, skip animated page transitions.
+   */
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = (e) => setReduced(e.matches);
+    if (mq.addEventListener) {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
+
+  // Fade content in when pathname changes (skipped when reduced)
   useEffect(() => {
     if (prevPathname.current !== pathname) {
       prevPathname.current = pathname;
       const content = contentRef.current;
-      if (content) {
+      if (content && !reduced) {
         gsap.fromTo(
           content,
           { opacity: 0 },
@@ -36,7 +54,7 @@ export default function TransitionProvider({ children }) {
         );
       }
     }
-  }, [pathname]);
+  }, [pathname, reduced]);
 
   const navigateTo = useCallback(
     (href) => {
@@ -44,7 +62,10 @@ export default function TransitionProvider({ children }) {
 
       // Same exact page — scroll to top
       if (href === pathname) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({
+          top: 0,
+          behavior: reduced ? "auto" : "smooth",
+        });
         return;
       }
 
@@ -54,16 +75,34 @@ export default function TransitionProvider({ children }) {
         return;
       }
 
-      isAnimating.current = true;
-      const overlay = overlayRef.current;
-      const content = contentRef.current;
-
       // Parse hash if present
       const hashIdx = href.indexOf("#");
       const basePath = hashIdx >= 0 ? href.slice(0, hashIdx) || "/" : href;
       const hash = hashIdx >= 0 ? href.slice(hashIdx + 1) : null;
       const samePage =
         basePath === pathname || (basePath === "/" && pathname === "/");
+
+      /* ── Reduced-motion: skip every animation, just navigate ── */
+      if (reduced) {
+        if (samePage && hash) {
+          const el = document.getElementById(hash);
+          if (el) el.scrollIntoView({ behavior: "instant" });
+          return;
+        }
+        router.push(basePath);
+        window.scrollTo(0, 0);
+        if (hash) {
+          setTimeout(() => {
+            const el = document.getElementById(hash);
+            if (el) el.scrollIntoView({ behavior: "instant" });
+          }, 100);
+        }
+        return;
+      }
+
+      isAnimating.current = true;
+      const overlay = overlayRef.current;
+      const content = contentRef.current;
 
       if (samePage && hash) {
         // Same page hash — quick fade, scroll, fade back
@@ -117,7 +156,7 @@ export default function TransitionProvider({ children }) {
         delay: 0.1,
       });
     },
-    [router, pathname]
+    [router, pathname, reduced]
   );
 
   return (

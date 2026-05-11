@@ -14,26 +14,28 @@ const COLUMNS = [
     links: [
       { text: "AI Engine", href: "/#ai-engine" },
       { text: "Features", href: "/#features" },
+      { text: "Pricing", href: "/pricing" },
       { text: "Warehouse", href: "/#warehouse" },
       { text: "Integrations", href: "/#integrations" },
       { text: "Industries", href: "/#industries" },
     ],
   },
   {
-    title: "Company",
+    title: "Resources",
     links: [
       { text: "Blog", href: "/blog" },
-      { text: "Contact", href: "/contact" },
       { text: "Help Center", href: "/help" },
-      { text: "Status", href: "/api-status" },
+      { text: "API Docs", href: "/api-docs" },
+      { text: "Status", href: "/status" },
+      { text: "Contact", href: "/contact" },
     ],
   },
   {
     title: "Legal",
     links: [
+      { text: "Trust & Security", href: "/trust" },
       { text: "Privacy Policy", href: "/legal/privacy" },
       { text: "Terms of Service", href: "/legal/terms" },
-      { text: "Security", href: "/legal/security" },
     ],
   },
 ];

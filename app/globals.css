@@ -467,3 +467,54 @@ body.animations-paused [class*="letter"] {
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* ═══ REDUCED MOTION ═══
+ * CSS-only backstop for users with prefers-reduced-motion enabled.
+ *
+ * Coordinated with:
+ *   - AnimationContext (auto-pauses, adding body.animations-paused)
+ *   - LenisProvider (skips smooth-scroll init)
+ *   - TransitionProvider (skips page-fade animations)
+ *
+ * This block ensures that even if JS fails to load or fails to run,
+ * motion-sensitive users still get a reduced-motion experience.
+ */
+@media (prefers-reduced-motion: reduce) {
+  /* Near-instant completion of CSS animations and transitions */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  html,
+  body {
+    scroll-behavior: auto !important;
+  }
+
+  /* Mirror the body.animations-paused reveal rules so motion-sensitive users
+     see all content immediately, even before AnimationContext mounts. */
+  [style*="opacity"]:not([data-transition-overlay]),
+  [style*="transform"]:not([data-transition-overlay]) {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [class*="Letter"],
+  [class*="letter"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Catch-all for any element explicitly marked as animation-hidden */
+  [data-anim-hidden] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Disable the body-grain animation (visual noise) */
+  body::after {
+    animation: none !important;
+  }
+}

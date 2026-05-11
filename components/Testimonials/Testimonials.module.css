@@ -1,90 +1,263 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TESTIMONIALS
+   ───────────────────────────────────────────────────────────────────────
+   Section layout:
+   - Header: eyebrow + title with italic gold accent
+   - Featured pull-quote: large editorial treatment with decorative
+     opening glyph, full-width with industry tag
+   - 6-card grid (3×2 on desktop): each card with industry tag + quote
+     + author/role/company
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .section {
-  width: 100%;
-  background: var(--bg);
-  padding: 140px 48px;
+  background: var(--dark);
+  padding: 100px 0;
   position: relative;
-  z-index: 1;
 }
-.inner {
-  max-width: 1300px;
+
+.shell {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 48px;
 }
+
+/* ─────────────────────────────────────────────────────
+     HEADER
+  ───────────────────────────────────────────────────── */
 .header {
-  text-align: center;
-  margin-bottom: 72px;
+  max-width: 760px;
+  margin-bottom: 64px;
 }
-.header h2 {
-  margin-bottom: 16px;
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 22px;
+  opacity: 0;
+}
+.title {
+  font-family: var(--display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  color: var(--white);
+  margin: 0;
+  opacity: 0;
+}
+.titleAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────
+     FEATURED PULL-QUOTE
+  ───────────────────────────────────────────────────── */
+.featured {
+  position: relative;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 24px;
+  padding: 56px 56px 48px;
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(212, 168, 83, 0.04) 0%,
+    rgba(212, 168, 83, 0.01) 100%
+  );
+  margin-bottom: 64px;
+  opacity: 0;
+}
+
+.featuredOpenQuote {
+  font-family: var(--display);
+  font-size: 220px;
+  font-weight: 700;
+  line-height: 0.7;
+  color: var(--accent);
+  opacity: 0.4;
+  user-select: none;
+  margin-top: -24px;
+}
+
+.featuredContent {
+  min-width: 0;
+}
+
+.featuredTag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 5px 10px;
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  margin-bottom: 28px;
+}
+
+.featuredQuote {
+  font-family: var(--display);
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.5px;
+  color: var(--white);
+  margin: 0 0 32px;
+  text-wrap: pretty;
+}
+
+.featuredRule {
+  width: 56px;
+  height: 1px;
+  background: var(--accent);
+  margin-bottom: 18px;
+}
+
+.featuredAttr {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.featuredName {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
   color: var(--white);
 }
-.header p {
-  color: rgba(255, 255, 255, 0.35);
+.featuredRole {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.55);
 }
+
+/* ─────────────────────────────────────────────────────
+     CARD GRID
+  ───────────────────────────────────────────────────── */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
+
 .card {
-  border-radius: 20px;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(24px);
-}
-.cardContent {
-  padding: 40px 32px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
-  height: 100%;
-  border-radius: inherit;
+  padding: 28px 28px 26px;
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid rgba(242, 240, 239, 0.08);
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+  opacity: 0;
 }
 .card:hover {
+  border-color: rgba(212, 168, 83, 0.3);
+  background: rgba(212, 168, 83, 0.02);
+  transform: translateY(-2px);
 }
-.quote {
-  font-family: var(--display);
-  font-size: 44px;
-  font-weight: 200;
+
+.cardTag {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
   color: var(--accent);
-  line-height: 1;
-  margin-bottom: 16px;
+  padding: 4px 9px;
+  border: 1px solid rgba(212, 168, 83, 0.25);
+  margin-bottom: 22px;
+}
+
+.cardQuote {
+  position: relative;
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.78);
+  margin: 0 0 24px;
+  flex: 1;
+  text-wrap: pretty;
+}
+.cardQuote::before {
+  content: "\201C";
+  position: absolute;
+  left: -2px;
+  top: -10px;
+  font-family: var(--display);
+  font-size: 36px;
+  color: var(--accent);
   opacity: 0.25;
-  user-select: none;
+  line-height: 1;
+  pointer-events: none;
 }
-.quoteText {
+
+.cardAttr {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+}
+.cardName {
   font-family: var(--display);
   font-size: 14px;
-  line-height: 1.9;
-  color: rgba(255, 255, 255, 0.35);
-  font-weight: 300;
-  font-style: italic;
-}
-.divider {
-  width: 20px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 16px;
-}
-.name {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   color: var(--white);
-  margin-bottom: 4px;
 }
-.role {
+.cardRole {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.5);
+}
+
+/* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .featured {
+    grid-template-columns: 80px 1fr;
+    padding: 44px 40px 40px;
+  }
+  .featuredOpenQuote {
+    font-size: 160px;
+  }
 }
 
 @media (max-width: 768px) {
   .section {
-    padding: 80px 24px;
+    padding: 80px 0;
+  }
+  .shell {
+    padding: 0 24px;
+  }
+  .header {
+    margin-bottom: 44px;
+  }
+  .featured {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 32px 28px 32px;
+    margin-bottom: 40px;
+  }
+  .featuredOpenQuote {
+    font-size: 96px;
+    margin-top: 0;
+    line-height: 0.6;
   }
   .grid {
     grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 24px 22px 22px;
   }
 }
