@@ -1,12 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════════════
    TESTIMONIALS
    ───────────────────────────────────────────────────────────────────────
-   Section layout:
-   - Header: eyebrow + title with italic gold accent
-   - Featured pull-quote: large editorial treatment with decorative
-     opening glyph, full-width with industry tag
-   - 6-card grid (3×2 on desktop): each card with industry tag + quote
-     + author/role/company
+   Layout: header + featured pull-quote + 6-card grid.
+   
+   The featured card and the grid cards both use the glow-card pattern
+   (see globals.css → .glow-card / .glow-cards / .glow-card-content).
+   That means:
+     - outer wrapper (.featured / .card) is a shell — border-radius from
+       globals (.glow-card), no padding, no background, no manual hover.
+     - inner element (.featuredInner / .cardInner) holds padding +
+       internal layout; globals' .glow-card-content provides background
+       and the 1px inset that creates the visible border-glow gap.
+     - hover effects (gold radial gradient following mouse, border-glow
+       on container hover, 3D tilt) all come from the shared system.
+       DO NOT add manual `:hover` border/bg transitions here.
+   
+   Critical: never set `height` on .featuredInner or .cardInner — globals
+   provides `height: calc(100% - 2px)` + `margin: 1px` which is the
+   mechanism that produces the 1px gap where the border-glow shines
+   through. Overriding height collapses the gap and silently kills the
+   effect.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .section {
@@ -53,23 +66,36 @@
   font-weight: 500;
 }
 
+/* Glow-cards context — both featured + grid live inside */
+.glowWrap {
+  /* Nothing layout-wise; just exists so useGlowCards has a single
+       container to attach mousemove tracking and find all .glow-card
+       descendants. */
+}
+
 /* ─────────────────────────────────────────────────────
      FEATURED PULL-QUOTE
+     
+     Outer wrapper is just a shell. Inner element does all the layout.
+     Border-radius from globals (.glow-card → 20px). We bump it slightly
+     via a specificity-doubled selector below so featured stays distinct.
   ───────────────────────────────────────────────────── */
 .featured {
   position: relative;
+  margin-bottom: 64px;
+  opacity: 0;
+}
+.featured.featured {
+  /* Specificity bump so we override globals' .glow-card { border-radius: 20px }
+       — featured cards get a slightly larger radius to feel distinct. */
+  border-radius: 24px;
+}
+
+.featuredInner {
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: 24px;
   padding: 56px 56px 48px;
-  border: 1px solid rgba(212, 168, 83, 0.2);
-  background: linear-gradient(
-    180deg,
-    rgba(212, 168, 83, 0.04) 0%,
-    rgba(212, 168, 83, 0.01) 100%
-  );
-  margin-bottom: 64px;
-  opacity: 0;
 }
 
 .featuredOpenQuote {
@@ -137,7 +163,7 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     CARD GRID
+     6-CARD GRID
   ───────────────────────────────────────────────────── */
 .grid {
   display: grid;
@@ -146,18 +172,17 @@
 }
 
 .card {
+  position: relative;
+  opacity: 0;
+}
+
+.cardInner {
   display: flex;
   flex-direction: column;
   padding: 28px 28px 26px;
-  background: rgba(255, 255, 255, 0.012);
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  transition: border-color 0.25s, background 0.25s, transform 0.25s;
-  opacity: 0;
-}
-.card:hover {
-  border-color: rgba(212, 168, 83, 0.3);
-  background: rgba(212, 168, 83, 0.02);
-  transform: translateY(-2px);
+  /* IMPORTANT: do not set height here — globals' .glow-card-content
+       gives this calc(100% - 2px) + margin: 1px, which is what creates
+       the 1px gap where the gold border-glow is visible on hover. */
 }
 
 .cardTag {
@@ -224,7 +249,7 @@
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .featured {
+  .featuredInner {
     grid-template-columns: 80px 1fr;
     padding: 44px 40px 40px;
   }
@@ -244,10 +269,12 @@
     margin-bottom: 44px;
   }
   .featured {
+    margin-bottom: 40px;
+  }
+  .featuredInner {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 32px 28px 32px;
-    margin-bottom: 40px;
   }
   .featuredOpenQuote {
     font-size: 96px;
@@ -257,7 +284,7 @@
   .grid {
     grid-template-columns: 1fr;
   }
-  .card {
+  .cardInner {
     padding: 24px 22px 22px;
   }
 }

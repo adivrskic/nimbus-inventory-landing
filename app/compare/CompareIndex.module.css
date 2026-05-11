@@ -1,0 +1,324 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPARE INDEX — Marketing-type landing for /compare
+   
+   Pattern: hero + 3-card grid + outro CTA. Each card previews a full
+   comparison with the same vs-mark + key-differences + read-arrow pattern.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.page {
+  background: var(--dark);
+  min-height: 100vh;
+  color: var(--white);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────
+     HERO
+  ───────────────────────────────────────────────────── */
+.hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 160px 48px 60px;
+}
+
+.heroEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
+  opacity: 0;
+}
+
+.heroTitle {
+  font-family: var(--display);
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1;
+  margin: 0 0 36px;
+  color: var(--white);
+  max-width: 1000px;
+}
+.heroLine {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.heroLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+}
+.heroLetterAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+.heroSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+
+.heroSub {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 640px;
+  margin: 0;
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+     CARD GRID
+  ───────────────────────────────────────────────────── */
+.grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 48px 100px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  opacity: 0;
+  min-height: 480px;
+  text-decoration: none;
+}
+
+.cardInner {
+  display: flex;
+  flex-direction: column;
+  padding: 36px 32px 32px;
+  /* The glow-card system from globals.css provides:
+         background: var(--dark)
+         border-radius: inherit
+         height: calc(100% - 2px)
+         margin: 1px
+         width: calc(100% - 2px)
+         — creating the 1px gap where the gold border glow shines through
+         on container hover, plus the radial mouse-follow gradient inside. */
+}
+
+.cardIndex {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(242, 240, 239, 0.3);
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.cardVs {
+  font-family: var(--display);
+  font-size: 28px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+  line-height: 1;
+}
+.cardName {
+  font-family: var(--display);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  color: var(--white);
+  line-height: 1;
+}
+.card:hover .cardName {
+  color: var(--accent);
+}
+
+.cardCategory {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.5);
+  margin-bottom: 22px;
+}
+
+.cardDesc {
+  font-family: var(--display);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(242, 240, 239, 0.65);
+  margin: 0 0 24px;
+}
+
+.cardDivider {
+  height: 1px;
+  background: rgba(242, 240, 239, 0.08);
+  margin-bottom: 22px;
+}
+
+.cardKeysLabel {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.cardKeys {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.cardKey {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-family: var(--display);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(242, 240, 239, 0.8);
+}
+.cardKeyCheck {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+}
+.cardFootText {
+  transition: color 0.2s;
+}
+.cardFootArrow {
+  color: rgba(242, 240, 239, 0.5);
+  font-size: 14px;
+  transition: color 0.2s, transform 0.25s;
+}
+.card:hover .cardFootText,
+.card:hover .cardFootArrow {
+  color: var(--accent);
+}
+.card:hover .cardFootArrow {
+  transform: translateX(6px);
+}
+
+/* ─────────────────────────────────────────────────────
+     OUTRO CTA
+  ───────────────────────────────────────────────────── */
+.outro {
+  max-width: 1200px;
+  margin: 0 auto 100px;
+  padding: 0 48px;
+  opacity: 0;
+}
+.outroInner {
+  padding: 60px 56px 64px;
+  background: rgba(212, 168, 83, 0.025);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-left: 2px solid var(--accent);
+}
+.outroLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.outroTitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 640px;
+}
+.outroDesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 32px;
+}
+.outroButtons {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.outroSecondary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 8px 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+.outroSecondary:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 120px 24px 40px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    min-height: 0;
+  }
+  .cardInner {
+    padding: 30px 26px 28px;
+  }
+  .outro {
+    padding: 0 24px;
+    margin-bottom: 80px;
+  }
+  .outroInner {
+    padding: 40px 28px 44px;
+  }
+}

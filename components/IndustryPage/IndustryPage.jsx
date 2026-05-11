@@ -306,7 +306,8 @@ export default function IndustryPage({ slug, onDemo }) {
           <h2 className={styles.sectionTitle}>From dock to door.</h2>
           <p className={styles.sectionDesc}>
             Every action a {industry.title.toLowerCase()} warehouse takes,
-            mapped to a Nimbus flow.
+            mapped to a Nimbus flow — running on phones, tablets, or rugged
+            scanners.
           </p>
 
           <div className={styles.workflow}>

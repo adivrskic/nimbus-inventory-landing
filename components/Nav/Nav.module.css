@@ -250,6 +250,102 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* ─────────────────────────────────────────────────────
+   "More" mega menu — 4-column rich grid + featured card
+───────────────────────────────────────────────────── */
+.megaMoreGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+.megaMoreCol {
+  display: flex;
+  flex-direction: column;
+}
+.megaRichItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
+  margin: 0 -12px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.megaRichItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.megaRichTitle {
+  font-family: var(--display);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.2px;
+  transition: color 0.2s;
+}
+.megaRichItem:hover .megaRichTitle {
+  color: var(--accent);
+}
+.megaRichDesc {
+  font-family: var(--display);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
+/* Featured callout on the left side of the More mega.
+   Used here for the ROI Calculator promo, but reusable for any
+   highlighted destination. Gold-tinted, subtle border, arrow lower-right. */
+.megaFeatured {
+  position: relative;
+  display: block;
+  margin-top: 22px;
+  padding: 18px 20px 20px;
+  background: rgba(212, 168, 83, 0.06);
+  border: 1px solid rgba(212, 168, 83, 0.18);
+  text-decoration: none;
+  transition: background 0.25s, border-color 0.25s, transform 0.25s;
+}
+.megaFeatured:hover {
+  background: rgba(212, 168, 83, 0.11);
+  border-color: rgba(212, 168, 83, 0.35);
+  transform: translateY(-2px);
+}
+.megaFeaturedTag {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.megaFeaturedTitle {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.3px;
+  margin-bottom: 5px;
+}
+.megaFeaturedDesc {
+  font-family: var(--display);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.5);
+  margin-right: 28px;
+}
+.megaFeaturedArrow {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  color: var(--accent);
+  transition: transform 0.25s;
+}
+.megaFeatured:hover .megaFeaturedArrow {
+  transform: translateX(4px);
+}
+
 .scrim {
   position: fixed;
   inset: 0;

@@ -181,6 +181,19 @@ export default function ProblemSolution({ onDemo }) {
       },
     });
 
+    /* Big decorative label fires first — fades up from below, drifts to
+       its low-opacity resting state. Slow + early so it's settled in
+       place by the time the per-letter headline lands on top of it. */
+    const bigLabel = el.querySelector(`.${styles.bigLabel}`);
+    if (bigLabel) {
+      tl.fromTo(
+        bigLabel,
+        { opacity: 0, y: 60 },
+        { opacity: 0.08, y: 0, duration: 0.9, ease: "power3.out" },
+        0
+      );
+    }
+
     // Per-letter headline
     const hLetters = el.querySelectorAll(`.${styles.phaseLetter}`);
     tl.fromTo(
@@ -291,6 +304,10 @@ export default function ProblemSolution({ onDemo }) {
           gsap.set(el.querySelectorAll(`.${styles.ctaWrap}`), {
             opacity: 0,
             y: 16,
+          });
+          gsap.set(el.querySelectorAll(`.${styles.bigLabel}`), {
+            opacity: 0,
+            y: 60,
           });
           resolve();
         },
@@ -471,6 +488,9 @@ export default function ProblemSolution({ onDemo }) {
             ref={(el) => (phaseRefs.current[i] = el)}
             className={`${styles.phase} ${phase.className}`}
           >
+            {/* Large decorative label — sits behind content via z-index:-1 */}
+            <div className={styles.bigLabel}>{phase.label}</div>
+
             <h2 className={styles.headline}>
               {renderHeadline(phase.headlineLines)}
             </h2>
@@ -499,33 +519,6 @@ export default function ProblemSolution({ onDemo }) {
             )}
           </div>
         ))}
-
-        <div
-          ref={progressRef}
-          className={`${styles.progressWrap} ${
-            styles[PROGRESS_CLASSES[activePhase]]
-          }`}
-        >
-          <div className={styles.progressLabels}>
-            {PHASES.map((phase, i) => (
-              <span
-                key={phase.key}
-                className={`${styles.progressLabel} ${
-                  activePhase >= i ? styles.active : ""
-                }`}
-                onClick={() => goToPhase(i)}
-              >
-                {phase.label}
-              </span>
-            ))}
-          </div>
-          <div className={styles.progressTrack}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${(activePhase / (PHASES.length - 1)) * 100}%` }}
-            />
-          </div>
-        </div>
       </div>
     </section>
   );

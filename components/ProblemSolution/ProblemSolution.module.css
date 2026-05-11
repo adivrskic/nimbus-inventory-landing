@@ -46,6 +46,47 @@
   z-index: 1;
 }
 
+/* ─────────────────────────────────────────────────────
+   LARGE DECORATIVE PHASE LABEL
+   
+   Massive low-opacity word ("Overview" / "Problem" /
+   "Solution") sitting behind the phase content. One per
+   phase — only the active phase's is rendered visibly
+   because each phase has visibility: hidden until shown.
+   
+   Positioned absolute within the phase, centered, with
+   z-index:-1 inside the phase's stacking context so it
+   paints behind all sibling content (headline, body,
+   stats, CTA) but above .pinned's bgLayer (because
+   .phase's z-index:1 is what creates the local stacking
+   context — z-index:-1 children stay within it).
+───────────────────────────────────────────────────── */
+.bigLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  font-family: var(--display);
+  font-size: clamp(160px, 25vw, 280px);
+  font-weight: 700;
+  letter-spacing: -8px;
+  line-height: 0.85;
+  color: var(--accent);
+  opacity: 0; /* GSAP animates in to ~0.08 */
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Per-phase color override — accent gold reads on the white intro phase
+   and the black solution phase, but on the gold problem phase we swap to
+   a low-opacity dark color so the label is still readable. */
+.phaseProblem .bigLabel {
+  color: rgba(0, 0, 0, 1);
+}
+
 /* Per-letter headline */
 .phaseLine {
   display: block;

@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useGlowCards from "@/lib/useGlowCards";
 import styles from "./Testimonials.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -83,6 +84,13 @@ const TESTIMONIALS = [
 
 export default function Testimonials() {
   const rootRef = useRef(null);
+  /* useGlowCards walks the container's descendants for .glow-card nodes and
+     wires up the mouse-follow gradient + 3D tilt. Both the featured card
+     and the 6 grid cards live inside the same `.glow-cards` container so
+     they share one hover context — hovering anywhere in the container
+     activates the gold border glow on every card, mouse position drives
+     where the gradient is brightest per card. Same behavior as Integrations. */
+  const glowRef = useGlowCards();
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -159,38 +167,47 @@ export default function Testimonials() {
           </h2>
         </div>
 
-        {/* ── Featured pull-quote ── */}
-        <article className={styles.featured}>
-          <span className={styles.featuredOpenQuote} aria-hidden="true">
-            &ldquo;
-          </span>
-          <div className={styles.featuredContent}>
-            <div className={styles.featuredTag}>{FEATURED.tag}</div>
-            <p className={styles.featuredQuote}>{FEATURED.quote}</p>
-            <div className={styles.featuredRule} />
-            <div className={styles.featuredAttr}>
-              <span className={styles.featuredName}>{FEATURED.name}</span>
-              <span className={styles.featuredRole}>
-                {FEATURED.role}, {FEATURED.company}
+        {/* ── Glow-cards context wraps both featured + grid ── */}
+        <div ref={glowRef} className={`${styles.glowWrap} glow-cards`}>
+          {/* Featured pull-quote */}
+          <article className={`${styles.featured} glow-card`}>
+            <div className="glow-card-border" />
+            <div className={`${styles.featuredInner} glow-card-content`}>
+              <span className={styles.featuredOpenQuote} aria-hidden="true">
+                &ldquo;
               </span>
-            </div>
-          </div>
-        </article>
-
-        {/* ── Card grid ── */}
-        <div className={styles.grid}>
-          {TESTIMONIALS.map((t, i) => (
-            <article key={i} className={styles.card}>
-              <div className={styles.cardTag}>{t.tag}</div>
-              <p className={styles.cardQuote}>{t.quote}</p>
-              <div className={styles.cardAttr}>
-                <span className={styles.cardName}>{t.name}</span>
-                <span className={styles.cardRole}>
-                  {t.role}, {t.company}
-                </span>
+              <div className={styles.featuredContent}>
+                <div className={styles.featuredTag}>{FEATURED.tag}</div>
+                <p className={styles.featuredQuote}>{FEATURED.quote}</p>
+                <div className={styles.featuredRule} />
+                <div className={styles.featuredAttr}>
+                  <span className={styles.featuredName}>{FEATURED.name}</span>
+                  <span className={styles.featuredRole}>
+                    {FEATURED.role}, {FEATURED.company}
+                  </span>
+                </div>
               </div>
-            </article>
-          ))}
+            </div>
+          </article>
+
+          {/* 6-card grid */}
+          <div className={styles.grid}>
+            {TESTIMONIALS.map((t, i) => (
+              <article key={i} className={`${styles.card} glow-card`}>
+                <div className="glow-card-border" />
+                <div className={`${styles.cardInner} glow-card-content`}>
+                  <div className={styles.cardTag}>{t.tag}</div>
+                  <p className={styles.cardQuote}>{t.quote}</p>
+                  <div className={styles.cardAttr}>
+                    <span className={styles.cardName}>{t.name}</span>
+                    <span className={styles.cardRole}>
+                      {t.role}, {t.company}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

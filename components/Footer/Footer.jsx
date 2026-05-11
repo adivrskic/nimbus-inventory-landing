@@ -14,10 +14,17 @@ const COLUMNS = [
     links: [
       { text: "AI Engine", href: "/#ai-engine" },
       { text: "Features", href: "/#features" },
-      { text: "Pricing", href: "/pricing" },
       { text: "Warehouse", href: "/#warehouse" },
       { text: "Integrations", href: "/#integrations" },
       { text: "Industries", href: "/#industries" },
+    ],
+  },
+  {
+    title: "Plans",
+    links: [
+      { text: "Pricing", href: "/pricing" },
+      { text: "ROI Calculator", href: "/calculator" },
+      { text: "Compare", href: "/compare" },
     ],
   },
   {
@@ -27,17 +34,24 @@ const COLUMNS = [
       { text: "Help Center", href: "/help" },
       { text: "API Docs", href: "/api-docs" },
       { text: "Status", href: "/status" },
-      { text: "Contact", href: "/contact" },
     ],
   },
   {
-    title: "Legal",
+    title: "Company",
     links: [
-      { text: "Trust & Security", href: "/trust" },
-      { text: "Privacy Policy", href: "/legal/privacy" },
-      { text: "Terms of Service", href: "/legal/terms" },
+      { text: "Trust", href: "/trust" },
+      { text: "Contact", href: "/contact" },
     ],
   },
+];
+
+/* Legal links live in the bottom bar alongside the copyright — they're
+   important but visually secondary, and the footer CSS already has
+   .legalLinks / .legalLink classes designed for this layout. */
+const LEGAL_LINKS = [
+  { text: "Privacy", href: "/legal/privacy" },
+  { text: "Terms", href: "/legal/terms" },
+  { text: "Security", href: "/legal/security" },
 ];
 
 const HELIX_COUNT = 3000;
@@ -256,6 +270,17 @@ export default function Footer() {
         <div ref={bottomRef} className={styles.bottom}>
           <div className={styles.copy}>
             &copy; 2026 Nimbus WMS. All rights reserved.
+          </div>
+          <div className={styles.legalLinks}>
+            {LEGAL_LINKS.map((link) => (
+              <TransitionLink
+                key={link.href}
+                href={link.href}
+                className={styles.legalLink}
+              >
+                {link.text}
+              </TransitionLink>
+            ))}
           </div>
         </div>
       </footer>

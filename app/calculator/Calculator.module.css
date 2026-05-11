@@ -1,0 +1,641 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ROI CALCULATOR
+   ───────────────────────────────────────────────────────────────────────
+   Distinctive treatment within the Marketing page type:
+   - The story paragraph IS the input form — numbers in the sentence are
+     editable text inputs styled as inline text with a dotted gold underline
+   - Big animated $LOSS and $SAVINGS numbers in the story (60-80px display)
+   - Editorial section numerals (Marketing pattern) anchor the breakdown
+     and assumptions sections
+   - Horizontal bar chart in the breakdown — bars animate width as inputs
+     change, smoothly via CSS transition
+   - Receipt-style total at the bottom of the breakdown
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.page {
+  background: var(--dark);
+  min-height: 100vh;
+  color: var(--white);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────
+     HERO
+  ───────────────────────────────────────────────────── */
+.hero {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 160px 48px 60px;
+}
+
+.heroEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
+  opacity: 0;
+}
+
+.heroTitle {
+  font-family: var(--display);
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1;
+  margin: 0 0 36px;
+  color: var(--white);
+  max-width: 1000px;
+}
+.heroLine {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.heroLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+}
+.heroLetterAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+.heroSpace {
+  display: inline-block;
+  width: 0.28em;
+}
+
+.heroSub {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 640px;
+  margin: 0;
+  opacity: 0;
+}
+
+.heroSecondary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 8px 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+.heroSecondary:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     THE STORY — the centerpiece
+     The editable paragraph that doubles as the input form.
+  ═══════════════════════════════════════════════════════════════════════ */
+.story {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 48px 100px;
+  opacity: 0;
+}
+
+.storyLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 32px;
+}
+.storyLabelDot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 168, 83, 0.5);
+  animation: storyPulse 2.4s ease-in-out infinite;
+}
+@keyframes storyPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The story paragraphs — large readable display type */
+.storyText,
+.storyTextSecondary {
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -1px;
+  margin: 0 0 28px;
+  text-wrap: pretty;
+}
+.storyText {
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.35;
+  color: rgba(242, 240, 239, 0.85);
+}
+.storyTextSecondary {
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1.4;
+  color: rgba(242, 240, 239, 0.65);
+  max-width: 920px;
+}
+
+/* The huge loss + savings displays embedded in the story */
+.storyLoss,
+.storySavings {
+  display: inline-block;
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: 1;
+  padding: 0 4px;
+  position: relative;
+}
+.storyLoss {
+  color: rgba(242, 240, 239, 0.95);
+  font-size: 1.15em;
+}
+.storySavings {
+  color: var(--accent);
+  font-size: 1.3em;
+  font-style: italic;
+}
+
+/* Reset + keyboard hint row */
+.storyControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+  flex-wrap: wrap;
+}
+.storyReset {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  background: transparent;
+  border: 1px solid rgba(242, 240, 239, 0.15);
+  color: rgba(242, 240, 239, 0.75);
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.storyReset:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.04);
+}
+.storyHint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.4);
+}
+.storyHintKbd {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(242, 240, 239, 0.12);
+  color: rgba(242, 240, 239, 0.7);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     INLINE EDITABLE NUMBER — the magic component
+     Looks like inline text. Click to edit. Dotted gold underline signals
+     editability without being distracting.
+  ═══════════════════════════════════════════════════════════════════════ */
+.editable {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  white-space: nowrap;
+  position: relative;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: var(--accent);
+  padding: 0 2px;
+}
+.editablePrefix,
+.editableSuffix {
+  font-family: inherit;
+  font-size: 0.92em;
+  font-weight: 500;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.editableSuffix {
+  margin-left: 2px;
+}
+.editableInput {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: inherit;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0 2px 4px;
+  margin: 0;
+  border-bottom: 1.5px dotted rgba(212, 168, 83, 0.55);
+  border-radius: 0;
+  cursor: text;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  /* Auto-size to content where supported (Chrome 123+, Edge, Safari TP) */
+  field-sizing: content;
+  min-width: 60px;
+  max-width: 240px;
+  text-align: center;
+  -webkit-appearance: none;
+  appearance: none;
+  font-variant-numeric: tabular-nums;
+}
+.editableInput::-webkit-inner-spin-button,
+.editableInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.editableInput:hover {
+  border-bottom-color: var(--accent);
+  background: rgba(212, 168, 83, 0.04);
+}
+.editableInputFocused {
+  border-bottom: 1.5px solid var(--accent);
+  background: rgba(212, 168, 83, 0.08);
+  color: var(--white);
+  font-style: normal;
+  box-shadow: inset 0 -2px 0 rgba(212, 168, 83, 0.2);
+}
+.editableInputFocused:hover {
+  background: rgba(212, 168, 83, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     EDITORIAL SECTIONS — same pattern as Marketing pages
+  ═══════════════════════════════════════════════════════════════════════ */
+.section {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 48px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 56px;
+  align-items: start;
+  border-top: 1px solid rgba(242, 240, 239, 0.05);
+}
+.sectionNum {
+  font-family: var(--display);
+  font-size: clamp(140px, 18vw, 260px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -8px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(212, 168, 83, 0.55);
+  text-stroke: 1px rgba(212, 168, 83, 0.55);
+  user-select: none;
+  position: sticky;
+  top: 100px;
+  align-self: start;
+  opacity: 0;
+}
+.sectionContent {
+  min-width: 0;
+}
+.sectionLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.sectionTitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  color: var(--white);
+  margin: 0 0 18px;
+  max-width: 640px;
+  opacity: 0;
+}
+.sectionDesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 48px;
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     BREAKDOWN — animated horizontal bar chart
+  ═══════════════════════════════════════════════════════════════════════ */
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.breakdownRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+}
+
+.breakdownTop {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+}
+.breakdownNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(242, 240, 239, 0.4);
+}
+.breakdownLabel {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--white);
+}
+.breakdownValue {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The bar itself */
+.breakdownBar {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  margin-left: 56px;
+  overflow: hidden;
+}
+.breakdownBarFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    rgba(212, 168, 83, 0.6) 100%
+  );
+  /* Smooth bar resize as values change */
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 0%;
+}
+.breakdownBarFill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 168, 83, 0.6);
+}
+
+.breakdownDesc {
+  font-family: var(--display);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(242, 240, 239, 0.5);
+  margin-left: 56px;
+}
+
+/* Total row — bigger, with top hairline */
+.totalBar {
+  margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(212, 168, 83, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  opacity: 0;
+}
+.totalLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.totalValue {
+  font-family: var(--display);
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     ASSUMPTIONS — definition list
+  ═══════════════════════════════════════════════════════════════════════ */
+.assumptions {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+}
+.assumption {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 32px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
+  opacity: 0;
+}
+.assumptionTerm {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+}
+.assumptionDef {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--white);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     FINAL CTA
+  ═══════════════════════════════════════════════════════════════════════ */
+.finalCTA {
+  max-width: 1200px;
+  margin: 60px auto 100px;
+  padding: 0 48px;
+  opacity: 0;
+}
+.finalCTAInner {
+  padding: 60px 56px 64px;
+  background: rgba(212, 168, 83, 0.025);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-left: 2px solid var(--accent);
+}
+.finalCTALabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.finalCTATitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 640px;
+}
+.finalCTADesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 32px;
+}
+.finalCTAButtons {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    padding: 80px 32px;
+  }
+  .sectionNum {
+    font-size: clamp(100px, 14vw, 160px);
+    letter-spacing: -4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 120px 24px 40px;
+  }
+  .story {
+    padding: 40px 24px 80px;
+  }
+  .storyText {
+    font-size: 22px;
+    line-height: 1.4;
+    letter-spacing: -0.6px;
+  }
+  .storyTextSecondary {
+    font-size: 19px;
+    letter-spacing: -0.5px;
+  }
+  .storyLoss,
+  .storySavings {
+    font-size: 1em;
+    letter-spacing: -1px;
+  }
+  .storyControls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 60px 24px;
+  }
+  .sectionNum {
+    position: static;
+    font-size: 96px;
+    letter-spacing: -3px;
+    margin-bottom: -20px;
+  }
+  .breakdownTop {
+    grid-template-columns: 30px 1fr auto;
+    gap: 12px;
+  }
+  .breakdownLabel {
+    font-size: 15px;
+  }
+  .breakdownValue {
+    font-size: 18px;
+  }
+  .breakdownBar,
+  .breakdownDesc {
+    margin-left: 42px;
+  }
+  .totalValue {
+    font-size: 56px;
+    letter-spacing: -2px;
+  }
+  .assumption {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .finalCTA {
+    margin: 40px auto 80px;
+    padding: 0 24px;
+  }
+  .finalCTAInner {
+    padding: 40px 28px 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .editableInput {
+    min-width: 50px;
+  }
+}

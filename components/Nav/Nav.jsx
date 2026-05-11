@@ -56,12 +56,69 @@ const INTEGRATION_CATEGORIES = [
   },
 ];
 
+/* Mega "More" menu — surfaces every page that isn't already in the
+   primary nav. Each item has a short description so users understand
+   what they'll find before clicking. */
+const MORE_GROUPS = [
+  {
+    label: "Plans & Tools",
+    items: [
+      { title: "Pricing", desc: "Plans for every team size", href: "/pricing" },
+      {
+        title: "ROI Calculator",
+        desc: "Estimate your annual savings",
+        href: "/calculator",
+      },
+      { title: "Compare", desc: "Nimbus vs alternatives", href: "/compare" },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { title: "Blog", desc: "Operations insights & updates", href: "/blog" },
+      { title: "Help Center", desc: "Guides and FAQs", href: "/help" },
+      { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
+    ],
+  },
+  {
+    label: "Company",
+    items: [
+      { title: "Trust", desc: "Security and SOC 2 details", href: "/trust" },
+      { title: "Contact", desc: "Talk to our team", href: "/contact" },
+      { title: "Status", desc: "Live system health", href: "/status" },
+    ],
+  },
+  {
+    label: "Legal",
+    items: [
+      {
+        title: "Privacy",
+        desc: "How we handle your data",
+        href: "/legal/privacy",
+      },
+      { title: "Terms", desc: "Service agreement", href: "/legal/terms" },
+      {
+        title: "Security",
+        desc: "Security practices",
+        href: "/legal/security",
+      },
+    ],
+  },
+];
+
 /* ── Mobile Menu with GSAP ── */
+/* Surface every secondary page in the mobile "Resources" section —
+   mirrors the desktop More mega menu since mobile can't fan out the same way. */
 const EXTRA_LINKS = [
+  { text: "Pricing", href: "/pricing" },
+  { text: "ROI Calculator", href: "/calculator" },
+  { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
-  { text: "Contact", href: "/contact" },
   { text: "API Docs", href: "/api-docs" },
+  { text: "Trust", href: "/trust" },
+  { text: "Contact", href: "/contact" },
+  { text: "Status", href: "/status" },
 ];
 
 function MobileMenu({ open, links, onClose, onDemo }) {
@@ -333,9 +390,9 @@ export default function Nav({ onDemo, dark }) {
   const links = [
     { text: "AI Engine", href: "/#ai-engine" },
     { text: "Features", href: "/#features" },
-    { text: "Pricing", href: "/pricing" },
     { text: "Integrations", href: "/#integrations", mega: "integrations" },
     { text: "Industries", href: "/#industries", mega: "industries" },
+    { text: "More", href: "/pricing", mega: "more" },
   ];
 
   return (
@@ -463,7 +520,7 @@ export default function Nav({ onDemo, dark }) {
       {/* Mobile menu overlay */}
       <MobileMenu
         open={mobileOpen}
-        links={links}
+        links={links.filter((l) => l.mega !== "more")}
         onClose={() => setMobileOpen(false)}
         onDemo={() => {
           setMobileOpen(false);
@@ -584,9 +641,67 @@ export default function Nav({ onDemo, dark }) {
             </div>
           </div>
         </div>
+        {/* More — surfaces all secondary site pages */}
+        <div
+          data-menu="more"
+          className={`${styles.megaPanel} ${
+            openMenu === "more" ? styles.megaPanelActive : ""
+          }`}
+        >
+          <div className={styles.megaContent}>
+            <div className={styles.megaLeft}>
+              <div className={styles.megaTag}>Explore</div>
+              <p className={styles.megaDesc}>
+                Plans, resources, company information, and legal documents.
+              </p>
+              <TransitionLink
+                href="/calculator"
+                className={styles.megaFeatured}
+                onClick={() => setOpenMenu(null)}
+              >
+                <div className={styles.megaFeaturedTag}>Tool</div>
+                <div className={styles.megaFeaturedTitle}>ROI Calculator</div>
+                <div className={styles.megaFeaturedDesc}>
+                  See your annual savings in 30 seconds.
+                </div>
+                <svg
+                  className={styles.megaFeaturedArrow}
+                  width="14"
+                  height="10"
+                  viewBox="0 0 14 10"
+                  fill="none"
+                >
+                  <path
+                    d="M1 5H12M9 1L13 5L9 9"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </TransitionLink>
+            </div>
+            <div className={styles.megaMoreGrid}>
+              {MORE_GROUPS.map((group) => (
+                <div key={group.label} className={styles.megaMoreCol}>
+                  <div className={styles.megaColLabel}>{group.label}</div>
+                  {group.items.map((item) => (
+                    <TransitionLink
+                      key={item.href}
+                      href={item.href}
+                      className={styles.megaRichItem}
+                      onClick={() => setOpenMenu(null)}
+                    >
+                      <span className={styles.megaRichTitle}>{item.title}</span>
+                      <span className={styles.megaRichDesc}>{item.desc}</span>
+                    </TransitionLink>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Scrim */}
       <div
         ref={scrimRef}
         className={styles.scrim}

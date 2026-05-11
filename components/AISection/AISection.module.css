@@ -28,64 +28,26 @@
   padding: 0 48px;
 }
 
-/* Intro */
-.intro {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.introInner {
-  max-width: 900px;
-}
-.introLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 4px;
-}
-.introLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(100%) rotateX(35deg);
-  transform-origin: bottom center;
-  color: var(--dark);
-}
-.introLetterAccent {
-  color: var(--accent);
-  font-style: italic;
-  font-weight: 500;
-}
-.introSpace {
-  display: inline-block;
-  width: 0.28em;
-}
-.introDesc {
-  margin-top: 24px;
-}
-.introDescLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 2px;
-}
-.introDescLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(110%);
-  font-family: var(--mono);
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--dark-secondary);
-  font-weight: 300;
-}
-.introDescSpace {
-  display: inline-block;
-  width: 0.3em;
-}
+/* ── Feature blocks ──
+   Block is 200vh. Inner is 100vh sticky. That gives a 100vh sticky-lock
+   window — this is the hold. While the user keeps scrolling through it,
+   CSS sticky pins the inner element at the viewport top, so the
+   formation-locked state and the card both appear stationary.
 
-/* Feature blocks */
+   Scroll-progress phase mapping (mirrors formationCurve() in JS):
+     [0.00, 0.15]  scattered, card invisible (entering)
+     [0.15, 0.40]  particles forming + card fading in
+     [0.40, 0.60]  LOCKED — sticky inner pinned, card fully visible
+     [0.60, 0.85]  particles dispersing + card fading out
+     [0.85, 1.00]  scattered, next block taking over */
 .block {
-  min-height: 100vh;
+  min-height: 200vh;
+  position: relative;
+}
+.blockSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   align-items: center;
   padding: 40px 0;
@@ -97,134 +59,50 @@
   justify-content: flex-end;
 }
 
-.textCard {
-  max-width: 440px;
-}
-
-/* Card header — starts hidden for GSAP */
-.cardHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+/* ── Editorial CTA ── */
+.cardEditorial {
+  max-width: 380px;
+  padding-left: 20px;
+  border-left: 1px solid rgba(212, 168, 83, 0.45);
   opacity: 0;
   transform: translateY(16px);
+  transition: opacity 0.06s linear, transform 0.06s linear;
 }
-.cardNumber {
+.cardEditorialRight {
+  padding-left: 0;
+  padding-right: 20px;
+  border-left: 0;
+  border-right: 1px solid rgba(212, 168, 83, 0.45);
+  text-align: right;
+}
+.cardEyebrow {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 2px;
   color: var(--accent);
-}
-.cardBadge {
-  font-family: var(--mono);
-  font-size: 8px;
-  font-weight: 500;
-  letter-spacing: 1px;
+  margin-bottom: 24px;
   text-transform: uppercase;
-  color: var(--accent);
-  padding: 3px 10px;
-  border: 1px solid rgba(212, 168, 83, 0.2);
-  background: rgba(212, 168, 83, 0.05);
 }
-
-/* Card title — per letter, same technique as intro */
 .cardTitle {
   font-family: var(--display);
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -1px;
+  font-size: clamp(36px, 4.2vw, 52px);
+  font-weight: 300;
+  line-height: 1.04;
+  letter-spacing: -1.2px;
   color: var(--dark);
-  margin-bottom: 16px;
-  overflow: hidden;
-  padding-bottom: 4px;
+  margin: 0 0 20px;
 }
-.cardTitleLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(100%) rotateX(35deg);
-  transform-origin: bottom center;
-}
-.cardTitleSpace {
-  display: inline-block;
-  width: 0.25em;
-}
-
-/* Card desc — per letter */
 .cardDesc {
   font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 14.5px;
+  line-height: 1.7;
+  font-weight: 300;
   color: var(--dark-secondary);
-  font-weight: 400;
-  margin-bottom: 24px;
+  margin: 0;
+  max-width: 340px;
 }
-.cardDescLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 2px;
-}
-.cardDescLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(110%);
-}
-.cardDescSpace {
-  display: inline-block;
-  width: 0.28em;
-}
-
-/* Details + stats — start hidden */
-.cardDetails {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  opacity: 0;
-  transform: translateY(16px);
-}
-.detailItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-.detailDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--accent);
-  margin-top: 6px;
-  flex-shrink: 0;
-}
-.detailText {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--dark-secondary);
-  line-height: 1.5;
-}
-.cardStats {
-  display: flex;
-  gap: 28px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  opacity: 0;
-  transform: translateY(16px);
-}
-.statVal {
-  font-family: var(--display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1;
-}
-.statLabel {
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 1px;
-  color: var(--dark-secondary);
-  text-transform: uppercase;
-  margin-top: 4px;
+.cardEditorialRight .cardDesc {
+  margin-left: auto;
 }
 
 .trailingSpacer {
@@ -238,8 +116,6 @@
   right: 0;
   z-index: 3;
   background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(0, 0, 0, 0.04);
@@ -294,28 +170,37 @@
   .textWrap {
     padding: 0 20px;
   }
-  .textCard {
+  .cardEditorial {
     max-width: 100%;
   }
   .block {
-    min-height: 80vh;
+    min-height: 170vh;
+  }
+  .blockSticky {
     align-items: flex-start;
     padding-top: 100px;
   }
   .blockLeft,
   .blockRight {
-    justify-content: center;
+    justify-content: flex-start;
+  }
+  .cardEditorialRight {
+    padding-left: 20px;
+    padding-right: 0;
+    border-left: 1px solid rgba(212, 168, 83, 0.45);
+    border-right: 0;
+    text-align: left;
+  }
+  .cardEditorialRight .cardDesc {
+    margin-left: 0;
   }
   .cardTitle {
-    font-size: 24px;
+    font-size: 30px;
   }
   .progressWrap {
     padding: 20px 16px 16px;
   }
   .progressLabels {
     display: none;
-  }
-  .intro {
-    min-height: 80vh;
   }
 }

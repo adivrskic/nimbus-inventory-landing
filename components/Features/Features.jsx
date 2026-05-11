@@ -18,7 +18,7 @@ const FEATURES = [
   {
     num: "01",
     title: "Instant barcode scanning",
-    desc: "AI-enhanced recognition identifies products in under 200ms — even damaged or partial barcodes. Register new items or locate existing inventory without typing a character.",
+    desc: "AI-enhanced recognition on iOS and Android, identifying products in under 200ms — even damaged or partial barcodes. Register new items or locate existing inventory without typing a character.",
     stats: [
       { val: "<200ms", label: "Recognition" },
       { val: "99.7%", label: "Accuracy" },
