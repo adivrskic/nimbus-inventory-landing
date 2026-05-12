@@ -1,17 +1,9 @@
 "use client";
+import LegalPage from "@/components/LegalPage/LegalPage";
 
-import { useState, useCallback, use } from "react";
-import LegalPageContent from "@/components/LegalPage/LegalPage";
-import DemoModal from "@/components/DemoModal/DemoModal";
-
+/* Trivial passthrough. Note: the previous version passed `dark` to Nav
+   via LegalPage; that's gone now — Nav auto-detects dark mode from
+   pathname (any path starting with /legal/). */
 export default function LegalClient({ slug }) {
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
-
-  return (
-    <>
-      <LegalPageContent slug={slug} onDemo={openDemo} />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
-    </>
-  );
+  return <LegalPage slug={slug} />;
 }

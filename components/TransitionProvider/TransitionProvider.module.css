@@ -1,0 +1,25 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Shelf-style transition overlay.
+   
+   top: 72px matches Nav height on desktop. On mobile (≤768px) Nav is
+   60px tall, so the overlay's top is adjusted to match. z-index sits
+   below Nav (which is at 100) so Nav stays continuously visible while
+   the overlay covers the page content area during transitions.
+───────────────────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    top: 60px;
+  }
+}

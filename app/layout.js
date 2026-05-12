@@ -2,6 +2,8 @@ import { JetBrains_Mono } from "next/font/google";
 import LenisProvider from "@/components/LenisProvider";
 import TransitionProvider from "@/components/TransitionProvider/TransitionProvider";
 import { AnimationProvider } from "@/lib/AnimationContext";
+import DemoHost from "@/lib/DemoContext";
+import Nav from "@/components/Nav/Nav";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -85,7 +87,20 @@ export default function RootLayout({ children }) {
       <body>
         <AnimationProvider>
           <LenisProvider>
-            <TransitionProvider>{children}</TransitionProvider>
+            <TransitionProvider>
+              {/* DemoHost owns the modal + provides openDemo via context.
+                  Wraps everything below so any descendant can pop the modal. */}
+              <DemoHost>
+                {/* Nav is the persistent shelf — mounted ONCE here, never
+                    unmounted by page navigation. Sits OUTSIDE the
+                    data-page-content wrapper so it doesn't fade. */}
+                <Nav />
+
+                {/* Page content. TransitionProvider's fade and the
+                    shelf-style overlay both target this wrapper. */}
+                <main data-page-content>{children}</main>
+              </DemoHost>
+            </TransitionProvider>
           </LenisProvider>
         </AnimationProvider>
       </body>

@@ -5,10 +5,10 @@ import {
   useRef,
   useCallback,
   useEffect,
-  useState,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import gsap from "gsap";
+import styles from "./TransitionProvider.module.css";
 
 const TransitionContext = createContext(null);
 
@@ -16,37 +16,38 @@ export function usePageTransition() {
   return useContext(TransitionContext);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   TransitionProvider — shelf-style transition
+   ───────────────────────────────────────────────────────────────────────
+   The overlay now starts below the Nav (top: 72px desktop, 60px mobile)
+   and z-index sits below Nav's 100. Result: during page transitions, the
+   Nav stays continuously visible while only the page content area is
+   covered by the dark overlay.
+
+   The "content to fade" is identified by the data-page-content attribute,
+   set by app/layout.js on the <main> wrapper around {children}. We no
+   longer wrap children in our own ref'd div — that let Nav move outside
+   the fading region.
+   ═══════════════════════════════════════════════════════════════════════ */
 export default function TransitionProvider({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const overlayRef = useRef(null);
-  const contentRef = useRef(null);
   const isAnimating = useRef(false);
   const prevPathname = useRef(pathname);
 
-  /**
-   * Track prefers-reduced-motion. When on, skip animated page transitions.
-   */
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e) => setReduced(e.matches);
-    if (mq.addEventListener) {
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
-    }
-    mq.addListener(onChange);
-    return () => mq.removeListener(onChange);
-  }, []);
+  /* Helper — find the page content area set up in layout.js. Falls back
+     to body so we never crash if the attribute is missing (e.g. during
+     dev hot-reload weirdness). */
+  const getContent = () =>
+    document.querySelector("[data-page-content]") || document.body;
 
-  // Fade content in when pathname changes (skipped when reduced)
+  /* Fade content in when pathname changes (the new page just rendered) */
   useEffect(() => {
     if (prevPathname.current !== pathname) {
       prevPathname.current = pathname;
-      const content = contentRef.current;
-      if (content && !reduced) {
+      const content = getContent();
+      if (content) {
         gsap.fromTo(
           content,
           { opacity: 0 },
@@ -54,58 +55,37 @@ export default function TransitionProvider({ children }) {
         );
       }
     }
-  }, [pathname, reduced]);
+  }, [pathname]);
 
   const navigateTo = useCallback(
     (href) => {
       if (isAnimating.current) return;
 
-      // Same exact page — scroll to top
+      /* Same exact page — scroll to top */
       if (href === pathname) {
-        window.scrollTo({
-          top: 0,
-          behavior: reduced ? "auto" : "smooth",
-        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
-      // External / mailto
+      /* External / mailto */
       if (href.startsWith("http") || href.startsWith("mailto:")) {
         window.open(href, "_blank");
         return;
       }
 
-      // Parse hash if present
+      isAnimating.current = true;
+      const overlay = overlayRef.current;
+      const content = getContent();
+
+      /* Parse hash if present */
       const hashIdx = href.indexOf("#");
       const basePath = hashIdx >= 0 ? href.slice(0, hashIdx) || "/" : href;
       const hash = hashIdx >= 0 ? href.slice(hashIdx + 1) : null;
       const samePage =
         basePath === pathname || (basePath === "/" && pathname === "/");
 
-      /* ── Reduced-motion: skip every animation, just navigate ── */
-      if (reduced) {
-        if (samePage && hash) {
-          const el = document.getElementById(hash);
-          if (el) el.scrollIntoView({ behavior: "instant" });
-          return;
-        }
-        router.push(basePath);
-        window.scrollTo(0, 0);
-        if (hash) {
-          setTimeout(() => {
-            const el = document.getElementById(hash);
-            if (el) el.scrollIntoView({ behavior: "instant" });
-          }, 100);
-        }
-        return;
-      }
-
-      isAnimating.current = true;
-      const overlay = overlayRef.current;
-      const content = contentRef.current;
-
       if (samePage && hash) {
-        // Same page hash — quick fade, scroll, fade back
+        /* Same page hash — quick fade, scroll, fade back */
         const tl = gsap.timeline({
           onComplete: () => {
             isAnimating.current = false;
@@ -125,7 +105,7 @@ export default function TransitionProvider({ children }) {
         return;
       }
 
-      // Full page transition
+      /* Full page transition */
       const tl = gsap.timeline({
         onComplete: () => {
           isAnimating.current = false;
@@ -140,7 +120,7 @@ export default function TransitionProvider({ children }) {
       tl.call(() => {
         router.push(basePath);
         window.scrollTo(0, 0);
-        // Scroll to hash after page loads
+        /* Scroll to hash after the new page renders */
         if (hash) {
           setTimeout(() => {
             const el = document.getElementById(hash);
@@ -156,25 +136,18 @@ export default function TransitionProvider({ children }) {
         delay: 0.1,
       });
     },
-    [router, pathname, reduced]
+    [router, pathname]
   );
 
   return (
     <TransitionContext.Provider value={navigateTo}>
-      <div ref={contentRef} style={{ opacity: 1 }}>
-        {children}
-      </div>
+      {children}
+      {/* Overlay — class-based so we can use a media query for the
+          mobile nav height. Always rendered, opacity-controlled by GSAP. */}
       <div
         ref={overlayRef}
         data-transition-overlay=""
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 99999,
-          background: "#000",
-          opacity: 0,
-          pointerEvents: "none",
-        }}
+        className={styles.overlay}
       />
     </TransitionContext.Provider>
   );

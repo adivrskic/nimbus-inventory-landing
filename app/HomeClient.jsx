@@ -1,6 +1,4 @@
 "use client";
-import { useState, useCallback } from "react";
-import Nav from "@/components/Nav/Nav";
 import Hero from "@/components/Hero/Hero";
 import AISection from "@/components/AISection/AISection";
 import ProblemSolution from "@/components/ProblemSolution/ProblemSolution";
@@ -11,15 +9,17 @@ import Integrations from "@/components/Integrations/Integrations";
 import Industries from "@/components/Industries/Industries";
 import Footer from "@/components/Footer/Footer";
 import FinalCTA from "@/components/FinalCTA/FinalCTA";
-import DemoModal from "@/components/DemoModal/DemoModal";
+import { useDemo } from "@/lib/DemoContext";
 
+/* Nav + DemoModal removed — both live in app/layout.js now. We still need
+   openDemo to pass to home-page sections that have their own demo CTAs
+   (Hero, ProblemSolution, WarehouseShowcase, FinalCTA). Pull it from
+   context. */
 export default function HomeClient() {
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  const { openDemo } = useDemo();
 
   return (
     <>
-      <Nav onDemo={openDemo} />
       <Hero onDemo={openDemo} />
       <AISection />
       <Features />
@@ -30,7 +30,6 @@ export default function HomeClient() {
       <Industries />
       <FinalCTA onDemo={openDemo} />
       <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </>
   );
 }

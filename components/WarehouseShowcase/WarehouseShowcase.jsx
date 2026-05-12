@@ -725,10 +725,10 @@ export default function WarehouseShowcase() {
     window.addEventListener("resize", onResize);
     resize();
 
-    // ScrollTrigger
+    // ScrollTrigger — start offset by nav height so progress 0 aligns with sticky pin point
     const st = ScrollTrigger.create({
       trigger: section,
-      start: "top top",
+      start: "top 72px",
       end: "bottom bottom",
       scrub: 0.5,
       onUpdate: (self) => {

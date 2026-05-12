@@ -4,6 +4,7 @@
    ==================================================================== */
 
 .section {
+  --nav-height: 72px;
   position: relative;
   background: #000;
   z-index: 5;
@@ -15,8 +16,8 @@
 
 .sticky {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: var(--nav-height);
+  height: calc(100vh - var(--nav-height));
   width: 100%;
   overflow: hidden;
 }
@@ -342,11 +343,13 @@
   background: rgba(10, 10, 10, 0.5);
   border: none;
   border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
 }
 
 .chapterDots {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   margin-bottom: 8px;
 }
