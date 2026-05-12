@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useAnimationPaused } from "@/lib/AnimationContext";
+import { useDemo } from "@/lib/DemoContext";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
@@ -303,6 +304,13 @@ function MobileMenu({ open, links, onClose, onDemo }) {
 export default function Nav({ onDemo, dark }) {
   const [scrolled, setScrolled] = useState(false);
   const { paused, togglePaused } = useAnimationPaused();
+  /* Pull openDemo from the DemoContext. Nav is mounted in app/layout.js
+     without any props, so without this the Request-a-Demo button would
+     silently no-op (onDemo would be undefined, ?.() would swallow the
+     click). The `onDemo` prop is still honored when provided — legacy
+     call sites that pass it (e.g. IntegrationsIndexClient) keep working. */
+  const { openDemo } = useDemo();
+  const fireDemo = onDemo || openDemo;
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeTimer = useRef(null);
@@ -447,7 +455,7 @@ export default function Nav({ onDemo, dark }) {
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nimbus</span>
-            <span className={styles.logoSub}>Inventory Management</span>
+            <span className={styles.logoSub}>Inventory Management Systems</span>
           </div>
         </TransitionLink>
 
@@ -530,7 +538,7 @@ export default function Nav({ onDemo, dark }) {
           </button>
           <button
             className={`bracket-hover ${styles.cta} hide-mobile`}
-            onClick={() => onDemo?.()}
+            onClick={fireDemo}
           >
             Request a Demo
           </button>
@@ -562,7 +570,7 @@ export default function Nav({ onDemo, dark }) {
         onClose={() => setMobileOpen(false)}
         onDemo={() => {
           setMobileOpen(false);
-          onDemo?.();
+          fireDemo();
         }}
       />
 
@@ -587,7 +595,7 @@ export default function Nav({ onDemo, dark }) {
                 Nimbus connects to your existing tools. No rip-and-replace.
               </p>
               <TransitionLink
-                href="/integrations"
+                href="/integration"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
               >
@@ -644,7 +652,7 @@ export default function Nav({ onDemo, dark }) {
                 Purpose-built warehouse intelligence for your vertical.
               </p>
               <TransitionLink
-                href="/industries"
+                href="/industry"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
               >

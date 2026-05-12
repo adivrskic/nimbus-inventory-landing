@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import { validateDemo } from "@/lib/validation";
@@ -44,6 +44,80 @@ const STATS = [
 
 const COMMENTS_MAX = 2000;
 
+/* ═══════════════════════════════════════════════════════════════════════
+   TOPICS — what the meeting is about
+   ───────────────────────────────────────────────────────────────────────
+   Each topic drives:
+     - the chip label (short, scannable)
+     - the left-panel title/desc (desktop only)
+     - the form title/desc (shown on all viewports)
+     - the Calendly button title (so it's clear what booking means)
+     - the topic value sent to the API and surfaced in the sales email
+     - the utm_content param on the Calendly URL so reps see context
+       on the booking before the call
+   ═══════════════════════════════════════════════════════════════════════ */
+const TOPICS = [
+  {
+    key: "demo",
+    chip: "Live demo",
+    leftTitle: "See Nimbus in action",
+    leftDesc:
+      "Get a personalized walkthrough tailored to your warehouse operations.",
+    formTitle: "Request a demo",
+    formDesc:
+      "Tell us a few details and our team will reach out within 24 hours.",
+    bookTitle: "Book a demo slot",
+    bookSub: "30 minutes, on your calendar",
+    emailLabel: "Live demo",
+  },
+  {
+    key: "sales",
+    chip: "Enterprise pricing",
+    leftTitle: "Plan your Enterprise rollout",
+    leftDesc: "Multi-warehouse pricing, SSO, and dedicated success management.",
+    formTitle: "Talk to Sales",
+    formDesc:
+      "Tell us about your operation and we'll put together a tailored proposal.",
+    bookTitle: "Book a pricing call",
+    bookSub: "30 minutes with our sales team",
+    emailLabel: "Enterprise pricing",
+  },
+  {
+    key: "migration",
+    chip: "Migration",
+    leftTitle: "Plan your migration",
+    leftDesc:
+      "We'll walk through your current setup and show how each piece maps to Nimbus.",
+    formTitle: "Plan a migration",
+    formDesc:
+      "Tell us what you're using today and we'll outline the migration path.",
+    bookTitle: "Book a migration call",
+    bookSub: "30 minutes with a migration engineer",
+    emailLabel: "Migration from another WMS",
+  },
+  {
+    key: "integration",
+    chip: "Custom integration",
+    leftTitle: "Build with Nimbus",
+    leftDesc:
+      "Tell us what you need to connect — we'll discuss the right approach.",
+    formTitle: "Talk to an engineer",
+    formDesc:
+      "Tell us about the integration you need and we'll get back within 24 hours.",
+    bookTitle: "Book an engineering call",
+    bookSub: "30 minutes with the integrations team",
+    emailLabel: "Custom integration",
+  },
+];
+
+const TOPIC_BY_KEY = TOPICS.reduce((acc, t) => {
+  acc[t.key] = t;
+  return acc;
+}, {});
+
+const DEFAULT_TOPIC = "demo";
+const getTopic = (key) => TOPIC_BY_KEY[key] || TOPIC_BY_KEY[DEFAULT_TOPIC];
+
 const INITIAL_FORM = {
   name: "",
   email: "",
@@ -65,7 +139,40 @@ const CheckIcon = () => (
   </svg>
 );
 
-export default function DemoModal({ isOpen, onClose }) {
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <rect
+      x="2"
+      y="3.5"
+      width="12"
+      height="11"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <path d="M2 6.5H14" stroke="currentColor" strokeWidth="1.4" />
+    <path
+      d="M5.5 1.5V4.5M10.5 1.5V4.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const ArrowIcon = ({ size = 12 }) => (
+  <svg width={size} height={size * (10 / 12)} viewBox="0 0 12 10" fill="none">
+    <path
+      d="M1 5H11M8 1L11 5L8 9"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export default function DemoModal({ isOpen, onClose, initialTopic }) {
   const backdropRef = useRef(null);
   const panelRef = useRef(null);
   const contentRef = useRef(null);
@@ -78,7 +185,31 @@ export default function DemoModal({ isOpen, onClose }) {
   const [status, setStatus] = useState("idle");
   const [submitError, setSubmitError] = useState("");
 
+  /* Topic state — seeded from initialTopic on each open. The user can
+     change it from inside the modal via the chip selector. */
+  const [topicKey, setTopicKey] = useState(initialTopic || DEFAULT_TOPIC);
+  useEffect(() => {
+    if (isOpen) setTopicKey(initialTopic || DEFAULT_TOPIC);
+  }, [isOpen, initialTopic]);
+
+  const topic = getTopic(topicKey);
+
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || "";
+
+  /* Append topic to the Calendly URL as utm_content so the sales rep
+     can see what the booking is for inside Calendly. Falls back to the
+     plain URL if URL construction fails (e.g. malformed env var). */
+  const calendlyHref = useMemo(() => {
+    if (!calendlyUrl) return "";
+    try {
+      const url = new URL(calendlyUrl);
+      url.searchParams.set("utm_source", "nimbus_site");
+      url.searchParams.set("utm_content", topicKey);
+      return url.toString();
+    } catch {
+      return calendlyUrl;
+    }
+  }, [calendlyUrl, topicKey]);
 
   const updateField = useCallback((name, value) => {
     setForm((f) => ({ ...f, [name]: value }));
@@ -114,10 +245,17 @@ export default function DemoModal({ isOpen, onClose }) {
       setStatus("submitting");
       setSubmitError("");
       try {
+        /* Include the topic in the submission so the sales email shows
+           what the lead clicked through on. Falls back gracefully on
+           the backend if the field isn't recognized. */
         const res = await fetch("/api/demo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            ...form,
+            topic: topicKey,
+            topicLabel: topic.emailLabel,
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -137,7 +275,7 @@ export default function DemoModal({ isOpen, onClose }) {
         setStatus("error");
       }
     },
-    [form, status]
+    [form, status, topicKey, topic]
   );
 
   // Mount/unmount lifecycle
@@ -278,13 +416,12 @@ export default function DemoModal({ isOpen, onClose }) {
           <div style={{ marginBottom: 32 }}>
             <Logo size={80} />
           </div>
+          {/* Left-panel title/desc track the topic so the dominant
+              promise on opening matches what was clicked. */}
           <h3 className={styles.leftTitle} id="demo-modal-title">
-            See Nimbus in action
+            {topic.leftTitle}
           </h3>
-          <p className={styles.leftDesc}>
-            Get a personalized walkthrough tailored to your warehouse
-            operations.
-          </p>
+          <p className={styles.leftDesc}>{topic.leftDesc}</p>
           <div className={styles.stats}>
             {STATS.map((s, i) => (
               <div key={i}>
@@ -333,34 +470,22 @@ export default function DemoModal({ isOpen, onClose }) {
                 hours.
               </p>
 
-              {calendlyUrl ? (
+              {calendlyHref ? (
                 <>
                   <div className={styles.successDivider} data-success-item>
                     <span>or skip the wait</span>
                   </div>
                   <a
-                    href={calendlyUrl}
+                    href={calendlyHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.calendlyBtn}
                     data-success-item
                   >
                     Book a time directly
-                    <svg
-                      width="12"
-                      height="10"
-                      viewBox="0 0 12 10"
-                      fill="none"
-                      style={{ marginLeft: 8 }}
-                    >
-                      <path
-                        d="M1 5H11M8 1L11 5L8 9"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <span style={{ marginLeft: 8, display: "inline-flex" }}>
+                      <ArrowIcon />
+                    </span>
                   </a>
                 </>
               ) : null}
@@ -381,10 +506,69 @@ export default function DemoModal({ isOpen, onClose }) {
               noValidate
               autoComplete="on"
             >
-              <div className={styles.formTitle}>Request a demo</div>
-              <p className={styles.formDesc}>
-                Fill in the details and our team will reach out within 24 hours.
-              </p>
+              {/* Form title/desc also track the topic — this is what
+                  mobile users see (the left panel is hidden < 768px). */}
+              <div className={styles.formTitle}>{topic.formTitle}</div>
+              <p className={styles.formDesc}>{topic.formDesc}</p>
+
+              {/* ── Topic chips ──
+                  Lets the user confirm or change what the conversation
+                  is about. Drives the Calendly utm_content param and
+                  the topic field on the form submission, so sales has
+                  context before the first reply. */}
+              <div className={styles.topicBlock}>
+                <div className={styles.topicQuestion}>What's this about?</div>
+                <div className={styles.topicChips} role="radiogroup">
+                  {TOPICS.map((t) => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={topicKey === t.key}
+                      onClick={() => setTopicKey(t.key)}
+                      className={`${styles.topicChip} ${
+                        topicKey === t.key ? styles.topicChipActive : ""
+                      }`}
+                    >
+                      {t.chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Prominent Calendly card ──
+                  Sits above the form so users who already know what
+                  they want can skip the form entirely. URL carries the
+                  selected topic as utm_content. Hidden if no Calendly
+                  URL is configured. */}
+              {calendlyHref ? (
+                <>
+                  <a
+                    href={calendlyHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.calendlyTop}
+                  >
+                    <span className={styles.calendlyTopIcon}>
+                      <CalendarIcon />
+                    </span>
+                    <span className={styles.calendlyTopText}>
+                      <span className={styles.calendlyTopTitle}>
+                        {topic.bookTitle}
+                      </span>
+                      <span className={styles.calendlyTopSub}>
+                        {topic.bookSub}
+                      </span>
+                    </span>
+                    <span className={styles.calendlyTopArrow}>
+                      <ArrowIcon size={14} />
+                    </span>
+                  </a>
+                  <div className={styles.calendlyOrDivider}>
+                    <span>or send us a note</span>
+                  </div>
+                </>
+              ) : null}
 
               <div className={styles.honeypot} aria-hidden="true">
                 <label>
@@ -533,32 +717,18 @@ export default function DemoModal({ isOpen, onClose }) {
                     </>
                   ) : (
                     <>
-                      Submit request
-                      <svg
-                        width="14"
-                        height="10"
-                        viewBox="0 0 14 10"
-                        fill="none"
+                      Send request
+                      <span
                         className={styles.submitArrow}
                         aria-hidden="true"
+                        style={{ display: "inline-flex" }}
                       >
-                        <path
-                          d="M1 5H13M9 1L13 5L9 9"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                        <ArrowIcon />
+                      </span>
                     </>
                   )}
                 </span>
               </button>
-
-              <p className={styles.footnote}>
-                <span className={styles.req}>*</span> Required · No commitment ·
-                Usually responds within 4 hours
-              </p>
             </form>
           )}
         </div>

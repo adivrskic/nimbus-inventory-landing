@@ -35,29 +35,6 @@ const USAGE_OPTIONS = [
   "Just exploring",
 ];
 
-const CHANNELS = [
-  {
-    label: "Sales",
-    email: "sales@nimbuswms.com",
-    desc: "Pricing, plans, contracts, custom deployments.",
-  },
-  {
-    label: "Support",
-    email: "support@nimbuswms.com",
-    desc: "Existing customers — bug reports, account questions, training.",
-  },
-  {
-    label: "Security",
-    email: "security@nimbuswms.com",
-    desc: "Vulnerability reports and responsible disclosure.",
-  },
-  {
-    label: "Press",
-    email: "press@nimbuswms.com",
-    desc: "Media inquiries, partnership announcements, interviews.",
-  },
-];
-
 /* ═══════════════════════════════════════════════════════════════════════
    CUSTOM SELECT
    ───────────────────────────────────────────────────────────────────────
@@ -301,7 +278,11 @@ export default function ContactClient() {
     [form, status]
   );
 
-  /* Animations */
+  /* Animations.
+     The section-numeral animation block from before is kept structurally
+     but is now no-op for this page because the .sectionNum element is
+     gone — `if (num)` guards against that. The content stagger still
+     finds .sectionLabel/.sectionTitle/.sectionDesc/.formGrid and runs. */
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
@@ -338,13 +319,16 @@ export default function ContactClient() {
       0.6
     );
 
-    /* Section numerals + content stagger on scroll */
+    /* Section content stagger on scroll. No more numeral selector since
+       the editorial 01 has been removed — the if(num) guard makes that
+       safe. .channelCard was also dropped from the list because the
+       channel grid section is gone. */
     if (!pageRef.current) return;
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.formGrid}, .${styles.channelCard}`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.formGrid}`
       );
       if (num) {
         gsap.fromTo(
@@ -378,7 +362,7 @@ export default function ContactClient() {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  /* Per-letter title rendering */
+  /* Per-letter title rendering — "Let's talk." with "talk." gold italic */
   const renderTitle = () => {
     const parts = [
       { t: "Let's", a: false },
@@ -437,14 +421,17 @@ export default function ContactClient() {
         </p>
       </section>
 
-      {/* ── § 01 — SEND US A NOTE ── */}
+      {/* ── SEND US A NOTE ──
+          Section numeral removed; this is the only section on the page
+          now, so the editorial "01" + "02" framing isn't earning its
+          keep. Heading swapped from "One form. A real reply, fast." —
+          which had a giveaway AI tricolon cadence — to a single
+          conversational question that picks up where the hero's "Let's
+          talk." left off. */}
       <section className={styles.section}>
-        <div className={styles.sectionNum} aria-hidden="true">
-          01
-        </div>
         <div className={styles.sectionContent}>
           <div className={styles.sectionLabel}>Send us a note</div>
-          <h2 className={styles.sectionTitle}>One form. A real reply, fast.</h2>
+          <h2 className={styles.sectionTitle}>What&apos;s on your mind?</h2>
           <p className={styles.sectionDesc}>
             Everything you tell us goes straight to the team. We don&apos;t
             route through a CRM, we don&apos;t score you, and we won&apos;t
@@ -639,37 +626,10 @@ export default function ContactClient() {
         </div>
       </section>
 
-      {/* ── § 02 — OR PICK A CHANNEL ── */}
-      <section className={styles.section}>
-        <div className={styles.sectionNum} aria-hidden="true">
-          02
-        </div>
-        <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>Or pick a channel</div>
-          <h2 className={styles.sectionTitle}>
-            Direct emails when you need them.
-          </h2>
-          <p className={styles.sectionDesc}>
-            All four go to a real person. We do not have a generic
-            &ldquo;info@&rdquo; address.
-          </p>
-
-          <div className={styles.channelGrid}>
-            {CHANNELS.map((c) => (
-              <a
-                key={c.label}
-                href={`mailto:${c.email}`}
-                className={styles.channelCard}
-              >
-                <div className={styles.channelLabel}>{c.label}</div>
-                <div className={styles.channelEmail}>{c.email}</div>
-                <p className={styles.channelDesc}>{c.desc}</p>
-                <span className={styles.channelArrow}>→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* (Section 02 "Or pick a channel" + the CHANNELS constant were
+          intentionally removed — the form above is the canonical way to
+          reach the team, and the email-card grid duplicated the same
+          call to action.) */}
 
       <Footer />
     </div>

@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import DemoModal from "@/components/DemoModal/DemoModal";
+import { useDemo } from "@/lib/DemoContext";
 import styles from "./Calculator.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -194,20 +194,11 @@ export default function CalculatorClient() {
   const pageRef = useRef(null);
   const heroRef = useRef(null);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
-
-  /* Calendly opener — opens the configured booking URL in a new tab. Falls
-     back to the demo modal in development when NEXT_PUBLIC_CALENDLY_URL
-     isn't set, so the button is still functional locally. */
-  const openCalendly = useCallback(() => {
-    const url = process.env.NEXT_PUBLIC_CALENDLY_URL;
-    if (url && typeof window !== "undefined") {
-      window.open(url, "_blank", "noopener,noreferrer");
-    } else {
-      setDemoOpen(true);
-    }
-  }, []);
+  /* Single demo opener — used to be a separate openCalendly that bypassed
+     the modal, but the modal now hosts Calendly natively with topic
+     context. "sales" makes the most sense here: visitors who reach this
+     CTA have just modeled their own ROI and want a pricing conversation. */
+  const { openDemo } = useDemo();
 
   const [size, setSize] = useState(RANGES.size.default);
   const [pickers, setPickers] = useState(RANGES.pickers.default);
@@ -404,7 +395,7 @@ export default function CalculatorClient() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav />
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -599,7 +590,7 @@ export default function CalculatorClient() {
             to build a more detailed estimate for your specific operation.
           </p>
           <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={openCalendly}>
+            <CornerButton onClick={() => openDemo("sales")}>
               Book the modeling call
             </CornerButton>
             <TransitionLink href="/pricing" className={styles.heroSecondary}>
@@ -610,7 +601,6 @@ export default function CalculatorClient() {
       </section>
 
       <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 }

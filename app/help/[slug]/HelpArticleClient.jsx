@@ -6,7 +6,7 @@ import {
   useResourceSectionAnimations,
 } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import DemoModal from "@/components/DemoModal/DemoModal";
+import { useDemo } from "@/lib/DemoContext";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./HelpArticle.module.css";
 import { HELP_CATEGORIES } from "@/lib/helpData";
@@ -67,8 +67,10 @@ export default function HelpArticleClient({ slug }) {
   const contentRef = useRef(null);
   useResourceSectionAnimations(contentRef);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  /* ResourceShell still receives `onDemo` so any Nav-style or in-shell
+     CTA can wire to the modal. The modal itself is mounted globally in
+     app/layout.js; we just hand the context-provided opener through. */
+  const { openDemo } = useDemo();
 
   /* Feedback state machine:
        null      → show Yes/No buttons (no vote yet)
@@ -354,27 +356,23 @@ export default function HelpArticleClient({ slug }) {
   );
 
   return (
-    <>
-      <ResourceShell
-        topStrip={{
-          text: `Help · ${category.title}`,
-          link: { href: "/help", text: "All articles →" },
-        }}
-        eyebrow={category.title}
-        title={post.title}
-        onDemo={openDemo}
-      >
-        {hasTOC ? (
-          <div className={shellStyles.body}>
-            <ResourceTOC sections={sections} label="In this article" />
-            {content}
-          </div>
-        ) : (
-          content
-        )}
-      </ResourceShell>
-
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
-    </>
+    <ResourceShell
+      topStrip={{
+        text: `Help · ${category.title}`,
+        link: { href: "/help", text: "All articles →" },
+      }}
+      eyebrow={category.title}
+      title={post.title}
+      onDemo={openDemo}
+    >
+      {hasTOC ? (
+        <div className={shellStyles.body}>
+          <ResourceTOC sections={sections} label="In this article" />
+          {content}
+        </div>
+      ) : (
+        content
+      )}
+    </ResourceShell>
   );
 }

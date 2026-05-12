@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
-import DemoModal from "@/components/DemoModal/DemoModal";
 import CornerButton from "@/components/shared/CornerButton";
+import { useDemo } from "@/lib/DemoContext";
 import styles from "./Pricing.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -18,6 +18,9 @@ const PRICING = {
   },
 };
 
+/* Each tier carries a `topic` that's passed to openDemo() when its CTA
+   fires. The modal uses that to preselect the chip, drive the Calendly
+   utm_content param, and label the lead email. */
 const TIERS = [
   {
     key: "pro",
@@ -28,6 +31,7 @@ const TIERS = [
     featured: true,
     cta: "Request a Demo",
     ctaVariant: "primary",
+    topic: "demo",
     includesLabel: "Includes",
     features: [
       "1 warehouse",
@@ -49,6 +53,7 @@ const TIERS = [
     featured: false,
     cta: "Talk to Sales",
     ctaVariant: "ghost",
+    topic: "sales",
     includesLabel: "Everything in Pro, plus",
     features: [
       "Unlimited warehouses",
@@ -167,8 +172,11 @@ export default function PricingClient() {
   const finalBracketTLRef = useRef(null);
   const finalBracketBRRef = useRef(null);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  /* Demo modal — global, mounted in app/layout.js. openDemo accepts an
+     optional topic key ("demo" | "sales" | "migration" | "integration")
+     that preselects the chip and rides through into Calendly + the
+     sales email. */
+  const { openDemo } = useDemo();
 
   const [billing, setBilling] = useState("monthly");
   const [openFaq, setOpenFaq] = useState(null);
@@ -368,7 +376,7 @@ export default function PricingClient() {
 
   return (
     <div className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav />
 
       {/* ── Hero ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -523,7 +531,10 @@ export default function PricingClient() {
             </div>
 
             <div className={styles.ctaRow}>
-              <CornerButton variant={tier.ctaVariant} onClick={openDemo}>
+              <CornerButton
+                variant={tier.ctaVariant}
+                onClick={() => openDemo(tier.topic)}
+              >
                 {tier.cta}
               </CornerButton>
             </div>
@@ -660,10 +671,10 @@ export default function PricingClient() {
             integration needs — and we&apos;ll put together a tailored proposal.
           </p>
           <div className={styles.finalCtas}>
-            <CornerButton variant="primary" onClick={openDemo}>
+            <CornerButton variant="primary" onClick={() => openDemo("demo")}>
               Request a Demo
             </CornerButton>
-            <CornerButton variant="ghost" onClick={openDemo}>
+            <CornerButton variant="ghost" onClick={() => openDemo("sales")}>
               Talk to Sales
             </CornerButton>
           </div>
@@ -671,7 +682,6 @@ export default function PricingClient() {
       </section>
 
       <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 }

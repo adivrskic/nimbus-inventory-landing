@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import DemoModal from "@/components/DemoModal/DemoModal";
+import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
 import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
 import styles from "./CompareIndex.module.css";
@@ -18,8 +18,9 @@ export default function CompareIndexClient() {
   const pageRef = useRef(null);
   const gridRef = useGlowCards();
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  /* All compare-index CTAs are migration conversations — visitors here
+     are evaluating Nimbus against an existing tool. */
+  const { openDemo } = useDemo();
 
   const competitors = COMPARE_SLUGS.map((slug) => ({
     slug,
@@ -125,7 +126,7 @@ export default function CompareIndexClient() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav />
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -199,7 +200,7 @@ export default function CompareIndexClient() {
             through it in 30 minutes.
           </p>
           <div className={styles.outroButtons}>
-            <CornerButton onClick={openDemo}>
+            <CornerButton onClick={() => openDemo("migration")}>
               Book a comparison call
             </CornerButton>
             <TransitionLink
@@ -213,7 +214,6 @@ export default function CompareIndexClient() {
       </section>
 
       <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 }

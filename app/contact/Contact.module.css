@@ -1,13 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   CONTACT — Conversion type, evolved with editorial section numerals
+   CONTACT — Conversion type, single-section layout
    ───────────────────────────────────────────────────────────────────────
-   Combines:
+   Vocabulary:
    - Conversion hero treatment: brackets in corners, per-letter title,
      italic gold accent on the last word
-   - Marketing pattern: huge outlined section numerals anchored to the
-     left margin as section signposts
    - Refined form: sharp corners, hairline borders, gold focus states,
      mono labels, segmented usage chips, custom dropdown (no native UI)
+
+   Note: the editorial section-numeral pattern + the dual-section grid
+   (was 280px / 1fr with a giant "01" / "02" outlined numeral on the
+   left) was removed when the page collapsed to a single form section.
+   .section is now a plain block.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -19,8 +22,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-       HERO
-    ───────────────────────────────────────────────────── */
+         HERO
+      ───────────────────────────────────────────────────── */
 .hero {
   position: relative;
   max-width: 1200px;
@@ -95,40 +98,24 @@
 }
 
 /* ─────────────────────────────────────────────────────
-       SECTIONS — huge editorial numerals
-    ───────────────────────────────────────────────────── */
+         SECTION
+         
+         Single content section, plain block (was previously a two-column
+         grid with the editorial numeral occupying the left 280px column).
+      ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
   padding: 100px 48px;
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 56px;
-  align-items: start;
-}
-.section + .section {
-  border-top: 1px solid rgba(242, 240, 239, 0.05);
-}
-
-.sectionNum {
-  font-family: var(--display);
-  font-size: clamp(140px, 18vw, 260px);
-  font-weight: 700;
-  line-height: 0.85;
-  letter-spacing: -8px;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(212, 168, 83, 0.55);
-  text-stroke: 1px rgba(212, 168, 83, 0.55);
-  user-select: none;
-  position: sticky;
-  top: 100px;
-  align-self: start;
-  opacity: 0;
 }
 
 .sectionContent {
   min-width: 0;
+  max-width: 720px;
+  /* Centered inside the section so the form sits in the eye-line rather
+       than hugging the left edge where the editorial numeral used to be. */
+  margin: 0 auto;
 }
 .sectionLabel {
   font-family: var(--mono);
@@ -160,9 +147,12 @@
   opacity: 0;
 }
 
+/* (Removed: .sectionNum — editorial numeral, no longer used.
+                .section + .section — single section now, no adjacency.) */
+
 /* ─────────────────────────────────────────────────────
-       FORM
-    ───────────────────────────────────────────────────── */
+         FORM
+      ───────────────────────────────────────────────────── */
 .formGrid {
   display: flex;
   flex-direction: column;
@@ -246,13 +236,13 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       CUSTOM SELECT
-       ───────────────────────────────────────────────────────────────────
-       Button visually matches the text inputs above (.fieldInput) — same
-       padding, border, font, focus treatment. The chevron + dropdown panel
-       are the only additions. List uses opacity + transform for a smooth
-       fade-in; pointer-events: none keeps it click-through when closed.
-    ═══════════════════════════════════════════════════════════════════════ */
+         CUSTOM SELECT
+         ───────────────────────────────────────────────────────────────────
+         Button visually matches the text inputs above (.fieldInput) — same
+         padding, border, font, focus treatment. The chevron + dropdown panel
+         are the only additions. List uses opacity + transform for a smooth
+         fade-in; pointer-events: none keeps it click-through when closed.
+      ═══════════════════════════════════════════════════════════════════════ */
 .selectWrap {
   position: relative;
 }
@@ -416,8 +406,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-       SUCCESS STATE
-    ───────────────────────────────────────────────────── */
+         SUCCESS STATE
+      ───────────────────────────────────────────────────── */
 .successCard {
   padding: 36px 40px;
   border: 1px solid rgba(34, 197, 94, 0.3);
@@ -471,81 +461,15 @@
   border-bottom-color: var(--accent);
 }
 
-/* ─────────────────────────────────────────────────────
-       CHANNEL CARDS
-    ───────────────────────────────────────────────────── */
-.channelGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-.channelCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 180px;
-  padding: 26px 28px 24px;
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.012);
-  text-decoration: none;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s;
-  opacity: 0;
-}
-.channelCard:hover {
-  background: rgba(212, 168, 83, 0.03);
-  border-color: rgba(212, 168, 83, 0.35);
-  transform: translateY(-2px);
-}
-.channelLabel {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-.channelEmail {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
-  color: var(--white);
-  margin-bottom: 12px;
-  word-break: break-all;
-}
-.channelDesc {
-  font-family: var(--display);
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: rgba(242, 240, 239, 0.55);
-  margin: 0;
-  flex: 1;
-}
-.channelArrow {
-  margin-top: 16px;
-  font-family: var(--mono);
-  font-size: 16px;
-  color: rgba(242, 240, 239, 0.4);
-  align-self: flex-start;
-  transition: color 0.2s, transform 0.25s;
-}
-.channelCard:hover .channelArrow {
-  color: var(--accent);
-  transform: translateX(6px);
-}
+/* (Removed: .channelGrid / .channelCard / .channelLabel / .channelEmail
+     / .channelDesc / .channelArrow — channel cards section is gone.) */
 
 /* ─────────────────────────────────────────────────────
-       RESPONSIVE
-    ───────────────────────────────────────────────────── */
+         RESPONSIVE
+      ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .section {
-    grid-template-columns: 180px 1fr;
-    gap: 32px;
     padding: 80px 32px;
-  }
-  .sectionNum {
-    font-size: clamp(100px, 14vw, 160px);
-    letter-spacing: -4px;
   }
 }
 
@@ -562,20 +486,9 @@
     right: 24px;
   }
   .section {
-    grid-template-columns: 1fr;
-    gap: 24px;
     padding: 60px 24px;
   }
-  .sectionNum {
-    position: static;
-    font-size: 96px;
-    letter-spacing: -3px;
-    margin-bottom: -20px;
-  }
   .row2 {
-    grid-template-columns: 1fr;
-  }
-  .channelGrid {
     grid-template-columns: 1fr;
   }
   .successCard {

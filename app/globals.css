@@ -411,7 +411,7 @@ body::after {
 }
 .glow-card {
   position: relative;
-  border-radius: 20px;
+  /* border-radius: 20px; */
   cursor: pointer;
 }
 .glow-card:hover::before {
@@ -419,7 +419,7 @@ body::after {
 }
 .glow-card::before,
 .glow-card > .glow-card-border {
-  border-radius: inherit;
+  /* border-radius: inherit; */
   content: "";
   height: 100%;
   left: 0;

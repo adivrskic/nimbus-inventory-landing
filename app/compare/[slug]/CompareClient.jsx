@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import DemoModal from "@/components/DemoModal/DemoModal";
+import { useDemo } from "@/lib/DemoContext";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
@@ -94,8 +94,10 @@ export default function CompareClient({ slug }) {
   const pageRef = useRef(null);
   const heroRef = useRef(null);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  /* Compare pages are inherently about migration — every CTA here opens
+     the demo modal with topic "migration" so the lead lands in sales
+     with the right context already attached. */
+  const { openDemo } = useDemo();
 
   /* Other comparisons for cross-link grid */
   const others = COMPARE_SLUGS.filter((s) => s !== slug).map((s) => ({
@@ -267,7 +269,7 @@ export default function CompareClient({ slug }) {
   if (!competitor) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={openDemo} />
+        <Nav />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Comparison not found.</h1>
@@ -289,7 +291,7 @@ export default function CompareClient({ slug }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav />
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -316,7 +318,9 @@ export default function CompareClient({ slug }) {
         <p className={styles.heroDesc}>{competitor.heroDesc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={openDemo}>See a live comparison</CornerButton>
+          <CornerButton onClick={() => openDemo("migration")}>
+            See a live comparison
+          </CornerButton>
           <TransitionLink href="/pricing" className={styles.heroSecondary}>
             See Nimbus pricing →
           </TransitionLink>
@@ -522,7 +526,9 @@ export default function CompareClient({ slug }) {
             work in Nimbus — including the migration path.
           </p>
           <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={openDemo}>Book the demo</CornerButton>
+            <CornerButton onClick={() => openDemo("migration")}>
+              Book the demo
+            </CornerButton>
             <TransitionLink href="/calculator" className={styles.heroSecondary}>
               Or run the ROI numbers →
             </TransitionLink>
@@ -531,7 +537,6 @@ export default function CompareClient({ slug }) {
       </section>
 
       <Footer />
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 }

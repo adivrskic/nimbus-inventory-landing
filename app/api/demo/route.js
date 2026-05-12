@@ -43,12 +43,18 @@ export async function POST(req) {
   }
 
   // ── Validate ──
+  // `topic` and `topicLabel` come from DemoModal's chip selector and ride
+  // through into the sales email so the rep sees what the meeting is
+  // about before replying. They're optional in the validator, so older
+  // clients (or callers that don't set them) still work.
   const form = {
     name: String(body?.name || "").trim(),
     email: String(body?.email || "").trim(),
     company: String(body?.company || "").trim(),
     warehouseSize: String(body?.warehouseSize || "").trim(),
     comments: String(body?.comments || "").trim(),
+    topic: String(body?.topic || "demo").trim(),
+    topicLabel: String(body?.topicLabel || "").trim(),
   };
   const errors = validateDemo(form);
   if (Object.keys(errors).length > 0) {

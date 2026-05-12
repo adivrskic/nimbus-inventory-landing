@@ -963,7 +963,7 @@ export default function WarehouseShowcase() {
   const scorecardVisible = ch === 4;
 
   return (
-    <section ref={sectionRef} className={styles.section}>
+    <section ref={sectionRef} className={styles.section} id="warehouse">
       <div ref={stickyRef} className={styles.sticky}>
         <canvas ref={canvasRef} className={styles.canvas} />
 

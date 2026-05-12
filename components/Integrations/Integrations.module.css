@@ -88,14 +88,14 @@
   gap: 20px;
 }
 .cell {
-  border-radius: 20px;
+  /* border-radius: 20px; */
   overflow: hidden;
   opacity: 0;
   transform: translateY(24px);
 }
 .cellContent {
   padding: 36px 32px;
-  border-radius: inherit;
+  /* border-radius: inherit; */
 }
 .cell:hover {
 }
@@ -165,7 +165,7 @@
   z-index: 1;
 }
 .bottomCell {
-  border-radius: 20px;
+  /* border-radius: 20px; */
   overflow: hidden;
   opacity: 0;
   transform: translateY(20px);

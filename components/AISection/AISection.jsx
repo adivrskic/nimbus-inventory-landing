@@ -24,6 +24,12 @@ const SHAPE_GENERATORS = {
   bars: generateBarChart,
 };
 
+/* Glyph pool for the matrix-scramble reveal. Mix of A–Z, digits and a
+   handful of block glyphs for an industrial flavor. Single uppercase
+   pool — the scramble idiom reads the same regardless of the real
+   char's case, which is the look we want. */
+const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
+
 /* ── Per-section configuration ──
    rotX / rotY / rotZ in DEGREES, applied to each shape at generation.
    scale is a multiplier applied AFTER rotation, before X/Y offset.
@@ -286,6 +292,10 @@ export default function AISection() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const sectionVisibleRef = useRef(false);
+  /* Per-card formation values (0..1). Written by the scroll handler and
+     read by the matrix-scramble RAF loop. Kept out of React state so
+     letter updates don't trigger re-renders. */
+  const formationsRef = useRef([]);
   const { paused } = useAnimationPaused();
   const pausedRef = useRef(false);
   useEffect(() => {
@@ -376,7 +386,7 @@ export default function AISection() {
     globalAlpha: 0,
   });
 
-  /* Click a stepper dot/label → scroll the matching block into view.
+  /* Click a side-bar tick → scroll the matching block into view.
      Scrolling to block-center lines up perfectly with the formation
      curve's peak (block-center == viewport-center == p == 0.5). */
   const scrollToBlock = useCallback((i) => {
@@ -386,11 +396,15 @@ export default function AISection() {
     });
   }, []);
 
-  /* ── Scroll handler ── */
+  /* ── Scroll handler ──
+     The visible cards no longer move — they live in a single sticky
+     layer (.cardLayer) pinned for the entire section. The .block
+     elements below are now invisible 140vh spacers whose only job is
+     to drive the per-card formation curves as they scroll past.
+     activeIdx + progress feed the side-bar UI. */
   useEffect(() => {
     const section = sectionRef.current;
     const blocks = blockRefs.current.filter(Boolean);
-    const cards = cardRefs.current.filter(Boolean);
     if (!section) return;
 
     const vh = window.innerHeight;
@@ -438,12 +452,9 @@ export default function AISection() {
 
       if (maxF > 0.5) setActiveIdx(dom);
 
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        if (!card) continue;
-        const f = formations[i];
-        card.style.opacity = String(f);
-        card.style.transform = `translateY(${(1 - f) * 16}px)`;
+      /* Stash formations for the scramble RAF below. */
+      for (let i = 0; i < formations.length; i++) {
+        formationsRef.current[i] = formations[i];
       }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -453,6 +464,100 @@ export default function AISection() {
       sectionObs.disconnect();
       window.removeEventListener("scroll", onScroll);
     };
+  }, []);
+
+  /* ── Matrix scramble loop ──
+     All 4 cards are stacked at the same viewport slot (left-side
+     cards overlap; right-side cards overlap). This loop is also
+     responsible for fading inactive cards out via the side bar's
+     opacity, so only the active card's bar reads as prominent at
+     any moment.
+
+     Per-letter math:
+       letter index li of total N → reveal threshold = (li/N) * (END - WIN)
+       lp = (f - threshold) / WIN
+         lp <= 0     → hidden (nbsp, opacity 0)
+         0 < lp < 1  → random glyph from MATRIX_CHARS, gold tint
+         lp >= 1     → real char, normal color
+
+     Random glyphs only re-roll every FRAME_DIVIDER frames so the
+     scramble reads at ~15fps instead of strobing at 60. A dataset
+     state tag skips redundant DOM writes once a letter is settled. */
+  useEffect(() => {
+    let raf;
+    let tickCounter = 0;
+    const REVEAL_END = 0.7;
+    const SCRAMBLE_WIN = 0.12;
+    const FRAME_DIVIDER = 4;
+
+    const tick = () => {
+      tickCounter++;
+      const rollGlyph = tickCounter % FRAME_DIVIDER === 0;
+
+      const cards = cardRefs.current;
+      for (let ci = 0; ci < cards.length; ci++) {
+        const card = cards[ci];
+        if (!card) continue;
+        const f = formationsRef.current[ci] ?? 0;
+
+        /* Side bar opacity tracks f. With multiple cards sharing the
+           same viewport slot, this makes the active card's bar
+           dominate while inactives recede. Pointer events gated so
+           only the active bar is clickable. */
+        const sideBar = card.querySelector(`.${styles.sideBar}`);
+        if (sideBar) {
+          const fKey = f.toFixed(3);
+          if (sideBar.dataset.fk !== fKey) {
+            sideBar.style.opacity = String(f);
+            sideBar.style.pointerEvents = f > 0.5 ? "auto" : "none";
+            sideBar.dataset.fk = fKey;
+          }
+        }
+
+        const letters = card.querySelectorAll(`.${styles.scrambleChar}`);
+        const total = letters.length;
+        if (!total) continue;
+
+        const denom = REVEAL_END - SCRAMBLE_WIN;
+
+        for (let li = 0; li < total; li++) {
+          const el = letters[li];
+          const real = el.dataset.char;
+          if (real === " ") continue;
+
+          const startAt = (li / total) * denom;
+          const lp = (f - startAt) / SCRAMBLE_WIN;
+
+          if (lp <= 0) {
+            if (el.dataset.state !== "hidden") {
+              el.textContent = "\u00A0";
+              el.style.opacity = "0";
+              el.style.color = "";
+              el.dataset.state = "hidden";
+            }
+          } else if (lp >= 1) {
+            if (el.dataset.state !== "real") {
+              el.textContent = real;
+              el.style.opacity = "1";
+              el.style.color = "";
+              el.dataset.state = "real";
+            }
+          } else {
+            if (rollGlyph) {
+              el.textContent =
+                MATRIX_CHARS[(Math.random() * MATRIX_CHARS.length) | 0];
+            }
+            el.style.opacity = String(0.35 + lp * 0.65);
+            el.style.color = "var(--accent)";
+            el.dataset.state = "scrambling";
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   /* ── Three.js particles ── */
@@ -699,70 +804,111 @@ export default function AISection() {
       </div>
 
       <div className={styles.textWrap}>
-        {SECTIONS.map((sec, i) => (
-          <div
-            key={sec.key}
-            ref={(el) => (blockRefs.current[i] = el)}
-            className={styles.block}
-          >
-            <div
-              className={`${styles.blockSticky} ${
-                sec.side === "left" ? styles.blockLeft : styles.blockRight
-              }`}
-            >
+        {/* ── Single sticky card layer ──
+            All 4 cards live here, stacked at the same viewport
+            position (left-side cards overlap each other; same for
+            right). The layer is pinned at top:0 for the entire
+            section scroll, so the cards never slide with the page —
+            only their content scrambles in/out. The negative
+            margin-bottom keeps it from taking layout space, so the
+            invisible spacer blocks below start right after the
+            canvas, exactly where they used to. */}
+        <div className={styles.cardLayer}>
+          <div className={styles.cardLayerInner}>
+            {SECTIONS.map((sec, i) => (
               <div
+                key={sec.key}
                 ref={(el) => (cardRefs.current[i] = el)}
                 className={`${styles.cardEditorial} ${
                   sec.side === "right" ? styles.cardEditorialRight : ""
                 }`}
               >
-                {/* ── Integrated stepper ──
-                    Numbers above, click-navigable dots on a fill track
-                    below. The track fill is the same `progress` value
-                    that drove the old sticky bottom bar. */}
-                <div className={styles.stepper}>
-                  <div className={styles.stepperNums}>
-                    {SECTIONS.map((s, idx) => (
-                      <span
-                        key={s.key}
-                        className={`${styles.stepperNum} ${
-                          activeIdx === idx ? styles.stepperNumCurrent : ""
-                        }`}
-                      >
-                        {s.num}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={styles.stepperTrack}>
-                    <div
-                      className={styles.stepperFill}
-                      style={{ width: `${progress * 100}%` }}
-                    />
-                    {SECTIONS.map((s, idx) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={() => scrollToBlock(idx)}
-                        aria-label={`Jump to ${s.title}`}
-                        className={`${styles.stepperDot} ${
-                          activeIdx >= idx ? styles.stepperDotActive : ""
-                        } ${activeIdx === idx ? styles.stepperDotCurrent : ""}`}
-                        style={{
-                          left: `${(idx / (SECTIONS.length - 1)) * 100}%`,
-                        }}
-                      />
-                    ))}
-                  </div>
+                {/* ── Side progress bar ──
+                    Vertical hairline that replaces the old static
+                    border. Fill height = global section progress.
+                    Each section has a click-to-jump tick; the
+                    current one scales up and shows its number. */}
+                <div className={styles.sideBar}>
+                  <div className={styles.sideTrack} />
+                  <div
+                    className={styles.sideFill}
+                    style={{ height: `${progress * 100}%` }}
+                  />
+                  {SECTIONS.map((s, idx) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => scrollToBlock(idx)}
+                      aria-label={`Jump to ${s.title}`}
+                      className={`${styles.sideTick} ${
+                        idx / (SECTIONS.length - 1) <= progress + 0.001
+                          ? styles.sideTickFilled
+                          : ""
+                      } ${activeIdx === idx ? styles.sideTickCurrent : ""}`}
+                      style={{
+                        top: `${(idx / (SECTIONS.length - 1)) * 100}%`,
+                      }}
+                    >
+                      <span className={styles.sideTickLabel}>{s.num}</span>
+                    </button>
+                  ))}
                 </div>
 
+                {/* ── Scramble-reveal text ──
+                    Each char is its own span carrying its real value
+                    in data-char. The RAF loop above walks them in
+                    DOM order and drives per-letter state from this
+                    card's f. Spaces are skipped by the loop. */}
                 <div className={styles.cardEyebrow}>
-                  {sec.badge.toUpperCase()}
+                  {[...sec.badge.toUpperCase()].map((c, j) => (
+                    <span
+                      key={`eb-${j}`}
+                      data-char={c}
+                      className={styles.scrambleChar}
+                    >
+                      {"\u00A0"}
+                    </span>
+                  ))}
                 </div>
-                <h3 className={styles.cardTitle}>{sec.title}</h3>
-                <p className={styles.cardDesc}>{sec.desc}</p>
+                <h3 className={styles.cardTitle}>
+                  {[...sec.title].map((c, j) => (
+                    <span
+                      key={`t-${j}`}
+                      data-char={c}
+                      className={styles.scrambleChar}
+                    >
+                      {"\u00A0"}
+                    </span>
+                  ))}
+                </h3>
+                <p className={styles.cardDesc}>
+                  {[...sec.desc].map((c, j) => (
+                    <span
+                      key={`d-${j}`}
+                      data-char={c}
+                      className={styles.scrambleChar}
+                    >
+                      {"\u00A0"}
+                    </span>
+                  ))}
+                </p>
               </div>
-            </div>
+            ))}
           </div>
+        </div>
+
+        {/* ── Invisible scroll spacers ──
+            One per section. They render nothing but their scroll
+            positions drive the formation curves (via
+            getBoundingClientRect in the scroll handler) and the
+            click-to-jump scrollIntoView. */}
+        {SECTIONS.map((sec, i) => (
+          <div
+            key={sec.key}
+            ref={(el) => (blockRefs.current[i] = el)}
+            className={styles.block}
+            aria-hidden="true"
+          />
         ))}
 
         <div className={styles.trailingSpacer} />

@@ -18,130 +18,150 @@
   height: 100%;
 }
 
+/* The text wrap pulls up by 100vh so its first child (the card layer)
+   shares the same viewport slot as the canvas. */
 .textWrap {
   position: relative;
   z-index: 1;
   margin-top: -100vh;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 48px;
 }
 
-/* ── Feature blocks ──
-   Block is 140vh. Inner is 100vh sticky. That gives a 40vh sticky-lock
-   window — this is the hold. Reduced from 200vh to cut total scroll
-   per section by ~30%. The formation-curve locked phase ([p 0.4–0.6])
-   still spans ~48vh and brackets the sticky pin, so visually the card
-   stays "frozen" a touch longer than the pin window suggests.
-
-   Scroll-progress phase mapping (mirrors formationCurve() in JS):
-     [0.00, 0.15]  scattered, card invisible (entering)
-     [0.15, 0.40]  particles forming + card fading in
-     [0.40, 0.60]  LOCKED — sticky inner pinned, card fully visible
-     [0.60, 0.85]  particles dispersing + card fading out
-     [0.85, 1.00]  scattered, next block taking over */
-.block {
-  min-height: 140vh;
-  position: relative;
-}
-.blockSticky {
+/* ── Single sticky card layer ──
+   Pinned at top:0 for the ENTIRE section scroll. All 4 cards live
+   inside, absolutely positioned so they share the same viewport slot
+   — left-side cards stack on the left, right-side cards on the right.
+   The negative margin-bottom collapses its layout footprint to 0 so
+   the invisible spacer blocks immediately follow the canvas. */
+.cardLayer {
   position: sticky;
   top: 0;
   height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 40px 0;
+  margin-bottom: -100vh;
+  pointer-events: none; /* re-enabled per-card below */
 }
-.blockLeft {
-  justify-content: flex-start;
-}
-.blockRight {
-  justify-content: flex-end;
+.cardLayerInner {
+  position: relative;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    EDITORIAL CTA CARD
    ───────────────────────────────────────────────────────────────────────
-   Restyled to match site CTA vocabulary:
-     - title: font-weight 700 (was 300), letter-spacing -1.5px, line-height 1.1
-     - desc:  16px, line-height 1.7 (was 14.5/1.7 light)
-     - eyebrow: same mono 10px gold, dot-separator variant available
-   The gold hairline accent on the inside edge is kept — it's part of the
-   site's hairline-border vocabulary.
+   All 4 cards share the same viewport slot — left-side cards stack on
+   the left, right-side cards on the right. Only the active card's
+   content is visible at any moment because the scramble loop drives
+   inactive cards' letters to opacity 0 (and inactive side bars to
+   near-zero opacity). No per-card opacity/transform JS — letters and
+   the side bar handle everything.
   ═══════════════════════════════════════════════════════════════════════ */
 .cardEditorial {
+  position: absolute;
+  top: 50%;
+  left: 48px;
+  transform: translateY(-50%);
   max-width: 400px;
   padding-left: 24px;
-  border-left: 1px solid rgba(212, 168, 83, 0.45);
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.06s linear, transform 0.06s linear;
+  pointer-events: none;
 }
 .cardEditorialRight {
+  left: auto;
+  right: 48px;
   padding-left: 0;
   padding-right: 24px;
-  border-left: 0;
-  border-right: 1px solid rgba(212, 168, 83, 0.45);
   text-align: right;
 }
 
-/* ── Integrated stepper (replaces the sticky bottom progress bar) ── */
-.stepper {
-  margin-bottom: 32px;
-  padding-bottom: 6px;
+/* ── Side progress bar (replaces the old border + the top stepper) ──
+   Vertical 1px track with a gold fill that grows top-to-bottom as
+   you scroll through the section. Four ticks sit on it as click-to-
+   jump anchors; the current one scales up and reveals its section
+   number to the side. Pointer-events flipped by JS so only the
+   active card's bar is clickable. */
+.sideBar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 1px;
+  pointer-events: none;
+  transition: opacity 0.18s linear;
 }
-.stepperNums {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
+.cardEditorialRight .sideBar {
+  left: auto;
+  right: 0;
 }
-.stepperNum {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  color: rgba(0, 0, 0, 0.28);
-  transition: color 0.3s;
+.sideTrack {
+  position: absolute;
+  inset: 0;
+  background: rgba(212, 168, 83, 0.18);
 }
-.stepperNumCurrent {
-  color: var(--accent);
-}
-.stepperTrack {
-  position: relative;
-  height: 2px;
-  background: rgba(0, 0, 0, 0.06);
-}
-.stepperFill {
+.sideFill {
   position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
+  width: 100%;
   background: var(--accent);
-  transition: width 0.2s linear;
+  transition: height 0.2s linear;
 }
-.stepperDot {
+.sideTick {
   position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  margin-left: -4px;
-  margin-top: -4px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  padding: 0;
   background: rgba(0, 0, 0, 0.18);
   border: none;
-  border-radius: 50%;
-  padding: 0;
+  border-radius: 0;
   cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
+  transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
 }
-.stepperDotActive {
+.cardEditorialRight .sideTick {
+  left: auto;
+  right: -3px;
+}
+.sideTickFilled {
   background: var(--accent);
 }
-.stepperDotCurrent {
-  transform: scale(1.4);
-  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.12);
+.sideTickCurrent {
+  transform: scale(1.6);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.14);
 }
-.stepperDot:hover {
+.sideTick:hover {
   background: var(--accent);
+}
+.sideTickLabel {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.cardEditorialRight .sideTickLabel {
+  left: auto;
+  right: 14px;
+}
+.sideTickCurrent .sideTickLabel {
+  opacity: 1;
+}
+
+/* ── Scramble char span ──
+   Inline-block so per-letter opacity / color changes don't reflow
+   neighbors. White-space: pre preserves the nbsp placeholder. The
+   JS RAF loop overwrites opacity, color and textContent directly. */
+.scrambleChar {
+  display: inline-block;
+  white-space: pre;
+  transition: color 0.18s linear;
 }
 
 /* ── Eyebrow / title / desc ── */
@@ -173,6 +193,15 @@
 }
 .cardEditorialRight .cardDesc {
   margin-left: auto;
+}
+
+/* ── Invisible scroll spacers ──
+   The cards no longer live inside these — they're just scroll-length
+   generators that drive the formation curves and provide a target
+   for scrollIntoView when a side-bar tick is clicked. */
+.block {
+  min-height: 140vh;
+  position: relative;
 }
 
 .trailingSpacer {
@@ -369,34 +398,38 @@
 
 /* ─────────────────────────────────────────────────────
      RESPONSIVE
-  ───────────────────────────────────────────────────── */
+   ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .textWrap {
-    padding: 0 20px;
-  }
-  .cardEditorial {
-    max-width: 100%;
-  }
-  .block {
-    min-height: 130vh;
-  }
-  .blockSticky {
-    align-items: flex-start;
-    padding-top: 100px;
-  }
-  .blockLeft,
-  .blockRight {
-    justify-content: flex-start;
-  }
+  /* On mobile, all cards pin top-left of the layer instead of
+     vertically-centered, and they span full width with a 20px gutter.
+     Right-side cards reset to left alignment. */
+  .cardEditorial,
   .cardEditorialRight {
+    top: 100px;
+    bottom: auto;
+    left: 20px;
+    right: 20px;
+    transform: none;
+    max-width: 100%;
     padding-left: 24px;
     padding-right: 0;
-    border-left: 1px solid rgba(212, 168, 83, 0.45);
-    border-right: 0;
     text-align: left;
   }
   .cardEditorialRight .cardDesc {
     margin-left: 0;
+  }
+  /* Side bar always pins to the left edge on mobile. */
+  .cardEditorialRight .sideBar {
+    left: 0;
+    right: auto;
+  }
+  .cardEditorialRight .sideTick {
+    left: -3px;
+    right: auto;
+  }
+  .cardEditorialRight .sideTickLabel {
+    left: 14px;
+    right: auto;
   }
   .cardTitle {
     font-size: 30px;
@@ -405,9 +438,8 @@
   .cardDesc {
     font-size: 15px;
   }
-  .stepperNum {
-    font-size: 9px;
-    letter-spacing: 1.2px;
+  .block {
+    min-height: 130vh;
   }
   /* Debug panel adapts on small screens — slides to full width */
   .dbgPanel {
