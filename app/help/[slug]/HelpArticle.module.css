@@ -2,8 +2,8 @@
    HELP ARTICLE — page-specific styles only.
    Shell + reading typography in ResourceShell.module.css.
    
-   Owns: "Was this helpful?" feedback widget, related articles list,
-   not-found fallback.
+   Owns: "Was this helpful?" feedback widget (with reason form for "no"
+   votes), related articles list, not-found fallback.
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────
@@ -37,15 +37,86 @@
   color: rgba(242, 240, 239, 0.75);
   padding: 10px 18px;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, opacity 0.2s;
 }
-.feedbackBtn:hover {
+.feedbackBtn:hover:not(:disabled) {
   color: var(--accent);
   border-color: var(--accent);
   background: rgba(212, 168, 83, 0.04);
 }
+.feedbackBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-/* Feedback result states */
+/* ── Reason form (shown after "Not really" click) ── */
+.feedbackReasonInput {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(242, 240, 239, 0.12);
+  color: var(--white);
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.feedbackReasonInput::placeholder {
+  color: rgba(242, 240, 239, 0.3);
+}
+.feedbackReasonInput:focus {
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.025);
+}
+.feedbackReasonInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.feedbackReasonActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.feedbackCancel {
+  background: transparent;
+  border: none;
+  color: rgba(242, 240, 239, 0.45);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.feedbackCancel:hover:not(:disabled) {
+  color: rgba(242, 240, 239, 0.85);
+}
+.feedbackCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Error state ── */
+.feedbackError {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 120, 120, 0.9);
+  background: rgba(255, 100, 100, 0.04);
+  border: 1px solid rgba(255, 100, 100, 0.25);
+  border-left: 2px solid rgba(255, 100, 100, 0.6);
+}
+
+/* ── Result states ── */
 .feedbackResult {
   display: flex;
   align-items: center;
@@ -165,6 +236,11 @@
   .feedbackBtn {
     width: 100%;
     text-align: center;
+  }
+  .feedbackReasonActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
   .feedbackResultRow {
     flex-direction: column;

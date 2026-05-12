@@ -1,101 +1,464 @@
+/* ====================================================================
+   WarehouseShowcase.module.css
+   Dark cinematic enterprise / control-room aesthetic
+   ==================================================================== */
+
 .section {
   position: relative;
-  z-index: 5;
   background: #000;
+  z-index: 5;
+}
+
+.scrollSpace {
+  height: 300vh;
 }
 
 .sticky {
   position: sticky;
   top: 0;
   height: 100vh;
+  width: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
-.canvasWrap {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.canvasWrap canvas {
+.canvas {
   display: block;
   width: 100%;
   height: 100%;
+  background: #121214;
+  touch-action: none;
 }
 
-.infoBar {
-  position: relative;
-  z-index: 2;
-  margin-top: auto;
+/* ---------- Shared glass surface ---------- */
+.manifestPanel,
+.scorecard,
+.naiveLabel,
+.optimalLabel,
+.naiveStats,
+.optimalStats,
+.dividerPill,
+.bottomCaption {
+  background: rgba(15, 15, 15, 0.42);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+/* ---------- Manifest (chapters 1 & 2) ---------- */
+.manifestPanel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 220px;
+  padding: 14px 16px;
+}
+
+.manifestHead {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 48px 36px;
-  text-align: center;
-  background: linear-gradient(
-    transparent,
-    rgba(0, 0, 0, 0.6) 30%,
-    rgba(0, 0, 0, 0.92)
-  );
-  padding-top: 50px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
 }
 
-.phaseCard {
-  animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-@keyframes cardIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-    filter: blur(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
+.manifestHeadKey {
+  color: #d4a853;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
 }
 
-.phaseLabel {
-  font-family: var(--mono);
+.manifestHeadCount {
+  color: rgba(255, 255, 255, 0.42);
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
   font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--accent);
+  letter-spacing: 1px;
 }
-.phaseTitle {
-  font-family: var(--display);
-  font-size: clamp(20px, 2.5vw, 30px);
-  font-weight: 600;
-  color: var(--white);
-  letter-spacing: -0.3px;
-  line-height: 1.2;
-  max-width: 500px;
+
+.manifestList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.72);
 }
-.phaseStat {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.3);
+
+.manifestRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.manifestArrow {
+  color: rgba(212, 168, 83, 0.55);
+}
+
+.manifestMore {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 9.5px;
   margin-top: 2px;
 }
 
-/* Single scroll space — controls total scroll distance */
-.scrollSpace {
-  height: 280vh;
-  pointer-events: none;
+.manifestFoot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.42);
+  display: flex;
+  justify-content: space-between;
 }
 
+.manifestFootMs {
+  color: #5a9a4a;
+}
+
+/* ---------- Race overlays (chapter 3) ---------- */
+.raceOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.naiveLabel,
+.optimalLabel {
+  position: absolute;
+  padding: 7px 12px;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9.5px;
+  letter-spacing: 2.2px;
+}
+
+.naiveLabel {
+  top: 24px;
+  left: 24px;
+  border-color: rgba(200, 69, 69, 0.3);
+  color: #c84545;
+}
+
+.optimalLabel {
+  top: calc(50% + 60px);
+  left: 24px;
+  border-color: rgba(212, 168, 83, 0.35);
+  color: #d4a853;
+}
+
+.naiveStats,
+.optimalStats {
+  position: absolute;
+  right: 24px;
+  padding: 9px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 10.5px;
+}
+
+.naiveStats {
+  top: 24px;
+}
+.optimalStats {
+  top: calc(50% + 60px);
+}
+
+.statLabel {
+  color: rgba(255, 255, 255, 0.4);
+}
+.naiveValue {
+  color: #c84545;
+}
+.optValue {
+  color: #d4a853;
+}
+
+.dividerWrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 16px);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dividerLineL,
+.dividerLineR {
+  display: block;
+  width: 70px;
+  height: 1px;
+}
+
+.dividerLineL {
+  background: linear-gradient(to right, transparent, rgba(200, 69, 69, 0.55));
+}
+
+.dividerLineR {
+  background: linear-gradient(to left, transparent, rgba(212, 168, 83, 0.55));
+}
+
+.dividerPill {
+  padding: 5px 13px;
+  border-radius: 3px;
+  border-color: rgba(212, 168, 83, 0.55);
+  background: rgba(10, 10, 10, 0.85);
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.6px;
+  color: #d4a853;
+}
+
+/* ---------- Scorecard (chapter 4) ---------- */
+.scorecard {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 240px;
+  padding: 14px 16px;
+}
+
+.scorecardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.scorecardHeadKey {
+  color: #5a9a4a;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
+}
+
+.scorecardHeadCount {
+  color: rgba(255, 255, 255, 0.42);
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.scoreRow {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.scoreRowHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+
+.scoreNaive {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #c84545;
+}
+
+.scoreOpt {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #d4a853;
+}
+
+.scoreTimeNaive {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 17px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.scoreTimeOpt {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 22px;
+  font-weight: 500;
+  color: #d4a853;
+}
+
+.scoreRowFoot {
+  display: flex;
+  justify-content: space-between;
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.savedBlock {
+  background: rgba(90, 154, 74, 0.1);
+  border: 0.5px solid rgba(90, 154, 74, 0.32);
+  padding: 10px 12px;
+}
+
+.savedLabel {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9px;
+  color: rgba(90, 154, 74, 0.75);
+  letter-spacing: 1.4px;
+  margin-bottom: 4px;
+}
+
+.savedRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.savedPct {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 22px;
+  font-weight: 500;
+  color: #5a9a4a;
+}
+
+.savedDetail {
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* ---------- Bottom caption (all chapters) ---------- */
+.bottomCaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 18px 24px 22px;
+  background: rgba(10, 10, 10, 0.5);
+  border: none;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.chapterDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chapterDot {
+  width: 16px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background 0.4s ease;
+}
+
+.chapterDotActive {
+  background: #d4a853;
+}
+
+.chapterLabel {
+  margin-left: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+}
+
+.chapterTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.96);
+  letter-spacing: -0.3px;
+}
+
+/* ---------- Mobile ---------- */
 @media (max-width: 768px) {
-  .infoBar {
-    padding: 40px 20px 28px;
-  }
   .scrollSpace {
-    height: 220vh;
+    height: 240vh;
+  }
+
+  .manifestPanel,
+  .scorecard {
+    width: 168px;
+    top: 16px;
+    padding: 11px 13px;
+  }
+  .manifestPanel {
+    left: 16px;
+  }
+  .scorecard {
+    right: 16px;
+  }
+
+  .manifestList {
+    font-size: 9.5px;
+  }
+  .manifestFoot {
+    font-size: 9px;
+  }
+
+  .naiveLabel {
+    top: 16px;
+    left: 16px;
+  }
+  .optimalLabel {
+    top: calc(50% + 50px);
+    left: 16px;
+  }
+  .naiveStats {
+    top: 16px;
+    right: 16px;
+  }
+  .optimalStats {
+    top: calc(50% + 50px);
+    right: 16px;
+  }
+  .naiveStats,
+  .optimalStats {
+    font-size: 9.5px;
+    padding: 7px 10px;
+  }
+
+  .dividerLineL,
+  .dividerLineR {
+    width: 40px;
+  }
+  .dividerPill {
+    font-size: 8.5px;
+    padding: 4px 10px;
+    letter-spacing: 1.3px;
+  }
+
+  .bottomCaption {
+    padding: 14px 18px 18px;
+  }
+  .chapterTitle {
+    font-size: 16px;
+  }
+  .chapterLabel {
+    font-size: 8.5px;
+  }
+  .scoreTimeOpt,
+  .savedPct {
+    font-size: 18px;
+  }
+  .scoreTimeNaive {
+    font-size: 14px;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .manifestPanel,
+  .scorecard,
+  .raceOverlay,
+  .chapterDot {
+    transition-duration: 0.01ms;
   }
 }

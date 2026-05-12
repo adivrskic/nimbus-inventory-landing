@@ -1,10 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
-export const metadata = {
-  title: "Page Not Found",
-};
-
-export default function NotFound() {
+export default function NotFoundClient() {
   return (
     <div
       style={{
@@ -28,6 +26,7 @@ export default function NotFound() {
       >
         404
       </div>
+
       <h1
         style={{
           fontFamily: "var(--display)",
@@ -41,6 +40,7 @@ export default function NotFound() {
       >
         Page not found
       </h1>
+
       <p
         style={{
           fontFamily: "var(--display)",
@@ -54,6 +54,7 @@ export default function NotFound() {
       >
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
+
       <Link
         href="/"
         style={{
@@ -66,8 +67,12 @@ export default function NotFound() {
           textDecoration: "none",
           transition: "background 0.3s",
         }}
-        onMouseEnter={(e) => (e.target.style.background = "var(--accent)")}
-        onMouseLeave={(e) => (e.target.style.background = "var(--white)")}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--accent)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.background = "var(--white)")
+        }
       >
         Back to home
       </Link>

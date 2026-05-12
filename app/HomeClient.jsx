@@ -25,7 +25,7 @@ export default function HomeClient() {
       <Features />
       <ProblemSolution onDemo={openDemo} />
       <WarehouseShowcase onDemo={openDemo} />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <Integrations />
       <Industries />
       <FinalCTA onDemo={openDemo} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnimationPaused } from "@/lib/AnimationContext";
 import {
   generateScattered,
@@ -17,8 +17,6 @@ import styles from "./AISection.module.css";
 const PARTICLE_COUNT = 50000;
 const OFFSET = 5.5;
 
-/* Map of shape-key → generator. Edit a section's `gen` field to swap
-   which shape it morphs into. */
 const SHAPE_GENERATORS = {
   rings: generateSoundRings,
   cube: generateCube,
@@ -27,20 +25,25 @@ const SHAPE_GENERATORS = {
 };
 
 /* ── Per-section configuration ──
-   rotX / rotY / rotZ are in DEGREES, applied to each shape at generation:
-     rotX  ─  pitch (negative tilts top edge toward viewer)
-     rotY  ─  yaw (positive rotates right edge away)
-     rotZ  ─  roll (in-plane spin)
-   Defaults of (-17, 23, 0) approximate the previous isometric look.
-   Tune per section to taste. */
+   rotX / rotY / rotZ in DEGREES, applied to each shape at generation.
+   scale is a multiplier applied AFTER rotation, before X/Y offset.
+   Use the debug panel (?debug) to live-tune these and copy the JSON
+   back here when you're happy. */
+/* Values below are baked from a debug-panel tuning pass — adjust via
+   ?debug=1 then "Copy config" to update. offsetX/offsetY are layered on
+   top of the default L/R or mobile-Y position offsets. */
 const SECTIONS = [
   {
     key: "voice",
+    shortName: "Voice",
     side: "left",
     gen: "rings",
-    rotX: -25,
-    rotY: -45,
-    rotZ: 0,
+    rotX: -33,
+    rotY: -52,
+    rotZ: 67,
+    scale: 0.6,
+    offsetX: -1,
+    offsetY: 0,
     num: "01",
     badge: "Hands-free",
     title: "Voice commands",
@@ -48,11 +51,15 @@ const SECTIONS = [
   },
   {
     key: "spatial",
+    shortName: "Spatial",
     side: "right",
     gen: "cube",
-    rotX: -25,
-    rotY: -45,
+    rotX: -57,
+    rotY: -19,
     rotZ: 0,
+    scale: 0.8,
+    offsetX: 0,
+    offsetY: 0,
     num: "02",
     badge: "Real-time",
     title: "Spatial intelligence",
@@ -60,11 +67,15 @@ const SECTIONS = [
   },
   {
     key: "search",
+    shortName: "Search",
     side: "left",
     gen: "magnifier",
-    rotX: -25,
-    rotY: -45,
-    rotZ: 0,
+    rotX: -12,
+    rotY: -34,
+    rotZ: -9,
+    scale: 0.6,
+    offsetX: -1.25,
+    offsetY: 1,
     num: "03",
     badge: "AI-powered",
     title: "Intelligent search",
@@ -72,17 +83,32 @@ const SECTIONS = [
   },
   {
     key: "analytics",
+    shortName: "Analytics",
     side: "right",
     gen: "bars",
-    rotX: 15,
-    rotY: 45,
-    rotZ: 0,
+    rotX: 0,
+    rotY: 42,
+    rotZ: 1,
+    scale: 0.65,
+    offsetX: 2,
+    offsetY: 0,
     num: "04",
     badge: "Forecasting",
     title: "Predictive analytics",
     desc: "Nimbus doesn't just report what happened — it forecasts what's next.",
   },
 ];
+
+const DEFAULT_PARAMS = SECTIONS.map((s) => ({
+  rotX: s.rotX,
+  rotY: s.rotY,
+  rotZ: s.rotZ,
+  scale: s.scale ?? 0.85,
+  offsetX: s.offsetX ?? 0,
+  offsetY: s.offsetY ?? 0,
+}));
+
+const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v1";
 
 function smoothstep(x) {
   const c = Math.max(0, Math.min(1, x));
@@ -97,6 +123,161 @@ function formationCurve(p) {
   return 1 - smoothstep((p - 0.6) / 0.25);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DEBUG PANEL — only mounted when ?debug is in the URL.
+   Sliders directly mutate parent state; parent's effect rebuilds the
+   relevant shape and the live render picks it up next frame.
+   ═══════════════════════════════════════════════════════════════════════ */
+function Slider({ label, value, min, max, step, unit, onChange }) {
+  return (
+    <div className={styles.dbgSlider}>
+      <div className={styles.dbgSliderHead}>
+        <span className={styles.dbgSliderLabel}>{label}</span>
+        <span className={styles.dbgSliderValue}>
+          {step < 1 ? value.toFixed(2) : Math.round(value)}
+          {unit}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className={styles.dbgRange}
+      />
+    </div>
+  );
+}
+
+function DebugPanel({ params, onChange, onReset, onClose }) {
+  const [active, setActive] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const p = params[active];
+
+  const update = (field, value) => onChange(active, field, value);
+
+  const copyConfig = async () => {
+    /* Output in the SECTIONS shape so it's a drop-in paste for the file. */
+    const config = params.map((par, i) => ({
+      key: SECTIONS[i].key,
+      rotX: Math.round(par.rotX),
+      rotY: Math.round(par.rotY),
+      rotZ: Math.round(par.rotZ),
+      scale: parseFloat(par.scale.toFixed(2)),
+      offsetX: parseFloat(par.offsetX.toFixed(2)),
+      offsetY: parseFloat(par.offsetY.toFixed(2)),
+    }));
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      console.log(JSON.stringify(config, null, 2));
+    }
+  };
+
+  return (
+    <div className={styles.dbgPanel}>
+      <div className={styles.dbgHead}>
+        <span className={styles.dbgTitle}>SHAPE DEBUG</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className={styles.dbgClose}
+          aria-label="Close debug panel"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className={styles.dbgTabs}>
+        {SECTIONS.map((s, i) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setActive(i)}
+            className={`${styles.dbgTab} ${
+              active === i ? styles.dbgTabActive : ""
+            }`}
+          >
+            {s.num}
+          </button>
+        ))}
+      </div>
+      <div className={styles.dbgSectionName}>{SECTIONS[active].title}</div>
+
+      <Slider
+        label="Rotation X"
+        value={p.rotX}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotX", v)}
+      />
+      <Slider
+        label="Rotation Y"
+        value={p.rotY}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotY", v)}
+      />
+      <Slider
+        label="Rotation Z"
+        value={p.rotZ}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotZ", v)}
+      />
+      <Slider
+        label="Scale"
+        value={p.scale}
+        min={0.3}
+        max={1.5}
+        step={0.05}
+        unit="×"
+        onChange={(v) => update("scale", v)}
+      />
+      <Slider
+        label="Offset X"
+        value={p.offsetX}
+        min={-10}
+        max={10}
+        step={0.25}
+        unit=""
+        onChange={(v) => update("offsetX", v)}
+      />
+      <Slider
+        label="Offset Y"
+        value={p.offsetY}
+        min={-10}
+        max={10}
+        step={0.25}
+        unit=""
+        onChange={(v) => update("offsetY", v)}
+      />
+
+      <div className={styles.dbgActions}>
+        <button type="button" onClick={onReset} className={styles.dbgBtn}>
+          Reset
+        </button>
+        <button type="button" onClick={copyConfig} className={styles.dbgBtn}>
+          {copied ? "Copied ✓" : "Copy config"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AI SECTION
+   ═══════════════════════════════════════════════════════════════════════ */
 export default function AISection() {
   const canvasRef = useRef(null);
   const sectionRef = useRef(null);
@@ -111,6 +292,69 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
+  /* Debug state. `debugAvailable` is read once from the URL — adding
+     ?debug=1 anywhere in the query string turns on the panel toggle. */
+  const [debugAvailable, setDebugAvailable] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugParams, setDebugParams] = useState(DEFAULT_PARAMS);
+  /* Mirror to a ref so the shape-rebuild function can read latest values
+     without being captured stale by the Three.js init closure. */
+  const debugParamsRef = useRef(debugParams);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasDebug = new URLSearchParams(window.location.search).has("debug");
+    setDebugAvailable(hasDebug);
+    /* If debug is on, load any previously-tuned values from storage so
+       tweaks survive page reloads. Validated by length to avoid stale data
+       from an older version with a different SECTIONS count. */
+    if (hasDebug) {
+      try {
+        const stored = localStorage.getItem(DEBUG_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length === SECTIONS.length) {
+            setDebugParams(parsed);
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  /* Whenever debugParams changes: update ref, persist (if debug is on),
+     and ask Three.js to rebuild the shape buffers. */
+  const rebuildShapesRef = useRef(null);
+  useEffect(() => {
+    debugParamsRef.current = debugParams;
+    if (debugAvailable) {
+      try {
+        localStorage.setItem(DEBUG_STORAGE_KEY, JSON.stringify(debugParams));
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    rebuildShapesRef.current?.();
+  }, [debugParams, debugAvailable]);
+
+  const handleDebugChange = useCallback((idx, field, value) => {
+    setDebugParams((prev) => {
+      const next = prev.slice();
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  }, []);
+
+  const handleDebugReset = useCallback(() => {
+    setDebugParams(DEFAULT_PARAMS);
+    try {
+      localStorage.removeItem(DEBUG_STORAGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }, []);
+
   const CFG = {
     smoothFormation: 0.18,
     physicsStiff: 0.055,
@@ -121,8 +365,6 @@ export default function AISection() {
     jitterFreqBase: 0.18,
     sheenSmooth: 0.22,
     sheenMax: 0.36,
-    /* Particle alpha when the section is in viewport. The formation
-       and sheen logic apply additional brightness on top. */
     sectionAlpha: 0.55,
     camZ: 16,
     camZMobile: 22,
@@ -133,6 +375,16 @@ export default function AISection() {
     formation: 0,
     globalAlpha: 0,
   });
+
+  /* Click a stepper dot/label → scroll the matching block into view.
+     Scrolling to block-center lines up perfectly with the formation
+     curve's peak (block-center == viewport-center == p == 0.5). */
+  const scrollToBlock = useCallback((i) => {
+    blockRefs.current[i]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, []);
 
   /* ── Scroll handler ── */
   useEffect(() => {
@@ -153,7 +405,6 @@ export default function AISection() {
     sectionObs.observe(section);
 
     const onScroll = () => {
-      /* Bottom progress bar */
       if (blocks.length > 1) {
         const fTop =
           blocks[0].getBoundingClientRect().top + blocks[0].offsetHeight * 0.5;
@@ -161,12 +412,9 @@ export default function AISection() {
         setProgress(Math.max(0, Math.min(1, (vcenter - fTop) / (lTop - fTop))));
       }
 
-      /* Section visibility → global particle alpha. Soft fade-in is
-         provided by the sAlpha smoothing in the render loop. */
       const sRect = section.getBoundingClientRect();
       const sectionInView = sRect.bottom > 0 && sRect.top < vh;
 
-      /* Per-block formation */
       const formations = [];
       for (let i = 0; i < blocks.length; i++) {
         const r = blocks[i].getBoundingClientRect();
@@ -210,6 +458,7 @@ export default function AISection() {
   /* ── Three.js particles ── */
   useEffect(() => {
     let frameId;
+    let cleanup = () => {};
     const init = async () => {
       const THREE = await import("three");
       const canvas = canvasRef.current;
@@ -244,21 +493,51 @@ export default function AISection() {
       const isMobile = window.innerWidth < 768;
       const scattered = generateScattered(PARTICLE_COUNT, isMobile);
 
-      /* Build each shape with its section's specific rotation. */
-      const baseShapes = SECTIONS.map((sec) => {
-        const fn = SHAPE_GENERATORS[sec.gen];
-        return fn(PARTICLE_COUNT, sec.rotX, sec.rotY, sec.rotZ);
-      });
+      /* ── Shape builder ──
+         Builds every shape from the latest debug params. Exposed via
+         rebuildShapesRef so the debug-params effect can call it live.
+         The animation loop reads `shapes` via closure — we keep mutating
+         the same `shapes` array (in place) so the loop's reference stays
+         valid across rebuilds. */
+      const shapes = [null, null, null, null];
 
-      const shapes = isMobile
-        ? baseShapes.map((s) => {
-            const scaled = new Float32Array(s.length);
-            for (let j = 0; j < s.length; j++) scaled[j] = s[j] * 0.75;
-            return offsetShapeY(scaled, -3.5);
-          })
-        : baseShapes.map((s, i) =>
-            offsetShape(s, SECTIONS[i].side === "left" ? OFFSET : -OFFSET)
-          );
+      const buildShape = (i) => {
+        const sec = SECTIONS[i];
+        const params = debugParamsRef.current[i];
+        const fn = SHAPE_GENERATORS[sec.gen];
+
+        let pts = fn(PARTICLE_COUNT, params.rotX, params.rotY, params.rotZ);
+
+        /* Scale — combine debug scale with a mobile shrink factor so the
+           shapes fit the narrower portrait viewport. */
+        const mobileFactor = isMobile ? 0.85 : 1.0;
+        const scale = params.scale * mobileFactor;
+        if (scale !== 1) {
+          const out = new Float32Array(pts.length);
+          for (let j = 0; j < pts.length; j++) out[j] = pts[j] * scale;
+          pts = out;
+        }
+
+        /* Position — desktop alternates left/right with OFFSET, mobile
+           centers and pulls up Y. Debug offsets layer on top. */
+        const defaultX = isMobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
+        const defaultY = isMobile ? -3.5 : 0;
+        const finalX = defaultX + params.offsetX;
+        const finalY = defaultY + params.offsetY;
+
+        if (finalX !== 0) pts = offsetShape(pts, finalX);
+        if (finalY !== 0) pts = offsetShapeY(pts, finalY);
+
+        return pts;
+      };
+
+      const rebuildShapes = () => {
+        for (let i = 0; i < SECTIONS.length; i++) {
+          shapes[i] = buildShape(i);
+        }
+      };
+      rebuildShapes();
+      rebuildShapesRef.current = rebuildShapes;
 
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
       currentPos.set(scattered);
@@ -327,6 +606,7 @@ export default function AISection() {
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
 
         const activeShape = shapes[s.activeShape];
+        if (!activeShape) return;
 
         const flowAmp =
           CFG.curlStrength > 0
@@ -399,11 +679,16 @@ export default function AISection() {
         renderer.render(scene, camera);
       }
       animate();
-      return () => window.removeEventListener("resize", resize);
+
+      cleanup = () => {
+        window.removeEventListener("resize", resize);
+        rebuildShapesRef.current = null;
+      };
     };
     init();
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
+      cleanup();
     };
   }, []);
 
@@ -431,8 +716,47 @@ export default function AISection() {
                   sec.side === "right" ? styles.cardEditorialRight : ""
                 }`}
               >
+                {/* ── Integrated stepper ──
+                    Numbers above, click-navigable dots on a fill track
+                    below. The track fill is the same `progress` value
+                    that drove the old sticky bottom bar. */}
+                <div className={styles.stepper}>
+                  <div className={styles.stepperNums}>
+                    {SECTIONS.map((s, idx) => (
+                      <span
+                        key={s.key}
+                        className={`${styles.stepperNum} ${
+                          activeIdx === idx ? styles.stepperNumCurrent : ""
+                        }`}
+                      >
+                        {s.num}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={styles.stepperTrack}>
+                    <div
+                      className={styles.stepperFill}
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                    {SECTIONS.map((s, idx) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => scrollToBlock(idx)}
+                        aria-label={`Jump to ${s.title}`}
+                        className={`${styles.stepperDot} ${
+                          activeIdx >= idx ? styles.stepperDotActive : ""
+                        } ${activeIdx === idx ? styles.stepperDotCurrent : ""}`}
+                        style={{
+                          left: `${(idx / (SECTIONS.length - 1)) * 100}%`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
                 <div className={styles.cardEyebrow}>
-                  {sec.num} &mdash; {sec.badge.toUpperCase()}
+                  {sec.badge.toUpperCase()}
                 </div>
                 <h3 className={styles.cardTitle}>{sec.title}</h3>
                 <p className={styles.cardDesc}>{sec.desc}</p>
@@ -444,57 +768,24 @@ export default function AISection() {
         <div className={styles.trailingSpacer} />
       </div>
 
-      <div className={styles.progressWrap}>
-        <div className={styles.progressInner}>
-          <div className={styles.progressLabels}>
-            {SECTIONS.map((s, i) => (
-              <span
-                key={s.key}
-                className={styles.progressLabel}
-                onClick={() =>
-                  blockRefs.current[i]?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  })
-                }
-                style={{
-                  left: `${(i / (SECTIONS.length - 1)) * 100}%`,
-                  color: activeIdx >= i ? "var(--primary)" : "var(--muted)",
-                  cursor: "pointer",
-                }}
-              >
-                {s.key.charAt(0).toUpperCase() + s.key.slice(1)}
-              </span>
-            ))}
-          </div>
-          <div className={styles.progressTrack}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${progress * 100}%` }}
-            />
-            {SECTIONS.map((_, i) => (
-              <div
-                key={i}
-                className={styles.progressDot}
-                onClick={() =>
-                  blockRefs.current[i]?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  })
-                }
-                style={{
-                  left: `${(i / (SECTIONS.length - 1)) * 100}%`,
-                  background:
-                    progress >= i / (SECTIONS.length - 1)
-                      ? "var(--primary)"
-                      : "var(--divider)",
-                  cursor: "pointer",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ── Debug UI (only when ?debug is set) ── */}
+      {debugAvailable && !debugOpen && (
+        <button
+          type="button"
+          onClick={() => setDebugOpen(true)}
+          className={styles.dbgToggle}
+        >
+          DEBUG
+        </button>
+      )}
+      {debugAvailable && debugOpen && (
+        <DebugPanel
+          params={debugParams}
+          onChange={handleDebugChange}
+          onReset={handleDebugReset}
+          onClose={() => setDebugOpen(false)}
+        />
+      )}
     </section>
   );
 }

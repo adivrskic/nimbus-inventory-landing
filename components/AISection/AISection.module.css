@@ -29,10 +29,11 @@
 }
 
 /* ── Feature blocks ──
-   Block is 200vh. Inner is 100vh sticky. That gives a 100vh sticky-lock
-   window — this is the hold. While the user keeps scrolling through it,
-   CSS sticky pins the inner element at the viewport top, so the
-   formation-locked state and the card both appear stationary.
+   Block is 140vh. Inner is 100vh sticky. That gives a 40vh sticky-lock
+   window — this is the hold. Reduced from 200vh to cut total scroll
+   per section by ~30%. The formation-curve locked phase ([p 0.4–0.6])
+   still spans ~48vh and brackets the sticky pin, so visually the card
+   stays "frozen" a touch longer than the pin window suggests.
 
    Scroll-progress phase mapping (mirrors formationCurve() in JS):
      [0.00, 0.15]  scattered, card invisible (entering)
@@ -41,7 +42,7 @@
      [0.60, 0.85]  particles dispersing + card fading out
      [0.85, 1.00]  scattered, next block taking over */
 .block {
-  min-height: 200vh;
+  min-height: 140vh;
   position: relative;
 }
 .blockSticky {
@@ -59,10 +60,19 @@
   justify-content: flex-end;
 }
 
-/* ── Editorial CTA ── */
+/* ═══════════════════════════════════════════════════════════════════════
+   EDITORIAL CTA CARD
+   ───────────────────────────────────────────────────────────────────────
+   Restyled to match site CTA vocabulary:
+     - title: font-weight 700 (was 300), letter-spacing -1.5px, line-height 1.1
+     - desc:  16px, line-height 1.7 (was 14.5/1.7 light)
+     - eyebrow: same mono 10px gold, dot-separator variant available
+   The gold hairline accent on the inside edge is kept — it's part of the
+   site's hairline-border vocabulary.
+  ═══════════════════════════════════════════════════════════════════════ */
 .cardEditorial {
-  max-width: 380px;
-  padding-left: 20px;
+  max-width: 400px;
+  padding-left: 24px;
   border-left: 1px solid rgba(212, 168, 83, 0.45);
   opacity: 0;
   transform: translateY(16px);
@@ -70,36 +80,96 @@
 }
 .cardEditorialRight {
   padding-left: 0;
-  padding-right: 20px;
+  padding-right: 24px;
   border-left: 0;
   border-right: 1px solid rgba(212, 168, 83, 0.45);
   text-align: right;
 }
+
+/* ── Integrated stepper (replaces the sticky bottom progress bar) ── */
+.stepper {
+  margin-bottom: 32px;
+  padding-bottom: 6px;
+}
+.stepperNums {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stepperNum {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: rgba(0, 0, 0, 0.28);
+  transition: color 0.3s;
+}
+.stepperNumCurrent {
+  color: var(--accent);
+}
+.stepperTrack {
+  position: relative;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.06);
+}
+.stepperFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+.stepperDot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  margin-top: -4px;
+  background: rgba(0, 0, 0, 0.18);
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+.stepperDotActive {
+  background: var(--accent);
+}
+.stepperDotCurrent {
+  transform: scale(1.4);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.12);
+}
+.stepperDot:hover {
+  background: var(--accent);
+}
+
+/* ── Eyebrow / title / desc ── */
 .cardEyebrow {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 2px;
+  letter-spacing: 2.5px;
   color: var(--accent);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-transform: uppercase;
 }
 .cardTitle {
   font-family: var(--display);
-  font-size: clamp(36px, 4.2vw, 52px);
-  font-weight: 300;
-  line-height: 1.04;
-  letter-spacing: -1.2px;
+  font-size: clamp(32px, 3.8vw, 46px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -1.5px;
   color: var(--dark);
-  margin: 0 0 20px;
+  margin: 0 0 18px;
 }
 .cardDesc {
   font-family: var(--display);
-  font-size: 14.5px;
+  font-size: 16px;
   line-height: 1.7;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--dark-secondary);
   margin: 0;
-  max-width: 340px;
+  max-width: 360px;
 }
 .cardEditorialRight .cardDesc {
   margin-left: auto;
@@ -109,63 +179,197 @@
   min-height: 150vh;
 }
 
-.progressWrap {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
-  padding: 24px 48px 20px;
-}
-.progressInner {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-.progressLabels {
-  position: relative;
-  width: 100%;
-  height: 16px;
-  margin-bottom: 10px;
-}
-.progressLabel {
-  position: absolute;
-  transform: translateX(-50%);
+/* ═══════════════════════════════════════════════════════════════════════
+   DEBUG PANEL — only mounted when ?debug is in the URL
+   Fixed-position dark overlay. Sliders are native range inputs styled
+   with appearance:none + custom thumb (gold square, no rounding to
+   match the site's sharp-corner vocabulary).
+  ═══════════════════════════════════════════════════════════════════════ */
+.dbgToggle {
+  position: fixed;
+  top: 88px;
+  right: 24px;
+  z-index: 99;
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  transition: color 0.3s;
-  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 8px 14px;
+  background: rgba(20, 20, 22, 0.92);
+  color: rgba(242, 240, 239, 0.85);
+  border: 1px solid rgba(212, 168, 83, 0.4);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.progressTrack {
-  width: 100%;
-  height: 2px;
-  background: var(--divider-subtle);
-  position: relative;
-}
-.progressFill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: var(--primary);
-  transition: width 0.15s linear;
-}
-.progressDot {
-  position: absolute;
-  top: -3px;
-  width: 8px;
-  height: 8px;
-  margin-left: -4px;
-  border-radius: 50%;
-  border: 2px solid var(--light);
-  transition: background 0.3s;
+.dbgToggle:hover {
+  background: var(--accent);
+  color: #0a0a0a;
+  border-color: var(--accent);
 }
 
+.dbgPanel {
+  position: fixed;
+  top: 88px;
+  right: 24px;
+  z-index: 100;
+  width: 300px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+  background: rgba(18, 18, 20, 0.96);
+  border: 1px solid rgba(212, 168, 83, 0.28);
+  color: rgba(242, 240, 239, 0.85);
+  font-family: var(--mono);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+.dbgHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.dbgTitle {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--accent);
+}
+.dbgClose {
+  background: transparent;
+  border: none;
+  color: rgba(242, 240, 239, 0.5);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  transition: color 0.2s;
+}
+.dbgClose:hover {
+  color: var(--accent);
+}
+
+.dbgTabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.dbgTab {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(242, 240, 239, 0.5);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.dbgTab:hover {
+  color: rgba(242, 240, 239, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.dbgTabActive {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.06);
+}
+.dbgSectionName {
+  font-family: var(--display);
+  font-size: 12px;
+  color: rgba(242, 240, 239, 0.7);
+  margin: 12px 0 18px;
+}
+
+.dbgSlider {
+  margin-bottom: 14px;
+}
+.dbgSliderHead {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dbgSliderLabel {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(242, 240, 239, 0.5);
+  text-transform: uppercase;
+}
+.dbgSliderValue {
+  font-size: 11px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.dbgRange {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+.dbgRange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+  transition: transform 0.15s;
+}
+.dbgRange::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+.dbgRange::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+}
+.dbgRange::-moz-range-track {
+  background: rgba(255, 255, 255, 0.12);
+  height: 2px;
+  border: none;
+}
+
+.dbgActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.dbgBtn {
+  background: transparent;
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 9px 0;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.dbgBtn:hover {
+  background: var(--accent);
+  color: #0a0a0a;
+}
+
+/* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .textWrap {
     padding: 0 20px;
@@ -174,7 +378,7 @@
     max-width: 100%;
   }
   .block {
-    min-height: 170vh;
+    min-height: 130vh;
   }
   .blockSticky {
     align-items: flex-start;
@@ -185,7 +389,7 @@
     justify-content: flex-start;
   }
   .cardEditorialRight {
-    padding-left: 20px;
+    padding-left: 24px;
     padding-right: 0;
     border-left: 1px solid rgba(212, 168, 83, 0.45);
     border-right: 0;
@@ -196,11 +400,24 @@
   }
   .cardTitle {
     font-size: 30px;
+    letter-spacing: -1.2px;
   }
-  .progressWrap {
-    padding: 20px 16px 16px;
+  .cardDesc {
+    font-size: 15px;
   }
-  .progressLabels {
-    display: none;
+  .stepperNum {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+  }
+  /* Debug panel adapts on small screens — slides to full width */
+  .dbgPanel {
+    top: 72px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+  .dbgToggle {
+    top: 72px;
+    right: 12px;
   }
 }

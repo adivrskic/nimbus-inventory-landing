@@ -116,15 +116,15 @@ const MORE_GROUPS = [
     items: [
       { title: "Blog", desc: "Operations insights & updates", href: "/blog" },
       { title: "Help Center", desc: "Guides and FAQs", href: "/help" },
-      { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
+      // { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
     ],
   },
   {
     label: "Company",
     items: [
-      { title: "Trust", desc: "Security and SOC 2 details", href: "/trust" },
+      // { title: "Trust", desc: "Security and SOC 2 details", href: "/trust" },
       { title: "Contact", desc: "Talk to our team", href: "/contact" },
-      { title: "Status", desc: "Live system health", href: "/status" },
+      // { title: "Status", desc: "Live system health", href: "/status" },
     ],
   },
   {
@@ -154,10 +154,10 @@ const EXTRA_LINKS = [
   { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
-  { text: "API Docs", href: "/api-docs" },
-  { text: "Trust", href: "/trust" },
+  // { text: "API Docs", href: "/api-docs" },
+  // { text: "Trust", href: "/trust" },
   { text: "Contact", href: "/contact" },
-  { text: "Status", href: "/status" },
+  // { text: "Status", href: "/status" },
 ];
 
 function MobileMenu({ open, links, onClose, onDemo }) {

@@ -32,14 +32,14 @@ const COLUMNS = [
     links: [
       { text: "Blog", href: "/blog" },
       { text: "Help Center", href: "/help" },
-      { text: "API Docs", href: "/api-docs" },
-      { text: "Status", href: "/status" },
+      // { text: "API Docs", href: "/api-docs" },
+      // { text: "Status", href: "/status" },
     ],
   },
   {
     title: "Company",
     links: [
-      { text: "Trust", href: "/trust" },
+      // { text: "Trust", href: "/trust" },
       { text: "Contact", href: "/contact" },
     ],
   },

@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import {
   ResourceShell,
   ResourceTOC,
@@ -26,6 +26,43 @@ function findArticle(slug) {
   return null;
 }
 
+/* ── Feedback localStorage helpers ──
+   - feedback:<resource> stores "yes" | "no" per-article so a returning
+     visitor sees their previous vote instead of the buttons
+   - nimbus_session_id is a single anonymous-visitor UUID shared across
+     all articles, used as soft dedup signal server-side */
+const FEEDBACK_KEY = (resource) => `nimbus_feedback:${resource}`;
+const SESSION_KEY = "nimbus_session_id";
+
+function generateUUID() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  /* Fallback for environments without crypto.randomUUID (very rare).
+     Not cryptographically random but fine as a session marker. */
+  return (
+    Math.random().toString(36).slice(2) +
+    "-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2)
+  );
+}
+
+function getOrCreateSessionId() {
+  if (typeof window === "undefined") return null;
+  try {
+    let id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = generateUUID();
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 export default function HelpArticleClient({ slug }) {
   const contentRef = useRef(null);
   useResourceSectionAnimations(contentRef);
@@ -33,11 +70,32 @@ export default function HelpArticleClient({ slug }) {
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
 
+  /* Feedback state machine:
+       null      → show Yes/No buttons (no vote yet)
+       "no-form" → showing reason textarea (clicked No but not submitted)
+       "yes"     → vote submitted (and persisted)
+       "no"      → vote submitted (and persisted) */
   const [feedback, setFeedback] = useState(null);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
 
   const found = findArticle(slug);
   const post = found?.article;
   const category = found?.category;
+
+  /* On mount, restore any prior vote from localStorage so the buttons
+     don't reappear on reload. Per-article (so voting on one doesn't
+     suppress the buttons on another). */
+  useEffect(() => {
+    if (typeof window === "undefined" || !post) return;
+    try {
+      const stored = localStorage.getItem(FEEDBACK_KEY(`help/${post.slug}`));
+      if (stored === "yes" || stored === "no") setFeedback(stored);
+    } catch {
+      /* ignore — localStorage may be disabled in private mode */
+    }
+  }, [post]);
 
   /* Sections derived from h2 blocks */
   const sections = useMemo(() => {
@@ -52,6 +110,69 @@ export default function HelpArticleClient({ slug }) {
     if (!category || !post) return [];
     return category.articles.filter((a) => a.slug !== post.slug).slice(0, 4);
   }, [category, post]);
+
+  /* ── Vote submission ──
+     Single path: POST to /api/feedback with vote + optional reason. On
+     success, persist to localStorage and transition to the final state.
+     On failure, show inline error and let the user retry. */
+  const submitVote = useCallback(
+    async (vote, reasonText = "") => {
+      if (!post || submitting) return;
+      setSubmitting(true);
+      setFeedbackError("");
+
+      const resource = `help/${post.slug}`;
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resource,
+            vote,
+            reason: reasonText || undefined,
+            sessionId: getOrCreateSessionId(),
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setFeedbackError(
+            data.error || "Couldn't save that. Please try again."
+          );
+          setSubmitting(false);
+          return;
+        }
+
+        /* Persist locally so the buttons stay hidden on reload */
+        try {
+          localStorage.setItem(FEEDBACK_KEY(resource), vote);
+        } catch {
+          /* ignore */
+        }
+        setFeedback(vote);
+        setReason("");
+      } catch (err) {
+        console.error(err);
+        setFeedbackError("Network error. Please try again.");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [post, submitting]
+  );
+
+  const handleYesClick = () => submitVote("yes", "");
+  const handleNoClick = () => {
+    /* Don't submit yet — show the reason form first. */
+    setFeedbackError("");
+    setFeedback("no-form");
+  };
+  const handleNoSubmit = () => submitVote("no", reason);
+  const handleNeverMind = () => {
+    setFeedback(null);
+    setReason("");
+    setFeedbackError("");
+  };
 
   if (!post) {
     return (
@@ -115,9 +236,9 @@ export default function HelpArticleClient({ slug }) {
         </section>
       ))}
 
-      {/* Was this helpful? */}
+      {/* ── Was this helpful? ── */}
       <div className={pageStyles.feedback}>
-        {feedback === null ? (
+        {feedback === null && (
           <>
             <div className={pageStyles.feedbackLabel}>
               Was this article helpful?
@@ -125,30 +246,80 @@ export default function HelpArticleClient({ slug }) {
             <div className={pageStyles.feedbackButtons}>
               <button
                 type="button"
-                onClick={() => setFeedback("yes")}
+                onClick={handleYesClick}
+                disabled={submitting}
                 className={pageStyles.feedbackBtn}
               >
-                Yes, it helped
+                {submitting ? "Sending…" : "Yes, it helped"}
               </button>
               <button
                 type="button"
-                onClick={() => setFeedback("no")}
+                onClick={handleNoClick}
+                disabled={submitting}
                 className={pageStyles.feedbackBtn}
               >
                 Not really
               </button>
             </div>
+            {feedbackError && (
+              <div className={pageStyles.feedbackError} role="alert">
+                {feedbackError}
+              </div>
+            )}
           </>
-        ) : feedback === "yes" ? (
+        )}
+
+        {feedback === "no-form" && (
+          <>
+            <div className={pageStyles.feedbackLabel}>What was missing?</div>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Optional — tell us what would have helped."
+              rows={3}
+              maxLength={2000}
+              disabled={submitting}
+              className={pageStyles.feedbackReasonInput}
+              aria-label="Optional feedback"
+            />
+            <div className={pageStyles.feedbackReasonActions}>
+              <button
+                type="button"
+                onClick={handleNoSubmit}
+                disabled={submitting}
+                className={pageStyles.feedbackBtn}
+              >
+                {submitting ? "Sending…" : "Send feedback"}
+              </button>
+              <button
+                type="button"
+                onClick={handleNeverMind}
+                disabled={submitting}
+                className={pageStyles.feedbackCancel}
+              >
+                Never mind
+              </button>
+            </div>
+            {feedbackError && (
+              <div className={pageStyles.feedbackError} role="alert">
+                {feedbackError}
+              </div>
+            )}
+          </>
+        )}
+
+        {feedback === "yes" && (
           <div className={pageStyles.feedbackResult}>
             <span className={pageStyles.feedbackResultDot} />
             <span>Thanks for the feedback.</span>
           </div>
-        ) : (
+        )}
+
+        {feedback === "no" && (
           <div className={pageStyles.feedbackResultRow}>
             <div className={pageStyles.feedbackResult}>
               <span className={pageStyles.feedbackResultDot} />
-              <span>Sorry this didn&apos;t help.</span>
+              <span>Got it — thanks for telling us.</span>
             </div>
             <TransitionLink
               href="/contact"
