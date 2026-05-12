@@ -173,29 +173,6 @@ export default function PricingClient() {
   const [billing, setBilling] = useState("monthly");
   const [openFaq, setOpenFaq] = useState(null);
 
-  /* Toggle underline positioning */
-  const toggleRowRef = useRef(null);
-  const monthlyBtnRef = useRef(null);
-  const annualBtnRef = useRef(null);
-  const underlineRef = useRef(null);
-
-  const moveUnderline = useCallback(() => {
-    if (!toggleRowRef.current || !underlineRef.current) return;
-    const targetBtn =
-      billing === "monthly" ? monthlyBtnRef.current : annualBtnRef.current;
-    if (!targetBtn) return;
-    const rowPos = toggleRowRef.current.getBoundingClientRect();
-    const btnPos = targetBtn.getBoundingClientRect();
-    underlineRef.current.style.left = `${btnPos.left - rowPos.left}px`;
-    underlineRef.current.style.width = `${btnPos.width}px`;
-  }, [billing]);
-
-  useEffect(() => {
-    moveUnderline();
-    window.addEventListener("resize", moveUnderline);
-    return () => window.removeEventListener("resize", moveUnderline);
-  }, [moveUnderline]);
-
   /* Intro + scroll animations */
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -297,7 +274,7 @@ export default function PricingClient() {
       }
     );
 
-    /* Final CTA — brackets + content */
+    /* Final CTA */
     const ctl = gsap.timeline({
       scrollTrigger: { trigger: finalCtaRef.current, start: "top 65%" },
       defaults: { ease: "power4.out" },
@@ -343,6 +320,9 @@ export default function PricingClient() {
   const proPrice =
     billing === "annual" ? PRICING.pro.annual : PRICING.pro.monthly;
   const proAnnualTotal = PRICING.pro.annual * 12;
+  /* Yearly savings — the gap between paying monthly all year vs paying
+     the discounted annual rate. Shown prominently when Annual is active. */
+  const annualSavings = (PRICING.pro.monthly - PRICING.pro.annual) * 12;
 
   /* Render helpers */
   const renderHeadline = (lines, lineCls, letterCls, accentCls, spaceCls) =>
@@ -413,43 +393,65 @@ export default function PricingClient() {
 
         <div className={styles.subWrap}>{renderSub(SUB_TEXT)}</div>
 
+        {/* ─────────────────────────────────────────────────────
+            BILLING SELECTOR — pill toggle with sliding gold pill
+            
+            The pill background slides between Monthly and Annual via a
+            CSS transform driven by inline style. When Annual is active,
+            the pill is on the right (gold), the Annual button text goes
+            dark (visible against gold), and the −20% badge contrasts.
+            On Monthly, the pill sits on the left and the −20% badge is
+            visible in gold as a teaser for the alternative.
+        ───────────────────────────────────────────────────── */}
         <div className={styles.toggleWrap}>
           <div
-            ref={toggleRowRef}
-            className={styles.toggleRow}
+            className={styles.pillToggle}
             role="tablist"
             aria-label="Billing period"
           >
+            <div
+              className={styles.pillSlider}
+              style={{
+                transform:
+                  billing === "annual" ? "translateX(100%)" : "translateX(0)",
+              }}
+            />
             <button
-              ref={monthlyBtnRef}
               role="tab"
               aria-selected={billing === "monthly"}
-              className={`${styles.toggleBtn} ${
-                billing === "monthly" ? styles.toggleBtnActive : ""
+              className={`${styles.pillBtn} ${
+                billing === "monthly" ? styles.pillBtnActive : ""
               }`}
               onClick={() => setBilling("monthly")}
             >
               Monthly
             </button>
-            <span className={styles.toggleDivider} />
             <button
-              ref={annualBtnRef}
               role="tab"
               aria-selected={billing === "annual"}
-              className={`${styles.toggleBtn} ${
-                billing === "annual" ? styles.toggleBtnActive : ""
+              className={`${styles.pillBtn} ${
+                billing === "annual" ? styles.pillBtnActive : ""
               }`}
               onClick={() => setBilling("annual")}
             >
               Annual
+              <span className={styles.pillBadge}>−20%</span>
             </button>
-            <div ref={underlineRef} className={styles.toggleUnderline} />
           </div>
-          <span className={styles.toggleSave}>— Save 20% annually —</span>
         </div>
       </section>
 
-      {/* ── Tier cards ── */}
+      {/* ─────────────────────────────────────────────────────
+          TIER CARDS — Pro (featured) + Enterprise
+          
+          Each card has a big editorial section numeral in the background
+          (very low opacity, behind content via z-index:-1 inside an
+          isolated stacking context). Pro carries a "Most Popular" pill
+          badge above its number prefix and a subtle gold tint on the
+          card background. When billing=annual, Pro's price block shows
+          a strike-through of the monthly price + a "Save $X/yr" call-out
+          in gold.
+      ───────────────────────────────────────────────────── */}
       <section className={styles.tiers}>
         {TIERS.map((tier, ti) => (
           <div
@@ -459,6 +461,19 @@ export default function PricingClient() {
               tier.featured ? styles.tierFeatured : ""
             }`}
           >
+            {/* Editorial section numeral in background */}
+            <span className={styles.tierBigNum} aria-hidden="true">
+              {tier.number}
+            </span>
+
+            {/* Most Popular badge — Pro only */}
+            {tier.featured && (
+              <div className={styles.tierBadge}>
+                <span className={styles.tierBadgeDot} />
+                Most Popular
+              </div>
+            )}
+
             <div className={styles.tierNumber}>
               {tier.number} / {tier.name.toUpperCase()}
             </div>
@@ -470,14 +485,30 @@ export default function PricingClient() {
               {tier.key === "pro" ? (
                 <>
                   <div ref={proPriceRef} className={styles.price}>
+                    {billing === "annual" && (
+                      <span className={styles.priceStrike}>
+                        ${fmt(PRICING.pro.monthly)}
+                      </span>
+                    )}
                     <span className={styles.priceCurrency}>$</span>
                     <span className={styles.priceValue}>{fmt(proPrice)}</span>
+                    <span className={styles.priceCadence}>/mo</span>
                   </div>
-                  <div className={styles.priceUnit}>per warehouse / month</div>
+                  <div className={styles.priceUnit}>per warehouse</div>
                   <div className={styles.priceNote}>
-                    {billing === "annual"
-                      ? `Billed annually · $${fmt(proAnnualTotal)}/yr`
-                      : "Billed monthly · Cancel anytime"}
+                    {billing === "annual" ? (
+                      <>
+                        <span className={styles.priceSavings}>
+                          Save ${fmt(annualSavings)}/yr
+                        </span>
+                        <span className={styles.priceMuted}>
+                          {" "}
+                          · Billed annually
+                        </span>
+                      </>
+                    ) : (
+                      "Billed monthly · Cancel anytime"
+                    )}
                   </div>
                 </>
               ) : (

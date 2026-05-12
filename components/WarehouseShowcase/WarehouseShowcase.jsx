@@ -8,33 +8,39 @@ import styles from "./WarehouseShowcase.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ═══ Warehouse: mathematically aligned to grid ═══ */
-const SHELF_H = 2.4,
-  SHELF_D = 0.8,
-  SHELF_W = 2.2;
-const AISLE_W = 2.0,
-  PAIR_GAP = 0.8;
+/* ═══════════════════════════════════════════════════════════════════
+   WAREHOUSE GEOMETRY — 10 bays × 3 groups × 4 shelves
+   Footprint ~52m × 46m, racks 4.2m tall (enterprise FC scale)
+   ═══════════════════════════════════════════════════════════════════ */
+const SHELF_H = 4.2;
+const SHELF_D = 0.85;
+const SHELF_W = 2.4;
+const AISLE_W = 2.4;
+const PAIR_GAP = 0.9;
 const PAIR_W = SHELF_D * 2 + PAIR_GAP;
 const PITCH_X = AISLE_W + PAIR_W;
 const SHELF_GAP_Z = 0.6;
 const PITCH_Z = SHELF_W + SHELF_GAP_Z;
-const CROSS_W = 2.0;
-const BAYS_X = 6,
-  GROUPS_Z = 3,
-  SHELVES_PER_GROUP = 3;
+const CROSS_W = 2.4;
+const CEIL_H = 9.0;
+
+const BAYS_X = 10;
+const GROUPS_Z = 3;
+const SHELVES_PER_GROUP = 4;
 const GROUP_DEPTH = SHELVES_PER_GROUP * PITCH_Z;
-const TOTAL_W = BAYS_X * PITCH_X;
+const TOTAL_W = BAYS_X * PITCH_X + AISLE_W;
 const TOTAL_D = GROUPS_Z * GROUP_DEPTH + (GROUPS_Z + 1) * CROSS_W;
-const OX = -TOTAL_W / 2,
-  OZ = -TOTAL_D / 2;
+const OX = -TOTAL_W / 2;
+const OZ = -TOTAL_D / 2;
 
 const AISLE_X = [];
 for (let i = 0; i <= BAYS_X; i++) AISLE_X.push(OX + i * PITCH_X + AISLE_W / 2);
 const AISLE_Z = [];
 for (let i = 0; i <= GROUPS_Z; i++)
   AISLE_Z.push(OZ + i * (GROUP_DEPTH + CROSS_W) + CROSS_W / 2);
-const DOCK_X = 0,
-  DOCK_Z = AISLE_Z[AISLE_Z.length - 1] + 4;
+
+const DOCK_X = 0;
+const DOCK_Z = AISLE_Z[AISLE_Z.length - 1] + 5;
 
 const SHELVES = [];
 for (let bx = 0; bx < BAYS_X; bx++) {
@@ -56,140 +62,31 @@ for (let bx = 0; bx < BAYS_X; bx++) {
 
 const _sz = (gz, s) =>
   OZ + gz * (GROUP_DEPTH + CROSS_W) + CROSS_W + s * PITCH_Z + SHELF_W / 2;
+
+/* ═══════════════════════════════════════════════════════════════════
+   PICKS — 12 items, ordered for max naive zigzag
+   ═══════════════════════════════════════════════════════════════════ */
 const PICK_ITEMS = [
-  { x: AISLE_X[0], z: _sz(0, 1), label: "A1-047" },
-  { x: AISLE_X[5], z: _sz(2, 0), label: "F3-392" },
-  { x: AISLE_X[1], z: _sz(1, 2), label: "B2-201" },
-  { x: AISLE_X[3], z: _sz(0, 0), label: "D1-854" },
-  { x: AISLE_X[6], z: _sz(1, 1), label: "G2-133" },
-  { x: AISLE_X[2], z: _sz(2, 2), label: "C3-776" },
-  { x: AISLE_X[4], z: _sz(0, 2), label: "E1-441" },
-  { x: AISLE_X[3], z: _sz(2, 1), label: "D3-519" },
+  { x: AISLE_X[1], z: _sz(0, 1), label: "B1-047" },
+  { x: AISLE_X[8], z: _sz(2, 0), label: "I3-392" },
+  { x: AISLE_X[2], z: _sz(2, 3), label: "C3-201" },
+  { x: AISLE_X[9], z: _sz(0, 2), label: "J1-854" },
+  { x: AISLE_X[3], z: _sz(0, 0), label: "D1-776" },
+  { x: AISLE_X[7], z: _sz(2, 1), label: "H3-133" },
+  { x: AISLE_X[1], z: _sz(2, 2), label: "B3-441" },
+  { x: AISLE_X[8], z: _sz(0, 3), label: "I1-519" },
+  { x: AISLE_X[5], z: _sz(2, 3), label: "F3-208" },
+  { x: AISLE_X[4], z: _sz(0, 1), label: "E1-672" },
+  { x: AISLE_X[9], z: _sz(2, 2), label: "J3-947" },
+  { x: AISLE_X[3], z: _sz(2, 1), label: "D3-318" },
 ];
 
-const AZ_BOT = AISLE_Z[AISLE_Z.length - 1],
-  AZ_TOP = AISLE_Z[0];
+const AZ_BOT = AISLE_Z[AISLE_Z.length - 1];
+const AZ_TOP = AISLE_Z[0];
 
-// Optimal route
-const OPT_ROUTE = [
-  [DOCK_X, DOCK_Z],
-  [DOCK_X, AZ_BOT],
-  [AISLE_X[0], AZ_BOT],
-  [AISLE_X[0], _sz(0, 1)],
-  [AISLE_X[0], AISLE_Z[1]],
-  [AISLE_X[1], AISLE_Z[1]],
-  [AISLE_X[1], _sz(1, 2)],
-  [AISLE_X[1], AISLE_Z[2]],
-  [AISLE_X[2], AISLE_Z[2]],
-  [AISLE_X[2], _sz(2, 2)],
-  [AISLE_X[2], AZ_BOT],
-  [AISLE_X[3], AZ_BOT],
-  [AISLE_X[3], _sz(2, 1)],
-  [AISLE_X[3], AISLE_Z[1]],
-  [AISLE_X[3], _sz(0, 0)],
-  [AISLE_X[3], AZ_TOP],
-  [AISLE_X[4], AZ_TOP],
-  [AISLE_X[4], _sz(0, 2)],
-  [AISLE_X[4], AISLE_Z[2]],
-  [AISLE_X[5], AISLE_Z[2]],
-  [AISLE_X[5], _sz(2, 0)],
-  [AISLE_X[5], AZ_BOT],
-  [AISLE_X[6], AZ_BOT],
-  [AISLE_X[6], _sz(1, 1)],
-  [AISLE_X[6], AZ_BOT],
-  [DOCK_X, AZ_BOT],
-  [DOCK_X, DOCK_Z],
-];
-
-// Naive route — broken into segments per pick
-const NAIVE_SEGMENTS = [
-  {
-    label: "Dock → A1",
-    pts: [
-      [DOCK_X, DOCK_Z],
-      [DOCK_X, AZ_BOT],
-      [AISLE_X[0], AZ_BOT],
-      [AISLE_X[0], _sz(0, 1)],
-    ],
-  },
-  {
-    label: "A1 → F3",
-    pts: [
-      [AISLE_X[0], _sz(0, 1)],
-      [AISLE_X[0], AZ_TOP],
-      [AISLE_X[5], AZ_TOP],
-      [AISLE_X[5], AISLE_Z[2]],
-      [AISLE_X[5], _sz(2, 0)],
-    ],
-  },
-  {
-    label: "F3 → B2",
-    pts: [
-      [AISLE_X[5], _sz(2, 0)],
-      [AISLE_X[5], AZ_BOT],
-      [AISLE_X[1], AZ_BOT],
-      [AISLE_X[1], _sz(1, 2)],
-    ],
-  },
-  {
-    label: "B2 → D1",
-    pts: [
-      [AISLE_X[1], _sz(1, 2)],
-      [AISLE_X[1], AZ_TOP],
-      [AISLE_X[3], AZ_TOP],
-      [AISLE_X[3], _sz(0, 0)],
-    ],
-  },
-  {
-    label: "D1 → G2",
-    pts: [
-      [AISLE_X[3], _sz(0, 0)],
-      [AISLE_X[3], AZ_BOT],
-      [AISLE_X[6], AZ_BOT],
-      [AISLE_X[6], _sz(1, 1)],
-    ],
-  },
-  {
-    label: "G2 → C3",
-    pts: [
-      [AISLE_X[6], _sz(1, 1)],
-      [AISLE_X[6], AZ_TOP],
-      [AISLE_X[2], AZ_TOP],
-      [AISLE_X[2], AISLE_Z[2]],
-      [AISLE_X[2], _sz(2, 2)],
-    ],
-  },
-  {
-    label: "C3 → E1",
-    pts: [
-      [AISLE_X[2], _sz(2, 2)],
-      [AISLE_X[2], AZ_BOT],
-      [AISLE_X[4], AZ_BOT],
-      [AISLE_X[4], AZ_TOP],
-      [AISLE_X[4], _sz(0, 2)],
-    ],
-  },
-  {
-    label: "E1 → D3",
-    pts: [
-      [AISLE_X[4], _sz(0, 2)],
-      [AISLE_X[4], AZ_BOT],
-      [AISLE_X[3], AZ_BOT],
-      [AISLE_X[3], _sz(2, 1)],
-    ],
-  },
-  {
-    label: "D3 → Dock",
-    pts: [
-      [AISLE_X[3], _sz(2, 1)],
-      [AISLE_X[3], AZ_BOT],
-      [DOCK_X, AZ_BOT],
-      [DOCK_X, DOCK_Z],
-    ],
-  },
-];
-
-// Compute distances per segment (1 unit ≈ 1m, speed ≈ 1.2 m/s)
+/* ═══════════════════════════════════════════════════════════════════
+   ROUTE GENERATION
+   ═══════════════════════════════════════════════════════════════════ */
 function segDist(pts) {
   let d = 0;
   for (let i = 1; i < pts.length; i++)
@@ -198,16 +95,94 @@ function segDist(pts) {
     );
   return d;
 }
+
+// Naive: visit picks in declaration order, dumb cross-aisle routing
+function buildNaiveSegments() {
+  const segs = [];
+  let cur = [DOCK_X, DOCK_Z];
+  PICK_ITEMS.forEach((item) => {
+    const target = [item.x, item.z];
+    const midZ = (cur[1] + target[1]) / 2;
+    const crossZ =
+      Math.abs(midZ - AZ_BOT) < Math.abs(midZ - AZ_TOP) ? AZ_BOT : AZ_TOP;
+    segs.push({
+      label: `→ ${item.label}`,
+      pts: [
+        [cur[0], cur[1]],
+        [cur[0], crossZ],
+        [target[0], crossZ],
+        [target[0], target[1]],
+      ],
+    });
+    cur = target;
+  });
+  segs.push({
+    label: "→ Dock",
+    pts: [
+      [cur[0], cur[1]],
+      [cur[0], AZ_BOT],
+      [DOCK_X, AZ_BOT],
+      [DOCK_X, DOCK_Z],
+    ],
+  });
+  return segs;
+}
+
+// Optimal: snake heuristic — traverse aisles left→right, alternate direction
+function buildOptimalRoute() {
+  const byAisle = new Map();
+  PICK_ITEMS.forEach((item) => {
+    const ai = AISLE_X.findIndex((ax) => Math.abs(ax - item.x) < 0.01);
+    if (!byAisle.has(ai)) byAisle.set(ai, []);
+    byAisle.get(ai).push(item);
+  });
+  const sortedAisles = [...byAisle.keys()].sort((a, b) => a - b);
+  const pts = [
+    [DOCK_X, DOCK_Z],
+    [DOCK_X, AZ_BOT],
+  ];
+  let endedAtBottom = true;
+  sortedAisles.forEach((ai, i) => {
+    const ax = AISLE_X[ai];
+    const fromBottom = i % 2 === 0;
+    const items = byAisle.get(ai).slice();
+    items.sort((a, b) => (fromBottom ? b.z - a.z : a.z - b.z));
+    pts.push([ax, fromBottom ? AZ_BOT : AZ_TOP]);
+    items.forEach((item) => pts.push([ax, item.z]));
+    pts.push([ax, fromBottom ? AZ_TOP : AZ_BOT]);
+    endedAtBottom = !fromBottom;
+  });
+  if (!endedAtBottom) {
+    const lastAx = AISLE_X[sortedAisles[sortedAisles.length - 1]];
+    pts.push([lastAx, AZ_BOT]);
+  }
+  pts.push([DOCK_X, AZ_BOT], [DOCK_X, DOCK_Z]);
+  return pts;
+}
+
+const NAIVE_SEGMENTS = buildNaiveSegments();
 NAIVE_SEGMENTS.forEach((s) => {
   s.dist = segDist(s.pts);
-  s.time = s.dist / 1.2;
 });
+const OPT_ROUTE = buildOptimalRoute();
 
-const GOLD = 0xd4a853,
-  GREEN = 0x5a9a4a,
-  RED_DIM = 0x993333;
+const NAIVE_DIST = NAIVE_SEGMENTS.reduce((a, s) => a + s.dist, 0);
+const OPT_DIST = segDist(OPT_ROUTE);
+const WALK_SPEED = 1.2; // m/s
+const NAIVE_TIME_S = NAIVE_DIST / WALK_SPEED;
+const OPT_TIME_S = OPT_DIST / WALK_SPEED;
+const SAVINGS_PCT = Math.round((1 - OPT_DIST / NAIVE_DIST) * 100);
+const OPT_SPEED_FACTOR = NAIVE_DIST / OPT_DIST;
 
-/* ── Route helpers ── */
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${m}:${sec}`;
+}
+
+/* Route helpers */
 function buildLinePoints(pts) {
   return pts.map((p) => new THREE.Vector3(p[0], 0.1, p[1]));
 }
@@ -238,18 +213,60 @@ function waypointFraction(pts, idx) {
   return a / t;
 }
 
-/* ═══ Timeline defaults ═══ */
+const GOLD = 0xd4a853;
+const GREEN = 0x5a9a4a;
+const RED_DIM = 0xa54545;
+const WARM_WHITE = 0xffeecc;
+
+/* ═══════════════════════════════════════════════════════════════════
+   CAMERA — chapter waypoints, smoothstepped
+   ═══════════════════════════════════════════════════════════════════ */
+const CAM_PROGRAM = [
+  { p: 0.0, pos: [-42, 78, 75], target: [0, 0, 0] }, // Establish (high corner)
+  { p: 0.12, pos: [-28, 58, 62], target: [-3, 0, 5] }, // Settle in
+  { p: 0.22, pos: [-12, 60, 58], target: [0, 0, 0] }, // Overview
+  { p: 0.36, pos: [-2, 82, 22], target: [0, 0, 0] }, // Tilt toward top-down
+  { p: 0.5, pos: [0, 78, 18], target: [0, 0, 0] }, // Near-top-down (route)
+  { p: 0.6, pos: [-26, 54, 52], target: [0, 0, 0] }, // Race begins (perspective)
+  { p: 0.76, pos: [18, 50, 56], target: [0, 0, 0] }, // Drift opposite for parallax
+  { p: 0.9, pos: [-8, 75, 72], target: [0, 0, 0] }, // Begin pull back
+  { p: 1.0, pos: [0, 115, 105], target: [0, 0, 0] }, // Final scale reveal
+];
+function getCamForP(p) {
+  for (let i = 0; i < CAM_PROGRAM.length - 1; i++) {
+    const a = CAM_PROGRAM[i];
+    const b = CAM_PROGRAM[i + 1];
+    if (p >= a.p && p <= b.p) {
+      const t = (p - a.p) / Math.max(0.0001, b.p - a.p);
+      const s = t * t * (3 - 2 * t);
+      return [
+        a.pos[0] + (b.pos[0] - a.pos[0]) * s,
+        a.pos[1] + (b.pos[1] - a.pos[1]) * s,
+        a.pos[2] + (b.pos[2] - a.pos[2]) * s,
+        a.target[0] + (b.target[0] - a.target[0]) * s,
+        a.target[1] + (b.target[1] - a.target[1]) * s,
+        a.target[2] + (b.target[2] - a.target[2]) * s,
+      ];
+    }
+  }
+  const last = CAM_PROGRAM[CAM_PROGRAM.length - 1];
+  return [...last.pos, ...last.target];
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TIMELINE & CAPTIONS
+   ═══════════════════════════════════════════════════════════════════ */
 const DEFAULT_T = {
-  shelfStart: 0,
-  shelfEnd: 0.12,
-  itemsStart: 0.12,
-  naiveStart: 0.22,
-  naiveEnd: 0.5,
-  routeStart: 0.42,
-  routeDrawEnd: 0.58,
-  pickStart: 0.58,
-  returnEnd: 0.84,
-  outroStart: 0.84,
+  shelfStart: 0.06,
+  shelfEnd: 0.16,
+  itemsStart: 0.18,
+  naiveStart: 0.28,
+  naiveEnd: 0.46,
+  optStart: 0.48,
+  optDrawEnd: 0.56,
+  raceStart: 0.58,
+  raceEnd: 0.86,
+  outroStart: 0.86,
   outroEnd: 1.0,
 };
 
@@ -261,62 +278,46 @@ const CAPTIONS = [
     stat: "Scroll to explore",
   },
   {
-    start: 0.12,
+    start: 0.18,
     label: "01 — Order received",
-    title: "8 items located across the grid.",
+    title: `${PICK_ITEMS.length} items located across ~${Math.round(
+      TOTAL_W
+    )}m × ${Math.round(TOTAL_D)}m floor.`,
     stat: "< 50ms lookup",
   },
   {
-    start: 0.22,
-    label: "02 — Naive path drawn",
-    title: "Sequential pick order — zigzags.",
-    stat: "Watch each leg appear",
+    start: 0.28,
+    label: "02 — Naive sequence",
+    title: "Pick items in order. Watch the zigzags.",
+    stat: `${Math.round(NAIVE_DIST)}m · ${fmtTime(NAIVE_TIME_S)}`,
   },
   {
-    start: 0.42,
+    start: 0.48,
     label: "03 — Optimal route",
-    title: "AI calculates shortest path.",
-    stat: "43% less distance",
+    title: "AI plans a single sweep.",
+    stat: `${Math.round(OPT_DIST)}m · ${SAVINGS_PCT}% shorter`,
   },
   {
     start: 0.58,
-    label: "04 — Pick in progress",
-    title: "Following the optimal route.",
-    stat: "99.7% accuracy",
+    label: "04 — Side-by-side race",
+    title: "Two pickers. Same items. Different paths.",
+    stat: `${Math.round(NAIVE_DIST)}m vs ${Math.round(OPT_DIST)}m`,
   },
   {
-    start: 0.84,
-    label: "05 — Complete",
-    title: "Packed, verified, shipped.",
-    stat: "2m 08s · 43% faster",
+    start: 0.76,
+    label: "05 — Optimal complete",
+    title: "Back at dock. Naive still picking.",
+    stat: `${fmtTime(OPT_TIME_S)} · ${SAVINGS_PCT}% faster`,
+  },
+  {
+    start: 0.88,
+    label: "06 — Both complete",
+    title: `Optimal saved ${fmtTime(
+      NAIVE_TIME_S - OPT_TIME_S
+    )} and ${Math.round(NAIVE_DIST - OPT_DIST)}m of walking.`,
+    stat: `Naive ${fmtTime(NAIVE_TIME_S)} · Optimal ${fmtTime(OPT_TIME_S)}`,
   },
 ];
-
-/* ═══ Stat sprite helper ═══ */
-function makeStatSprite(text, subtext) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 160;
-  canvas.height = 56;
-  const ctx = canvas.getContext("2d");
-  ctx.font = "bold 16px monospace";
-  ctx.fillStyle = "rgba(153,51,51,0.9)";
-  ctx.textAlign = "center";
-  ctx.fillText(text, 80, 20);
-  ctx.font = "11px monospace";
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  ctx.fillText(subtext, 80, 40);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.minFilter = THREE.LinearFilter;
-  const mat = new THREE.SpriteMaterial({
-    map: tex,
-    transparent: true,
-    depthTest: false,
-  });
-  const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(3.2, 1.1, 1);
-  sprite.visible = false;
-  return sprite;
-}
 
 export default function WarehouseShowcase() {
   const sectionRef = useRef(null);
@@ -332,8 +333,8 @@ export default function WarehouseShowcase() {
 
   // Debug
   const [showDebug, setShowDebug] = useState(false);
-  const [debugTick, setDebugTick] = useState(0);
-  const [scrollH, setScrollH] = useState(180);
+  const [, setDebugTick] = useState(0);
+  const [scrollH, setScrollH] = useState(280);
   const [vig, setVig] = useState({
     size: 80,
     cx: 50,
@@ -345,11 +346,13 @@ export default function WarehouseShowcase() {
   const debugRef = useRef({
     p: 0,
     shelfH: 0,
-    routeVis: 0,
-    routeProgress: 0,
+    optRouteVis: 0,
+    optRouteProg: 0,
     naiveSegIdx: 0,
     naiveSegProg: 0,
-    pickProgress: 0,
+    raceProg: 0,
+    optProg: 0,
+    naiveProg: 0,
     phase: "—",
     camY: 0,
   });
@@ -368,9 +371,9 @@ export default function WarehouseShowcase() {
   }, [showDebug]);
 
   useEffect(() => {
-    const canvas = canvasRef.current,
-      section = sectionRef.current,
-      scrollEl = scrollRef.current;
+    const canvas = canvasRef.current;
+    const section = sectionRef.current;
+    const scrollEl = scrollRef.current;
     if (!canvas || !section || !scrollEl) return;
 
     const renderer = new THREE.WebGLRenderer({
@@ -384,141 +387,279 @@ export default function WarehouseShowcase() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 200);
+    scene.fog = new THREE.FogExp2(0x000000, 0.011);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 250);
 
     /* ── Lighting ── */
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(10, 28, 14);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dir = new THREE.DirectionalLight(0xfff5e0, 0.85);
+    dir.position.set(16, 40, 20);
     dir.castShadow = true;
     dir.shadow.mapSize.set(2048, 2048);
     dir.shadow.camera.near = 1;
-    dir.shadow.camera.far = 70;
-    dir.shadow.camera.left = -35;
-    dir.shadow.camera.right = 35;
-    dir.shadow.camera.top = 35;
-    dir.shadow.camera.bottom = -35;
+    dir.shadow.camera.far = 100;
+    dir.shadow.camera.left = -45;
+    dir.shadow.camera.right = 45;
+    dir.shadow.camera.top = 45;
+    dir.shadow.camera.bottom = -45;
+    dir.shadow.bias = -0.0002;
     scene.add(dir);
-    scene.add(new THREE.HemisphereLight(0x2a2010, 0x080808, 0.3));
+    scene.add(new THREE.HemisphereLight(0x3a2810, 0x080808, 0.35));
 
     /* ── Floor ── */
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(80, 80),
+      new THREE.PlaneGeometry(140, 140),
       new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.95 })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const gMat = new THREE.LineBasicMaterial({ color: 0x151515 });
-    for (let i = -40; i <= 40; i += 2) {
-      const g = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, 0.005, -40),
-        new THREE.Vector3(i, 0.005, 40),
-      ]);
-      scene.add(new THREE.Line(g, gMat));
-      const g2 = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-40, 0.005, i),
-        new THREE.Vector3(40, 0.005, i),
-      ]);
-      scene.add(new THREE.Line(g2, gMat));
-    }
 
-    /* ── Aisle markings ── */
-    const sM = new THREE.MeshBasicMaterial({
-      color: 0x111111,
+    /* ── Floor grid — single merged LineSegments ── */
+    const gridPts = [];
+    const HW = 58;
+    const HD = 52;
+    const STEP = 2;
+    for (let x = -HW; x <= HW; x += STEP)
+      gridPts.push(
+        new THREE.Vector3(x, 0.005, -HD),
+        new THREE.Vector3(x, 0.005, HD)
+      );
+    for (let z = -HD; z <= HD; z += STEP)
+      gridPts.push(
+        new THREE.Vector3(-HW, 0.005, z),
+        new THREE.Vector3(HW, 0.005, z)
+      );
+    const gridGeo = new THREE.BufferGeometry().setFromPoints(gridPts);
+    scene.add(
+      new THREE.LineSegments(
+        gridGeo,
+        new THREE.LineBasicMaterial({
+          color: 0x141414,
+          transparent: true,
+          opacity: 0.6,
+        })
+      )
+    );
+
+    /* ── Aisle stripes ── */
+    const stripeMat = new THREE.MeshBasicMaterial({
+      color: 0x141414,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.55,
     });
     AISLE_X.forEach((ax) => {
-      const s = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 44), sM);
+      const s = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.2, TOTAL_D + 4),
+        stripeMat
+      );
       s.rotation.x = -Math.PI / 2;
-      s.position.set(ax, 0.015, -2);
+      s.position.set(ax, 0.015, 0);
       scene.add(s);
     });
     AISLE_Z.forEach((az) => {
-      const s = new THREE.Mesh(new THREE.PlaneGeometry(50, 1.0), sM);
+      const s = new THREE.Mesh(
+        new THREE.PlaneGeometry(TOTAL_W + 4, 1.1),
+        stripeMat
+      );
       s.rotation.x = -Math.PI / 2;
-      s.position.set(-2, 0.015, az);
+      s.position.set(0, 0.015, az);
       scene.add(s);
     });
 
-    /* ── Dock ── */
-    const dockRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.8, 1.0, 32),
-      new THREE.MeshBasicMaterial({
-        color: GOLD,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide,
-      })
-    );
-    dockRing.rotation.x = -Math.PI / 2;
-    dockRing.position.set(DOCK_X, 0.02, DOCK_Z);
-    scene.add(dockRing);
-    const sRing = new THREE.Mesh(
-      new THREE.RingGeometry(1.1, 1.2, 32),
-      new THREE.MeshBasicMaterial({
-        color: GOLD,
-        transparent: true,
-        opacity: 0.08,
-        side: THREE.DoubleSide,
-      })
-    );
-    sRing.rotation.x = -Math.PI / 2;
-    sRing.position.set(DOCK_X, 0.02, DOCK_Z);
-    scene.add(sRing);
-
-    /* ── Shelves ── */
-    const shelfMeshes = [];
-    SHELVES.forEach((s) => {
-      const geo = new THREE.BoxGeometry(s.w, SHELF_H, s.d);
-      const mesh = new THREE.Mesh(
-        geo,
-        new THREE.MeshStandardMaterial({
-          color: 0x1c1c1c,
-          roughness: 0.6,
-          metalness: 0.3,
-        })
-      );
-      mesh.position.set(s.x + s.w / 2, SHELF_H / 2, s.z + s.d / 2);
-      mesh.castShadow = true;
-      const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(geo),
-        new THREE.LineBasicMaterial({
-          color: 0x333333,
-          transparent: true,
-          opacity: 0.4,
-        })
-      );
-      edges.position.copy(mesh.position);
-      scene.add(mesh);
-      scene.add(edges);
-      shelfMeshes.push({ mesh, edges });
-    });
-
-    /* ── Pick markers with text labels ── */
-    const PICK_TIMES = [
-      "0:12",
-      "0:24",
-      "0:18",
-      "0:31",
-      "0:15",
-      "0:22",
-      "0:28",
-      "0:20",
-    ];
-    function makeTextSprite(text, subtext) {
+    /* ── Zone letters on floor ── */
+    const ZONE_LETTERS = "ABCDEFGHIJ";
+    function makeZoneSprite(letter) {
       const cv = document.createElement("canvas");
       cv.width = 128;
-      cv.height = 64;
+      cv.height = 128;
       const cx = cv.getContext("2d");
-      cx.font = "bold 18px monospace";
-      cx.fillStyle = "rgba(212,168,83,0.9)";
+      cx.font = "bold 96px sans-serif";
+      cx.fillStyle = "rgba(212,168,83,0.18)";
       cx.textAlign = "center";
-      cx.fillText(text, 64, 24);
-      cx.font = "12px monospace";
+      cx.textBaseline = "middle";
+      cx.fillText(letter, 64, 64);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.minFilter = THREE.LinearFilter;
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 2.4),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+      );
+      m.rotation.x = -Math.PI / 2;
+      return m;
+    }
+    for (let bx = 0; bx < BAYS_X; bx++) {
+      const bayCenter = OX + bx * PITCH_X + AISLE_W + PAIR_W / 2;
+      const m = makeZoneSprite(ZONE_LETTERS[bx]);
+      m.position.set(bayCenter, 0.02, OZ + CROSS_W / 2 - 0.4);
+      scene.add(m);
+    }
+
+    /* ── Ceiling trusses ── */
+    const trussMat = new THREE.MeshStandardMaterial({
+      color: 0x1a1a1a,
+      roughness: 0.7,
+      metalness: 0.5,
+    });
+    const NUM_TRUSSES = 6;
+    for (let i = 0; i < NUM_TRUSSES; i++) {
+      const z = OZ + (i / (NUM_TRUSSES - 1)) * TOTAL_D;
+      const truss = new THREE.Mesh(
+        new THREE.BoxGeometry(TOTAL_W + 6, 0.25, 0.4),
+        trussMat
+      );
+      truss.position.set(0, CEIL_H, z);
+      scene.add(truss);
+    }
+
+    /* ── Overhead lights ── */
+    const lightMat = new THREE.MeshStandardMaterial({
+      color: 0x222222,
+      emissive: WARM_WHITE,
+      emissiveIntensity: 0.6,
+      roughness: 0.4,
+    });
+    const ceilLightCount = 12;
+    for (let i = 0; i < ceilLightCount; i++) {
+      const lx = OX + (i + 0.5) * (TOTAL_W / ceilLightCount);
+      [0.3, 0.7].forEach((zf) => {
+        const lz = OZ + zf * TOTAL_D;
+        const fix = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.35, 0.5, 0.35, 12),
+          lightMat
+        );
+        fix.position.set(lx, CEIL_H - 0.4, lz);
+        scene.add(fix);
+        const disk = new THREE.Mesh(
+          new THREE.CircleGeometry(0.5, 16),
+          new THREE.MeshBasicMaterial({
+            color: WARM_WHITE,
+            transparent: true,
+            opacity: 0.5,
+          })
+        );
+        disk.rotation.x = -Math.PI / 2;
+        disk.position.set(lx, CEIL_H - 0.58, lz);
+        scene.add(disk);
+        const pl = new THREE.PointLight(WARM_WHITE, 0.6, 14, 2);
+        pl.position.set(lx, CEIL_H - 0.8, lz);
+        scene.add(pl);
+        const pool = new THREE.Mesh(
+          new THREE.CircleGeometry(2.2, 24),
+          new THREE.MeshBasicMaterial({
+            color: WARM_WHITE,
+            transparent: true,
+            opacity: 0.04,
+          })
+        );
+        pool.rotation.x = -Math.PI / 2;
+        pool.position.set(lx, 0.025, lz);
+        scene.add(pool);
+      });
+    }
+
+    /* ── Dock ── */
+    const dockOuter = new THREE.Mesh(
+      new THREE.RingGeometry(1.4, 1.55, 48),
+      new THREE.MeshBasicMaterial({
+        color: GOLD,
+        transparent: true,
+        opacity: 0.22,
+        side: THREE.DoubleSide,
+      })
+    );
+    dockOuter.rotation.x = -Math.PI / 2;
+    dockOuter.position.set(DOCK_X, 0.02, DOCK_Z);
+    scene.add(dockOuter);
+    const dockInner = new THREE.Mesh(
+      new THREE.RingGeometry(1.0, 1.1, 48),
+      new THREE.MeshBasicMaterial({
+        color: GOLD,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide,
+      })
+    );
+    dockInner.rotation.x = -Math.PI / 2;
+    dockInner.position.set(DOCK_X, 0.025, DOCK_Z);
+    scene.add(dockInner);
+
+    /* ── Shelves: InstancedMesh + merged edges ── */
+    const shelfGeo = new THREE.BoxGeometry(1, 1, 1);
+    const shelfMat = new THREE.MeshStandardMaterial({
+      color: 0x1c1c1c,
+      roughness: 0.55,
+      metalness: 0.35,
+    });
+    const shelvesInst = new THREE.InstancedMesh(
+      shelfGeo,
+      shelfMat,
+      SHELVES.length
+    );
+    shelvesInst.castShadow = true;
+    shelvesInst.receiveShadow = true;
+    scene.add(shelvesInst);
+
+    const unitEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
+    const unitEdgePosArr = unitEdges.attributes.position.array;
+    const edgeFloats = [];
+    SHELVES.forEach((s) => {
+      const cx = s.x + s.w / 2;
+      const cz = s.z + s.d / 2;
+      for (let i = 0; i < unitEdgePosArr.length; i += 3) {
+        edgeFloats.push(
+          unitEdgePosArr[i] * s.w + cx,
+          unitEdgePosArr[i + 1],
+          unitEdgePosArr[i + 2] * s.d + cz
+        );
+      }
+    });
+    const edgeGeo = new THREE.BufferGeometry();
+    edgeGeo.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(edgeFloats, 3)
+    );
+    const edgesObj = new THREE.LineSegments(
+      edgeGeo,
+      new THREE.LineBasicMaterial({
+        color: 0x3a3a3a,
+        transparent: true,
+        opacity: 0.45,
+      })
+    );
+    scene.add(edgesObj);
+
+    const dummy = new THREE.Object3D();
+    let lastShelfH = -1;
+    function updateShelfHeights(h) {
+      if (Math.abs(h - lastShelfH) < 0.005) return;
+      lastShelfH = h;
+      const yScale = Math.max(0.05, h);
+      SHELVES.forEach((s, i) => {
+        dummy.position.set(s.x + s.w / 2, yScale / 2, s.z + s.d / 2);
+        dummy.scale.set(s.w, yScale, s.d);
+        dummy.updateMatrix();
+        shelvesInst.setMatrixAt(i, dummy.matrix);
+      });
+      shelvesInst.instanceMatrix.needsUpdate = true;
+      edgesObj.scale.y = yScale;
+      edgesObj.position.y = yScale / 2;
+    }
+    updateShelfHeights(0);
+
+    /* ── Pick markers ── */
+    function makeTextSprite(text, subtext) {
+      const cv = document.createElement("canvas");
+      cv.width = 192;
+      cv.height = 96;
+      const cx = cv.getContext("2d");
+      cx.font = "bold 26px monospace";
+      cx.fillStyle = "rgba(212,168,83,0.95)";
+      cx.textAlign = "center";
+      cx.fillText(text, 96, 36);
+      cx.font = "16px monospace";
       cx.fillStyle = "rgba(255,255,255,0.5)";
-      cx.fillText(subtext, 64, 44);
+      cx.fillText(subtext, 96, 62);
       const tex = new THREE.CanvasTexture(cv);
       tex.minFilter = THREE.LinearFilter;
       const sprite = new THREE.Sprite(
@@ -528,66 +669,64 @@ export default function WarehouseShowcase() {
           depthTest: false,
         })
       );
-      sprite.scale.set(2.5, 1.25, 1);
+      sprite.scale.set(3.6, 1.8, 1);
       return sprite;
     }
+    const PICK_TIMES = PICK_ITEMS.map((_, i) => `${10 + ((i * 7) % 25)}s`);
 
     const markers = [];
     PICK_ITEMS.forEach((item, idx) => {
       const group = new THREE.Group();
       group.visible = false;
-      const cz = item.z;
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.35, 0.48, 32),
+        new THREE.RingGeometry(0.4, 0.55, 32),
         new THREE.MeshBasicMaterial({
           color: GOLD,
           transparent: true,
-          opacity: 0.3,
+          opacity: 0.35,
           side: THREE.DoubleSide,
         })
       );
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(item.x, 0.04, cz);
+      ring.position.set(item.x, 0.04, item.z);
       group.add(ring);
       const beam = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.01, 0.01, 1, 4),
+        new THREE.CylinderGeometry(0.012, 0.012, 1, 4),
         new THREE.MeshBasicMaterial({
           color: GOLD,
           transparent: true,
-          opacity: 0.12,
+          opacity: 0.14,
         })
       );
-      beam.position.set(item.x, 0.5, cz);
+      beam.position.set(item.x, 0.5, item.z);
       group.add(beam);
       const diamond = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.25, 1),
+        new THREE.IcosahedronGeometry(0.3, 1),
         new THREE.MeshStandardMaterial({
           color: GOLD,
           emissive: GOLD,
-          emissiveIntensity: 0.7,
+          emissiveIntensity: 0.8,
           roughness: 0.2,
           metalness: 0.5,
-          transparent: true,
-          opacity: 0.9,
         })
       );
-      diamond.position.set(item.x, 1, cz);
+      diamond.position.set(item.x, 1, item.z);
       group.add(diamond);
       const dEdges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.25, 1)),
+        new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.3, 1)),
         new THREE.LineBasicMaterial({
           color: GOLD,
           transparent: true,
-          opacity: 0.4,
+          opacity: 0.5,
         })
       );
       dEdges.position.copy(diamond.position);
       group.add(dEdges);
-      const light = new THREE.PointLight(GOLD, 0, 6);
-      light.position.set(item.x, 1, cz);
+      const light = new THREE.PointLight(GOLD, 0, 7);
+      light.position.set(item.x, 1.2, item.z);
       group.add(light);
       const sprite = makeTextSprite(item.label, PICK_TIMES[idx]);
-      sprite.position.set(item.x, SHELF_H + 2.8, cz);
+      sprite.position.set(item.x, SHELF_H + 1.6, item.z);
       group.add(sprite);
       scene.add(group);
       markers.push({
@@ -597,14 +736,14 @@ export default function WarehouseShowcase() {
         dEdges,
         beam,
         light,
-        cz,
         item,
         sprite,
-        picked: false,
+        pickedNaive: false,
+        pickedOpt: false,
       });
     });
 
-    /* ── Naive route: per-segment lines + stat sprites ── */
+    /* ── Naive route lines ── */
     const naiveSegs = NAIVE_SEGMENTS.map((seg) => {
       const pts = buildLinePoints(seg.pts);
       const pairs = [];
@@ -615,34 +754,16 @@ export default function WarehouseShowcase() {
         color: RED_DIM,
         transparent: true,
         opacity: 0,
-        dashSize: 0.4,
-        gapSize: 0.25,
+        dashSize: 0.5,
+        gapSize: 0.3,
       });
       const line = new THREE.LineSegments(geo, mat);
       line.computeLineDistances();
       scene.add(line);
-
-      // Stat sprite at midpoint of segment
-      const mid = pts[Math.floor(pts.length / 2)];
-      const statSprite = makeStatSprite(
-        `${seg.dist.toFixed(1)}m`,
-        `${seg.time.toFixed(1)}s · ${seg.label}`
-      );
-      statSprite.position.set(mid.x, 4.5, mid.z);
-      scene.add(statSprite);
-
-      return {
-        geo,
-        mat,
-        line,
-        pairs,
-        statSprite,
-        dist: seg.dist,
-        time: seg.time,
-      };
+      return { geo, mat, line, pairs };
     });
 
-    /* ── Optimal route ── */
+    /* ── Optimal route line ── */
     const optPts = buildLinePoints(OPT_ROUTE);
     const optPairs = [];
     for (let i = 0; i < optPts.length - 1; i++)
@@ -655,30 +776,90 @@ export default function WarehouseShowcase() {
     });
     scene.add(new THREE.LineSegments(optGeo, optMat));
 
-    const pickWaypoints = [3, 20, 6, 14, 23, 9, 17, 12];
-    const pickFracs = pickWaypoints.map((idx) => waypointFraction(optPts, idx));
+    // Find each pick's fraction along the optimal route
+    const optPickFracs = PICK_ITEMS.map((item) => {
+      let bestIdx = 0;
+      let bestD = Infinity;
+      OPT_ROUTE.forEach((p, i) => {
+        const d = (p[0] - item.x) ** 2 + (p[1] - item.z) ** 2;
+        if (d < bestD) {
+          bestD = d;
+          bestIdx = i;
+        }
+      });
+      return waypointFraction(optPts, bestIdx);
+    });
 
-    /* ── Picker ── */
-    const picker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 16, 16),
-      new THREE.MeshStandardMaterial({
-        color: GOLD,
-        emissive: GOLD,
-        emissiveIntensity: 1.5,
-        roughness: 0.1,
-      })
-    );
-    picker.position.set(DOCK_X, 0.35, DOCK_Z);
-    picker.visible = false;
-    scene.add(picker);
-    const pLight = new THREE.PointLight(GOLD, 0, 8);
-    pLight.position.set(DOCK_X, 2, DOCK_Z);
-    scene.add(pLight);
+    // Naive pick fractions: pick i is at the end of segment i
+    const naivePickFracs = (() => {
+      const fracs = [];
+      let acc = 0;
+      NAIVE_SEGMENTS.forEach((s, i) => {
+        acc += s.dist;
+        if (i < PICK_ITEMS.length) fracs.push(acc / NAIVE_DIST);
+      });
+      return fracs;
+    })();
+
+    /* ── Two pickers ── */
+    function makePicker(color) {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 20, 20),
+        new THREE.MeshStandardMaterial({
+          color,
+          emissive: color,
+          emissiveIntensity: 1.4,
+          roughness: 0.15,
+        })
+      );
+      g.add(body);
+      const halo = new THREE.Mesh(
+        new THREE.RingGeometry(0.5, 0.65, 24),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.5,
+          side: THREE.DoubleSide,
+        })
+      );
+      halo.rotation.x = -Math.PI / 2;
+      halo.position.y = -0.3;
+      g.add(halo);
+      const lt = new THREE.PointLight(color, 3, 10);
+      lt.position.y = 0.5;
+      g.add(lt);
+      g.position.set(DOCK_X, 0.4, DOCK_Z);
+      g.visible = false;
+      scene.add(g);
+      return { group: g, body, halo, light: lt };
+    }
+    const pickerOpt = makePicker(GOLD);
+    const pickerNaive = makePicker(RED_DIM);
+
+    // Trails
+    function makeTrail(color) {
+      const N = 24;
+      const positions = new Float32Array(N * 3);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.5,
+      });
+      const line = new THREE.Line(geo, mat);
+      line.visible = false;
+      scene.add(line);
+      return { line, positions, geo, N, history: [] };
+    }
+    const trailOpt = makeTrail(GOLD);
+    const trailNaive = makeTrail(RED_DIM);
 
     /* ── Resize ── */
     const resize = () => {
-      const w = canvas.parentElement.clientWidth,
-        h = canvas.parentElement.clientHeight;
+      const w = canvas.parentElement.clientWidth;
+      const h = canvas.parentElement.clientHeight;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -690,11 +871,13 @@ export default function WarehouseShowcase() {
     const state = {
       p: 0,
       shelfH: 0,
-      routeVis: 0,
-      routeProgress: 0,
-      naiveSegIdx: 0,
+      optRouteVis: 0,
+      optRouteProg: 0,
+      naiveSegIdx: -1,
       naiveSegProg: 0,
-      pickProgress: 0,
+      raceProg: 0,
+      optProg: 0,
+      naiveProg: 0,
     };
 
     ScrollTrigger.create({
@@ -707,24 +890,28 @@ export default function WarehouseShowcase() {
         const p = (state.p = self.progress);
 
         state.shelfH =
-          p < T.shelfEnd
-            ? p / T.shelfEnd
+          p < T.shelfStart
+            ? 0
+            : p < T.shelfEnd
+            ? (p - T.shelfStart) / (T.shelfEnd - T.shelfStart)
             : p > T.outroStart
-            ? Math.max(0, 1 - (p - T.outroStart) / (T.outroEnd - T.outroStart))
+            ? Math.max(
+                0.15,
+                1 - (p - T.outroStart) / (T.outroEnd - T.outroStart)
+              )
             : 1;
 
-        // Naive segments: draw one at a time across naiveStart→naiveEnd
+        // Naive route segments
         const naiveSpan = T.naiveEnd - T.naiveStart;
         const numSegs = NAIVE_SEGMENTS.length;
-        if (p >= T.naiveStart && p < T.naiveEnd + 0.05) {
-          const naiveLocal = (p - T.naiveStart) / naiveSpan;
+        if (p >= T.naiveStart && p < T.naiveEnd) {
+          const local = (p - T.naiveStart) / naiveSpan;
           state.naiveSegIdx = Math.min(
             numSegs - 1,
-            Math.floor(naiveLocal * numSegs)
+            Math.floor(local * numSegs)
           );
-          const segLocal = naiveLocal * numSegs - state.naiveSegIdx;
-          state.naiveSegProg = Math.min(1, segLocal);
-        } else if (p >= T.naiveEnd + 0.05) {
+          state.naiveSegProg = Math.min(1, local * numSegs - state.naiveSegIdx);
+        } else if (p >= T.naiveEnd) {
           state.naiveSegIdx = numSegs - 1;
           state.naiveSegProg = 1;
         } else {
@@ -733,31 +920,39 @@ export default function WarehouseShowcase() {
         }
 
         // Optimal route
-        if (p >= T.routeStart) {
-          state.routeVis = Math.min(1, (p - T.routeStart) / 0.04) * 0.65;
-          state.routeProgress = Math.min(
+        if (p >= T.optStart) {
+          state.optRouteVis = Math.min(1, (p - T.optStart) / 0.04) * 0.75;
+          state.optRouteProg = Math.min(
             1,
-            (p - T.routeStart) / (T.routeDrawEnd - T.routeStart)
+            (p - T.optStart) / (T.optDrawEnd - T.optStart)
           );
         } else {
-          state.routeVis = 0;
-          state.routeProgress = 0;
+          state.optRouteVis = 0;
+          state.optRouteProg = 0;
         }
 
-        // Pick progress
-        if (p >= T.pickStart && p <= T.returnEnd) {
-          state.pickProgress = Math.min(
-            1,
-            (p - T.pickStart) / (T.returnEnd - T.pickStart)
-          );
+        // Race
+        if (p >= T.raceStart && p <= T.raceEnd) {
+          state.raceProg = (p - T.raceStart) / (T.raceEnd - T.raceStart);
+          state.naiveProg = Math.min(1, state.raceProg);
+          state.optProg = Math.min(1, state.raceProg * OPT_SPEED_FACTOR);
+        } else if (p > T.raceEnd) {
+          state.raceProg = 1;
+          state.naiveProg = 1;
+          state.optProg = 1;
+        } else {
+          state.raceProg = 0;
+          state.naiveProg = 0;
+          state.optProg = 0;
         }
 
-        // Outro
-        if (p > T.outroStart)
-          state.routeVis *= Math.max(
+        if (p > T.outroStart) {
+          const fade = Math.max(
             0,
             1 - (p - T.outroStart) / (T.outroEnd - T.outroStart)
           );
+          state.optRouteVis *= fade;
+        }
 
         // Captions
         let phaseName = "—";
@@ -772,21 +967,36 @@ export default function WarehouseShowcase() {
         Object.assign(debugRef.current, {
           p,
           shelfH: state.shelfH,
-          routeVis: state.routeVis,
-          routeProgress: state.routeProgress,
+          optRouteVis: state.optRouteVis,
+          optRouteProg: state.optRouteProg,
           naiveSegIdx: state.naiveSegIdx,
           naiveSegProg: state.naiveSegProg,
-          pickProgress: state.pickProgress,
+          raceProg: state.raceProg,
+          optProg: state.optProg,
+          naiveProg: state.naiveProg,
           phase: phaseName,
         });
       },
     });
 
+    /* ── Build naive polyline for the naive picker ── */
+    const naivePolyline = [];
+    NAIVE_SEGMENTS.forEach((s, i) => {
+      s.pts.forEach((p, j) => {
+        if (i === 0 || j > 0) naivePolyline.push([p[0], p[1]]);
+      });
+    });
+    const naivePtsVec = buildLinePoints(naivePolyline);
+
     /* ── Animate ── */
     let frameId;
     const clock = new THREE.Clock();
-    const camPos = new THREE.Vector3(0, 50, 44);
-    const camTarget = new THREE.Vector3();
+    const camPos = new THREE.Vector3(
+      CAM_PROGRAM[0].pos[0],
+      CAM_PROGRAM[0].pos[1],
+      CAM_PROGRAM[0].pos[2]
+    );
+    const camTarget = new THREE.Vector3(0, 0, 0);
 
     function animate() {
       frameId = requestAnimationFrame(animate);
@@ -795,21 +1005,15 @@ export default function WarehouseShowcase() {
       const t = clock.getElapsedTime();
       const p = state.p;
       const curH = SHELF_H * Math.max(0, Math.min(1, state.shelfH));
+      updateShelfHeights(curH);
 
-      shelfMeshes.forEach(({ mesh, edges }) => {
-        const h = Math.max(0.05, curH);
-        mesh.scale.y = h;
-        mesh.position.y = h / 2;
-        edges.scale.y = h;
-        edges.position.y = h / 2;
-      });
-
+      // Markers
       const showItems = p >= T.itemsStart && p < T.outroStart;
       markers.forEach((m, i) => {
-        const vis = showItems && p >= T.itemsStart + i * 0.005;
+        const vis = showItems && p >= T.itemsStart + i * 0.004;
         if (vis && !m.group.visible) {
           m.group.visible = true;
-          gsap.to(m.light, { intensity: 2, duration: 0.4 });
+          gsap.to(m.light, { intensity: 2.2, duration: 0.4 });
           gsap.fromTo(
             m.diamond.scale,
             { x: 0, y: 0, z: 0 },
@@ -819,132 +1023,161 @@ export default function WarehouseShowcase() {
         if (!vis && m.group.visible) {
           m.group.visible = false;
           m.light.intensity = 0;
-          m.picked = false;
+          m.pickedNaive = false;
+          m.pickedOpt = false;
           m.diamond.material.color.setHex(GOLD);
           m.diamond.material.emissive.setHex(GOLD);
+          m.diamond.material.emissiveIntensity = 0.8;
           m.ring.material.color.setHex(GOLD);
           m.light.color.setHex(GOLD);
         }
         if (!m.group.visible) return;
+
         if (
-          !m.picked &&
-          state.pickProgress > 0 &&
-          state.pickProgress >= pickFracs[i]
+          !m.pickedOpt &&
+          state.optProg > 0 &&
+          state.optProg >= optPickFracs[i]
         ) {
-          m.picked = true;
+          m.pickedOpt = true;
           m.diamond.material.color.setHex(GREEN);
           m.diamond.material.emissive.setHex(GREEN);
           m.ring.material.color.setHex(GREEN);
           m.light.color.setHex(GREEN);
         }
-        const my = curH + 0.9 + Math.sin(t * 1.4 + i * 1.3) * 0.08;
+        if (
+          !m.pickedNaive &&
+          state.naiveProg > 0 &&
+          state.naiveProg >= naivePickFracs[i]
+        ) {
+          m.pickedNaive = true;
+          if (!m.pickedOpt) m.diamond.material.emissiveIntensity = 0.4;
+        }
+
+        const my = curH * 0.6 + 1.2 + Math.sin(t * 1.3 + i * 1.1) * 0.1;
         m.diamond.position.y = my;
         m.dEdges.position.y = my;
         m.light.position.y = my;
         m.beam.scale.y = my;
         m.beam.position.y = my / 2;
-        if (m.sprite) m.sprite.position.y = my + 1.6;
-        m.diamond.rotation.y = t * 0.6 + i;
+        if (m.sprite) m.sprite.position.y = curH + 1.6;
+        m.diamond.rotation.y = t * 0.55 + i;
         m.diamond.rotation.x = Math.sin(t * 0.4 + i) * 0.12;
         m.dEdges.rotation.copy(m.diamond.rotation);
         m.ring.rotation.z = t * 0.2 + i;
       });
 
-      sRing.rotation.z = t * 0.12;
-
-      // Naive segments — draw one at a time, fade out old ones when optimal appears
-      const optOverlap = p >= T.routeStart;
+      // Naive route render
+      const optDrawing = p >= T.optStart;
       naiveSegs.forEach((seg, i) => {
-        if (i < state.naiveSegIdx) {
-          // Completed segment: show fully, fade when optimal draws
-          seg.mat.opacity = optOverlap
-            ? Math.max(0, 0.35 - (p - T.routeStart) * 2)
-            : 0.35;
+        let baseOp = 0;
+        if (i <= state.naiveSegIdx) baseOp = 0.5;
+        if (optDrawing) baseOp = Math.min(baseOp, 0.18);
+        if (p > T.raceEnd) baseOp *= Math.max(0, 1 - (p - T.raceEnd) * 4);
+
+        seg.mat.opacity = baseOp;
+        if (i < state.naiveSegIdx || p >= T.naiveEnd) {
           seg.geo.setDrawRange(0, seg.pairs.length);
-          seg.statSprite.visible = !optOverlap && p >= T.naiveStart;
-          seg.statSprite.material.opacity = optOverlap ? 0 : 0.8;
         } else if (i === state.naiveSegIdx) {
-          // Currently drawing segment
-          seg.mat.opacity = optOverlap
-            ? Math.max(0, 0.35 - (p - T.routeStart) * 2)
-            : 0.35;
           seg.geo.setDrawRange(
             0,
             Math.max(2, Math.floor(state.naiveSegProg * seg.pairs.length))
           );
-          seg.statSprite.visible = state.naiveSegProg > 0.8 && !optOverlap;
-          seg.statSprite.material.opacity =
-            state.naiveSegProg > 0.8
-              ? Math.min(0.8, (state.naiveSegProg - 0.8) * 4)
-              : 0;
         } else {
-          // Not yet drawn
-          seg.mat.opacity = 0;
           seg.geo.setDrawRange(0, 0);
-          seg.statSprite.visible = false;
         }
       });
 
-      // Optimal route
-      optMat.opacity = state.routeVis;
+      // Optimal route render
+      optMat.opacity = state.optRouteVis;
       optGeo.setDrawRange(
         0,
-        Math.max(2, Math.floor(state.routeProgress * optPairs.length))
+        Math.max(2, Math.floor(state.optRouteProg * optPairs.length))
       );
 
-      // Picker
-      const pickerMoving = p >= T.pickStart && p <= T.returnEnd;
-      picker.visible = pickerMoving;
-      if (pickerMoving) {
-        if (!picker.userData.smoothP)
-          picker.userData.smoothP = state.pickProgress;
-        picker.userData.smoothP +=
-          (state.pickProgress - picker.userData.smoothP) * 0.12;
-        const pt = pointOnRoute(
+      // Pickers
+      const inRace = p >= T.raceStart && p <= T.outroEnd;
+      pickerOpt.group.visible = inRace;
+      pickerNaive.group.visible = inRace;
+      trailOpt.line.visible = inRace;
+      trailNaive.line.visible = inRace;
+
+      if (inRace) {
+        if (pickerOpt.group.userData.smoothP == null)
+          pickerOpt.group.userData.smoothP = 0;
+        pickerOpt.group.userData.smoothP +=
+          (state.optProg - pickerOpt.group.userData.smoothP) * 0.14;
+        const optPt = pointOnRoute(
           optPts,
-          Math.min(0.999, picker.userData.smoothP)
+          Math.min(0.9995, pickerOpt.group.userData.smoothP)
         );
-        picker.position.set(pt.x, 0.35, pt.z);
-        pLight.position.set(pt.x, 2, pt.z);
-        pLight.intensity += (5 - pLight.intensity) * 0.1;
+        pickerOpt.group.position.set(optPt.x, 0.4, optPt.z);
+
+        if (pickerNaive.group.userData.smoothP == null)
+          pickerNaive.group.userData.smoothP = 0;
+        pickerNaive.group.userData.smoothP +=
+          (state.naiveProg - pickerNaive.group.userData.smoothP) * 0.14;
+        const naivePt = pointOnRoute(
+          naivePtsVec,
+          Math.min(0.9995, pickerNaive.group.userData.smoothP)
+        );
+        pickerNaive.group.position.set(naivePt.x, 0.4, naivePt.z);
+
+        const optDone = state.optProg >= 0.999;
+        const naiveDone = state.naiveProg >= 0.999;
+        pickerOpt.halo.rotation.z = t * 1.4;
+        pickerNaive.halo.rotation.z = -t * 1.0;
+        pickerOpt.halo.scale.setScalar(
+          optDone ? 1 + Math.sin(t * 4) * 0.15 : 1
+        );
+        if (optDone) {
+          pickerOpt.body.material.color.setHex(GREEN);
+          pickerOpt.body.material.emissive.setHex(GREEN);
+          pickerOpt.light.color.setHex(GREEN);
+        } else {
+          pickerOpt.body.material.color.setHex(GOLD);
+          pickerOpt.body.material.emissive.setHex(GOLD);
+          pickerOpt.light.color.setHex(GOLD);
+        }
+        if (naiveDone) {
+          pickerNaive.body.material.color.setHex(GREEN);
+          pickerNaive.body.material.emissive.setHex(GREEN);
+          pickerNaive.light.color.setHex(GREEN);
+        }
+
+        function updateTrail(trail, pos) {
+          trail.history.push([pos.x, 0.15, pos.z]);
+          if (trail.history.length > trail.N) trail.history.shift();
+          const arr = trail.positions;
+          const fallback = trail.history[trail.history.length - 1] || [
+            pos.x,
+            0.15,
+            pos.z,
+          ];
+          for (let i = 0; i < trail.N; i++) {
+            const src = trail.history[i] || fallback;
+            arr[i * 3] = src[0];
+            arr[i * 3 + 1] = src[1];
+            arr[i * 3 + 2] = src[2];
+          }
+          trail.geo.attributes.position.needsUpdate = true;
+        }
+        updateTrail(trailOpt, pickerOpt.group.position);
+        updateTrail(trailNaive, pickerNaive.group.position);
       } else {
-        picker.userData.smoothP = 0;
-        pLight.intensity *= 0.9;
-        if (pLight.intensity < 0.01) pLight.intensity = 0;
+        pickerOpt.group.userData.smoothP = 0;
+        pickerNaive.group.userData.smoothP = 0;
+        trailOpt.history.length = 0;
+        trailNaive.history.length = 0;
       }
 
-      // Camera
-      if (pickerMoving) {
-        camPos.lerp(
-          new THREE.Vector3(picker.position.x, 42, picker.position.z),
-          0.03
-        );
-        camTarget.lerp(
-          new THREE.Vector3(picker.position.x, 0, picker.position.z),
-          0.03
-        );
-      } else if (p > T.returnEnd) {
-        camPos.lerp(new THREE.Vector3(0, 50, 44), 0.025);
-        camTarget.lerp(new THREE.Vector3(0, 0, 0), 0.025);
-      } else {
-        const orbitT = Math.min(1, p / Math.max(0.01, T.pickStart));
-        const angle = orbitT * Math.PI * 0.4;
-        const radius = 44 - orbitT * 14;
-        const height = 50 - orbitT * 8;
-        camPos.lerp(
-          new THREE.Vector3(
-            Math.sin(angle) * radius,
-            height,
-            Math.cos(angle) * radius
-          ),
-          0.04
-        );
-        camTarget.lerp(new THREE.Vector3(0, 0, 0), 0.04);
-      }
-
+      // Camera — chapter program
+      const [cx, cy, cz, tx, ty, tz] = getCamForP(p);
+      camPos.lerp(new THREE.Vector3(cx, cy, cz), 0.045);
+      camTarget.lerp(new THREE.Vector3(tx, ty, tz), 0.045);
       camera.position.copy(camPos);
       camera.lookAt(camTarget);
       debugRef.current.camY = camPos.y;
+
       renderer.render(scene, camera);
     }
     animate();
@@ -1005,8 +1238,8 @@ export default function WarehouseShowcase() {
               fontSize: 10,
               color: "rgba(255,255,255,0.7)",
               lineHeight: 1.7,
-              minWidth: 280,
-              maxHeight: "90vh",
+              minWidth: 300,
+              maxHeight: "92vh",
               overflowY: "auto",
             }}
           >
@@ -1024,7 +1257,6 @@ export default function WarehouseShowcase() {
               </span>
             </div>
 
-            {/* Live */}
             <div
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -1052,21 +1284,28 @@ export default function WarehouseShowcase() {
                 {d.naiveSegProg.toFixed(3)}
               </div>
               <div>
-                <span style={{ opacity: 0.4 }}>routeVis:</span>{" "}
-                {d.routeVis.toFixed(3)}{" "}
+                <span style={{ opacity: 0.4 }}>optRoute vis:</span>{" "}
+                {d.optRouteVis.toFixed(2)}{" "}
                 <span style={{ opacity: 0.3 }}>prog:</span>{" "}
-                {d.routeProgress.toFixed(3)}
+                {d.optRouteProg.toFixed(2)}
               </div>
               <div>
-                <span style={{ opacity: 0.4 }}>pickProg:</span>{" "}
-                {d.pickProgress.toFixed(3)}
+                <span style={{ opacity: 0.4 }}>race:</span>{" "}
+                {d.raceProg.toFixed(2)}{" "}
+                <span style={{ opacity: 0.3 }}>opt:</span>{" "}
+                {d.optProg.toFixed(2)}{" "}
+                <span style={{ opacity: 0.3 }}>naive:</span>{" "}
+                {d.naiveProg.toFixed(2)}
               </div>
               <div>
                 <span style={{ opacity: 0.4 }}>camY:</span> {d.camY.toFixed(1)}
               </div>
+              <div style={{ marginTop: 4, opacity: 0.5, fontSize: 9 }}>
+                naive {NAIVE_DIST.toFixed(0)}m · opt {OPT_DIST.toFixed(0)}m ·{" "}
+                {SAVINGS_PCT}% saved
+              </div>
             </div>
 
-            {/* ScrollHeight */}
             <div style={{ marginBottom: 8 }}>
               <label
                 style={{ display: "flex", justifyContent: "space-between" }}
@@ -1076,7 +1315,7 @@ export default function WarehouseShowcase() {
               </label>
               <input
                 type="range"
-                min={100}
+                min={150}
                 max={500}
                 step={10}
                 value={scrollH}
@@ -1085,7 +1324,6 @@ export default function WarehouseShowcase() {
               />
             </div>
 
-            {/* Timeline */}
             <div
               style={{
                 fontSize: 9,
@@ -1108,7 +1346,7 @@ export default function WarehouseShowcase() {
               >
                 <span
                   style={{
-                    width: 80,
+                    width: 84,
                     opacity: 0.4,
                     flexShrink: 0,
                     fontSize: 9,
@@ -1141,7 +1379,6 @@ export default function WarehouseShowcase() {
               </div>
             ))}
 
-            {/* Timeline vis */}
             <div
               style={{
                 marginTop: 6,
@@ -1167,25 +1404,25 @@ export default function WarehouseShowcase() {
                   left: `${T.naiveStart * 100}%`,
                   width: `${(T.naiveEnd - T.naiveStart) * 100}%`,
                   height: "100%",
-                  background: "rgba(153,51,51,0.25)",
+                  background: "rgba(165,69,69,0.25)",
                 }}
               />
               <div
                 style={{
                   position: "absolute",
-                  left: `${T.routeStart * 100}%`,
-                  width: `${(T.routeDrawEnd - T.routeStart) * 100}%`,
+                  left: `${T.optStart * 100}%`,
+                  width: `${(T.optDrawEnd - T.optStart) * 100}%`,
                   height: "100%",
-                  background: "rgba(212,168,83,0.15)",
+                  background: "rgba(212,168,83,0.18)",
                 }}
               />
               <div
                 style={{
                   position: "absolute",
-                  left: `${T.pickStart * 100}%`,
-                  width: `${(T.returnEnd - T.pickStart) * 100}%`,
+                  left: `${T.raceStart * 100}%`,
+                  width: `${(T.raceEnd - T.raceStart) * 100}%`,
                   height: "100%",
-                  background: "rgba(90,154,74,0.15)",
+                  background: "rgba(90,154,74,0.18)",
                 }}
               />
               <div
@@ -1219,12 +1456,11 @@ export default function WarehouseShowcase() {
             >
               <span>shelf</span>
               <span>naive</span>
-              <span>route</span>
-              <span>pick</span>
+              <span>opt</span>
+              <span>race</span>
               <span>outro</span>
             </div>
 
-            {/* Vignette */}
             <div
               style={{
                 fontSize: 9,
@@ -1280,7 +1516,6 @@ export default function WarehouseShowcase() {
               </div>
             ))}
 
-            {/* JSON export */}
             <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
               <button
                 onClick={() =>

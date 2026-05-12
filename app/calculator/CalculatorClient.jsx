@@ -73,7 +73,7 @@ const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 ───────────────────────────────────────────────────── */
 function calculate({ size, pickers, accuracy, wage }) {
   /* Picking time saved — assume 600hrs/yr of pick activity per picker,
-     AI routes cut that by 20%. */
+     optimized routes cut that by 20%. */
   const pickingSavings = pickers * 600 * 0.2 * wage;
 
   /* Error reduction — at lower accuracy, more errors. Each error costs
@@ -196,6 +196,18 @@ export default function CalculatorClient() {
 
   const [demoOpen, setDemoOpen] = useState(false);
   const openDemo = useCallback(() => setDemoOpen(true), []);
+
+  /* Calendly opener — opens the configured booking URL in a new tab. Falls
+     back to the demo modal in development when NEXT_PUBLIC_CALENDLY_URL
+     isn't set, so the button is still functional locally. */
+  const openCalendly = useCallback(() => {
+    const url = process.env.NEXT_PUBLIC_CALENDLY_URL;
+    if (url && typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      setDemoOpen(true);
+    }
+  }, []);
 
   const [size, setSize] = useState(RANGES.size.default);
   const [pickers, setPickers] = useState(RANGES.pickers.default);
@@ -363,7 +375,7 @@ export default function CalculatorClient() {
     {
       num: "01",
       label: "Picking time saved",
-      desc: "AI routes are 20% shorter than manual paths",
+      desc: "Optimized pick routes run about 20% shorter than manual paths",
       value: computed.pickingSavings,
       animValue: animPicking,
     },
@@ -377,14 +389,14 @@ export default function CalculatorClient() {
     {
       num: "03",
       label: "Inventory accuracy",
-      desc: "60% less shrinkage and stockouts",
+      desc: "60% less shrinkage and fewer stockouts",
       value: computed.shrinkageSavings,
       animValue: animShrinkage,
     },
     {
       num: "04",
       label: "Cycle counting",
-      desc: "Continuous counts replace annual freezes",
+      desc: "Continuous counts replace the annual freeze",
       value: computed.cycleCountSavings,
       animValue: animCycle,
     },
@@ -399,9 +411,8 @@ export default function CalculatorClient() {
         <div className={styles.heroEyebrow}>ROI Calculator</div>
         <h1 className={styles.heroTitle}>{renderTitle()}</h1>
         <p className={styles.heroSub}>
-          The numbers in the paragraph below are editable. Click any of them,
-          type a new value, and the whole estimate recalculates. No signup, no
-          email — just the math.
+          Every number in the paragraph below is editable. Click one, type a new
+          value, and the estimate recalculates as you type. No signup, no email.
         </p>
       </section>
 
@@ -409,11 +420,11 @@ export default function CalculatorClient() {
       <section className={styles.story}>
         <div className={styles.storyLabel}>
           <span className={styles.storyLabelDot} />
-          <span>Editable estimate · drag or type to change</span>
+          <span>Editable estimate · click any number</span>
         </div>
 
         <p className={styles.storyText}>
-          You operate a{" "}
+          You run a{" "}
           <InlineNumber
             value={size}
             onChange={setSize}
@@ -426,14 +437,14 @@ export default function CalculatorClient() {
             onChange={setPickers}
             range={RANGES.pickers}
           />{" "}
-          pickers running at{" "}
+          pickers,{" "}
           <InlineNumber
             value={accuracy}
             onChange={setAccuracy}
             range={RANGES.accuracy}
             suffix="%"
           />{" "}
-          inventory accuracy at{" "}
+          inventory accuracy, and{" "}
           <InlineNumber
             value={wage}
             onChange={setWage}
@@ -441,17 +452,17 @@ export default function CalculatorClient() {
             prefix="$"
             suffix="/hr"
           />{" "}
-          labor. That setup is leaking about{" "}
+          average labor. That setup costs about{" "}
           <span className={styles.storyLoss}>{formatDollars(animLoss)}</span> a
-          year to errors, rework, and slow picking.
+          year in errors, rework, and slow picking.
         </p>
 
         <p className={styles.storyTextSecondary}>
-          Nimbus recovers about{" "}
+          Nimbus typically recovers about{" "}
           <span className={styles.storySavings}>
             {formatDollars(animTotal)}
           </span>{" "}
-          of that in year one — and the same again every year after.
+          of that in year one. Similar amounts every year after.
         </p>
 
         <div className={styles.storyControls}>
@@ -477,10 +488,10 @@ export default function CalculatorClient() {
         </div>
         <div className={styles.sectionContent}>
           <div className={styles.sectionLabel}>Where the savings come from</div>
-          <h2 className={styles.sectionTitle}>Four sources, one estimate.</h2>
+          <h2 className={styles.sectionTitle}>Four lines of savings.</h2>
           <p className={styles.sectionDesc}>
-            Each bar scales to the largest source. Watch them shift as you
-            change your warehouse profile above.
+            Bars scale relative to the largest source. They update when you
+            change the inputs above.
           </p>
 
           <div className={styles.breakdown}>
@@ -520,13 +531,12 @@ export default function CalculatorClient() {
           02
         </div>
         <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>How we calculate</div>
-          <h2 className={styles.sectionTitle}>The assumptions, openly.</h2>
+          <div className={styles.sectionLabel}>How the math works</div>
+          <h2 className={styles.sectionTitle}>The assumptions.</h2>
           <p className={styles.sectionDesc}>
-            These are conservative industry averages drawn from Nimbus customer
-            data and published WMS benchmarks. Your real numbers will vary —
-            book a demo and we&apos;ll model it precisely against your
-            operation.
+            Conservative averages from customer data and published WMS
+            benchmarks. Your numbers will vary. For a precise estimate, book a
+            call and we run the model on your real data.
           </p>
 
           <dl className={styles.assumptions}>
@@ -580,20 +590,19 @@ export default function CalculatorClient() {
       {/* ── FINAL CTA ── */}
       <section className={styles.finalCTA}>
         <div className={styles.finalCTAInner}>
-          <div className={styles.finalCTALabel}>Like the number?</div>
+          <div className={styles.finalCTALabel}>Want a precise estimate?</div>
           <h2 className={styles.finalCTATitle}>
-            Let&apos;s model it against your real data.
+            Get a number based on your data.
           </h2>
           <p className={styles.finalCTADesc}>
-            A 30-minute call with a Nimbus engineer. We&apos;ll plug your actual
-            operational metrics into a more detailed version of this model and
-            walk you through what changes.
+            30 minutes with a Nimbus engineer. We use your real operational data
+            to build a more detailed estimate for your specific operation.
           </p>
           <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={openDemo}>
+            <CornerButton onClick={openCalendly}>
               Book the modeling call
             </CornerButton>
-            <TransitionLink href="/#pricing" className={styles.heroSecondary}>
+            <TransitionLink href="/pricing" className={styles.heroSecondary}>
               Or see pricing →
             </TransitionLink>
           </div>

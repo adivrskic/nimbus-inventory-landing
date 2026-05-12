@@ -7,7 +7,7 @@
    - Marketing pattern: huge outlined section numerals anchored to the
      left margin as section signposts
    - Refined form: sharp corners, hairline borders, gold focus states,
-     mono labels, segmented usage chips
+     mono labels, segmented usage chips, custom dropdown (no native UI)
    ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -19,8 +19,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+       HERO
+    ───────────────────────────────────────────────────── */
 .hero {
   position: relative;
   max-width: 1200px;
@@ -95,8 +95,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SECTIONS — huge editorial numerals
-  ───────────────────────────────────────────────────── */
+       SECTIONS — huge editorial numerals
+    ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
@@ -161,8 +161,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     FORM
-  ───────────────────────────────────────────────────── */
+       FORM
+    ───────────────────────────────────────────────────── */
 .formGrid {
   display: flex;
   flex-direction: column;
@@ -199,8 +199,7 @@
   color: var(--accent);
 }
 .fieldInput,
-.fieldTextarea,
-.fieldSelect {
+.fieldTextarea {
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.018);
   border: 1px solid rgba(242, 240, 239, 0.1);
@@ -220,14 +219,12 @@
   color: rgba(242, 240, 239, 0.3);
 }
 .fieldInput:focus,
-.fieldTextarea:focus,
-.fieldSelect:focus {
+.fieldTextarea:focus {
   border-color: var(--accent);
   background: rgba(212, 168, 83, 0.025);
 }
 .fieldInput:disabled,
-.fieldTextarea:disabled,
-.fieldSelect:disabled {
+.fieldTextarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -241,24 +238,127 @@
   font-size: 15px;
   line-height: 1.6;
 }
-.fieldSelect {
-  cursor: pointer;
-  background-image: linear-gradient(
-      45deg,
-      transparent 50%,
-      rgba(212, 168, 83, 0.6) 50%
-    ),
-    linear-gradient(135deg, rgba(212, 168, 83, 0.6) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 40px;
-}
 .fieldErr {
   font-family: var(--mono);
   font-size: 11px;
   color: rgba(255, 120, 120, 0.85);
   letter-spacing: -0.1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+       CUSTOM SELECT
+       ───────────────────────────────────────────────────────────────────
+       Button visually matches the text inputs above (.fieldInput) — same
+       padding, border, font, focus treatment. The chevron + dropdown panel
+       are the only additions. List uses opacity + transform for a smooth
+       fade-in; pointer-events: none keeps it click-through when closed.
+    ═══════════════════════════════════════════════════════════════════════ */
+.selectWrap {
+  position: relative;
+}
+
+.selectButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(242, 240, 239, 0.1);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: -0.1px;
+  cursor: pointer;
+  outline: none;
+  text-align: left;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.25s, background 0.25s;
+}
+.selectButton:hover:not(:disabled) {
+  border-color: rgba(242, 240, 239, 0.25);
+}
+.selectButton:focus-visible,
+.selectButtonOpen {
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.025);
+}
+.selectButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.selectButtonError {
+  border-color: rgba(255, 100, 100, 0.45);
+}
+
+.selectPlaceholder {
+  color: rgba(242, 240, 239, 0.3);
+}
+.selectValue {
+  color: var(--white);
+}
+
+.selectChevron {
+  color: rgba(212, 168, 83, 0.6);
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 0.25s;
+}
+.selectButtonOpen .selectChevron {
+  color: var(--accent);
+}
+.selectChevronOpen {
+  transform: rotate(180deg);
+}
+
+.selectList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--dark, #0a0a0a);
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  max-height: 280px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.18s,
+    transform 0.22s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.selectListOpen {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.selectOption {
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.1px;
+  color: rgba(242, 240, 239, 0.75);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.selectOptionHighlight {
+  background: rgba(212, 168, 83, 0.08);
+  color: var(--white);
+}
+.selectOptionSelected {
+  color: var(--accent);
+  font-weight: 500;
+}
+.selectOptionSelected.selectOptionHighlight {
+  background: rgba(212, 168, 83, 0.12);
 }
 
 /* Usage chips */
@@ -316,8 +416,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SUCCESS STATE
-  ───────────────────────────────────────────────────── */
+       SUCCESS STATE
+    ───────────────────────────────────────────────────── */
 .successCard {
   padding: 36px 40px;
   border: 1px solid rgba(34, 197, 94, 0.3);
@@ -372,8 +472,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     CHANNEL CARDS
-  ───────────────────────────────────────────────────── */
+       CHANNEL CARDS
+    ───────────────────────────────────────────────────── */
 .channelGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -435,8 +535,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+       RESPONSIVE
+    ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;

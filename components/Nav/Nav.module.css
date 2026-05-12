@@ -133,7 +133,9 @@
   border-color: var(--accent);
 }
 
-/* ── Mega menu ── */
+/* ─────────────────────────────────────────────────────
+   MEGA MENU SHELL
+───────────────────────────────────────────────────── */
 .megaWrap {
   position: fixed;
   top: 72px;
@@ -208,12 +210,41 @@
   color: var(--white);
 }
 
+/* ─────────────────────────────────────────────────────
+   ALL THREE MEGA MENUS NOW SHARE THE SAME ITEM TREATMENT
+   
+   .megaRichItem (title + desc, brighter title, gold hover) is used by
+   Integrations, Industries, AND More — unified visual vocabulary.
+   
+   Layout differs per menu:
+     - Integrations: .megaCols (3 cat columns, each with label + items)
+     - Industries:   .megaIndustriesGrid (4-col rich grid, no labels)
+     - More:         .megaMoreGrid (4 cat columns with labels)
+───────────────────────────────────────────────────── */
+
+/* Integrations 3-col with categories */
 .megaCols {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
 }
-.megaCol {
+
+/* Industries — 4-col flat grid, 8 items in 4×2 */
+.megaIndustriesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 24px;
+}
+
+/* More 4-col with categories (already defined below) */
+.megaMoreGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+
+/* Shared column wrapper for category-style menus (Integrations + More) */
+.megaMoreCol {
   display: flex;
   flex-direction: column;
 }
@@ -228,40 +259,9 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.megaGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2px;
-}
-
-.megaItem {
-  display: block;
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.55);
-  text-decoration: none;
-  padding: 9px 14px;
-  border-radius: 8px;
-  transition: color 0.2s, background 0.2s;
-}
-.megaItem:hover {
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* ─────────────────────────────────────────────────────
-   "More" mega menu — 4-column rich grid + featured card
-───────────────────────────────────────────────────── */
-.megaMoreGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
-}
-.megaMoreCol {
-  display: flex;
-  flex-direction: column;
-}
+/* Rich item — title + descriptor. Used in all three mega menus.
+   Negative horizontal margin lets the hover background extend slightly
+   past the column's natural item width so it feels generous, not boxy. */
 .megaRichItem {
   display: flex;
   flex-direction: column;
@@ -372,6 +372,15 @@
   }
   .megaLeft {
     display: none;
+  }
+  .megaIndustriesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .megaMoreGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .megaCols {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 768px) {

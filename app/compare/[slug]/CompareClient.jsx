@@ -104,8 +104,36 @@ export default function CompareClient({ slug }) {
   }));
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-    if (!competitor || !heroRef.current) return;
+    /* ──────────────────────────────────────────────────────────────────
+       Reset scroll on slug change.
+       
+       Lenis owns the scroll position globally (LenisProvider attaches it
+       to window.__lenis). window.scrollTo() alone gets overridden because
+       Lenis's RAF loop snaps the page back to its internal scroll value
+       on the next tick. So we use lenis.scrollTo with immediate+force —
+       that updates BOTH the browser scroll position and Lenis's internal
+       state, making the reset stick.
+       
+       The double-call (sync + rAF) covers the edge case where the
+       transition overlay finishes its fade-out after the new component
+       has already mounted — without the rAF callback, Lenis can briefly
+       restore the previous page's scroll position before settling at 0.
+    ─────────────────────────────────────────────────────────────────── */
+    const resetScroll = () => {
+      if (typeof window === "undefined") return;
+      const lenis = window.__lenis;
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true, force: true });
+      } else {
+        window.scrollTo(0, 0);
+      }
+    };
+    resetScroll();
+    const rafId = requestAnimationFrame(resetScroll);
+
+    if (!competitor || !heroRef.current) {
+      return () => cancelAnimationFrame(rafId);
+    }
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
@@ -161,8 +189,13 @@ export default function CompareClient({ slug }) {
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
+      /* IMPORTANT: .honestCard was previously omitted from this list, which
+         meant the §04 wrapper stayed at the CSS-default opacity: 0 forever
+         (only .honestStrength items animated to 1, but CSS opacity is
+         multiplicative — items inside an opacity:0 parent stay invisible).
+         Adding .honestCard here is what makes §04 render at all. */
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestStrength}`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
       );
       if (num) {
         gsap.fromTo(
@@ -221,7 +254,14 @@ export default function CompareClient({ slug }) {
       }
     );
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    /* After all triggers are created from scroll=0 (the position we just
+       forced), tell ScrollTrigger to recalc against the new content. */
+    ScrollTrigger.refresh();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, [slug, competitor]);
 
   if (!competitor) {
@@ -277,7 +317,7 @@ export default function CompareClient({ slug }) {
 
         <div className={styles.heroCTA}>
           <CornerButton onClick={openDemo}>See a live comparison</CornerButton>
-          <TransitionLink href="/#pricing" className={styles.heroSecondary}>
+          <TransitionLink href="/pricing" className={styles.heroSecondary}>
             See Nimbus pricing →
           </TransitionLink>
         </div>

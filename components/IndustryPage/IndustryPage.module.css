@@ -9,7 +9,8 @@
    - Asymmetric grid: number column + content column
    - Paired Challenge ↔ Solution layout with arrow divider
    - Massive stat numerals (Big numbers as design elements)
-   - Cross-link grid at the end
+   - Cross-link grid at the end — glow-cards
+   - Workflow steps — glow-cards
    - Final CTA without bracket decorations
    
    Shared with other page types:
@@ -29,8 +30,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+       HERO
+    ───────────────────────────────────────────────────── */
 .hero {
   max-width: 1200px;
   margin: 0 auto;
@@ -128,8 +129,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SECTIONS — huge numeral anchor + asymmetric content column
-  ───────────────────────────────────────────────────── */
+       SECTIONS — huge numeral anchor + asymmetric content column
+    ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
@@ -144,7 +145,6 @@
   border-top: 1px solid rgba(242, 240, 239, 0.05);
 }
 
-/* THE editorial numeral — outlined display type */
 .sectionNum {
   font-family: var(--display);
   font-size: clamp(140px, 18vw, 260px);
@@ -195,8 +195,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     CHALLENGE ↔ SOLUTION PAIRS
-  ───────────────────────────────────────────────────── */
+       CHALLENGE ↔ SOLUTION PAIRS  (list-style, unchanged)
+    ───────────────────────────────────────────────────── */
 .pairs {
   display: flex;
   flex-direction: column;
@@ -293,26 +293,34 @@
   color: rgba(242, 240, 239, 0.5);
 }
 
-/* ─────────────────────────────────────────────────────
-     WORKFLOW STEPS
-  ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+       WORKFLOW STEPS — glow-cards
+       ───────────────────────────────────────────────────────────────────
+       Container has the `glow-cards` class + useGlowCards ref. Each step
+       has the glow-card outer/border/content structure. Container gap
+       replaces the old shared-border-grid look — each step is now a
+       discrete rounded card.
+    ═══════════════════════════════════════════════════════════════════════ */
 .workflow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
-  border-left: 1px solid rgba(242, 240, 239, 0.08);
+  gap: 16px;
+  /* removed: border-top, border-left (no more shared-border grid) */
 }
 .workflowStep {
-  padding: 28px 24px 32px;
-  border-right: 1px solid rgba(242, 240, 239, 0.08);
-  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.015);
-  transition: background 0.25s;
+  /* Outer shell — just shape and entrance opacity.
+       Glow-card globals provide: border-radius: 20px, cursor: pointer.
+       The .glow-card-content inner gets background + 1px-inset border peek. */
+  position: relative;
   opacity: 0;
 }
-.workflowStep:hover {
-  background: rgba(255, 255, 255, 0.03);
+.workflowStepInner {
+  /* Padding lives here now. DO NOT set height — globals' .glow-card-content
+       provides height: calc(100% - 2px) + margin: 1px which is the 1px gap
+       where the gold border-glow shines through on hover. */
+  padding: 28px 24px 32px;
+  display: flex;
+  flex-direction: column;
 }
 .workflowStepNum {
   font-family: var(--mono);
@@ -338,8 +346,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     STATS — massive numerals
-  ───────────────────────────────────────────────────── */
+       STATS — massive numerals (column-separators, not cards)
+    ───────────────────────────────────────────────────── */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -375,9 +383,9 @@
   color: rgba(242, 240, 239, 0.55);
 }
 
-/* ─────────────────────────────────────────────────────
-     CROSS-LINKS
-  ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+       CROSS-LINKS — glow-cards
+    ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
   max-width: 1200px;
   margin: 0 auto;
@@ -398,21 +406,17 @@
   gap: 16px;
 }
 .crossCard {
+  /* Outer shell — globals provides border-radius 20px + cursor. */
+  position: relative;
+  min-height: 200px;
+  opacity: 0;
+  text-decoration: none;
+}
+.crossCardInner {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 200px;
   padding: 24px 26px 22px;
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.015);
-  text-decoration: none;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s;
-  opacity: 0;
-}
-.crossCard:hover {
-  background: rgba(212, 168, 83, 0.03);
-  border-color: rgba(212, 168, 83, 0.35);
-  transform: translateY(-2px);
 }
 .crossCardMeta {
   font-family: var(--mono);
@@ -438,14 +442,15 @@
   color: rgba(242, 240, 239, 0.4);
   transition: color 0.2s, transform 0.25s;
 }
+/* Arrow gets its own hover treatment (glow-card system handles the rest) */
 .crossCard:hover .crossCardArrow {
   color: var(--accent);
   transform: translateX(6px);
 }
 
 /* ─────────────────────────────────────────────────────
-     FINAL CTA
-  ───────────────────────────────────────────────────── */
+       FINAL CTA
+    ───────────────────────────────────────────────────── */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -492,8 +497,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     NOT FOUND
-  ───────────────────────────────────────────────────── */
+       NOT FOUND
+    ───────────────────────────────────────────────────── */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -529,8 +534,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+       RESPONSIVE
+    ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;

@@ -6,52 +6,91 @@ import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
 
+/* Each industry now carries a short descriptor so the mega menu can use
+   the same rich-item treatment (title + desc) as the More menu. Keep
+   descriptions ≤ 4-5 words — they're meant to identify, not explain. */
 const INDUSTRY_ITEMS = [
   {
     title: "Flooring & Building Materials",
+    desc: "Hardwood, tile, adhesives",
     slug: "flooring-building-materials",
   },
-  { title: "Manufacturing & Assembly", slug: "manufacturing-assembly" },
-  { title: "Food & Beverage", slug: "food-beverage" },
-  { title: "Automotive & Parts", slug: "automotive-parts" },
-  { title: "Pharmaceuticals & Medical", slug: "pharmaceuticals-medical" },
-  { title: "E-commerce & 3PL", slug: "ecommerce-3pl" },
-  { title: "Electrical & Plumbing Supply", slug: "electrical-plumbing" },
-  { title: "Agriculture & Seed", slug: "agriculture-seed" },
+  {
+    title: "Manufacturing & Assembly",
+    desc: "Parts, kits, sub-assemblies",
+    slug: "manufacturing-assembly",
+  },
+  {
+    title: "Food & Beverage",
+    desc: "Lot tracking & FEFO",
+    slug: "food-beverage",
+  },
+  {
+    title: "Automotive & Parts",
+    desc: "Catalogs and dealer ops",
+    slug: "automotive-parts",
+  },
+  {
+    title: "Pharmaceuticals & Medical",
+    desc: "Compliance-first inventory",
+    slug: "pharmaceuticals-medical",
+  },
+  {
+    title: "E-commerce & 3PL",
+    desc: "Multi-tenant & white-label",
+    slug: "ecommerce-3pl",
+  },
+  {
+    title: "Electrical & Plumbing Supply",
+    desc: "Fittings, fixtures, kits",
+    slug: "electrical-plumbing",
+  },
+  {
+    title: "Agriculture & Seed",
+    desc: "Seasonal & bulk inventory",
+    slug: "agriculture-seed",
+  },
 ];
 
+/* Same treatment for integrations — each item carries a short descriptor
+   for the rich-item rendering. 2-3 words each, identifying what the
+   service is for at a glance. */
 const INTEGRATION_CATEGORIES = [
   {
     label: "Accounting & ERP",
     items: [
-      { title: "QuickBooks", slug: "quickbooks" },
-      { title: "Xero", slug: "xero" },
-      { title: "FreshBooks", slug: "freshbooks" },
-      { title: "SAP Business One", slug: "sap-business-one" },
-      { title: "NetSuite", slug: "netsuite" },
-      { title: "Sage", slug: "sage" },
+      { title: "QuickBooks", desc: "Cloud accounting", slug: "quickbooks" },
+      { title: "Xero", desc: "Online accounting", slug: "xero" },
+      { title: "FreshBooks", desc: "Invoicing & books", slug: "freshbooks" },
+      { title: "SAP Business One", desc: "SMB ERP", slug: "sap-business-one" },
+      { title: "NetSuite", desc: "Cloud ERP suite", slug: "netsuite" },
+      { title: "Sage", desc: "Accounting & finance", slug: "sage" },
     ],
   },
   {
     label: "E-commerce & POS",
     items: [
-      { title: "Shopify", slug: "shopify" },
-      { title: "WooCommerce", slug: "woocommerce" },
-      { title: "Amazon", slug: "amazon" },
-      { title: "Square", slug: "square" },
-      { title: "BigCommerce", slug: "bigcommerce" },
-      { title: "Lightspeed", slug: "lightspeed" },
+      { title: "Shopify", desc: "Online stores", slug: "shopify" },
+      { title: "WooCommerce", desc: "WordPress commerce", slug: "woocommerce" },
+      { title: "Amazon", desc: "Marketplace sync", slug: "amazon" },
+      { title: "Square", desc: "POS & payments", slug: "square" },
+      { title: "BigCommerce", desc: "Enterprise ecom", slug: "bigcommerce" },
+      { title: "Lightspeed", desc: "Retail POS", slug: "lightspeed" },
     ],
   },
   {
     label: "Shipping & Logistics",
     items: [
-      { title: "ShipStation", slug: "shipstation" },
-      { title: "Shippo", slug: "shippo" },
-      { title: "EasyPost", slug: "easypost" },
-      { title: "FedEx", slug: "fedex" },
-      { title: "UPS", slug: "ups" },
-      { title: "DHL", slug: "dhl" },
+      {
+        title: "ShipStation",
+        desc: "Multi-carrier labels",
+        slug: "shipstation",
+      },
+      { title: "Shippo", desc: "Shipping API", slug: "shippo" },
+      { title: "EasyPost", desc: "Carrier abstraction", slug: "easypost" },
+      { title: "FedEx", desc: "Direct carrier sync", slug: "fedex" },
+      { title: "UPS", desc: "Direct carrier sync", slug: "ups" },
+      { title: "DHL", desc: "International shipping", slug: "dhl" },
     ],
   },
 ];
@@ -188,8 +227,6 @@ function MobileMenu({ open, links, onClose, onDemo }) {
       document.body.style.overflow = "";
     };
   }, [open]);
-
-  const allLinks = [...links, ...EXTRA_LINKS];
 
   return (
     <div
@@ -331,9 +368,10 @@ export default function Nav({ onDemo, dark }) {
             { opacity: 1, y: 0, duration: 0.3, delay: 0.1, ease: "power3.out" }
           );
       } else {
-        // Fresh open — animate items in
+        /* Fresh open — animate items in. Targets every rich item across
+           all three mega panels with the same selector. */
         const items = wrap.querySelectorAll(
-          `.${styles.megaPanelActive} .${styles.megaItem}`
+          `.${styles.megaPanelActive} .${styles.megaRichItem}`
         );
         gsap.fromTo(
           items,
@@ -535,7 +573,7 @@ export default function Nav({ onDemo, dark }) {
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
       >
-        {/* Integrations */}
+        {/* Integrations — 3 category columns with rich items */}
         <div
           data-menu="integrations"
           className={`${styles.megaPanel} ${
@@ -549,7 +587,7 @@ export default function Nav({ onDemo, dark }) {
                 Nimbus connects to your existing tools. No rip-and-replace.
               </p>
               <TransitionLink
-                href="/#integrations"
+                href="/integrations"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
               >
@@ -573,16 +611,17 @@ export default function Nav({ onDemo, dark }) {
             </div>
             <div className={styles.megaCols}>
               {INTEGRATION_CATEGORIES.map((cat) => (
-                <div key={cat.label} className={styles.megaCol}>
+                <div key={cat.label} className={styles.megaMoreCol}>
                   <div className={styles.megaColLabel}>{cat.label}</div>
                   {cat.items.map((item) => (
                     <TransitionLink
                       key={item.slug}
                       href={`/integration/${item.slug}`}
-                      className={styles.megaItem}
+                      className={styles.megaRichItem}
                       onClick={() => setOpenMenu(null)}
                     >
-                      {item.title}
+                      <span className={styles.megaRichTitle}>{item.title}</span>
+                      <span className={styles.megaRichDesc}>{item.desc}</span>
                     </TransitionLink>
                   ))}
                 </div>
@@ -591,7 +630,7 @@ export default function Nav({ onDemo, dark }) {
           </div>
         </div>
 
-        {/* Industries */}
+        {/* Industries — 4-col rich grid, no category labels */}
         <div
           data-menu="industries"
           className={`${styles.megaPanel} ${
@@ -605,7 +644,7 @@ export default function Nav({ onDemo, dark }) {
                 Purpose-built warehouse intelligence for your vertical.
               </p>
               <TransitionLink
-                href="/#industries"
+                href="/industries"
                 className={styles.megaViewAll}
                 onClick={() => setOpenMenu(null)}
               >
@@ -627,20 +666,22 @@ export default function Nav({ onDemo, dark }) {
                 </svg>
               </TransitionLink>
             </div>
-            <div className={styles.megaGrid}>
+            <div className={styles.megaIndustriesGrid}>
               {INDUSTRY_ITEMS.map((ind) => (
                 <TransitionLink
                   key={ind.slug}
                   href={`/industry/${ind.slug}`}
-                  className={styles.megaItem}
+                  className={styles.megaRichItem}
                   onClick={() => setOpenMenu(null)}
                 >
-                  {ind.title}
+                  <span className={styles.megaRichTitle}>{ind.title}</span>
+                  <span className={styles.megaRichDesc}>{ind.desc}</span>
                 </TransitionLink>
               ))}
             </div>
           </div>
         </div>
+
         {/* More — surfaces all secondary site pages */}
         <div
           data-menu="more"

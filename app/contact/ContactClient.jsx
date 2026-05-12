@@ -58,6 +58,188 @@ const CHANNELS = [
   },
 ];
 
+/* ═══════════════════════════════════════════════════════════════════════
+   CUSTOM SELECT
+   ───────────────────────────────────────────────────────────────────────
+   Button-triggered listbox that matches the rest of the form styling. The
+   button retains focus; aria-activedescendant tells screen readers which
+   option is "active" via the keyboard. Outside-click closes; Esc closes
+   and returns focus to the button.
+   
+   Keyboard:
+     Closed:  Enter / Space / ArrowDown / ArrowUp  → open
+     Open:    ArrowDown / ArrowUp                  → navigate options
+              Home / End                           → first / last
+              Enter / Space                        → pick highlighted
+              Escape                               → close
+              Tab                                  → close + advance focus
+   ═══════════════════════════════════════════════════════════════════════ */
+function CustomSelect({
+  id,
+  labelId,
+  value,
+  onChange,
+  options,
+  placeholder = "Choose one…",
+  disabled = false,
+  hasError = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
+  const wrapRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  /* Close when clicking anywhere outside the wrapper. */
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  /* When opening, jump the highlight to the current value (if any) so the
+     user lands on what they already picked. Otherwise start at the top. */
+  useEffect(() => {
+    if (open) {
+      const i = value ? options.indexOf(value) : -1;
+      setHighlight(i >= 0 ? i : 0);
+    }
+  }, [open, value, options]);
+
+  const selectOption = (opt) => {
+    onChange(opt);
+    setOpen(false);
+    /* Return focus to the button so keyboard users don't lose their place. */
+    requestAnimationFrame(() => buttonRef.current?.focus());
+  };
+
+  const handleKey = (e) => {
+    if (disabled) return;
+
+    /* Let Tab close the menu and move on naturally — don't trap focus. */
+    if (e.key === "Tab") {
+      if (open) setOpen(false);
+      return;
+    }
+
+    if (!open) {
+      if (
+        e.key === "Enter" ||
+        e.key === " " ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowUp"
+      ) {
+        e.preventDefault();
+        setOpen(true);
+      }
+      return;
+    }
+
+    /* Open state */
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlight((i) => (i + 1) % options.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlight((i) => (i - 1 + options.length) % options.length);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setHighlight(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setHighlight(options.length - 1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (highlight >= 0) selectOption(options[highlight]);
+    }
+  };
+
+  const listId = `${id}-listbox`;
+
+  return (
+    <div ref={wrapRef} className={styles.selectWrap}>
+      <button
+        ref={buttonRef}
+        id={id}
+        type="button"
+        onClick={() => !disabled && setOpen((o) => !o)}
+        onKeyDown={handleKey}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-labelledby={labelId}
+        aria-activedescendant={
+          open && highlight >= 0 ? `${id}-opt-${highlight}` : undefined
+        }
+        className={`${styles.selectButton} ${
+          open ? styles.selectButtonOpen : ""
+        } ${hasError ? styles.selectButtonError : ""}`}
+      >
+        <span className={value ? styles.selectValue : styles.selectPlaceholder}>
+          {value || placeholder}
+        </span>
+        <svg
+          className={`${styles.selectChevron} ${
+            open ? styles.selectChevronOpen : ""
+          }`}
+          width="10"
+          height="6"
+          viewBox="0 0 10 6"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M1 1L5 5L9 1"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      <ul
+        id={listId}
+        role="listbox"
+        aria-labelledby={labelId}
+        className={`${styles.selectList} ${open ? styles.selectListOpen : ""}`}
+      >
+        {options.map((opt, i) => (
+          <li
+            key={opt}
+            id={`${id}-opt-${i}`}
+            role="option"
+            aria-selected={value === opt}
+            onMouseEnter={() => setHighlight(i)}
+            onMouseDown={(e) => {
+              /* Mousedown (not click) so we beat the wrapper's mousedown
+                 outside-click detection without race conditions. */
+              e.preventDefault();
+              selectOption(opt);
+            }}
+            className={`${styles.selectOption} ${
+              i === highlight ? styles.selectOptionHighlight : ""
+            } ${value === opt ? styles.selectOptionSelected : ""}`}
+          >
+            {opt}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────
+   PAGE
+───────────────────────────────────────────────────── */
 export default function ContactClient() {
   const pageRef = useRef(null);
   const heroRef = useRef(null);
@@ -276,9 +458,9 @@ export default function ContactClient() {
                 <span className={styles.successLabel}>Message sent</span>
               </div>
               <p className={styles.successText}>
-                Thanks, {form.name || "we"}&apos;ve got it. You&apos;ll hear
-                back within 4 business hours. Check spam if you don&apos;t see
-                us — we send from <strong>hello@nimbuswms.com</strong>.
+                Thanks — we&apos;ve got it. You&apos;ll hear back within 4
+                business hours. Check spam if you don&apos;t see us — we send
+                from <strong>hello@nimbuswms.com</strong>.
               </p>
               <button
                 type="button"
@@ -376,24 +558,18 @@ export default function ContactClient() {
                 </div>
 
                 <div className={styles.field}>
-                  <label htmlFor="c-role" className={styles.fieldLabel}>
+                  <label id="c-role-label" className={styles.fieldLabel}>
                     Role
                   </label>
-                  <select
+                  <CustomSelect
                     id="c-role"
-                    name="role"
+                    labelId="c-role-label"
                     value={form.role}
-                    onChange={(e) => updateField("role", e.target.value)}
+                    onChange={(v) => updateField("role", v)}
+                    options={ROLES}
+                    placeholder="Choose one…"
                     disabled={isSubmitting}
-                    className={styles.fieldSelect}
-                  >
-                    <option value="">Choose one…</option>
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 

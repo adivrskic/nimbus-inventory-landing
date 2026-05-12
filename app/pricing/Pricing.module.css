@@ -5,7 +5,7 @@
 }
 
 /* ─────────────────────────────────────────────────────
-   HERO
+   HERO  (unchanged)
 ───────────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -97,67 +97,101 @@
   width: 0.28em;
 }
 
-/* ─────────────────────────────────────────────────────
-   BILLING TOGGLE — sliding gold underline
-───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+   BILLING TOGGLE — pill style
+   ───────────────────────────────────────────────────────────────────────
+   Two buttons inside a padded shell. A gold "slider" pill sits absolutely
+   positioned behind them and translates from x:0 (Monthly) to x:100%
+   (Annual) via inline style. The active button's text goes dark so it
+   reads against the gold pill; the inactive button stays dim.
+   The "−20%" badge lives inside the Annual button — its color flips
+   based on whether Annual is the active state (dark text on gold pill,
+   or gold text on transparent when the slider is over Monthly).
+   ═══════════════════════════════════════════════════════════════════════ */
 .toggleWrap {
   position: relative;
   z-index: 1;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
   opacity: 0;
 }
-.toggleRow {
+
+.pillToggle {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px;
 }
-.toggleBtn {
+
+.pillSlider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: var(--accent);
+  transition: transform 0.4s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pillBtn {
   position: relative;
-  padding: 8px 4px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+  padding: 12px 28px;
   background: transparent;
   border: none;
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.35);
+  color: rgba(242, 240, 239, 0.55);
   cursor: pointer;
-  transition: color 0.25s var(--ease-smooth);
+  transition: color 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
 }
-.toggleBtnActive {
-  color: var(--white);
-}
-.toggleDivider {
-  width: 1px;
-  height: 10px;
-  background: rgba(242, 240, 239, 0.15);
-  margin: 0 8px;
-}
-.toggleUnderline {
-  position: absolute;
-  bottom: 0;
-  height: 1px;
-  background: var(--accent);
-  transition: left 0.4s var(--ease-smooth), width 0.4s var(--ease-smooth);
-}
-.toggleSave {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
+.pillBtnActive {
+  color: var(--dark);
 }
 
-/* ─────────────────────────────────────────────────────
-   TIER CARDS
-───────────────────────────────────────────────────── */
+.pillBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: background 0.3s, color 0.3s;
+}
+/* When Annual is the active button (slider sits behind it), the badge
+   needs to read against gold — dark pill on subtle dark-on-gold tint. */
+.pillBtnActive .pillBadge {
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--dark);
+}
+/* When Annual is NOT active (slider is over Monthly), the badge stays
+   gold against the transparent shell — acts as a teaser. */
+.pillBtn:not(.pillBtnActive) .pillBadge {
+  background: rgba(212, 168, 83, 0.15);
+  color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TIER CARDS — Pro (featured) + Enterprise
+   ───────────────────────────────────────────────────────────────────────
+   isolation: isolate on each .tier creates a fresh stacking context so
+   the big background numeral (.tierBigNum, z-index: -1) sits BEHIND
+   the content but stays inside its own card. Pro carries a "Most
+   Popular" badge with a pulsing dot, plus a faint gold gradient bg.
+   ═══════════════════════════════════════════════════════════════════════ */
 .tiers {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -171,17 +205,30 @@
 
 .tier {
   position: relative;
+  isolation: isolate;
   padding: 48px 44px 44px;
   display: flex;
   flex-direction: column;
   opacity: 0;
   transform: translateY(24px);
+  transition: background 0.4s;
+  overflow: hidden;
 }
 .tier + .tier {
   border-left: 1px solid rgba(242, 240, 239, 0.06);
 }
 
-/* Top accent strip — Pro is gold, Enterprise is dim */
+/* Featured (Pro) — subtle gold gradient bleed from top */
+.tierFeatured {
+  background: linear-gradient(
+    180deg,
+    rgba(212, 168, 83, 0.03) 0%,
+    transparent 40%
+  );
+}
+
+/* Top accent strip — Enterprise gets a dim 40px line that extends on
+   hover. Pro doesn't need it (the badge serves as its top accent). */
 .tier::before {
   content: "";
   position: absolute;
@@ -190,13 +237,14 @@
   height: 2px;
   background: rgba(242, 240, 239, 0.1);
   width: 40px;
-  transition: width 0.5s var(--ease-smooth), background 0.3s;
+  transition: width 0.5s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)),
+    background 0.3s;
+  z-index: 1;
 }
 .tierFeatured::before {
-  background: var(--accent);
-  width: 80px;
+  display: none;
 }
-.tier:hover::before {
+.tier:not(.tierFeatured):hover::before {
   width: 100%;
 }
 
@@ -212,11 +260,66 @@
   border-right: 1.5px solid var(--accent);
   opacity: 0;
   transition: opacity 0.3s, width 0.3s, height 0.3s;
+  z-index: 1;
 }
 .tier:hover::after {
   opacity: 0.5;
   width: 18px;
   height: 18px;
+}
+
+/* Big editorial section numeral, behind content */
+.tierBigNum {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  font-family: var(--display);
+  font-size: 220px;
+  font-weight: 800;
+  letter-spacing: -10px;
+  line-height: 0.85;
+  color: var(--white);
+  opacity: 0.025;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+}
+.tierFeatured .tierBigNum {
+  color: var(--accent);
+  opacity: 0.06;
+}
+
+/* Most Popular badge — Pro only. Pulsing dot for subtle motion. */
+.tierBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: var(--dark);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.tierBadgeDot {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .tierNumber {
@@ -253,7 +356,10 @@
   max-width: 340px;
 }
 
-/* Price block */
+/* ─────────────────────────────────────────────────────
+   Price block — Pro shows strike-through monthly + savings
+   call-out when Annual is active. Enterprise shows "Custom".
+───────────────────────────────────────────────────── */
 .priceBlock {
   margin-bottom: 32px;
   min-height: 92px;
@@ -264,6 +370,16 @@
   gap: 6px;
   margin-bottom: 8px;
   line-height: 1;
+  flex-wrap: wrap;
+}
+.priceStrike {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(242, 240, 239, 0.3);
+  text-decoration: line-through;
+  margin-right: 8px;
+  align-self: center;
 }
 .priceCurrency {
   font-family: var(--display);
@@ -278,6 +394,15 @@
   color: var(--white);
   letter-spacing: -3px;
   line-height: 1;
+}
+.priceCadence {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: rgba(242, 240, 239, 0.5);
+  margin-left: 6px;
+  letter-spacing: 0.5px;
+  align-self: flex-end;
+  margin-bottom: 12px;
 }
 .priceCustom {
   font-family: var(--display);
@@ -303,6 +428,13 @@
   letter-spacing: 0.3px;
   color: rgba(242, 240, 239, 0.3);
   min-height: 14px;
+}
+.priceSavings {
+  color: var(--accent);
+  font-weight: 700;
+}
+.priceMuted {
+  color: rgba(242, 240, 239, 0.3);
 }
 
 .ctaRow {
@@ -349,6 +481,10 @@
   justify-content: center;
   margin-top: 3px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EVERYTHING BELOW THIS LINE IS UNCHANGED (matrix, FAQ, finalCTA)
+   ═══════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────
    SIDE-BY-SIDE MATRIX
@@ -398,7 +534,7 @@
   background: var(--accent);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 0.3s var(--ease-smooth);
+  transition: transform 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
 }
 .matrixRow:hover::before {
   transform: scaleY(1);
@@ -484,7 +620,7 @@
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.3s var(--ease-smooth);
+  transition: transform 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
 }
 .faqHeader:hover::before {
   transform: scaleX(1);
@@ -503,7 +639,8 @@
 .faqIcon {
   flex-shrink: 0;
   color: rgba(242, 240, 239, 0.4);
-  transition: transform 0.4s var(--ease-smooth), color 0.25s;
+  transition: transform 0.4s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 0.25s;
   margin-left: 24px;
 }
 .faqIconOpen {
@@ -513,7 +650,7 @@
 .faqBody {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.5s var(--ease-smooth);
+  transition: max-height 0.5s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
 }
 .faqBodyOpen {
   max-height: 400px;
@@ -606,6 +743,18 @@
   .bracket {
     display: none;
   }
+
+  /* Toggle stays as pill but tightens up */
+  .pillBtn {
+    min-width: 120px;
+    padding: 11px 20px;
+    font-size: 10px;
+  }
+  .pillBadge {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+
   .tiers {
     grid-template-columns: 1fr;
     padding: 0 24px 60px;
@@ -620,9 +769,18 @@
   .tierName {
     font-size: 30px;
   }
+  .tierBigNum {
+    font-size: 160px;
+    right: 16px;
+    top: 12px;
+  }
   .priceValue {
     font-size: 56px;
   }
+  .priceStrike {
+    font-size: 20px;
+  }
+
   .matrixSection {
     padding: 80px 24px 40px;
   }

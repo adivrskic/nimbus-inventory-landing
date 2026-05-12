@@ -9,14 +9,15 @@ gsap.registerPlugin(ScrollTrigger);
 
 const H_LINES = [
   [
-    { t: "Your", a: false },
+    { t: "Take", a: false },
+    { t: "your", a: false },
     { t: "warehouse", a: false },
-    { t: "should", a: false },
   ],
   [
-    { t: "evolve", a: true },
-    { t: "with", a: true },
-    { t: "it", a: true },
+    { t: "to", a: true },
+    { t: "the", a: true },
+    { t: "next", a: true },
+    { t: "level", a: true },
   ],
 ];
 const DESC_LINES = [

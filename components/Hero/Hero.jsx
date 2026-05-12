@@ -12,14 +12,14 @@ const HEADLINE_LINES = [
   {
     words: [
       { text: "The", accent: false },
-      { text: "operating", accent: false },
-      { text: "system", accent: false },
+      { text: "complete", accent: false },
+      { text: "solution", accent: false },
       { text: "for", accent: false },
     ],
   },
   {
     words: [
-      { text: "warehouse", accent: false },
+      { text: "warehouse", accent: true },
       { text: "intelligence", accent: true },
     ],
   },

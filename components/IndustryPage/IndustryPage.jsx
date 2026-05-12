@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import useGlowCards from "@/lib/useGlowCards";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
@@ -69,6 +70,12 @@ export default function IndustryPage({ slug, onDemo }) {
   const industry = INDUSTRIES.find((i) => i.slug === slug);
   const pageRef = useRef(null);
   const heroRef = useRef(null);
+
+  /* Two glow-cards contexts — workflow grid (§02) and cross-link grid.
+     Each container needs its own ref so mousemove tracking and 3D tilt
+     are scoped per-grid. */
+  const workflowGlowRef = useGlowCards();
+  const crossGlowRef = useGlowCards();
 
   const indexNum = industry
     ? INDUSTRIES.findIndex((i) => i.slug === slug) + 1
@@ -236,7 +243,7 @@ export default function IndustryPage({ slug, onDemo }) {
 
         <div className={styles.heroCTA}>
           <CornerButton onClick={onDemo}>Talk to our team</CornerButton>
-          <TransitionLink href="/#pricing" className={styles.heroSecondary}>
+          <TransitionLink href="/pricing" className={styles.heroSecondary}>
             See pricing →
           </TransitionLink>
         </div>
@@ -310,14 +317,24 @@ export default function IndustryPage({ slug, onDemo }) {
             scanners.
           </p>
 
-          <div className={styles.workflow}>
+          {/* Workflow grid is now a glow-cards container.
+              Each step gets the glow-card outer/inner pattern. */}
+          <div
+            ref={workflowGlowRef}
+            className={`${styles.workflow} glow-cards`}
+          >
             {WORKFLOW.map((w, i) => (
-              <div key={i} className={styles.workflowStep}>
-                <div className={styles.workflowStepNum}>
-                  {String(i + 1).padStart(2, "0")}
+              <div key={i} className={`${styles.workflowStep} glow-card`}>
+                <div className="glow-card-border" />
+                <div
+                  className={`${styles.workflowStepInner} glow-card-content`}
+                >
+                  <div className={styles.workflowStepNum}>
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <h4 className={styles.workflowStepTitle}>{w.label}</h4>
+                  <p className={styles.workflowStepDesc}>{w.desc}</p>
                 </div>
-                <h4 className={styles.workflowStepTitle}>{w.label}</h4>
-                <p className={styles.workflowStepDesc}>{w.desc}</p>
               </div>
             ))}
           </div>
@@ -347,23 +364,29 @@ export default function IndustryPage({ slug, onDemo }) {
         </div>
       </section>
 
-      {/* ── CROSS-LINKS ── */}
+      {/* ── CROSS-LINKS — glow-cards container ── */}
       <section className={styles.crossLinks}>
         <div className={styles.crossLinksLabel}>
           Industries similar to yours
         </div>
-        <div className={styles.crossLinksGrid}>
+        <div
+          ref={crossGlowRef}
+          className={`${styles.crossLinksGrid} glow-cards`}
+        >
           {others.map((o) => (
             <TransitionLink
               key={o.slug}
-              href={`/industries/${o.slug}`}
-              className={styles.crossCard}
+              href={`/industry/${o.slug}`}
+              className={`${styles.crossCard} glow-card`}
             >
-              <div className={styles.crossCardMeta}>{o.title}</div>
-              <div className={styles.crossCardTitle}>
-                {o.headline.join(" ")}
+              <div className="glow-card-border" />
+              <div className={`${styles.crossCardInner} glow-card-content`}>
+                <div className={styles.crossCardMeta}>{o.title}</div>
+                <div className={styles.crossCardTitle}>
+                  {o.headline.join(" ")}
+                </div>
+                <div className={styles.crossCardArrow}>→</div>
               </div>
-              <div className={styles.crossCardArrow}>→</div>
             </TransitionLink>
           ))}
         </div>

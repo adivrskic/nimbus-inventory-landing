@@ -3,9 +3,10 @@
    ───────────────────────────────────────────────────────────────────────
    Same Marketing vocabulary as Industry pages, but with:
    - Connection mark in hero (Nimbus × Partner — partnership signature)
-   - Bidirectional data-flow diagram
-   - Stepped 4-step setup grid
+   - Bidirectional data-flow diagram (glow-card)
+   - Setup steps grid — glow-cards
    - FAQ block
+   - Cross-link grid — glow-cards
    ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -17,8 +18,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+       HERO
+    ───────────────────────────────────────────────────── */
 .hero {
   max-width: 1200px;
   margin: 0 auto;
@@ -145,8 +146,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SECTIONS — same editorial numeral pattern as Industry
-  ───────────────────────────────────────────────────── */
+       SECTIONS — same editorial numeral pattern as Industry
+    ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
@@ -211,8 +212,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     FEATURES
-  ───────────────────────────────────────────────────── */
+       FEATURES — list-style, unchanged
+    ───────────────────────────────────────────────────── */
 .features {
   display: flex;
   flex-direction: column;
@@ -268,16 +269,27 @@
   max-width: 540px;
 }
 
-/* ─────────────────────────────────────────────────────
-     DATA FLOW DIAGRAM
-  ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+       DATA FLOW DIAGRAM — single glow-card containing the 3-col layout
+       ───────────────────────────────────────────────────────────────────
+       .flowWrap is just the glow-cards container (no visual styling — it's
+       the ref target for useGlowCards). .flow is the single glow-card. The
+       3-column grid (Nimbus | connector | Partner) lives inside .flowInner
+       (= glow-card-content).
+    ═══════════════════════════════════════════════════════════════════════ */
+.flowWrap {
+  /* Just a layout passthrough for useGlowCards to bind to. */
+}
 .flow {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  opacity: 0;
+}
+.flowInner {
   display: grid;
   grid-template-columns: 1fr 140px 1fr;
   gap: 0;
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.012);
-  opacity: 0;
 }
 .flowNode {
   padding: 28px 32px;
@@ -368,26 +380,25 @@
   background: var(--dark);
 }
 
-/* ─────────────────────────────────────────────────────
-     SETUP STEPS
-  ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+       SETUP STEPS — glow-cards
+    ═══════════════════════════════════════════════════════════════════════ */
 .steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
-  border-left: 1px solid rgba(242, 240, 239, 0.08);
+  gap: 16px;
+  /* removed: border-top, border-left (no more shared-border grid) */
 }
 .step {
-  padding: 28px 24px 32px;
-  border-right: 1px solid rgba(242, 240, 239, 0.08);
-  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.012);
-  transition: background 0.25s;
+  position: relative;
   opacity: 0;
 }
-.step:hover {
-  background: rgba(255, 255, 255, 0.025);
+.stepInner {
+  /* Globals' .glow-card-content provides bg + 1px-inset border peek.
+       DO NOT set height here. */
+  padding: 28px 24px 32px;
+  display: flex;
+  flex-direction: column;
 }
 .stepNum {
   font-family: var(--mono);
@@ -413,8 +424,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     STATS — massive numerals
-  ───────────────────────────────────────────────────── */
+       STATS — massive numerals (column separators, not cards)
+    ───────────────────────────────────────────────────── */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -451,8 +462,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     FAQ
-  ───────────────────────────────────────────────────── */
+       FAQ — list-style, unchanged
+    ───────────────────────────────────────────────────── */
 .faqList {
   display: flex;
   flex-direction: column;
@@ -482,9 +493,9 @@
   max-width: 700px;
 }
 
-/* ─────────────────────────────────────────────────────
-     CROSS-LINKS
-  ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+       CROSS-LINKS — glow-cards
+    ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
   max-width: 1200px;
   margin: 0 auto;
@@ -505,20 +516,15 @@
   gap: 16px;
 }
 .crossCard {
+  position: relative;
+  min-height: 200px;
+  opacity: 0;
+  text-decoration: none;
+}
+.crossCardInner {
   display: flex;
   flex-direction: column;
-  min-height: 200px;
   padding: 24px 26px 22px;
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.012);
-  text-decoration: none;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s;
-  opacity: 0;
-}
-.crossCard:hover {
-  background: rgba(212, 168, 83, 0.03);
-  border-color: rgba(212, 168, 83, 0.35);
-  transform: translateY(-2px);
 }
 .crossCardMeta {
   font-family: var(--mono);
@@ -557,8 +563,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     FINAL CTA
-  ───────────────────────────────────────────────────── */
+       FINAL CTA
+    ───────────────────────────────────────────────────── */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -605,8 +611,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     NOT FOUND
-  ───────────────────────────────────────────────────── */
+       NOT FOUND
+    ───────────────────────────────────────────────────── */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -642,8 +648,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+       RESPONSIVE
+    ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
@@ -657,7 +663,7 @@
   .steps {
     grid-template-columns: repeat(2, 1fr);
   }
-  .flow {
+  .flowInner {
     grid-template-columns: 1fr;
   }
   .flowNode {

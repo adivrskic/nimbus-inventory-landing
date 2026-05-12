@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import useGlowCards from "@/lib/useGlowCards";
 import { INTEGRATIONS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
 
@@ -121,6 +122,15 @@ export default function IntegrationPage({ slug, onDemo }) {
   const integration = INTEGRATIONS[slug];
   const pageRef = useRef(null);
   const heroRef = useRef(null);
+
+  /* Three glow-card contexts. Each section that has card-like content
+     gets its own container ref so mousemove tracking is scoped per-grid.
+     - flowGlowRef: the single bidirectional sync diagram card
+     - stepsGlowRef: 4-step setup grid
+     - crossGlowRef: 3 sibling integration cards */
+  const flowGlowRef = useGlowCards();
+  const stepsGlowRef = useGlowCards();
+  const crossGlowRef = useGlowCards();
 
   /* Sibling integrations in the same category (excluding current) — up to 3 */
   const siblings = integration
@@ -307,7 +317,7 @@ export default function IntegrationPage({ slug, onDemo }) {
         </div>
       </section>
 
-      {/* ── 01 · FEATURES ── */}
+      {/* ── 01 · FEATURES (list-style, unchanged) ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           01
@@ -341,7 +351,7 @@ export default function IntegrationPage({ slug, onDemo }) {
         </div>
       </section>
 
-      {/* ── 02 · DATA FLOW ── */}
+      {/* ── 02 · DATA FLOW (glow-card wrapping the whole diagram) ── */}
       {flow && (
         <section className={styles.section}>
           <div className={styles.sectionNum} aria-hidden="true">
@@ -357,46 +367,56 @@ export default function IntegrationPage({ slug, onDemo }) {
               directions, near-real-time.
             </p>
 
-            <div className={styles.flow}>
-              <div className={styles.flowNode}>
-                <div className={styles.flowNodeName}>Nimbus</div>
-                <div className={styles.flowNodeRole}>Source of truth</div>
-                <ul className={styles.flowNodeData}>
-                  {flow.fromNimbus.map((d) => (
-                    <li key={d}>{d}</li>
-                  ))}
-                </ul>
-              </div>
+            {/* The flow diagram is treated as ONE glow-card containing both
+                nodes + the connector. flowWrap is just the glow-cards
+                container so useGlowCards has somewhere to attach. */}
+            <div ref={flowGlowRef} className={`${styles.flowWrap} glow-cards`}>
+              <div className={`${styles.flow} glow-card`}>
+                <div className="glow-card-border" />
+                <div className={`${styles.flowInner} glow-card-content`}>
+                  <div className={styles.flowNode}>
+                    <div className={styles.flowNodeName}>Nimbus</div>
+                    <div className={styles.flowNodeRole}>Source of truth</div>
+                    <ul className={styles.flowNodeData}>
+                      {flow.fromNimbus.map((d) => (
+                        <li key={d}>{d}</li>
+                      ))}
+                    </ul>
+                  </div>
 
-              <div className={styles.flowConnector}>
-                <div className={styles.flowArrowRight}>
-                  <span className={styles.flowArrowLine} />
-                  <span className={styles.flowArrowHead}>▶</span>
-                </div>
-                <div className={styles.flowLatency}>{"<"} 30s</div>
-                <div className={styles.flowArrowLeft}>
-                  <span className={styles.flowArrowHead}>◀</span>
-                  <span className={styles.flowArrowLine} />
-                </div>
-              </div>
+                  <div className={styles.flowConnector}>
+                    <div className={styles.flowArrowRight}>
+                      <span className={styles.flowArrowLine} />
+                      <span className={styles.flowArrowHead}>▶</span>
+                    </div>
+                    <div className={styles.flowLatency}>{"<"} 30s</div>
+                    <div className={styles.flowArrowLeft}>
+                      <span className={styles.flowArrowHead}>◀</span>
+                      <span className={styles.flowArrowLine} />
+                    </div>
+                  </div>
 
-              <div className={styles.flowNode}>
-                <div className={styles.flowNodeName}>{integration.title}</div>
-                <div className={styles.flowNodeRole}>
-                  {integration.category}
+                  <div className={styles.flowNode}>
+                    <div className={styles.flowNodeName}>
+                      {integration.title}
+                    </div>
+                    <div className={styles.flowNodeRole}>
+                      {integration.category}
+                    </div>
+                    <ul className={styles.flowNodeData}>
+                      {flow.toNimbus.map((d) => (
+                        <li key={d}>{d}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <ul className={styles.flowNodeData}>
-                  {flow.toNimbus.map((d) => (
-                    <li key={d}>{d}</li>
-                  ))}
-                </ul>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── 03 · SETUP ── */}
+      {/* ── 03 · SETUP (glow-cards grid) ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           03
@@ -409,12 +429,15 @@ export default function IntegrationPage({ slug, onDemo }) {
             but doesn&apos;t block sync.
           </p>
 
-          <div className={styles.steps}>
+          <div ref={stepsGlowRef} className={`${styles.steps} glow-cards`}>
             {SETUP_STEPS.map((s) => (
-              <div key={s.num} className={styles.step}>
-                <div className={styles.stepNum}>{s.num}</div>
-                <h4 className={styles.stepTitle}>{s.title}</h4>
-                <p className={styles.stepDesc}>{s.desc}</p>
+              <div key={s.num} className={`${styles.step} glow-card`}>
+                <div className="glow-card-border" />
+                <div className={`${styles.stepInner} glow-card-content`}>
+                  <div className={styles.stepNum}>{s.num}</div>
+                  <h4 className={styles.stepTitle}>{s.title}</h4>
+                  <p className={styles.stepDesc}>{s.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -443,7 +466,7 @@ export default function IntegrationPage({ slug, onDemo }) {
         </div>
       </section>
 
-      {/* ── 05 · FAQ ── */}
+      {/* ── 05 · FAQ (list-style, unchanged) ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           05
@@ -463,23 +486,29 @@ export default function IntegrationPage({ slug, onDemo }) {
         </div>
       </section>
 
-      {/* ── CROSS-LINKS ── */}
+      {/* ── CROSS-LINKS — glow-cards ── */}
       {siblings.length > 0 && (
         <section className={styles.crossLinks}>
           <div className={styles.crossLinksLabel}>
             Other {integration.category.toLowerCase()} integrations
           </div>
-          <div className={styles.crossLinksGrid}>
+          <div
+            ref={crossGlowRef}
+            className={`${styles.crossLinksGrid} glow-cards`}
+          >
             {siblings.map((s) => (
               <TransitionLink
                 key={s.slug}
-                href={`/integrations/${s.slug}`}
-                className={styles.crossCard}
+                href={`/integration/${s.slug}`}
+                className={`${styles.crossCard} glow-card`}
               >
-                <div className={styles.crossCardMeta}>{s.category}</div>
-                <div className={styles.crossCardTitle}>{s.title}</div>
-                <div className={styles.crossCardTagline}>{s.tagline}</div>
-                <div className={styles.crossCardArrow}>→</div>
+                <div className="glow-card-border" />
+                <div className={`${styles.crossCardInner} glow-card-content`}>
+                  <div className={styles.crossCardMeta}>{s.category}</div>
+                  <div className={styles.crossCardTitle}>{s.title}</div>
+                  <div className={styles.crossCardTagline}>{s.tagline}</div>
+                  <div className={styles.crossCardArrow}>→</div>
+                </div>
               </TransitionLink>
             ))}
           </div>
