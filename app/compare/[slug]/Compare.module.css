@@ -6,6 +6,7 @@
    - Two-column "At a glance" with Nimbus favored visually
    - Spec-sheet feature matrix table (signature)
    - Honest-take card calling out when competitor is the better fit
+   - Cross-link grid at the bottom using the glow-card system
    ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -17,8 +18,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+       HERO
+    ───────────────────────────────────────────────────── */
 .hero {
   max-width: 1200px;
   margin: 0 auto;
@@ -153,8 +154,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SECTIONS — Marketing editorial numeral pattern
-  ───────────────────────────────────────────────────── */
+       SECTIONS — Marketing editorial numeral pattern
+    ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
@@ -165,9 +166,7 @@
   gap: 56px;
   align-items: start;
 }
-.section + .section {
-  border-top: 1px solid rgba(242, 240, 239, 0.05);
-}
+
 .sectionNum {
   font-family: var(--display);
   font-size: clamp(140px, 18vw, 260px);
@@ -217,10 +216,10 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     §01 QUICK COMPARE — two columns side by side
-     Nimbus on the left visually favored (gold accents, full opacity).
-     Competitor on the right (muted dashes, lower opacity).
-  ═══════════════════════════════════════════════════════════════════════ */
+       §01 QUICK COMPARE — two columns side by side
+       Nimbus on the left visually favored (gold accents, full opacity).
+       Competitor on the right (muted dashes, lower opacity).
+    ═══════════════════════════════════════════════════════════════════════ */
 .quickCompare {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -306,8 +305,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     §02 FEATURE MATRIX — spec sheet table
-  ═══════════════════════════════════════════════════════════════════════ */
+       §02 FEATURE MATRIX — spec sheet table
+    ═══════════════════════════════════════════════════════════════════════ */
 .matrix {
   display: flex;
   flex-direction: column;
@@ -398,8 +397,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     §03 REASONS — numbered list pattern
-  ═══════════════════════════════════════════════════════════════════════ */
+       §03 REASONS — numbered list pattern
+    ═══════════════════════════════════════════════════════════════════════ */
 .reasons {
   display: flex;
   flex-direction: column;
@@ -455,8 +454,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     §04 HONEST TAKE — outlined card with distinct treatment
-  ═══════════════════════════════════════════════════════════════════════ */
+       §04 HONEST TAKE — outlined card with distinct treatment
+    ═══════════════════════════════════════════════════════════════════════ */
 .honestCard {
   padding: 36px 40px 40px;
   border: 1px solid rgba(242, 240, 239, 0.12);
@@ -510,8 +509,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     CROSS-LINKS
-  ═══════════════════════════════════════════════════════════════════════ */
+       CROSS-LINKS — glow-card grid
+       ───────────────────────────────────────────────────────────────────
+       The grid container has `glow-cards` (globals) + the ref from
+       useGlowCards. Each card is a TransitionLink (.glow-card outer
+       shell + .crossCard for layout + opacity entrance), with a
+       .glow-card-border sibling and a .glow-card-content / .crossCardInner
+       child that holds the actual content.
+       
+       Rules of engagement (same as every other glow-card on the site):
+       • Outer shell sets shape + entrance opacity ONLY. No background,
+         no border, no hover transforms — globals' .glow-card / .glow-card::before
+         provide all of that.
+       • Inner element holds padding + layout. NEVER set height on the
+         inner — globals provides `height: calc(100% - 2px); margin: 1px;`
+         and overriding that collapses the 1px gap where the border-glow
+         shines through.
+       • Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
+         Don't add CSS hover transforms; they'll fight with the GSAP
+         overwrite logic and look glitchy.
+    ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
   max-width: 1200px;
   margin: 0 auto;
@@ -531,22 +548,26 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
+
+/* Outer shell — shape + entrance only. Globals adds border-radius 20px,
+     cursor: pointer, the mouse-radial ::before, and (via the
+     .glow-card-border child) the border-glow gradient. */
 .crossCard {
-  display: flex;
-  flex-direction: column;
-  min-height: 160px;
-  padding: 24px 26px 22px;
-  border: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.012);
+  position: relative;
   text-decoration: none;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s;
+  min-height: 160px;
   opacity: 0;
 }
-.crossCard:hover {
-  background: rgba(212, 168, 83, 0.03);
-  border-color: rgba(212, 168, 83, 0.35);
-  transform: translateY(-2px);
+
+/* Inner content wrapper. Pairs with `glow-card-content` from globals,
+     which provides the dark background and the 1px inset that creates
+     the visible border-glow gap. We supply padding + flex layout only. */
+.crossCardInner {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 26px 22px;
 }
+
 .crossCardMeta {
   font-family: var(--display);
   font-size: 14px;
@@ -578,14 +599,17 @@
   color: rgba(242, 240, 239, 0.4);
   transition: color 0.2s, transform 0.25s;
 }
+/* Arrow-only hover affordance. The card-level hover (gold border-glow +
+     mouse-radial gradient + 3D tilt) is handled by the glow-card system,
+     not by these styles. */
 .crossCard:hover .crossCardArrow {
   color: var(--accent);
   transform: translateX(6px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     FINAL CTA
-  ═══════════════════════════════════════════════════════════════════════ */
+       FINAL CTA
+    ═══════════════════════════════════════════════════════════════════════ */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -632,8 +656,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     NOT FOUND
-  ═══════════════════════════════════════════════════════════════════════ */
+       NOT FOUND
+    ═══════════════════════════════════════════════════════════════════════ */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -669,8 +693,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     RESPONSIVE
-  ═══════════════════════════════════════════════════════════════════════ */
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;

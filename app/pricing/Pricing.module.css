@@ -199,8 +199,6 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 48px 100px;
-  border-top: 1px solid rgba(242, 240, 239, 0.06);
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
 }
 
 .tier {
@@ -586,7 +584,7 @@
    FAQ
 ───────────────────────────────────────────────────── */
 .faqSection {
-  max-width: 820px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 80px 48px;
 }

@@ -474,14 +474,6 @@ export default function PricingClient() {
               {tier.number}
             </span>
 
-            {/* Most Popular badge — Pro only */}
-            {tier.featured && (
-              <div className={styles.tierBadge}>
-                <span className={styles.tierBadgeDot} />
-                Most Popular
-              </div>
-            )}
-
             <div className={styles.tierNumber}>
               {tier.number} / {tier.name.toUpperCase()}
             </div>

@@ -261,7 +261,7 @@
   background: transparent;
   border: none;
   outline: none;
-  padding: 0 2px 4px;
+  padding: 0 8px 4px;
   margin: 0;
   border-bottom: 1.5px dotted rgba(212, 168, 83, 0.55);
   border-radius: 0;
@@ -270,7 +270,7 @@
   /* Auto-size to content where supported (Chrome 123+, Edge, Safari TP) */
   field-sizing: content;
   min-width: 60px;
-  max-width: 240px;
+  max-width: 280px;
   text-align: center;
   -webkit-appearance: none;
   appearance: none;
@@ -308,7 +308,6 @@
   grid-template-columns: 280px 1fr;
   gap: 56px;
   align-items: start;
-  border-top: 1px solid rgba(242, 240, 239, 0.05);
 }
 .sectionNum {
   font-family: var(--display);

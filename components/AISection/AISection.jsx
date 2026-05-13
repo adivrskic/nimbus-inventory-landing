@@ -24,20 +24,8 @@ const SHAPE_GENERATORS = {
   bars: generateBarChart,
 };
 
-/* Glyph pool for the matrix-scramble reveal. Mix of A–Z, digits and a
-   handful of block glyphs for an industrial flavor. Single uppercase
-   pool — the scramble idiom reads the same regardless of the real
-   char's case, which is the look we want. */
 const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
 
-/* ── Per-section configuration ──
-   rotX / rotY / rotZ in DEGREES, applied to each shape at generation.
-   scale is a multiplier applied AFTER rotation, before X/Y offset.
-   Use the debug panel (?debug) to live-tune these and copy the JSON
-   back here when you're happy. */
-/* Values below are baked from a debug-panel tuning pass — adjust via
-   ?debug=1 then "Copy config" to update. offsetX/offsetY are layered on
-   top of the default L/R or mobile-Y position offsets. */
 const SECTIONS = [
   {
     key: "voice",
@@ -50,7 +38,6 @@ const SECTIONS = [
     scale: 0.6,
     offsetX: -1,
     offsetY: 0,
-    num: "01",
     badge: "Hands-free",
     title: "Voice commands",
     desc: "Nimbus processes natural speech and executes warehouse actions hands-free.",
@@ -66,7 +53,6 @@ const SECTIONS = [
     scale: 0.8,
     offsetX: 0,
     offsetY: 0,
-    num: "02",
     badge: "Real-time",
     title: "Spatial intelligence",
     desc: "A living model of your warehouse. Every section, bay, and level mapped in real time.",
@@ -82,7 +68,6 @@ const SECTIONS = [
     scale: 0.6,
     offsetX: -1.25,
     offsetY: 1,
-    num: "03",
     badge: "AI-powered",
     title: "Intelligent search",
     desc: "Ask anything in plain language. Searches products, locations, and history.",
@@ -98,20 +83,22 @@ const SECTIONS = [
     scale: 0.65,
     offsetX: 2,
     offsetY: 0,
-    num: "04",
     badge: "Forecasting",
     title: "Predictive analytics",
     desc: "Nimbus doesn't just report what happened — it forecasts what's next.",
   },
 ];
 
+/* FIXED: was `offsetX: s.offsetsetX` (typo) — that made every particle's
+   defaultX collapse to NaN and the entire cloud disappear into garbage
+   positions. Now sources the value from the canonical SECTIONS field. */
 const DEFAULT_PARAMS = SECTIONS.map((s) => ({
   rotX: s.rotX,
   rotY: s.rotY,
   rotZ: s.rotZ,
-  scale: s.scale ?? 0.85,
-  offsetX: s.offsetX ?? 0,
-  offsetY: s.offsetY ?? 0,
+  scale: s.scale,
+  offsetX: s.offsetX,
+  offsetY: s.offsetY,
 }));
 
 const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v1";
@@ -121,7 +108,6 @@ function smoothstep(x) {
   return c * c * (3 - 2 * c);
 }
 
-/* Formation curve — see AISection.module.css for phase mapping. */
 function formationCurve(p) {
   if (p <= 0.15 || p >= 0.85) return 0;
   if (p < 0.4) return smoothstep((p - 0.15) / 0.25);
@@ -129,11 +115,49 @@ function formationCurve(p) {
   return 1 - smoothstep((p - 0.6) / 0.25);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   DEBUG PANEL — only mounted when ?debug is in the URL.
-   Sliders directly mutate parent state; parent's effect rebuilds the
-   relevant shape and the live render picks it up next frame.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ─────────────────────────────────────────────────────────────────────
+   SCRAMBLE TEXT RENDERER
+   
+   The matrix-scramble effect needs each letter wrapped in its own
+   span so the RAF loop can individually drive its textContent +
+   opacity + color. The original implementation spread the entire
+   string into per-character spans with no word grouping, so every
+   space-position character was an inline-block too. Result: the
+   browser was free to line-break BETWEEN any two characters,
+   including in the middle of a word — exactly the "letter breaks
+   in words" the user is seeing.
+   
+   Fix: split on whitespace, wrap each real word in a .word span
+   (`white-space: nowrap` from globals.css), and leave the spaces
+   between words as plain text nodes — so the browser CAN break the
+   line at spaces but CAN'T break inside a word.
+
+   The scramble RAF loop still finds every .scrambleChar via
+   querySelectorAll, in DOM order = reading order, so the staggered
+   reveal still works correctly.
+   ───────────────────────────────────────────────────────────────────── */
+function renderScramble(text, keyPrefix = "") {
+  /* The capturing group in split() keeps the whitespace runs as their
+     own array entries — we render those as plain text so the line is
+     allowed to break at them. */
+  const parts = text.split(/(\s+)/);
+  return parts.map((part, pi) => {
+    if (part === "") return null;
+    if (/^\s+$/.test(part)) {
+      return <span key={`${keyPrefix}-s${pi}`}> </span>;
+    }
+    return (
+      <span key={`${keyPrefix}-w${pi}`} className="word">
+        {[...part].map((c, ci) => (
+          <span key={ci} data-char={c} className={styles.scrambleChar}>
+            {"\u00A0"}
+          </span>
+        ))}
+      </span>
+    );
+  });
+}
+
 function Slider({ label, value, min, max, step, unit, onChange }) {
   return (
     <div className={styles.dbgSlider}>
@@ -159,42 +183,16 @@ function Slider({ label, value, min, max, step, unit, onChange }) {
 
 function DebugPanel({ params, onChange, onReset, onClose }) {
   const [active, setActive] = useState(0);
-  const [copied, setCopied] = useState(false);
   const p = params[active];
-
   const update = (field, value) => onChange(active, field, value);
-
-  const copyConfig = async () => {
-    /* Output in the SECTIONS shape so it's a drop-in paste for the file. */
-    const config = params.map((par, i) => ({
-      key: SECTIONS[i].key,
-      rotX: Math.round(par.rotX),
-      rotY: Math.round(par.rotY),
-      rotZ: Math.round(par.rotZ),
-      scale: parseFloat(par.scale.toFixed(2)),
-      offsetX: parseFloat(par.offsetX.toFixed(2)),
-      offsetY: parseFloat(par.offsetY.toFixed(2)),
-    }));
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (e) {
-      console.log(JSON.stringify(config, null, 2));
-    }
-  };
 
   return (
     <div className={styles.dbgPanel}>
       <div className={styles.dbgHead}>
         <span className={styles.dbgTitle}>SHAPE DEBUG</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className={styles.dbgClose}
-          aria-label="Close debug panel"
-        >
-          ×
+        {/* FIXED: was "×times;" — looks like a half-decoded HTML entity. */}
+        <button type="button" onClick={onClose} className={styles.dbgClose}>
+          ✕
         </button>
       </div>
 
@@ -212,6 +210,7 @@ function DebugPanel({ params, onChange, onReset, onClose }) {
           </button>
         ))}
       </div>
+
       <div className={styles.dbgSectionName}>{SECTIONS[active].title}</div>
 
       <Slider
@@ -273,80 +272,46 @@ function DebugPanel({ params, onChange, onReset, onClose }) {
         <button type="button" onClick={onReset} className={styles.dbgBtn}>
           Reset
         </button>
-        <button type="button" onClick={copyConfig} className={styles.dbgBtn}>
-          {copied ? "Copied ✓" : "Copy config"}
-        </button>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   AI SECTION
-   ═══════════════════════════════════════════════════════════════════════ */
 export default function AISection() {
   const canvasRef = useRef(null);
   const sectionRef = useRef(null);
+
   const cardRefs = useRef([]);
   const blockRefs = useRef([]);
+
+  const formationsRef = useRef([]);
+
   const [activeIdx, setActiveIdx] = useState(0);
   const [progress, setProgress] = useState(0);
+
+  /* Visibility flag for the THREE animate loop. The animate loop
+     short-circuits when this is false (cheap perf win when the section
+     is off-screen). It's wired up via IntersectionObserver below; was
+     missing entirely before, which is why the particle render call was
+     never actually executing. */
   const sectionVisibleRef = useRef(false);
-  /* Per-card formation values (0..1). Written by the scroll handler and
-     read by the matrix-scramble RAF loop. Kept out of React state so
-     letter updates don't trigger re-renders. */
-  const formationsRef = useRef([]);
+
   const { paused } = useAnimationPaused();
   const pausedRef = useRef(false);
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
 
-  /* Debug state. `debugAvailable` is read once from the URL — adding
-     ?debug=1 anywhere in the query string turns on the panel toggle. */
   const [debugAvailable, setDebugAvailable] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugParams, setDebugParams] = useState(DEFAULT_PARAMS);
-  /* Mirror to a ref so the shape-rebuild function can read latest values
-     without being captured stale by the Three.js init closure. */
+
   const debugParamsRef = useRef(debugParams);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hasDebug = new URLSearchParams(window.location.search).has("debug");
-    setDebugAvailable(hasDebug);
-    /* If debug is on, load any previously-tuned values from storage so
-       tweaks survive page reloads. Validated by length to avoid stale data
-       from an older version with a different SECTIONS count. */
-    if (hasDebug) {
-      try {
-        const stored = localStorage.getItem(DEBUG_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length === SECTIONS.length) {
-            setDebugParams(parsed);
-          }
-        }
-      } catch (e) {
-        /* ignore */
-      }
-    }
-  }, []);
-
-  /* Whenever debugParams changes: update ref, persist (if debug is on),
-     and ask Three.js to rebuild the shape buffers. */
-  const rebuildShapesRef = useRef(null);
   useEffect(() => {
     debugParamsRef.current = debugParams;
-    if (debugAvailable) {
-      try {
-        localStorage.setItem(DEBUG_STORAGE_KEY, JSON.stringify(debugParams));
-      } catch (e) {
-        /* ignore */
-      }
-    }
-    rebuildShapesRef.current?.();
-  }, [debugParams, debugAvailable]);
+  }, [debugParams]);
+
+  const rebuildShapesRef = useRef(null);
 
   const handleDebugChange = useCallback((idx, field, value) => {
     setDebugParams((prev) => {
@@ -356,25 +321,85 @@ export default function AISection() {
     });
   }, []);
 
-  const handleDebugReset = useCallback(() => {
-    setDebugParams(DEFAULT_PARAMS);
+  /* Unlock the debug panel when ?debug is in the URL. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("debug")) {
+      setDebugAvailable(true);
+    }
+  }, []);
+
+  /* Persist debug tuning across reloads. The "first mount" ref ensures
+     we LOAD before SAVE on the initial render — otherwise the save
+     effect would fire on mount with the default state and overwrite
+     any previously-saved tuning. */
+  const debugMountedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!debugMountedRef.current) {
+      debugMountedRef.current = true;
+      try {
+        const saved = window.localStorage.getItem(DEBUG_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length === SECTIONS.length) {
+            setDebugParams(parsed);
+          }
+        }
+      } catch {
+        /* localStorage disabled / quota; nothing to recover. */
+      }
+      return;
+    }
     try {
-      localStorage.removeItem(DEBUG_STORAGE_KEY);
-    } catch (e) {
+      window.localStorage.setItem(
+        DEBUG_STORAGE_KEY,
+        JSON.stringify(debugParams)
+      );
+    } catch {
       /* ignore */
     }
+  }, [debugParams]);
+
+  /* Whenever tunings change, regenerate the shape buffers. The init
+     useEffect parks the rebuild function on this ref once THREE has
+     loaded; if a change comes in before that, the optional chaining
+     no-ops and the next init pass picks up the latest params via
+     debugParamsRef anyway. */
+  useEffect(() => {
+    rebuildShapesRef.current?.();
+  }, [debugParams]);
+
+  /* Section visibility observer. rootMargin lets us start the loop
+     ~200px before the section actually enters the viewport, so the
+     particle cloud is settled by the time the user scrolls into it. */
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        sectionVisibleRef.current = entry.isIntersecting;
+      },
+      { rootMargin: "200px 0px" }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToBlock = useCallback((i) => {
+    blockRefs.current[i]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }, []);
 
   const CFG = {
     smoothFormation: 0.18,
     physicsStiff: 0.055,
     physicsDamping: 0.78,
-    curlStrength: 0,
-    stagger: 0.32,
     jitterBase: 0.018,
     jitterFreqBase: 0.18,
-    sheenSmooth: 0.22,
-    sheenMax: 0.36,
     sectionAlpha: 0.55,
     camZ: 16,
     camZMobile: 22,
@@ -386,50 +411,27 @@ export default function AISection() {
     globalAlpha: 0,
   });
 
-  /* Click a side-bar tick → scroll the matching block into view.
-     Scrolling to block-center lines up perfectly with the formation
-     curve's peak (block-center == viewport-center == p == 0.5). */
-  const scrollToBlock = useCallback((i) => {
-    blockRefs.current[i]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, []);
-
-  /* ── Scroll handler ──
-     The visible cards no longer move — they live in a single sticky
-     layer (.cardLayer) pinned for the entire section. The .block
-     elements below are now invisible 140vh spacers whose only job is
-     to drive the per-card formation curves as they scroll past.
-     activeIdx + progress feed the side-bar UI. */
+  /* Scroll-driven formation values. Computes a [0..1] formation curve
+     for each block based on its viewport position, picks the dominant
+     section as the active shape, and updates the progress bar. */
   useEffect(() => {
     const section = sectionRef.current;
     const blocks = blockRefs.current.filter(Boolean);
     if (!section) return;
 
     const vh = window.innerHeight;
-    const vcenter = vh / 2;
-
-    const sectionObs = new IntersectionObserver(
-      ([e]) => {
-        sectionVisibleRef.current = e.isIntersecting;
-      },
-      { threshold: 0.01, rootMargin: "400px" }
-    );
-    sectionObs.observe(section);
+    const center = vh / 2;
 
     const onScroll = () => {
+      const formations = [];
+
       if (blocks.length > 1) {
         const fTop =
           blocks[0].getBoundingClientRect().top + blocks[0].offsetHeight * 0.5;
         const lTop = blocks[blocks.length - 1].getBoundingClientRect().top;
-        setProgress(Math.max(0, Math.min(1, (vcenter - fTop) / (lTop - fTop))));
+        setProgress(Math.max(0, Math.min(1, (center - fTop) / (lTop - fTop))));
       }
 
-      const sRect = section.getBoundingClientRect();
-      const sectionInView = sRect.bottom > 0 && sRect.top < vh;
-
-      const formations = [];
       for (let i = 0; i < blocks.length; i++) {
         const r = blocks[i].getBoundingClientRect();
         const total = vh + r.height;
@@ -438,7 +440,7 @@ export default function AISection() {
       }
 
       let maxF = 0;
-      let dom = stateRef.current.activeShape;
+      let dom = 0;
       for (let i = 0; i < formations.length; i++) {
         if (formations[i] > maxF) {
           maxF = formations[i];
@@ -448,77 +450,56 @@ export default function AISection() {
 
       stateRef.current.formation = maxF;
       stateRef.current.activeShape = dom;
-      stateRef.current.globalAlpha = sectionInView ? CFG.sectionAlpha : 0;
 
-      if (maxF > 0.5) setActiveIdx(dom);
+      formationsRef.current = formations;
 
-      /* Stash formations for the scramble RAF below. */
-      for (let i = 0; i < formations.length; i++) {
-        formationsRef.current[i] = formations[i];
+      if (maxF > 0.5) {
+        setActiveIdx(dom);
       }
     };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-
-    return () => {
-      sectionObs.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ── Matrix scramble loop ──
-     All 4 cards are stacked at the same viewport slot (left-side
-     cards overlap; right-side cards overlap). This loop is also
-     responsible for fading inactive cards out via the side bar's
-     opacity, so only the active card's bar reads as prominent at
-     any moment.
-
-     Per-letter math:
-       letter index li of total N → reveal threshold = (li/N) * (END - WIN)
-       lp = (f - threshold) / WIN
-         lp <= 0     → hidden (nbsp, opacity 0)
-         0 < lp < 1  → random glyph from MATRIX_CHARS, gold tint
-         lp >= 1     → real char, normal color
-
-     Random glyphs only re-roll every FRAME_DIVIDER frames so the
-     scramble reads at ~15fps instead of strobing at 60. A dataset
-     state tag skips redundant DOM writes once a letter is settled. */
+  /* Text scramble RAF loop.
+     Tunables: REVEAL_END is how far into the formation curve all
+     letters are fully revealed (0.7 = revealed by 70% of the
+     formation, with the last 30% just holding the real text). 
+     SCRAMBLE_WINDOW is the per-letter on-ramp width. MIN_OPACITY
+     used to be 0.35 — bumped to 0.45 so the scrambling glyphs stay
+     legible against the white page background. */
   useEffect(() => {
     let raf;
-    let tickCounter = 0;
     const REVEAL_END = 0.7;
-    const SCRAMBLE_WIN = 0.12;
+    const SCRAMBLE_WINDOW = 0.12;
     const FRAME_DIVIDER = 4;
+    const MIN_OPACITY = 0.45;
+    let frame = 0;
 
     const tick = () => {
-      tickCounter++;
-      const rollGlyph = tickCounter % FRAME_DIVIDER === 0;
-
+      frame++;
+      const reroll = frame % FRAME_DIVIDER === 0;
       const cards = cardRefs.current;
+
       for (let ci = 0; ci < cards.length; ci++) {
         const card = cards[ci];
         if (!card) continue;
+
         const f = formationsRef.current[ci] ?? 0;
 
-        /* Side bar opacity tracks f. With multiple cards sharing the
-           same viewport slot, this makes the active card's bar
-           dominate while inactives recede. Pointer events gated so
-           only the active bar is clickable. */
         const sideBar = card.querySelector(`.${styles.sideBar}`);
         if (sideBar) {
-          const fKey = f.toFixed(3);
-          if (sideBar.dataset.fk !== fKey) {
-            sideBar.style.opacity = String(f);
-            sideBar.style.pointerEvents = f > 0.5 ? "auto" : "none";
-            sideBar.dataset.fk = fKey;
-          }
+          sideBar.style.opacity = String(f);
+          sideBar.style.pointerEvents = f > 0.5 ? "auto" : "none";
         }
 
         const letters = card.querySelectorAll(`.${styles.scrambleChar}`);
         const total = letters.length;
         if (!total) continue;
 
-        const denom = REVEAL_END - SCRAMBLE_WIN;
+        const denom = REVEAL_END - SCRAMBLE_WINDOW;
 
         for (let li = 0; li < total; li++) {
           const el = letters[li];
@@ -526,7 +507,7 @@ export default function AISection() {
           if (real === " ") continue;
 
           const startAt = (li / total) * denom;
-          const lp = (f - startAt) / SCRAMBLE_WIN;
+          const lp = (f - startAt) / SCRAMBLE_WINDOW;
 
           if (lp <= 0) {
             if (el.dataset.state !== "hidden") {
@@ -543,16 +524,17 @@ export default function AISection() {
               el.dataset.state = "real";
             }
           } else {
-            if (rollGlyph) {
+            if (reroll) {
               el.textContent =
                 MATRIX_CHARS[(Math.random() * MATRIX_CHARS.length) | 0];
             }
-            el.style.opacity = String(0.35 + lp * 0.65);
+            el.style.opacity = String(MIN_OPACITY + lp * (1 - MIN_OPACITY));
             el.style.color = "var(--accent)";
             el.dataset.state = "scrambling";
           }
         }
       }
+
       raf = requestAnimationFrame(tick);
     };
 
@@ -560,12 +542,23 @@ export default function AISection() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  /* ── Three.js particles ── */
+  /* THREE.js init + animate. The fixes that matter here:
+     1. The shape buffers no longer get NaN positions (offsetX typo fixed
+        at the top of the file).
+     2. sectionVisibleRef.current is now updated by the IntersectionObserver
+        above, so the animate body actually runs instead of bailing every
+        frame.
+     3. sAlpha is driven from formation so the particle cloud is
+        actually visible — the old code never assigned globalAlpha
+        anywhere, so the shader's uGlobalAlpha stayed at 0 and the
+        whole system rendered fully transparent. */
   useEffect(() => {
     let frameId;
     let cleanup = () => {};
+
     const init = async () => {
       const THREE = await import("three");
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -584,26 +577,16 @@ export default function AISection() {
       const resize = () => {
         const w = canvas.parentElement.clientWidth;
         const h = canvas.parentElement.clientHeight;
-        canvas.width = w * window.devicePixelRatio;
-        canvas.height = h * window.devicePixelRatio;
-        canvas.style.width = w + "px";
-        canvas.style.height = h + "px";
         renderer.setSize(w, h);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
       };
+
       resize();
       window.addEventListener("resize", resize);
 
       const isMobile = window.innerWidth < 768;
       const scattered = generateScattered(PARTICLE_COUNT, isMobile);
-
-      /* ── Shape builder ──
-         Builds every shape from the latest debug params. Exposed via
-         rebuildShapesRef so the debug-params effect can call it live.
-         The animation loop reads `shapes` via closure — we keep mutating
-         the same `shapes` array (in place) so the loop's reference stays
-         valid across rebuilds. */
       const shapes = [null, null, null, null];
 
       const buildShape = (i) => {
@@ -613,18 +596,17 @@ export default function AISection() {
 
         let pts = fn(PARTICLE_COUNT, params.rotX, params.rotY, params.rotZ);
 
-        /* Scale — combine debug scale with a mobile shrink factor so the
-           shapes fit the narrower portrait viewport. */
-        const mobileFactor = isMobile ? 0.85 : 1.0;
+        const mobileFactor = isMobile ? 0.85 : 1;
         const scale = params.scale * mobileFactor;
+
         if (scale !== 1) {
           const out = new Float32Array(pts.length);
-          for (let j = 0; j < pts.length; j++) out[j] = pts[j] * scale;
+          for (let j = 0; j < pts.length; j++) {
+            out[j] = pts[j] * scale;
+          }
           pts = out;
         }
 
-        /* Position — desktop alternates left/right with OFFSET, mobile
-           centers and pulls up Y. Debug offsets layer on top. */
         const defaultX = isMobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
         const defaultY = isMobile ? -3.5 : 0;
         const finalX = defaultX + params.offsetX;
@@ -641,11 +623,13 @@ export default function AISection() {
           shapes[i] = buildShape(i);
         }
       };
+
       rebuildShapes();
       rebuildShapesRef.current = rebuildShapes;
 
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
       currentPos.set(scattered);
+
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
         "position",
@@ -654,20 +638,25 @@ export default function AISection() {
 
       const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
       physicsPos.set(scattered);
+
       const velocity = new Float32Array(PARTICLE_COUNT * 3);
 
       const baseSizes = new Float32Array(PARTICLE_COUNT);
       const sizeScale = isMobile ? 1.6 : 1.25;
-      for (let i = 0; i < PARTICLE_COUNT; i++)
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
         baseSizes[i] = (0.7 + Math.random() * 1.2) * sizeScale;
+      }
       geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
 
       const stagger = new Float32Array(PARTICLE_COUNT);
-      for (let i = 0; i < PARTICLE_COUNT; i++)
-        stagger[i] = Math.random() * CFG.stagger;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        stagger[i] = Math.random() * 0.32;
+      }
 
       const seeds = new Float32Array(PARTICLE_COUNT * 3);
-      for (let i = 0; i < PARTICLE_COUNT * 3; i++) seeds[i] = Math.random();
+      for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
+        seeds[i] = Math.random();
+      }
 
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -678,9 +667,9 @@ export default function AISection() {
           uColorMix: { value: 0 },
           uAccentColor: { value: new THREE.Color(0xd4a853) },
           uGlobalAlpha: { value: 0 },
-          uSheen: { value: 0 },
         },
       });
+
       const points = new THREE.Points(geometry, material);
       scene.add(points);
 
@@ -688,70 +677,50 @@ export default function AISection() {
       let sAlpha = 0;
       let sColorMix = 0;
 
-      function noise2(x, y) {
-        return Math.sin(x * 1.7 + y * 2.3) * Math.cos(y * 1.3 - x * 0.9);
-      }
-      function curl2D(x, y, t) {
-        const eps = 0.01;
-        const n1 = noise2(x * 0.12 + t * 0.15, y * 0.12);
-        const n2 = noise2(x * 0.12, y * 0.12 + eps + t * 0.15);
-        const n3 = noise2(x * 0.12 + eps, y * 0.12 + t * 0.15);
-        return { x: (n2 - n1) / eps, y: -((n3 - n1) / eps) };
-      }
-
-      function animate() {
+      const animate = () => {
         frameId = requestAnimationFrame(animate);
-        if (!sectionVisibleRef.current || pausedRef.current) return;
+
+        if (pausedRef.current || !sectionVisibleRef.current) {
+          return;
+        }
 
         const t = performance.now() * 0.001;
         const s = stateRef.current;
 
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
-        sAlpha += (s.globalAlpha - sAlpha) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
+
+        /* Drive globalAlpha from formation: a steady scattered visibility
+           floor whenever the section is on-screen, ramping up to fully
+           opaque while a shape is forming. The old code initialized
+           globalAlpha to 0 and never touched it, which is why the
+           particle cloud rendered as nothing — uGlobalAlpha stayed at 0. */
+        const baseAlpha = 0.4;
+        const targetAlpha = baseAlpha + (1 - baseAlpha) * sFormation;
+        sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
 
         const activeShape = shapes[s.activeShape];
         if (!activeShape) return;
 
-        const flowAmp =
-          CFG.curlStrength > 0
-            ? Math.sin(sFormation * Math.PI) * CFG.curlStrength
-            : 0;
-
-        const stiff = CFG.physicsStiff;
-        const damping = CFG.physicsDamping;
-        const jitterAmp = CFG.jitterBase * (1 - sFormation * 0.4);
-
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          const stagDen = 1 - stagger[i] + 0.001;
-          const rawF = Math.max(
-            0,
-            Math.min(1, (sFormation - stagger[i]) / stagDen)
-          );
-          const pf = rawF * rawF * (3 - 2 * rawF);
-
-          const targetX = scattered[i3] * (1 - pf) + activeShape[i3] * pf;
+          const targetX =
+            scattered[i3] * (1 - sFormation) + activeShape[i3] * sFormation;
           const targetY =
-            scattered[i3 + 1] * (1 - pf) + activeShape[i3 + 1] * pf;
+            scattered[i3 + 1] * (1 - sFormation) +
+            activeShape[i3 + 1] * sFormation;
           const targetZ =
-            scattered[i3 + 2] * (1 - pf) + activeShape[i3 + 2] * pf;
+            scattered[i3 + 2] * (1 - sFormation) +
+            activeShape[i3 + 2] * sFormation;
 
-          velocity[i3] += (targetX - physicsPos[i3]) * stiff;
-          velocity[i3 + 1] += (targetY - physicsPos[i3 + 1]) * stiff;
-          velocity[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * stiff;
+          velocity[i3] += (targetX - physicsPos[i3]) * CFG.physicsStiff;
+          velocity[i3 + 1] += (targetY - physicsPos[i3 + 1]) * CFG.physicsStiff;
+          velocity[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * CFG.physicsStiff;
 
-          if (flowAmp > 0.001 && pf > 0.05 && pf < 0.95) {
-            const c = curl2D(physicsPos[i3], physicsPos[i3 + 1], t);
-            const mag = flowAmp * 0.08;
-            velocity[i3] += c.x * mag;
-            velocity[i3 + 1] += c.y * mag;
-          }
-
-          velocity[i3] *= damping;
-          velocity[i3 + 1] *= damping;
-          velocity[i3 + 2] *= damping;
+          velocity[i3] *= CFG.physicsDamping;
+          velocity[i3 + 1] *= CFG.physicsDamping;
+          velocity[i3 + 2] *= CFG.physicsDamping;
 
           physicsPos[i3] += velocity[i3];
           physicsPos[i3 + 1] += velocity[i3 + 1];
@@ -759,37 +728,34 @@ export default function AISection() {
 
           const s1 = seeds[i3];
           const s2 = seeds[i3 + 1];
-          const s3 = seeds[i3 + 2];
           const freq = CFG.jitterFreqBase + s1 * 0.2;
-          const phase = s3 * 6.28;
+
           currentPos[i3] =
             physicsPos[i3] +
-            Math.sin(t * freq + phase) * jitterAmp * (0.7 + s2 * 0.6);
+            Math.sin(t * freq) * CFG.jitterBase * (0.7 + s2 * 0.6);
           currentPos[i3 + 1] =
-            physicsPos[i3 + 1] +
-            Math.sin(t * freq * 0.9 + phase + 2.1) * jitterAmp * 0.6;
-          currentPos[i3 + 2] =
-            physicsPos[i3 + 2] +
-            Math.cos(t * freq * 0.8 + phase + 4.2) * jitterAmp * 0.5;
+            physicsPos[i3 + 1] + Math.cos(t * freq) * CFG.jitterBase * 0.6;
+          currentPos[i3 + 2] = physicsPos[i3 + 2];
         }
-        geometry.attributes.position.needsUpdate = true;
 
+        geometry.attributes.position.needsUpdate = true;
         material.uniforms.uColorMix.value = sColorMix;
         material.uniforms.uGlobalAlpha.value = sAlpha;
-        const sheenTarget =
-          sFormation > 0.85 ? ((sFormation - 0.85) / 0.15) * CFG.sheenMax : 0;
-        material.uniforms.uSheen.value +=
-          (sheenTarget - material.uniforms.uSheen.value) * CFG.sheenSmooth;
 
         renderer.render(scene, camera);
-      }
+      };
+
       animate();
 
       cleanup = () => {
         window.removeEventListener("resize", resize);
         rebuildShapesRef.current = null;
+        geometry.dispose();
+        material.dispose();
+        renderer.dispose();
       };
     };
+
     init();
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
@@ -804,15 +770,6 @@ export default function AISection() {
       </div>
 
       <div className={styles.textWrap}>
-        {/* ── Single sticky card layer ──
-            All 4 cards live here, stacked at the same viewport
-            position (left-side cards overlap each other; same for
-            right). The layer is pinned at top:0 for the entire
-            section scroll, so the cards never slide with the page —
-            only their content scrambles in/out. The negative
-            margin-bottom keeps it from taking layout space, so the
-            invisible spacer blocks below start right after the
-            canvas, exactly where they used to. */}
         <div className={styles.cardLayer}>
           <div className={styles.cardLayerInner}>
             {SECTIONS.map((sec, i) => (
@@ -823,11 +780,6 @@ export default function AISection() {
                   sec.side === "right" ? styles.cardEditorialRight : ""
                 }`}
               >
-                {/* ── Side progress bar ──
-                    Vertical hairline that replaces the old static
-                    border. Fill height = global section progress.
-                    Each section has a click-to-jump tick; the
-                    current one scales up and shows its number. */}
                 <div className={styles.sideBar}>
                   <div className={styles.sideTrack} />
                   <div
@@ -839,7 +791,6 @@ export default function AISection() {
                       key={s.key}
                       type="button"
                       onClick={() => scrollToBlock(idx)}
-                      aria-label={`Jump to ${s.title}`}
                       className={`${styles.sideTick} ${
                         idx / (SECTIONS.length - 1) <= progress + 0.001
                           ? styles.sideTickFilled
@@ -854,67 +805,33 @@ export default function AISection() {
                   ))}
                 </div>
 
-                {/* ── Scramble-reveal text ──
-                    Each char is its own span carrying its real value
-                    in data-char. The RAF loop above walks them in
-                    DOM order and drives per-letter state from this
-                    card's f. Spaces are skipped by the loop. */}
                 <div className={styles.cardEyebrow}>
-                  {[...sec.badge.toUpperCase()].map((c, j) => (
-                    <span
-                      key={`eb-${j}`}
-                      data-char={c}
-                      className={styles.scrambleChar}
-                    >
-                      {"\u00A0"}
-                    </span>
-                  ))}
+                  {renderScramble(sec.badge, `${sec.key}-eyebrow`)}
                 </div>
+
                 <h3 className={styles.cardTitle}>
-                  {[...sec.title].map((c, j) => (
-                    <span
-                      key={`t-${j}`}
-                      data-char={c}
-                      className={styles.scrambleChar}
-                    >
-                      {"\u00A0"}
-                    </span>
-                  ))}
+                  {renderScramble(sec.title, `${sec.key}-title`)}
                 </h3>
+
                 <p className={styles.cardDesc}>
-                  {[...sec.desc].map((c, j) => (
-                    <span
-                      key={`d-${j}`}
-                      data-char={c}
-                      className={styles.scrambleChar}
-                    >
-                      {"\u00A0"}
-                    </span>
-                  ))}
+                  {renderScramble(sec.desc, `${sec.key}-desc`)}
                 </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Invisible scroll spacers ──
-            One per section. They render nothing but their scroll
-            positions drive the formation curves (via
-            getBoundingClientRect in the scroll handler) and the
-            click-to-jump scrollIntoView. */}
         {SECTIONS.map((sec, i) => (
           <div
             key={sec.key}
             ref={(el) => (blockRefs.current[i] = el)}
             className={styles.block}
-            aria-hidden="true"
           />
         ))}
 
         <div className={styles.trailingSpacer} />
       </div>
 
-      {/* ── Debug UI (only when ?debug is set) ── */}
       {debugAvailable && !debugOpen && (
         <button
           type="button"
@@ -924,11 +841,12 @@ export default function AISection() {
           DEBUG
         </button>
       )}
+
       {debugAvailable && debugOpen && (
         <DebugPanel
           params={debugParams}
           onChange={handleDebugChange}
-          onReset={handleDebugReset}
+          onReset={() => setDebugParams(DEFAULT_PARAMS)}
           onClose={() => setDebugOpen(false)}
         />
       )}

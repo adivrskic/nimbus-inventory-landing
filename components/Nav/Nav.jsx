@@ -341,12 +341,21 @@ export default function Nav({ onDemo, dark }) {
     const scrim = scrimRef.current;
     if (!wrap || !scrim) return;
 
+    /* Manage every panel as a set, not just the active one. The original
+     bug was that gsap.killTweensOf([wrap, scrim]) ignored the panels,
+     so rapid hovers stranded inline opacity > 0 on panels that should
+     have been hidden — they then rendered absolute-positioned on top
+     of the active panel ("stacking"). */
+    const allPanels = Array.from(wrap.querySelectorAll(`.${styles.megaPanel}`));
+
     if (openMenu) {
-      // Find the active panel to measure its height
       const activePanel = wrap.querySelector(`.${styles.megaPanelActive}`);
       const targetH = activePanel ? activePanel.scrollHeight : 0;
 
-      gsap.killTweensOf([wrap, scrim]);
+      /* Kill EVERY in-flight tween on the mega chrome and on every panel.
+       This is the single line that prevents the stacking glitch. */
+      gsap.killTweensOf([wrap, scrim, ...allPanels]);
+
       gsap.to(wrap, {
         height: targetH,
         opacity: 1,
@@ -362,22 +371,31 @@ export default function Nav({ onDemo, dark }) {
         },
       });
 
-      // If switching menus (not fresh open), crossfade panels
+      /* Hard-reset every inactive panel. CSS already says opacity: 0 on
+       these, but stray inline styles from past tweens win against CSS,
+       so we set them explicitly every single time. Belt + suspenders. */
+      allPanels.forEach((p) => {
+        if (p !== activePanel) {
+          gsap.set(p, { opacity: 0, y: 0 });
+        }
+      });
+
       if (prevMenu.current && prevMenu.current !== openMenu) {
-        const oldPanel = wrap.querySelector(
-          `[data-menu="${prevMenu.current}"]`
-        );
-        const newPanel = wrap.querySelector(`[data-menu="${openMenu}"]`);
-        if (oldPanel) gsap.to(oldPanel, { opacity: 0, y: -4, duration: 0.15 });
-        if (newPanel)
+        /* Switching menus. The old panel is already at opacity 0 thanks
+         to the loop above (hard cut, not a fade). Fade the new one in
+         on its own — there is no window where two panels are visible. */
+        if (activePanel) {
           gsap.fromTo(
-            newPanel,
+            activePanel,
             { opacity: 0, y: 6 },
-            { opacity: 1, y: 0, duration: 0.3, delay: 0.1, ease: "power3.out" }
+            { opacity: 1, y: 0, duration: 0.3, ease: "power3.out" }
           );
+        }
       } else {
-        /* Fresh open — animate items in. Targets every rich item across
-           all three mega panels with the same selector. */
+        /* Fresh open from nothing — ensure the active panel itself is
+         visible (it might carry stale inline opacity from a previous
+         session), then stagger its items in. */
+        if (activePanel) gsap.set(activePanel, { opacity: 1, y: 0 });
         const items = wrap.querySelectorAll(
           `.${styles.megaPanelActive} .${styles.megaRichItem}`
         );
@@ -412,7 +430,7 @@ export default function Nav({ onDemo, dark }) {
       prevMenu.current = openMenu;
     } else {
       // Close
-      gsap.killTweensOf([wrap, scrim]);
+      gsap.killTweensOf([wrap, scrim, ...allPanels]);
       gsap.to(wrap, {
         height: 0,
         opacity: 0,
@@ -427,6 +445,11 @@ export default function Nav({ onDemo, dark }) {
           scrim.style.pointerEvents = "none";
         },
       });
+      /* Wipe inline styles off every panel so the next open starts from
+       the CSS baseline, not from stale GSAP state. */
+      allPanels.forEach((p) =>
+        gsap.set(p, { clearProps: "opacity,transform,y" })
+      );
       prevMenu.current = null;
     }
   }, [openMenu]);
@@ -577,7 +600,7 @@ export default function Nav({ onDemo, dark }) {
       {/* Full-width mega panel */}
       <div
         ref={megaRef}
-        className={styles.megaWrap}
+        className={`${styles.megaWrap} ${dark ? styles.megaWrapDark : ""}`}
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
       >

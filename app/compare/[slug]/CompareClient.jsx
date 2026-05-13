@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
@@ -98,6 +99,14 @@ export default function CompareClient({ slug }) {
      the demo modal with topic "migration" so the lead lands in sales
      with the right context already attached. */
   const { openDemo } = useDemo();
+
+  /* Glow-card wiring for the cross-link grid at the bottom of the page.
+     The hook returns a ref to attach to the .glow-cards container; it
+     walks the descendants for `.glow-card` nodes and binds mousemove
+     tracking (per-card radial gradient + 3D tilt) on mount.
+     Container-level hover lights the border-glow on every card at once
+     (matches Industries / Integrations / Testimonials behavior). */
+  const glowRef = useGlowCards();
 
   /* Other comparisons for cross-link grid */
   const others = COMPARE_SLUGS.filter((s) => s !== slug).map((s) => ({
@@ -228,6 +237,10 @@ export default function CompareClient({ slug }) {
       }
     });
 
+    /* Cross-link cards stagger-in. .crossCard is now the glow-card OUTER
+       shell, so animating opacity/y on it still works — the glow
+       hover effects (mouse-radial + 3D tilt) are driven independently
+       by useGlowCards on transforms that don't conflict with y/opacity. */
     gsap.fromTo(
       `.${styles.crossCard}`,
       { opacity: 0, y: 14 },
@@ -490,21 +503,31 @@ export default function CompareClient({ slug }) {
         </div>
       </section>
 
-      {/* ── CROSS-LINKS ── */}
+      {/* ── CROSS-LINKS — glow-card grid ──
+          Each TransitionLink is a glow-card outer shell; the
+          glow-card-border div sits at the same z-level so the gold
+          border-radial gradient can shine through the 1px gap that
+          .glow-card-content (via globals) introduces with margin: 1px
+          + height: calc(100% - 2px). Container has the `glow-cards`
+          class so hovering anywhere in the grid lights up the borders
+          on every card. */}
       {others.length > 0 && (
         <section className={styles.crossLinks}>
           <div className={styles.crossLinksLabel}>Other comparisons</div>
-          <div className={styles.crossLinksGrid}>
+          <div ref={glowRef} className={`${styles.crossLinksGrid} glow-cards`}>
             {others.map((o) => (
               <TransitionLink
                 key={o.slug}
                 href={`/compare/${o.slug}`}
-                className={styles.crossCard}
+                className={`${styles.crossCard} glow-card`}
               >
-                <div className={styles.crossCardMeta}>vs</div>
-                <div className={styles.crossCardTitle}>{o.name}</div>
-                <div className={styles.crossCardCategory}>{o.category}</div>
-                <div className={styles.crossCardArrow}>→</div>
+                <div className="glow-card-border" />
+                <div className={`${styles.crossCardInner} glow-card-content`}>
+                  <div className={styles.crossCardMeta}>vs</div>
+                  <div className={styles.crossCardTitle}>{o.name}</div>
+                  <div className={styles.crossCardCategory}>{o.category}</div>
+                  <div className={styles.crossCardArrow}>→</div>
+                </div>
               </TransitionLink>
             ))}
           </div>

@@ -61,7 +61,7 @@
   top: 50%;
   left: 48px;
   transform: translateY(-50%);
-  max-width: 400px;
+  max-width: 440px;
   padding-left: 24px;
   pointer-events: none;
 }
@@ -155,16 +155,29 @@
 }
 
 /* ── Scramble char span ──
-   Inline-block so per-letter opacity / color changes don't reflow
-   neighbors. White-space: pre preserves the nbsp placeholder. The
-   JS RAF loop overwrites opacity, color and textContent directly. */
+   Each letter is its own inline-block so the RAF loop can drive its
+   textContent + opacity + color independently. White-space: pre
+   preserves the nbsp placeholder used in the "hidden" state.
+   
+   The PARENT of these spans is a .word wrapper (white-space: nowrap
+   from globals.css) so individual letters can never line-break out
+   of their word. Spaces between words are rendered as plain text
+   nodes between adjacent .word spans, so the line CAN still wrap
+   at word boundaries naturally. */
 .scrambleChar {
   display: inline-block;
   white-space: pre;
   transition: color 0.18s linear;
+  /* Vertical alignment is explicit because text-bottom is the default
+     baseline for inline-block but reads as a slight subscript here
+     against the eyebrow's letter-spacing. */
+  vertical-align: baseline;
 }
 
-/* ── Eyebrow / title / desc ── */
+/* ── Eyebrow / title / desc ──
+   Card content now uses the full 440px - 24px = 416px width budget
+   on desktop (was previously a 360px hard cap on .cardDesc, leaving
+   ~16px of dead space inside the card). */
 .cardEyebrow {
   font-family: var(--mono);
   font-size: 10px;
@@ -189,10 +202,6 @@
   font-weight: 400;
   color: var(--dark-secondary);
   margin: 0;
-  max-width: 360px;
-}
-.cardEditorialRight .cardDesc {
-  margin-left: auto;
 }
 
 /* ── Invisible scroll spacers ──
@@ -374,7 +383,7 @@
 
 .dbgActions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 6px;
   margin-top: 16px;
   padding-top: 14px;
@@ -414,9 +423,6 @@
     padding-left: 24px;
     padding-right: 0;
     text-align: left;
-  }
-  .cardEditorialRight .cardDesc {
-    margin-left: 0;
   }
   /* Side bar always pins to the left edge on mobile. */
   .cardEditorialRight .sideBar {
