@@ -1,17 +1,30 @@
-/* ====================================================================
+/* ════════════════════════════════════════════════════════════════════
    WarehouseShowcase.module.css
-   Dark cinematic enterprise / control-room aesthetic
-   ==================================================================== */
+
+   Annotation system, not panels. Each "card" is a tiny composition:
+
+     · cardLabel    — small mono key ("02 · VOICE")
+     · cardHeadline — the BIG number/word that carries the meaning
+     · cardSubhead  — one line of context under the headline
+     · cardRule     — a hairline gold rule for editorial rhythm
+     · supporting   — tiny mono stats below the rule
+
+   The chrome is intentionally bare: no backdrop blur, no border box,
+   no heavy shadow. A single gold rule at the top of each card is the
+   only decorative element. An SVG leader line (drawn behind the card
+   in DOM order) tethers each card to its 3D anchor point so the
+   typography reads as architectural annotation rather than a UI panel.
+   ════════════════════════════════════════════════════════════════════ */
 
 .section {
   --nav-height: 72px;
   position: relative;
-  background: #000;
+  background: #060610;
   z-index: 5;
 }
 
 .scrollSpace {
-  height: 300vh;
+  height: 380vh;
 }
 
 .sticky {
@@ -26,442 +39,587 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: #121214;
+  background: #060610;
   touch-action: none;
 }
 
-/* ---------- Shared glass surface ---------- */
-.manifestPanel,
-.scorecard,
-.naiveLabel,
-.optimalLabel,
-.naiveStats,
-.optimalStats,
-.dividerPill,
-.bottomCaption {
-  background: rgba(15, 15, 15, 0.42);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  border: 0.5px solid rgba(255, 255, 255, 0.09);
-  color: rgba(255, 255, 255, 0.85);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-    sans-serif;
-  pointer-events: none;
-  transition: opacity 0.6s ease;
-}
-
-/* ---------- Manifest (chapters 1 & 2) ---------- */
-.manifestPanel {
+/* ─── CORNER EDITORIAL KEYS ──────────────────────────────────────── */
+.corner {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  width: 220px;
-  padding: 14px 16px;
-}
-
-.manifestHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-}
-
-.manifestHeadKey {
-  color: #d4a853;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9.5px;
-  letter-spacing: 1.4px;
-}
-
-.manifestHeadCount {
-  color: rgba(255, 255, 255, 0.42);
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9px;
-  letter-spacing: 1px;
-}
-
-.manifestList {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.manifestRow {
-  display: flex;
-  justify-content: space-between;
-}
-
-.manifestArrow {
-  color: rgba(212, 168, 83, 0.55);
-}
-
-.manifestMore {
-  color: rgba(255, 255, 255, 0.28);
-  font-size: 9.5px;
-  margin-top: 2px;
-}
-
-.manifestFoot {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.42);
-  display: flex;
-  justify-content: space-between;
-}
-
-.manifestFootMs {
-  color: #5a9a4a;
-}
-
-/* ---------- Race overlays (chapter 3) ---------- */
-.raceOverlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transition: opacity 0.6s ease;
-}
-
-.naiveLabel,
-.optimalLabel {
-  position: absolute;
-  padding: 7px 12px;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9.5px;
-  letter-spacing: 2.2px;
-}
-
-.naiveLabel {
-  top: 24px;
-  left: 24px;
-  border-color: rgba(200, 69, 69, 0.3);
-  color: #c84545;
-}
-
-.optimalLabel {
-  top: calc(50% + 60px);
-  left: 24px;
-  border-color: rgba(212, 168, 83, 0.35);
-  color: #d4a853;
-}
-
-.naiveStats,
-.optimalStats {
-  position: absolute;
-  right: 24px;
-  padding: 9px 13px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 10.5px;
+  pointer-events: none;
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  z-index: 6;
+}
+.cornerTL {
+  top: 22px;
+  left: 24px;
+}
+.cornerTR {
+  top: 22px;
+  right: 24px;
+  align-items: flex-end;
 }
 
-.naiveStats {
-  top: 24px;
+.cornerKey {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.8px;
+  color: var(--accent, #d4a853);
+  text-transform: uppercase;
 }
-.optimalStats {
-  top: calc(50% + 60px);
+.cornerSub {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  background: var(--accent, #d4a853);
+  border-radius: 50%;
+  animation: dotPulse 1.6s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
 }
 
-.statLabel {
-  color: rgba(255, 255, 255, 0.4);
-}
-.naiveValue {
-  color: #c84545;
-}
-.optValue {
-  color: #d4a853;
-}
-
-.dividerWrap {
+/* ════════════════════════════════════════════════════════════════════
+     SVG LEADER OVERLAY
+     ──────────────────────────────────────────────────────────────────
+     Full-canvas SVG sitting BEHIND the cards. The render loop sets
+     x1/y1/x2/y2 on each line and cx/cy on each dot. Hairlines read
+     as architectural callouts rather than UI.
+     ════════════════════════════════════════════════════════════════════ */
+.leaderSvg {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+}
+.leaderLine {
+  stroke: var(--accent, #d4a853);
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  shape-rendering: crispEdges;
+}
+.leaderLineRed {
+  stroke: #c84a4a;
+}
+.leaderDot {
+  fill: var(--accent, #d4a853);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.leaderDotRed {
+  fill: #c84a4a;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+     MODE CARDS — minimal annotation, not panels
+     ──────────────────────────────────────────────────────────────────
+     Pinned at top:0/left:0; the render loop sets transform + opacity
+     each frame. No backdrop-filter (we want crisp text against the
+     scene, not a frosted bubble). No box-shadow. A single gold rule
+     at the top is the only chrome.
+     ════════════════════════════════════════════════════════════════════ */
+
+.modeCard {
+  position: absolute;
+  top: 0;
   left: 0;
-  right: 0;
-  top: calc(50% - 16px);
-  height: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0);
+  transform-origin: center bottom;
+  transition: opacity 0.25s ease;
+  will-change: transform, opacity;
+  z-index: 4;
+
+  /* Very subtle ink wash, just enough to seat the text over busy
+       scene content; no border, no blur. */
+  background: linear-gradient(
+    180deg,
+    rgba(6, 6, 12, 0.78) 0%,
+    rgba(6, 6, 12, 0.62) 100%
+  );
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--accent, #d4a853);
+}
+
+/* ─── COMMON CARD CONTENT ──────────────────────────────────────── */
+
+.cardLabel {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--accent, #d4a853);
+  text-transform: uppercase;
+  margin-bottom: 10px;
 }
-
-.dividerLineL,
-.dividerLineR {
-  display: block;
-  width: 70px;
-  height: 1px;
+.cardLabelRed {
+  color: #d97070;
 }
-
-.dividerLineL {
-  background: linear-gradient(to right, transparent, rgba(200, 69, 69, 0.55));
-}
-
-.dividerLineR {
-  background: linear-gradient(to left, transparent, rgba(212, 168, 83, 0.55));
-}
-
-.dividerPill {
-  padding: 5px 13px;
-  border-radius: 3px;
-  border-color: rgba(212, 168, 83, 0.55);
-  background: rgba(10, 10, 10, 0.85);
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9.5px;
-  letter-spacing: 1.6px;
-  color: #d4a853;
-}
-
-/* ---------- Scorecard (chapter 4) ---------- */
-.scorecard {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 240px;
-  padding: 14px 16px;
-}
-
-.scorecardHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-}
-
-.scorecardHeadKey {
-  color: #5a9a4a;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9.5px;
+.cardLabelMeta {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
   letter-spacing: 1.4px;
 }
 
-.scorecardHeadCount {
-  color: rgba(255, 255, 255, 0.42);
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9px;
-  letter-spacing: 1px;
+/* The headline is the visual element — large display number/word. */
+.cardHeadline {
+  font-family: var(--display, Georgia, serif);
+  font-size: 52px;
+  font-weight: 500;
+  line-height: 0.98;
+  color: rgba(255, 255, 255, 0.97);
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+.cardHeadlineDenom {
+  font-size: 22px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+  letter-spacing: -0.5px;
 }
 
-.scoreRow {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
-}
-
-.scoreRowHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 3px;
-}
-
-.scoreNaive {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  color: #c84545;
-}
-
-.scoreOpt {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  color: #d4a853;
-}
-
-.scoreTimeNaive {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 17px;
-  font-weight: 300;
+.cardSubhead {
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  letter-spacing: 1.2px;
   color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  margin-top: 6px;
 }
 
-.scoreTimeOpt {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+.cardRule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(212, 168, 83, 0.5) 0%,
+    rgba(212, 168, 83, 0.1) 100%
+  );
+  margin: 12px 0 10px;
+}
+
+.cardSupport {
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+.cardSupportAccent {
+  color: var(--accent, #d4a853);
+}
+
+/* ─── WAKE CARD ──────────────────────────────────────────────────── */
+.wakeCard {
+  width: 280px;
+}
+
+/* ─── HEAR CARD ──────────────────────────────────────────────────── */
+.hearCard {
+  width: 360px;
+}
+.hearWave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 12px;
+}
+.hearWave > span {
+  display: block;
+  width: 2px;
+  background: var(--accent, #d4a853);
+  border-radius: 1px;
+  animation: waveBar 1s ease-in-out infinite;
+}
+.hearWave > span:nth-child(1) {
+  height: 30%;
+}
+.hearWave > span:nth-child(2) {
+  height: 70%;
+}
+.hearWave > span:nth-child(3) {
+  height: 100%;
+}
+.hearWave > span:nth-child(4) {
+  height: 60%;
+}
+.hearWave > span:nth-child(5) {
+  height: 90%;
+}
+.hearWave > span:nth-child(6) {
+  height: 50%;
+}
+.hearWave > span:nth-child(7) {
+  height: 75%;
+}
+@keyframes waveBar {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scaleY(1.1);
+    opacity: 1;
+  }
+}
+.cardQuery {
+  font-family: var(--display, Georgia, serif);
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.97);
+  letter-spacing: -0.4px;
+}
+.cardResolve {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+.cardResolveKey {
+  font-family: var(--mono, "JetBrains Mono", monospace);
   font-size: 22px;
   font-weight: 500;
-  color: #d4a853;
+  color: var(--accent, #d4a853);
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+.cardResolveLoc {
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.68);
 }
 
-.scoreRowFoot {
+/* ─── PREDICT CARD ───────────────────────────────────────────────── */
+.forecastCard {
+  width: 280px;
+  border-top-color: rgba(200, 74, 74, 0.7);
+}
+.forecastRows {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.forecastRow {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+.forecastSku {
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 500;
+}
+.forecastEta {
+  color: #d97070;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-.savedBlock {
-  background: rgba(90, 154, 74, 0.1);
-  border: 0.5px solid rgba(90, 154, 74, 0.32);
-  padding: 10px 12px;
+/* ─── ACT CARD ───────────────────────────────────────────────────── */
+.actCard {
+  width: 340px;
 }
-
-.savedLabel {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 9px;
-  color: rgba(90, 154, 74, 0.75);
+.actRow {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  margin-bottom: 10px;
+}
+.actRowVal {
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+.actRowAccent {
+  color: var(--accent, #d4a853);
+}
+.actRowKey {
+  font-size: 9.5px;
   letter-spacing: 1.4px;
-  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: uppercase;
+}
+.actRowSep {
+  color: rgba(255, 255, 255, 0.22);
+  margin: 0 4px;
 }
 
-.savedRow {
+/* ─── LEARN CARD ─────────────────────────────────────────────────── */
+.learnCard {
+  width: 420px;
+}
+.learnFacts {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 10px;
 }
-
-.savedPct {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 22px;
+.learnFactsAccent {
+  color: var(--accent, #d4a853);
   font-weight: 500;
-  color: #5a9a4a;
+  margin-right: 3px;
+}
+.learnFactsGood {
+  color: #6dac5a;
+  font-weight: 500;
+  margin-right: 3px;
 }
 
-.savedDetail {
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.42);
-}
-
-/* ---------- Bottom caption (all chapters) ---------- */
-.bottomCaption {
+/* ════════════════════════════════════════════════════════════════════
+     MODE INDICATOR (bottom-center, editorial chapter marker)
+     ════════════════════════════════════════════════════════════════════ */
+.modeIndicator {
   position: absolute;
-  bottom: 0;
   left: 0;
   right: 0;
-  padding: 18px 24px 22px;
-  background: rgba(10, 10, 10, 0.5);
-  border: none;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
-  text-align: center;
+  bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 5;
 }
-
-.chapterDots {
+.modeRow {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 8px;
+  font-family: var(--mono, "JetBrains Mono", monospace);
 }
-
-.chapterDot {
-  width: 16px;
+.modeTick {
+  display: block;
+  width: 26px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.14);
-  transition: background 0.4s ease;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.5s ease, width 0.5s ease;
 }
-
-.chapterDotActive {
-  background: #d4a853;
+.modeTickPast {
+  background: rgba(212, 168, 83, 0.4);
 }
-
-.chapterLabel {
-  margin-left: 10px;
-  color: rgba(255, 255, 255, 0.45);
-  font-family: "JetBrains Mono", "Menlo", "Consolas", monospace;
+.modeTickActive {
+  background: var(--accent, #d4a853);
+  width: 42px;
+  box-shadow: 0 0 12px rgba(212, 168, 83, 0.5);
+}
+.modeNum {
+  margin-left: 14px;
   font-size: 9.5px;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.4px;
+  color: rgba(255, 255, 255, 0.55);
 }
-
-.chapterTitle {
-  font-size: 20px;
+.modeLabel {
+  font-size: 10px;
+  letter-spacing: 2.2px;
+  color: var(--accent, #d4a853);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.modeTitle {
+  font-family: var(--display, Georgia, serif);
+  font-size: 22px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.96);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
+  text-align: center;
+  max-width: 720px;
+  padding: 0 24px;
+  text-wrap: balance;
 }
 
-/* ---------- Mobile ---------- */
-@media (max-width: 768px) {
+/* ════════════════════════════════════════════════════════════════════
+     RESPONSIVE
+     ════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1100px) {
+  .wakeCard {
+    width: 240px;
+  }
+  .hearCard {
+    width: 320px;
+  }
+  .forecastCard {
+    width: 250px;
+  }
+  .actCard {
+    width: 300px;
+  }
+  .learnCard {
+    width: 360px;
+  }
+  .cardHeadline {
+    font-size: 44px;
+    letter-spacing: -1.6px;
+  }
+  .cardQuery {
+    font-size: 19px;
+  }
+  .cardResolveKey {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 860px) {
   .scrollSpace {
-    height: 240vh;
+    height: 320vh;
   }
 
-  .manifestPanel,
-  .scorecard {
-    width: 168px;
-    top: 16px;
-    padding: 11px 13px;
+  .modeCard {
+    padding: 10px 14px 12px;
   }
-  .manifestPanel {
-    left: 16px;
+  .wakeCard {
+    width: 200px;
   }
-  .scorecard {
-    right: 16px;
+  .hearCard {
+    width: 270px;
+  }
+  .forecastCard {
+    width: 220px;
+  }
+  .actCard {
+    width: 270px;
+  }
+  .learnCard {
+    width: calc(100vw - 32px);
+    max-width: 380px;
   }
 
-  .manifestList {
-    font-size: 9.5px;
-  }
-  .manifestFoot {
+  .cardLabel {
     font-size: 9px;
+    letter-spacing: 1.4px;
+    margin-bottom: 8px;
   }
-
-  .naiveLabel {
-    top: 16px;
-    left: 16px;
+  .cardHeadline {
+    font-size: 36px;
+    letter-spacing: -1.4px;
   }
-  .optimalLabel {
-    top: calc(50% + 50px);
-    left: 16px;
-  }
-  .naiveStats {
-    top: 16px;
-    right: 16px;
-  }
-  .optimalStats {
-    top: calc(50% + 50px);
-    right: 16px;
-  }
-  .naiveStats,
-  .optimalStats {
-    font-size: 9.5px;
-    padding: 7px 10px;
-  }
-
-  .dividerLineL,
-  .dividerLineR {
-    width: 40px;
-  }
-  .dividerPill {
-    font-size: 8.5px;
-    padding: 4px 10px;
-    letter-spacing: 1.3px;
-  }
-
-  .bottomCaption {
-    padding: 14px 18px 18px;
-  }
-  .chapterTitle {
+  .cardHeadlineDenom {
     font-size: 16px;
   }
-  .chapterLabel {
+  .cardSubhead {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .cardSupport {
+    font-size: 9.5px;
+  }
+  .cardRule {
+    margin: 9px 0 8px;
+  }
+  .cardQuery {
+    font-size: 16px;
+  }
+  .cardResolveKey {
+    font-size: 16px;
+  }
+  .cardResolveLoc {
+    font-size: 10px;
+  }
+  .actRowVal {
+    font-size: 16px;
+  }
+  .forecastRow {
+    font-size: 12px;
+  }
+  .learnFacts {
+    font-size: 11.5px;
+  }
+
+  .modeTitle {
+    font-size: 17px;
+  }
+  .modeTick {
+    width: 18px;
+  }
+  .modeTickActive {
+    width: 30px;
+  }
+
+  .corner {
+    gap: 2px;
+  }
+  .cornerTL {
+    top: 16px;
+    left: 16px;
+  }
+  .cornerTR {
+    top: 16px;
+    right: 16px;
+  }
+  .cornerKey {
+    font-size: 9px;
+  }
+  .cornerSub {
     font-size: 8.5px;
-  }
-  .scoreTimeOpt,
-  .savedPct {
-    font-size: 18px;
-  }
-  .scoreTimeNaive {
-    font-size: 14px;
   }
 }
 
-/* ---------- Reduced motion ---------- */
+@media (max-width: 540px) {
+  .wakeCard,
+  .hearCard,
+  .forecastCard,
+  .actCard {
+    max-width: calc(100vw - 32px);
+  }
+  .learnCard {
+    width: calc(100vw - 24px);
+  }
+  .cardHeadline {
+    font-size: 32px;
+    letter-spacing: -1.2px;
+  }
+}
+
+/* ─── REDUCED MOTION ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .manifestPanel,
-  .scorecard,
-  .raceOverlay,
-  .chapterDot {
-    transition-duration: 0.01ms;
+  .dot,
+  .hearWave > span {
+    animation-duration: 4s;
+  }
+  .modeCard {
+    transition: opacity 0.6s ease;
+  }
+  .leaderLine,
+  .leaderDot {
+    transition: opacity 0.6s ease;
   }
 }

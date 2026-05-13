@@ -7,6 +7,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
+import { useDemo } from "@/lib/DemoContext";
 import { INTEGRATIONS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
 
@@ -118,7 +119,11 @@ function renderHeroTitle(text) {
   );
 }
 
-export default function IntegrationPage({ slug, onDemo }) {
+export default function IntegrationPage({ slug }) {
+  /* Demo modal lives in app/layout.js via DemoHost — pull the opener
+     from context instead of expecting a prop the wrapper never passes. */
+  const { openDemo } = useDemo();
+
   const integration = INTEGRATIONS[slug];
   const pageRef = useRef(null);
   const heroRef = useRef(null);
@@ -268,7 +273,7 @@ export default function IntegrationPage({ slug, onDemo }) {
   if (!integration) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={onDemo} />
+        <Nav onDemo={openDemo} />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Integration not found.</h1>
@@ -283,7 +288,7 @@ export default function IntegrationPage({ slug, onDemo }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={onDemo} />
+      <Nav onDemo={openDemo} />
 
       {/* ── HERO with CONNECTION MARK ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -310,10 +315,7 @@ export default function IntegrationPage({ slug, onDemo }) {
         <p className={styles.heroDesc}>{integration.desc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={onDemo}>Talk to our team</CornerButton>
-          <TransitionLink href="/api-docs" className={styles.heroSecondary}>
-            See API docs →
-          </TransitionLink>
+          <CornerButton onClick={openDemo}>Talk to our team</CornerButton>
         </div>
       </section>
 
@@ -527,7 +529,7 @@ export default function IntegrationPage({ slug, onDemo }) {
             sandbox of your {integration.title} account and show the sync live.
           </p>
           <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={onDemo}>Request a demo</CornerButton>
+            <CornerButton onClick={openDemo}>Request a demo</CornerButton>
             <TransitionLink href="/contact" className={styles.heroSecondary}>
               Or just reach out →
             </TransitionLink>

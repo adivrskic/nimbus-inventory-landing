@@ -7,6 +7,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
+import { useDemo } from "@/lib/DemoContext";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
@@ -66,7 +67,11 @@ function renderHeadline(lines, accentWord) {
   ));
 }
 
-export default function IndustryPage({ slug, onDemo }) {
+export default function IndustryPage({ slug }) {
+  /* Demo modal lives in app/layout.js via DemoHost — pull the opener
+     from context instead of expecting a prop the wrapper never passes. */
+  const { openDemo } = useDemo();
+
   const industry = INDUSTRIES.find((i) => i.slug === slug);
   const pageRef = useRef(null);
   const heroRef = useRef(null);
@@ -199,7 +204,7 @@ export default function IndustryPage({ slug, onDemo }) {
   if (!industry) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={onDemo} />
+        <Nav onDemo={openDemo} />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Industry not found.</h1>
@@ -220,7 +225,7 @@ export default function IndustryPage({ slug, onDemo }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={onDemo} />
+      <Nav onDemo={openDemo} />
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
@@ -242,7 +247,7 @@ export default function IndustryPage({ slug, onDemo }) {
         <p className={styles.heroSub}>{industry.heroDesc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={onDemo}>Talk to our team</CornerButton>
+          <CornerButton onClick={openDemo}>Talk to our team</CornerButton>
           <TransitionLink href="/pricing" className={styles.heroSecondary}>
             See pricing →
           </TransitionLink>
@@ -404,7 +409,7 @@ export default function IndustryPage({ slug, onDemo }) {
             you bring the questions.
           </p>
           <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={onDemo}>Request a demo</CornerButton>
+            <CornerButton onClick={openDemo}>Request a demo</CornerButton>
             <TransitionLink href="/contact" className={styles.heroSecondary}>
               Or just reach out →
             </TransitionLink>

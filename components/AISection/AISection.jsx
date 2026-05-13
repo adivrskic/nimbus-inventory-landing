@@ -7,7 +7,7 @@ import {
   generateSoundRings,
   generateCube,
   generateMagnifier,
-  generateBarChart,
+  generateStockArrow,
   offsetShape,
   offsetShapeY,
 } from "@/lib/shapes";
@@ -21,23 +21,40 @@ const SHAPE_GENERATORS = {
   rings: generateSoundRings,
   cube: generateCube,
   magnifier: generateMagnifier,
-  bars: generateBarChart,
+  arrow: generateStockArrow,
 };
 
 const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
 
+/* ─────────────────────────────────────────────────────────────────────
+   SECTIONS
+   Each section now carries TWO shape configs — `desktop` and `mobile`.
+   The debug panel edits these separately and the renderer selects the
+   right one based on viewport width (with optional override from the
+   debug panel's preview mode toggle).
+   ───────────────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
     key: "voice",
     shortName: "Voice",
     side: "left",
     gen: "rings",
-    rotX: -33,
-    rotY: -52,
-    rotZ: 67,
-    scale: 0.6,
-    offsetX: -1,
-    offsetY: 0,
+    desktop: {
+      rotX: -33,
+      rotY: -52,
+      rotZ: 67,
+      scale: 0.6,
+      offsetX: -1,
+      offsetY: 0,
+    },
+    mobile: {
+      rotX: -33,
+      rotY: -52,
+      rotZ: 67,
+      scale: 0.55,
+      offsetX: 0,
+      offsetY: 0,
+    },
     badge: "Hands-free",
     title: "Voice commands",
     desc: "Nimbus processes natural speech and executes warehouse actions hands-free.",
@@ -47,12 +64,22 @@ const SECTIONS = [
     shortName: "Spatial",
     side: "right",
     gen: "cube",
-    rotX: -57,
-    rotY: -19,
-    rotZ: 0,
-    scale: 0.8,
-    offsetX: 0,
-    offsetY: 0,
+    desktop: {
+      rotX: -57,
+      rotY: -19,
+      rotZ: 0,
+      scale: 0.8,
+      offsetX: 0,
+      offsetY: 0,
+    },
+    mobile: {
+      rotX: -57,
+      rotY: -19,
+      rotZ: 0,
+      scale: 0.65,
+      offsetX: 0,
+      offsetY: 0,
+    },
     badge: "Real-time",
     title: "Spatial intelligence",
     desc: "A living model of your warehouse. Every section, bay, and level mapped in real time.",
@@ -62,12 +89,22 @@ const SECTIONS = [
     shortName: "Search",
     side: "left",
     gen: "magnifier",
-    rotX: -12,
-    rotY: -34,
-    rotZ: -9,
-    scale: 0.6,
-    offsetX: -1.25,
-    offsetY: 1,
+    desktop: {
+      rotX: -12,
+      rotY: -34,
+      rotZ: -9,
+      scale: 0.6,
+      offsetX: -1.25,
+      offsetY: 1,
+    },
+    mobile: {
+      rotX: -12,
+      rotY: -34,
+      rotZ: -9,
+      scale: 0.55,
+      offsetX: 0,
+      offsetY: 0,
+    },
     badge: "AI-powered",
     title: "Intelligent search",
     desc: "Ask anything in plain language. Searches products, locations, and history.",
@@ -76,32 +113,39 @@ const SECTIONS = [
     key: "analytics",
     shortName: "Analytics",
     side: "right",
-    gen: "bars",
-    rotX: 0,
-    rotY: 42,
-    rotZ: 1,
-    scale: 0.65,
-    offsetX: 2,
-    offsetY: 0,
+    gen: "arrow",
+    desktop: {
+      rotX: -8,
+      rotY: 14,
+      rotZ: 0,
+      scale: 0.55,
+      offsetX: 1,
+      offsetY: 0,
+    },
+    mobile: {
+      rotX: -8,
+      rotY: 14,
+      rotZ: 0,
+      scale: 0.55,
+      offsetX: 0,
+      offsetY: 0,
+    },
     badge: "Forecasting",
     title: "Predictive analytics",
     desc: "Nimbus doesn't just report what happened — it forecasts what's next.",
   },
 ];
 
-/* FIXED: was `offsetX: s.offsetsetX` (typo) — that made every particle's
-   defaultX collapse to NaN and the entire cloud disappear into garbage
-   positions. Now sources the value from the canonical SECTIONS field. */
-const DEFAULT_PARAMS = SECTIONS.map((s) => ({
-  rotX: s.rotX,
-  rotY: s.rotY,
-  rotZ: s.rotZ,
-  scale: s.scale,
-  offsetX: s.offsetX,
-  offsetY: s.offsetY,
-}));
+const extractParams = (mode) => SECTIONS.map((s) => ({ ...s[mode] }));
+const DEFAULT_PARAMS = {
+  desktop: extractParams("desktop"),
+  mobile: extractParams("mobile"),
+};
 
-const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v1";
+/* Bumped storage key version because the data shape changed
+   (object with desktop/mobile, not a flat array). Old saved tunings
+   from v1 are ignored, which is the correct behavior. */
+const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v2";
 
 function smoothstep(x) {
   const c = Math.max(0, Math.min(1, x));
@@ -116,30 +160,9 @@ function formationCurve(p) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   SCRAMBLE TEXT RENDERER
-   
-   The matrix-scramble effect needs each letter wrapped in its own
-   span so the RAF loop can individually drive its textContent +
-   opacity + color. The original implementation spread the entire
-   string into per-character spans with no word grouping, so every
-   space-position character was an inline-block too. Result: the
-   browser was free to line-break BETWEEN any two characters,
-   including in the middle of a word — exactly the "letter breaks
-   in words" the user is seeing.
-   
-   Fix: split on whitespace, wrap each real word in a .word span
-   (`white-space: nowrap` from globals.css), and leave the spaces
-   between words as plain text nodes — so the browser CAN break the
-   line at spaces but CAN'T break inside a word.
-
-   The scramble RAF loop still finds every .scrambleChar via
-   querySelectorAll, in DOM order = reading order, so the staggered
-   reveal still works correctly.
+   SCRAMBLE TEXT RENDERER (unchanged — already correct)
    ───────────────────────────────────────────────────────────────────── */
 function renderScramble(text, keyPrefix = "") {
-  /* The capturing group in split() keeps the whitespace runs as their
-     own array entries — we render those as plain text so the line is
-     allowed to break at them. */
   const parts = text.split(/(\s+)/);
   return parts.map((part, pi) => {
     if (part === "") return null;
@@ -181,19 +204,91 @@ function Slider({ label, value, min, max, step, unit, onChange }) {
   );
 }
 
-function DebugPanel({ params, onChange, onReset, onClose }) {
+/* ─────────────────────────────────────────────────────────────────────
+   DEBUG PANEL
+   - Mode toggle at top (Desktop / Mobile) — flips both the editing
+     target AND the rendered preview so you can tune mobile shapes
+     without resizing your browser.
+   - Section tabs (01/02/03/04).
+   - Six sliders (rotX/Y/Z, scale, offsetX/Y).
+   - Reset (resets current mode only).
+   - Copy Config (writes a paste-ready SECTIONS literal to clipboard).
+   ───────────────────────────────────────────────────────────────────── */
+function DebugPanel({
+  params,
+  previewMode,
+  onPreviewModeChange,
+  onParamChange,
+  onReset,
+  onCopy,
+  onClose,
+  copiedFlash,
+}) {
   const [active, setActive] = useState(0);
-  const p = params[active];
-  const update = (field, value) => onChange(active, field, value);
+
+  /* The mode being EDITED is the same as the preview mode, but we
+     also accept 'auto' from outside — in that case we fall back to
+     whatever the current viewport is. */
+  const [viewport, setViewport] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1280
+  );
+  useEffect(() => {
+    const onR = () => setViewport(window.innerWidth);
+    window.addEventListener("resize", onR);
+    return () => window.removeEventListener("resize", onR);
+  }, []);
+
+  const actualMode = viewport < 768 ? "mobile" : "desktop";
+  const editMode = previewMode === "auto" ? actualMode : previewMode;
+
+  const p = params[editMode][active];
+  const update = (field, value) =>
+    onParamChange(editMode, active, field, value);
 
   return (
     <div className={styles.dbgPanel}>
       <div className={styles.dbgHead}>
         <span className={styles.dbgTitle}>SHAPE DEBUG</span>
-        {/* FIXED: was "×times;" — looks like a half-decoded HTML entity. */}
-        <button type="button" onClick={onClose} className={styles.dbgClose}>
+        <button
+          type="button"
+          onClick={onClose}
+          className={styles.dbgClose}
+          aria-label="close debug panel"
+        >
           ✕
         </button>
+      </div>
+
+      {/* Mode toggle — forces preview to selected mode */}
+      <div className={styles.dbgModeToggle}>
+        <button
+          type="button"
+          onClick={() => onPreviewModeChange("desktop")}
+          className={`${styles.dbgModeBtn} ${
+            editMode === "desktop" ? styles.dbgModeBtnActive : ""
+          }`}
+        >
+          Desktop
+        </button>
+        <button
+          type="button"
+          onClick={() => onPreviewModeChange("mobile")}
+          className={`${styles.dbgModeBtn} ${
+            editMode === "mobile" ? styles.dbgModeBtnActive : ""
+          }`}
+        >
+          Mobile
+        </button>
+      </div>
+
+      <div className={styles.dbgViewport}>
+        viewport {viewport}px · {actualMode}
+        {editMode !== actualMode && (
+          <span className={styles.dbgViewportWarn}>
+            {" "}
+            · preview forced to {editMode}
+          </span>
+        )}
       </div>
 
       <div className={styles.dbgTabs}>
@@ -206,7 +301,7 @@ function DebugPanel({ params, onChange, onReset, onClose }) {
               active === i ? styles.dbgTabActive : ""
             }`}
           >
-            {s.num}
+            {String(i + 1).padStart(2, "0")}
           </button>
         ))}
       </div>
@@ -269,14 +364,28 @@ function DebugPanel({ params, onChange, onReset, onClose }) {
       />
 
       <div className={styles.dbgActions}>
-        <button type="button" onClick={onReset} className={styles.dbgBtn}>
-          Reset
+        <button
+          type="button"
+          onClick={() => onReset(editMode)}
+          className={styles.dbgBtn}
+        >
+          Reset {editMode}
+        </button>
+        <button
+          type="button"
+          onClick={onCopy}
+          className={`${styles.dbgBtn} ${styles.dbgBtnPrimary}`}
+        >
+          {copiedFlash ? "Copied" : "Copy Config"}
         </button>
       </div>
     </div>
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════════════ */
 export default function AISection() {
   const canvasRef = useRef(null);
   const sectionRef = useRef(null);
@@ -289,11 +398,6 @@ export default function AISection() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  /* Visibility flag for the THREE animate loop. The animate loop
-     short-circuits when this is false (cheap perf win when the section
-     is off-screen). It's wired up via IntersectionObserver below; was
-     missing entirely before, which is why the particle render call was
-     never actually executing. */
   const sectionVisibleRef = useRef(false);
 
   const { paused } = useAnimationPaused();
@@ -302,23 +406,80 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
+  /* Debug state */
   const [debugAvailable, setDebugAvailable] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugParams, setDebugParams] = useState(DEFAULT_PARAMS);
+  const [debugPreviewMode, setDebugPreviewMode] = useState("auto");
+  const [copiedFlash, setCopiedFlash] = useState(false);
 
   const debugParamsRef = useRef(debugParams);
+  const debugPreviewModeRef = useRef(debugPreviewMode);
   useEffect(() => {
     debugParamsRef.current = debugParams;
   }, [debugParams]);
+  useEffect(() => {
+    debugPreviewModeRef.current = debugPreviewMode;
+  }, [debugPreviewMode]);
 
   const rebuildShapesRef = useRef(null);
 
-  const handleDebugChange = useCallback((idx, field, value) => {
-    setDebugParams((prev) => {
-      const next = prev.slice();
-      next[idx] = { ...next[idx], [field]: value };
-      return next;
-    });
+  const handleParamChange = useCallback((mode, idx, field, value) => {
+    setDebugParams((prev) => ({
+      ...prev,
+      [mode]: prev[mode].map((p, i) =>
+        i === idx ? { ...p, [field]: value } : p
+      ),
+    }));
+  }, []);
+
+  const handleReset = useCallback((mode) => {
+    setDebugParams((prev) => ({
+      ...prev,
+      [mode]: DEFAULT_PARAMS[mode].map((p) => ({ ...p })),
+    }));
+  }, []);
+
+  /* Copy-config: emit a paste-ready SECTIONS literal so the user can
+     replace the SECTIONS array at the top of this file once they're
+     done tuning. */
+  const handleCopyConfig = useCallback(async () => {
+    const fmtStr = (v) => `"${String(v).replace(/"/g, '\\"')}"`;
+    const fmtNum = (n) => {
+      if (Number.isInteger(n)) return String(n);
+      return Number(n.toFixed(2)).toString();
+    };
+    const fmtCfg = (c) =>
+      `{ rotX: ${fmtNum(c.rotX)}, rotY: ${fmtNum(c.rotY)}, rotZ: ${fmtNum(
+        c.rotZ
+      )}, scale: ${fmtNum(c.scale)}, offsetX: ${fmtNum(
+        c.offsetX
+      )}, offsetY: ${fmtNum(c.offsetY)} }`;
+
+    const params = debugParamsRef.current;
+    const body = SECTIONS.map(
+      (s, i) =>
+        `  {
+    key: ${fmtStr(s.key)},
+    shortName: ${fmtStr(s.shortName)},
+    side: ${fmtStr(s.side)},
+    gen: ${fmtStr(s.gen)},
+    desktop: ${fmtCfg(params.desktop[i])},
+    mobile:  ${fmtCfg(params.mobile[i])},
+    badge: ${fmtStr(s.badge)},
+    title: ${fmtStr(s.title)},
+    desc: ${fmtStr(s.desc)},
+  },`
+    ).join("\n");
+    const output = `const SECTIONS = [\n${body}\n];`;
+
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopiedFlash(true);
+      setTimeout(() => setCopiedFlash(false), 1400);
+    } catch (e) {
+      console.error("[AISection] clipboard write failed:", e);
+    }
   }, []);
 
   /* Unlock the debug panel when ?debug is in the URL. */
@@ -330,10 +491,7 @@ export default function AISection() {
     }
   }, []);
 
-  /* Persist debug tuning across reloads. The "first mount" ref ensures
-     we LOAD before SAVE on the initial render — otherwise the save
-     effect would fire on mount with the default state and overwrite
-     any previously-saved tuning. */
+  /* Persist debug tuning across reloads */
   const debugMountedRef = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -343,12 +501,18 @@ export default function AISection() {
         const saved = window.localStorage.getItem(DEBUG_STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === SECTIONS.length) {
+          if (
+            parsed &&
+            Array.isArray(parsed.desktop) &&
+            parsed.desktop.length === SECTIONS.length &&
+            Array.isArray(parsed.mobile) &&
+            parsed.mobile.length === SECTIONS.length
+          ) {
             setDebugParams(parsed);
           }
         }
       } catch {
-        /* localStorage disabled / quota; nothing to recover. */
+        /* ignore */
       }
       return;
     }
@@ -362,18 +526,19 @@ export default function AISection() {
     }
   }, [debugParams]);
 
-  /* Whenever tunings change, regenerate the shape buffers. The init
-     useEffect parks the rebuild function on this ref once THREE has
-     loaded; if a change comes in before that, the optional chaining
-     no-ops and the next init pass picks up the latest params via
-     debugParamsRef anyway. */
+  /* Trigger shape rebuilds when params or preview-mode change */
   useEffect(() => {
     rebuildShapesRef.current?.();
-  }, [debugParams]);
+  }, [debugParams, debugPreviewMode]);
 
-  /* Section visibility observer. rootMargin lets us start the loop
-     ~200px before the section actually enters the viewport, so the
-     particle cloud is settled by the time the user scrolls into it. */
+  /* Reset preview override when the debug panel closes, so production
+     behavior resumes (mode follows viewport). */
+  const handleCloseDebug = useCallback(() => {
+    setDebugOpen(false);
+    setDebugPreviewMode("auto");
+  }, []);
+
+  /* Section visibility observer */
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -394,13 +559,16 @@ export default function AISection() {
     });
   }, []);
 
+  /* CFG — Tuned for smooth, no-bounce motion with visible ambient jitter.
+     The old `physicsStiff` + `physicsDamping` spring system has been
+     removed (it caused the bounce). Replaced with `smoothPosition`,
+     a single critical-damping coefficient that approaches the target
+     monotonically. */
   const CFG = {
     smoothFormation: 0.18,
-    physicsStiff: 0.055,
-    physicsDamping: 0.78,
-    jitterBase: 0.018,
-    jitterFreqBase: 0.18,
-    sectionAlpha: 0.55,
+    smoothPosition: 0.085, // exponential smoothing toward target — no overshoot
+    jitterBase: 0.045, // up from 0.018 — visible breath when formed
+    jitterFreqBase: 0.55, // up from 0.18 — feels more "alive"
     camZ: 16,
     camZMobile: 22,
   };
@@ -411,9 +579,7 @@ export default function AISection() {
     globalAlpha: 0,
   });
 
-  /* Scroll-driven formation values. Computes a [0..1] formation curve
-     for each block based on its viewport position, picks the dominant
-     section as the active shape, and updates the progress bar. */
+  /* Scroll-driven formation values */
   useEffect(() => {
     const section = sectionRef.current;
     const blocks = blockRefs.current.filter(Boolean);
@@ -463,13 +629,7 @@ export default function AISection() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* Text scramble RAF loop.
-     Tunables: REVEAL_END is how far into the formation curve all
-     letters are fully revealed (0.7 = revealed by 70% of the
-     formation, with the last 30% just holding the real text). 
-     SCRAMBLE_WINDOW is the per-letter on-ramp width. MIN_OPACITY
-     used to be 0.35 — bumped to 0.45 so the scrambling glyphs stay
-     legible against the white page background. */
+  /* Text scramble RAF loop (unchanged) */
   useEffect(() => {
     let raf;
     const REVEAL_END = 0.7;
@@ -542,16 +702,17 @@ export default function AISection() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  /* THREE.js init + animate. The fixes that matter here:
-     1. The shape buffers no longer get NaN positions (offsetX typo fixed
-        at the top of the file).
-     2. sectionVisibleRef.current is now updated by the IntersectionObserver
-        above, so the animate body actually runs instead of bailing every
-        frame.
-     3. sAlpha is driven from formation so the particle cloud is
-        actually visible — the old code never assigned globalAlpha
-        anywhere, so the shader's uGlobalAlpha stayed at 0 and the
-        whole system rendered fully transparent. */
+  /* THREE init + animate.
+     Key behavioral changes vs the previous version:
+       1. Physics — replaced spring/velocity system with exponential
+          smoothing toward the target. Particles approach monotonically,
+          no overshoot, no bounce.
+       2. Jitter — 3D, two-frequency noise per particle with per-particle
+          amplitude variation. Visible even when the shape is fully formed
+          so it never feels frozen.
+       3. Build per mode — each rebuild reads the desktop or mobile
+          sub-config based on the debug preview override (or, if not
+          overridden, the live viewport width). */
   useEffect(() => {
     let frameId;
     let cleanup = () => {};
@@ -580,23 +741,39 @@ export default function AISection() {
         renderer.setSize(w, h);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+
+        /* If we crossed the breakpoint and we're in auto mode,
+           rebuild shapes so the mobile/desktop config swap takes
+           effect without a reload. */
+        if (debugPreviewModeRef.current === "auto") {
+          rebuildShapes();
+        }
       };
 
-      resize();
       window.addEventListener("resize", resize);
 
       const isMobile = window.innerWidth < 768;
       const scattered = generateScattered(PARTICLE_COUNT, isMobile);
       const shapes = [null, null, null, null];
 
-      const buildShape = (i) => {
+      /* Resolve which mode's params to use right now. The preview-mode
+         ref wins if it's been forced via debug; otherwise we use the
+         live viewport. */
+      const resolveMode = () => {
+        const o = debugPreviewModeRef.current;
+        if (o === "desktop" || o === "mobile") return o;
+        return window.innerWidth < 768 ? "mobile" : "desktop";
+      };
+
+      const buildShape = (i, mode) => {
         const sec = SECTIONS[i];
-        const params = debugParamsRef.current[i];
+        const params = debugParamsRef.current[mode][i];
         const fn = SHAPE_GENERATORS[sec.gen];
 
         let pts = fn(PARTICLE_COUNT, params.rotX, params.rotY, params.rotZ);
 
-        const mobileFactor = isMobile ? 0.85 : 1;
+        const mobile = mode === "mobile";
+        const mobileFactor = mobile ? 0.85 : 1;
         const scale = params.scale * mobileFactor;
 
         if (scale !== 1) {
@@ -607,8 +784,8 @@ export default function AISection() {
           pts = out;
         }
 
-        const defaultX = isMobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
-        const defaultY = isMobile ? -3.5 : 0;
+        const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
+        const defaultY = mobile ? -3.5 : 0;
         const finalX = defaultX + params.offsetX;
         const finalY = defaultY + params.offsetY;
 
@@ -619,13 +796,20 @@ export default function AISection() {
       };
 
       const rebuildShapes = () => {
+        const mode = resolveMode();
         for (let i = 0; i < SECTIONS.length; i++) {
-          shapes[i] = buildShape(i);
+          shapes[i] = buildShape(i, mode);
         }
       };
 
       rebuildShapes();
       rebuildShapesRef.current = rebuildShapes;
+
+      /* Initial size/aspect now that rebuildShapes exists — resize()
+         forward-references it, so we must NOT call it before this
+         line or we hit a TDZ ReferenceError that silently rejects the
+         async init and the scene never renders. */
+      resize();
 
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
       currentPos.set(scattered);
@@ -636,10 +820,11 @@ export default function AISection() {
         new THREE.BufferAttribute(currentPos, 3)
       );
 
+      /* physicsPos is the smoothed-to-target position. currentPos =
+         physicsPos + jitter. No velocity buffer — we don't need one
+         with exponential smoothing. */
       const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
       physicsPos.set(scattered);
-
-      const velocity = new Float32Array(PARTICLE_COUNT * 3);
 
       const baseSizes = new Float32Array(PARTICLE_COUNT);
       const sizeScale = isMobile ? 1.6 : 1.25;
@@ -648,11 +833,9 @@ export default function AISection() {
       }
       geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
 
-      const stagger = new Float32Array(PARTICLE_COUNT);
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        stagger[i] = Math.random() * 0.32;
-      }
-
+      /* Three seeds per particle drive frequency / phase / amplitude
+         variation in the jitter. Constant for the particle's lifetime
+         so each particle has a consistent personality. */
       const seeds = new Float32Array(PARTICLE_COUNT * 3);
       for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
         seeds[i] = Math.random();
@@ -677,6 +860,8 @@ export default function AISection() {
       let sAlpha = 0;
       let sColorMix = 0;
 
+      const TAU = Math.PI * 2;
+
       const animate = () => {
         frameId = requestAnimationFrame(animate);
 
@@ -690,17 +875,16 @@ export default function AISection() {
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
 
-        /* Drive globalAlpha from formation: a steady scattered visibility
-           floor whenever the section is on-screen, ramping up to fully
-           opaque while a shape is forming. The old code initialized
-           globalAlpha to 0 and never touched it, which is why the
-           particle cloud rendered as nothing — uGlobalAlpha stayed at 0. */
         const baseAlpha = 0.4;
         const targetAlpha = baseAlpha + (1 - baseAlpha) * sFormation;
         sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
 
         const activeShape = shapes[s.activeShape];
         if (!activeShape) return;
+
+        const k = CFG.smoothPosition;
+        const jb = CFG.jitterBase;
+        const jf = CFG.jitterFreqBase;
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
@@ -714,28 +898,32 @@ export default function AISection() {
             scattered[i3 + 2] * (1 - sFormation) +
             activeShape[i3 + 2] * sFormation;
 
-          velocity[i3] += (targetX - physicsPos[i3]) * CFG.physicsStiff;
-          velocity[i3 + 1] += (targetY - physicsPos[i3 + 1]) * CFG.physicsStiff;
-          velocity[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * CFG.physicsStiff;
+          /* Critical-damping approach to target. Monotonic, no overshoot.
+             Replaces the old spring + velocity + damping triad that
+             caused the bouncy settle. */
+          physicsPos[i3] += (targetX - physicsPos[i3]) * k;
+          physicsPos[i3 + 1] += (targetY - physicsPos[i3 + 1]) * k;
+          physicsPos[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * k;
 
-          velocity[i3] *= CFG.physicsDamping;
-          velocity[i3 + 1] *= CFG.physicsDamping;
-          velocity[i3 + 2] *= CFG.physicsDamping;
-
-          physicsPos[i3] += velocity[i3];
-          physicsPos[i3 + 1] += velocity[i3 + 1];
-          physicsPos[i3 + 2] += velocity[i3 + 2];
-
+          /* Ambient jitter — 3D, two-frequency noise with per-particle
+             amplitude. Visible when formed (so the cloud breathes) but
+             low enough not to soften the shape outlines. */
           const s1 = seeds[i3];
           const s2 = seeds[i3 + 1];
-          const freq = CFG.jitterFreqBase + s1 * 0.2;
+          const s3 = seeds[i3 + 2];
+          const f1 = jf + s1 * 0.3;
+          const f2 = jf * 2.4 + s2 * 0.4;
+          const ph1 = t * f1 + s1 * TAU;
+          const ph2 = t * f2 + s2 * TAU;
+          const sinA = Math.sin(ph1);
+          const cosA = Math.cos(ph1);
+          const sinB = Math.sin(ph2);
+          const amp = jb * (0.55 + s3 * 0.9);
 
-          currentPos[i3] =
-            physicsPos[i3] +
-            Math.sin(t * freq) * CFG.jitterBase * (0.7 + s2 * 0.6);
+          currentPos[i3] = physicsPos[i3] + (sinA * 0.65 + sinB * 0.35) * amp;
           currentPos[i3 + 1] =
-            physicsPos[i3 + 1] + Math.cos(t * freq) * CFG.jitterBase * 0.6;
-          currentPos[i3 + 2] = physicsPos[i3 + 2];
+            physicsPos[i3 + 1] + (cosA * 0.55 + Math.cos(ph2) * 0.45) * amp;
+          currentPos[i3 + 2] = physicsPos[i3 + 2] + sinB * amp * 0.45;
         }
 
         geometry.attributes.position.needsUpdate = true;
@@ -799,9 +987,8 @@ export default function AISection() {
                       style={{
                         top: `${(idx / (SECTIONS.length - 1)) * 100}%`,
                       }}
-                    >
-                      <span className={styles.sideTickLabel}>{s.num}</span>
-                    </button>
+                      aria-label={`Jump to ${s.shortName}`}
+                    />
                   ))}
                 </div>
 
@@ -845,9 +1032,13 @@ export default function AISection() {
       {debugAvailable && debugOpen && (
         <DebugPanel
           params={debugParams}
-          onChange={handleDebugChange}
-          onReset={() => setDebugParams(DEFAULT_PARAMS)}
-          onClose={() => setDebugOpen(false)}
+          previewMode={debugPreviewMode}
+          onPreviewModeChange={setDebugPreviewMode}
+          onParamChange={handleParamChange}
+          onReset={handleReset}
+          onCopy={handleCopyConfig}
+          onClose={handleCloseDebug}
+          copiedFlash={copiedFlash}
         />
       )}
     </section>
