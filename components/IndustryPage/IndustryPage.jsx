@@ -7,6 +7,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
+import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
@@ -31,41 +32,6 @@ const WORKFLOW = [
     desc: "Verify items by scan, print labels, push tracking to sales channels.",
   },
 ];
-
-/* Render the headline with optional accent word in italic gold */
-function renderHeadline(lines, accentWord) {
-  return lines.map((line, li) => (
-    <span key={li} className={styles.heroLine}>
-      <span className={styles.heroLineInner}>
-        {line.split(" ").map((word, wi) => {
-          const isAccent =
-            accentWord &&
-            word.replace(/[.,!?]/g, "").toLowerCase() ===
-              accentWord.toLowerCase();
-          return (
-            <span key={wi}>
-              <span className="word">
-                {word.split("").map((c, ci) => (
-                  <span
-                    key={`${li}-${wi}-${ci}`}
-                    className={`${styles.heroLetter} ${
-                      isAccent ? styles.heroLetterAccent : ""
-                    }`}
-                  >
-                    {c}
-                  </span>
-                ))}
-              </span>
-              {wi < line.split(" ").length - 1 && (
-                <span className={styles.heroSpace} />
-              )}
-            </span>
-          );
-        })}
-      </span>
-    </span>
-  ));
-}
 
 export default function IndustryPage({ slug }) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
@@ -241,7 +207,17 @@ export default function IndustryPage({ slug }) {
         </div>
 
         <h1 className={styles.heroTitle}>
-          {renderHeadline(industry.headline, industry.accentWord)}
+          <SplitText
+            lines={industry.headline}
+            accentWord={industry.accentWord}
+            classNames={{
+              line: styles.heroLine,
+              lineInner: styles.heroLineInner,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
         </h1>
 
         <p className={styles.heroSub}>{industry.heroDesc}</p>

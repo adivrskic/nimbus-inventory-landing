@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import DemoModal from "@/components/DemoModal/DemoModal";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./Status.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -415,29 +416,15 @@ export default function StatusClient() {
         <header className={styles.hero}>
           <div className={styles.eyebrow}>System Status</div>
           <h1 className={styles.headline}>
-            {H_LINES.map((line, li) => (
-              <span key={li} className={styles.headLine}>
-                {line.map((w, wi) => (
-                  <span key={wi}>
-                    <span className="word">
-                      {w.t.split("").map((c, ci) => (
-                        <span
-                          key={`${wi}-${ci}`}
-                          className={`${styles.headLetter} ${
-                            w.a ? styles.headLetterAccent : ""
-                          }`}
-                        >
-                          {c}
-                        </span>
-                      ))}
-                    </span>
-                    {wi < line.length - 1 && (
-                      <span className={styles.headSpace} />
-                    )}
-                  </span>
-                ))}
-              </span>
-            ))}
+            <SplitText
+              tokens={H_LINES}
+              classNames={{
+                line: styles.headLine,
+                letter: styles.headLetter,
+                accent: styles.headLetterAccent,
+                space: styles.headSpace,
+              }}
+            />
           </h1>
           <p className={styles.sub}>
             Service health, uptime, and incident history across the Nimbus

@@ -5,6 +5,8 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/Footer/Footer";
+import SplitText from "@/components/shared/SplitText";
+
 import { LEGAL_PAGES } from "./legalData";
 import styles from "./LegalPage.module.css";
 
@@ -47,33 +49,6 @@ function toRoman(n) {
   return out;
 }
 
-/* ─────────────────────────────────────────────────────
-   PER-LETTER TITLE — wraps each word in `.word` (global
-   white-space: nowrap, so titles can't break inside a
-   word) and each character in a `.headLetter` span so
-   GSAP can rise + un-rotate them individually.
-───────────────────────────────────────────────────── */
-function renderTitle(text) {
-  const parts = text.split(/(\s+)/);
-  return parts.map((part, pi) => {
-    if (part === "") return null;
-    if (/^\s+$/.test(part)) {
-      return (
-        <span key={`s${pi}`} className={styles.headSpace} aria-hidden="true" />
-      );
-    }
-    return (
-      <span key={`w${pi}`} className="word">
-        {[...part].map((c, ci) => (
-          <span key={ci} className={styles.headLetter}>
-            {c}
-          </span>
-        ))}
-      </span>
-    );
-  });
-}
-
 export default function LegalPage({ slug }) {
   const page = LEGAL_PAGES[slug];
   const shellRef = useRef(null);
@@ -92,10 +67,6 @@ export default function LegalPage({ slug }) {
     /* Doc-meta block (Document / Last updated / Effective / Jurisdiction). */
     tl.to(`.${styles.docMeta}`, { opacity: 1, duration: 0.5 }, 0.05);
 
-    /* Per-letter title rise. CSS sets each letter to translateY(100%)
-       rotateX(35deg) opacity 0; we tween to y:0, rotateX:0, opacity:1.
-       y:"0%" is a percentage tween so GSAP composes with the existing
-       transform unit cleanly. */
     const letters = headerRef.current.querySelectorAll(`.${styles.headLetter}`);
     if (letters.length) {
       tl.to(
@@ -202,7 +173,14 @@ export default function LegalPage({ slug }) {
           {/* Title block — per-letter rise + italic recital */}
           <div className={styles.titleBlock}>
             <h1 className={styles.title}>
-              <span className={styles.headLine}>{renderTitle(page.title)}</span>
+              <SplitText
+                text={page.title}
+                classNames={{
+                  line: styles.headLine,
+                  letter: styles.headLetter,
+                  space: styles.headSpace,
+                }}
+              />
             </h1>
             <p className={styles.recital}>{recital}</p>
           </div>

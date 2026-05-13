@@ -8,6 +8,7 @@ import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
+import SplitText from "@/components/shared/SplitText";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
@@ -51,43 +52,6 @@ function MatrixCell({ value, accent = false }) {
   }
   /* fallthrough — display as text label */
   return <span className={styles.matrixMarkText}>{value}</span>;
-}
-
-/* ─────────────────────────────────────────────────────
-   PER-LETTER TITLE with optional italic-gold accent word
-───────────────────────────────────────────────────── */
-function renderHeadline(lines, accentWord) {
-  return lines.map((line, li) => (
-    <span key={li} className={styles.heroLine}>
-      <span className={styles.heroLineInner}>
-        {line.split(" ").map((word, wi) => {
-          const isAccent =
-            accentWord &&
-            word.replace(/[.,!?]/g, "").toLowerCase() ===
-              accentWord.toLowerCase();
-          return (
-            <span key={wi}>
-              <span className="word">
-                {word.split("").map((c, ci) => (
-                  <span
-                    key={`${li}-${wi}-${ci}`}
-                    className={`${styles.heroLetter} ${
-                      isAccent ? styles.heroLetterAccent : ""
-                    }`}
-                  >
-                    {c}
-                  </span>
-                ))}
-              </span>
-              {wi < line.split(" ").length - 1 && (
-                <span className={styles.heroSpace} />
-              )}
-            </span>
-          );
-        })}
-      </span>
-    </span>
-  ));
 }
 
 export default function CompareClient({ slug }) {
@@ -326,7 +290,17 @@ export default function CompareClient({ slug }) {
         </div>
 
         <h1 className={styles.heroTitle}>
-          {renderHeadline(competitor.headline, competitor.accentWord)}
+          <SplitText
+            lines={competitor.headline}
+            accentWord={competitor.accentWord}
+            classNames={{
+              line: styles.heroLine,
+              lineInner: styles.heroLineInner,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
         </h1>
         <p className={styles.heroDesc}>{competitor.heroDesc}</p>
 

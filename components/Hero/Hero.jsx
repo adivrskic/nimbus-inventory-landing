@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAnimationPaused } from "@/lib/AnimationContext";
 import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./Hero.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -188,47 +189,6 @@ export default function Hero({ onDemo }) {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  const renderHeadlineLine = (line, lineIdx) => (
-    <span key={lineIdx} className={styles.line}>
-      {line.words.map((word, wi) => (
-        <span key={wi}>
-          <span className="word">
-            {word.text.split("").map((char, ci) => (
-              <span
-                key={`${wi}-${ci}`}
-                className={`${styles.letter} ${
-                  word.accent ? styles.accentWord : ""
-                }`}
-              >
-                {char}
-              </span>
-            ))}
-          </span>
-          {wi < line.words.length - 1 && (
-            <span className={styles.letterSpace} />
-          )}
-        </span>
-      ))}
-    </span>
-  );
-
-  const renderDescLine = (text, lineIdx) => (
-    <span key={lineIdx} className={styles.descLine}>
-      {text.split(" ").map((word, wi, arr) => (
-        <span key={wi}>
-          <span className="word">
-            {word.split("").map((c, ci) => (
-              <span key={ci} className={styles.descLetter}>
-                {c}
-              </span>
-            ))}
-          </span>
-          {wi < arr.length - 1 && <span className={styles.descSpace} />}
-        </span>
-      ))}
-    </span>
-  );
-
   return (
     <section ref={sectionRef} className={styles.hero}>
       <div ref={videoBgRef} className={styles.videoBg}>
@@ -248,11 +208,30 @@ export default function Hero({ onDemo }) {
       <div ref={scrollDimRef} className={styles.scrollDim} />
 
       <div ref={contentRef} className={styles.content}>
+        {/* AFTER */}
         <h1 className={styles.headline}>
-          {HEADLINE_LINES.map(renderHeadlineLine)}
+          <SplitText
+            tokens={HEADLINE_LINES.map((line) =>
+              line.words.map((w) => ({ t: w.text, a: w.accent }))
+            )}
+            classNames={{
+              line: styles.line,
+              letter: styles.letter,
+              accent: styles.accentWord,
+              space: styles.letterSpace,
+            }}
+          />
         </h1>
-
-        <p className={styles.desc}>{DESC_LINES.map(renderDescLine)}</p>
+        <p className={styles.desc}>
+          <SplitText
+            lines={DESC_LINES}
+            classNames={{
+              line: styles.descLine,
+              letter: styles.descLetter,
+              space: styles.descSpace,
+            }}
+          />
+        </p>
 
         <div ref={ctasRef} className={styles.ctas}>
           <CornerButton variant="primary" onClick={onDemo}>

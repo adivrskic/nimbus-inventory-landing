@@ -8,6 +8,7 @@ import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
+import SplitText from "@/components/shared/SplitText";
 import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
 import styles from "./CompareIndex.module.css";
 
@@ -88,42 +89,6 @@ export default function CompareIndexClient() {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  /* Per-letter title: "Compare Nimbus to *the alternatives.*" */
-  const renderTitle = () => {
-    const parts = [
-      { t: "Compare", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "Nimbus", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "to", a: false },
-      { t: " ", isSpace: true, a: true },
-      { t: "the", a: true },
-      { t: " ", isSpace: true, a: true },
-      { t: "alternatives.", a: true },
-    ];
-    return (
-      <span className={styles.heroLine}>
-        {parts.map((p, pi) => {
-          if (p.isSpace) return <span key={pi} className={styles.heroSpace} />;
-          return (
-            <span key={pi} className="word">
-              {p.t.split("").map((c, ci) => (
-                <span
-                  key={`${pi}-${ci}`}
-                  className={`${styles.heroLetter} ${
-                    p.a ? styles.heroLetterAccent : ""
-                  }`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-          );
-        })}
-      </span>
-    );
-  };
-
   return (
     <div ref={pageRef} className={styles.page}>
       <Nav />
@@ -131,7 +96,18 @@ export default function CompareIndexClient() {
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>Compare</div>
-        <h1 className={styles.heroTitle}>{renderTitle()}</h1>
+        <h1 className={styles.heroTitle}>
+          <SplitText
+            text="Compare Nimbus to the alternatives."
+            accentWord="alternatives"
+            classNames={{
+              line: styles.heroLine,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
+        </h1>
         <p className={styles.heroSub}>
           Honest side-by-side comparisons against the WMS platforms teams
           evaluate alongside Nimbus. Each one includes a feature matrix and a

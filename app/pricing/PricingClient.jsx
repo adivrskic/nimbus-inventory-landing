@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import styles from "./Pricing.module.css";
 
@@ -332,48 +333,6 @@ export default function PricingClient() {
      the discounted annual rate. Shown prominently when Annual is active. */
   const annualSavings = (PRICING.pro.monthly - PRICING.pro.annual) * 12;
 
-  /* Render helpers */
-  const renderHeadline = (lines, lineCls, letterCls, accentCls, spaceCls) =>
-    lines.map((line, li) => (
-      <span key={li} className={lineCls}>
-        {line.map((w, wi) => (
-          <span key={wi}>
-            <span className="word">
-              {w.t.split("").map((c, ci) => (
-                <span
-                  key={`${wi}-${ci}`}
-                  className={`${letterCls} ${w.a ? accentCls : ""}`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < line.length - 1 && <span className={spaceCls} />}
-          </span>
-        ))}
-      </span>
-    ));
-
-  const renderSub = (text) => {
-    const words = text.split(" ");
-    return (
-      <span className={styles.subLine}>
-        {words.map((word, wi) => (
-          <span key={wi}>
-            <span className="word">
-              {word.split("").map((c, ci) => (
-                <span key={ci} className={styles.subLetter}>
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < words.length - 1 && <span className={styles.subSpace} />}
-          </span>
-        ))}
-      </span>
-    );
-  };
-
   return (
     <div className={styles.page}>
       <Nav />
@@ -390,16 +349,27 @@ export default function PricingClient() {
         />
 
         <h1 className={styles.headline}>
-          {renderHeadline(
-            H_LINES,
-            styles.headLine,
-            styles.headLetter,
-            styles.headLetterAccent,
-            styles.headSpace
-          )}
+          <SplitText
+            tokens={H_LINES}
+            classNames={{
+              line: styles.headLine,
+              letter: styles.headLetter,
+              accent: styles.headLetterAccent,
+              space: styles.headSpace,
+            }}
+          />
         </h1>
 
-        <div className={styles.subWrap}>{renderSub(SUB_TEXT)}</div>
+        <div className={styles.subWrap}>
+          <SplitText
+            text={SUB_TEXT}
+            classNames={{
+              line: styles.subLine,
+              letter: styles.subLetter,
+              space: styles.subSpace,
+            }}
+          />
+        </div>
 
         {/* ─────────────────────────────────────────────────────
             BILLING SELECTOR — pill toggle with sliding gold pill
@@ -650,13 +620,15 @@ export default function PricingClient() {
 
         <div className={styles.finalInner}>
           <h2 className={styles.finalHeadline}>
-            {renderHeadline(
-              FINAL_H_LINES,
-              styles.headLine,
-              styles.headLetter,
-              styles.finalHeadlineAccent,
-              styles.headSpace
-            )}
+            <SplitText
+              tokens={FINAL_H_LINES}
+              classNames={{
+                line: styles.headLine,
+                letter: styles.headLetter,
+                accent: styles.finalHeadlineAccent,
+                space: styles.headSpace,
+              }}
+            />
           </h2>
           <p className={styles.finalSub}>
             Tell us about your operation — warehouse count, SKU volume,

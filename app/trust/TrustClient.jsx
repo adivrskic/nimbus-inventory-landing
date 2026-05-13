@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import SplitText from "@/components/shared/SplitText";
 import DemoModal from "@/components/DemoModal/DemoModal";
 import styles from "./Trust.module.css";
 
@@ -199,38 +200,6 @@ export default function TrustClient() {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  /* Per-letter title: "Trust, built in." with "built in." italic gold */
-  const renderTitle = () => {
-    const parts = [
-      { t: "Trust,", a: false },
-      { t: " ", a: false, isSpace: true },
-      { t: "built", a: true },
-      { t: " ", a: true, isSpace: true },
-      { t: "in.", a: true },
-    ];
-    return (
-      <span className={styles.heroLine}>
-        {parts.map((p, pi) => {
-          if (p.isSpace) return <span key={pi} className={styles.heroSpace} />;
-          return (
-            <span key={pi} className="word">
-              {p.t.split("").map((c, ci) => (
-                <span
-                  key={`${pi}-${ci}`}
-                  className={`${styles.heroLetter} ${
-                    p.a ? styles.heroLetterAccent : ""
-                  }`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-          );
-        })}
-      </span>
-    );
-  };
-
   return (
     <div ref={pageRef} className={styles.page}>
       <Nav onDemo={openDemo} />
@@ -249,7 +218,18 @@ export default function TrustClient() {
         </span>
 
         <div className={styles.heroEyebrow}>Trust & Security</div>
-        <h1 className={styles.heroTitle}>{renderTitle()}</h1>
+        <h1 className={styles.heroTitle}>
+          <SplitText
+            text="Trust, built in."
+            accentWord="built"
+            classNames={{
+              line: styles.heroLine,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
+        </h1>
         <p className={styles.heroSub}>
           The certifications, practices, and infrastructure that keep your
           warehouse data safe. No marketing fluff — just what we do and how we

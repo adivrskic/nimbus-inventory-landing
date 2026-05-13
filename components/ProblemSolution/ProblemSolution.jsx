@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./ProblemSolution.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -428,49 +429,6 @@ export default function ProblemSolution({ onDemo }) {
     };
   }, [showPhase, goToPhase]);
 
-  function renderHeadline(lines) {
-    return lines.map((line, li) => (
-      <span key={li} className={styles.phaseLine}>
-        {line.map((w, wi) => (
-          <span key={wi}>
-            <span className="word">
-              {w.t.split("").map((c, ci) => (
-                <span
-                  key={`${wi}-${ci}`}
-                  className={`${styles.phaseLetter} ${
-                    w.a ? styles.headlineAccent : ""
-                  }`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < line.length - 1 && <span className={styles.phaseSpace} />}
-          </span>
-        ))}
-      </span>
-    ));
-  }
-
-  function renderBody(lines) {
-    return lines.map((line, li) => (
-      <span key={li} className={styles.phaseBodyLine}>
-        {line.split(" ").map((word, wi, arr) => (
-          <span key={wi}>
-            <span className="word">
-              {word.split("").map((c, ci) => (
-                <span key={ci} className={styles.phaseBodyLetter}>
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < arr.length - 1 && <span className={styles.phaseBodySpace} />}
-          </span>
-        ))}
-      </span>
-    ));
-  }
-
   return (
     <section ref={sectionRef} className={styles.section}>
       <div ref={pinnedRef} className={styles.pinned}>
@@ -491,11 +449,28 @@ export default function ProblemSolution({ onDemo }) {
             {/* Large decorative label — sits behind content via z-index:-1 */}
             <div className={styles.bigLabel}>{phase.label}</div>
 
+            {/* AFTER */}
             <h2 className={styles.headline}>
-              {renderHeadline(phase.headlineLines)}
+              <SplitText
+                tokens={phase.headlineLines}
+                classNames={{
+                  line: styles.phaseLine,
+                  letter: styles.phaseLetter,
+                  accent: styles.headlineAccent,
+                  space: styles.phaseSpace,
+                }}
+              />
             </h2>
-            <div className={styles.accentLine} />
-            <div className={styles.body}>{renderBody(phase.bodyLines)}</div>
+            <div className={styles.body}>
+              <SplitText
+                lines={phase.bodyLines}
+                classNames={{
+                  line: styles.phaseBodyLine,
+                  letter: styles.phaseBodyLetter,
+                  space: styles.phaseBodySpace,
+                }}
+              />
+            </div>
 
             {phase.stats && (
               <div className={styles.stats}>

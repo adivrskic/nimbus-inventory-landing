@@ -8,6 +8,7 @@ import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
+import SplitText from "@/components/shared/SplitText";
 import { INTEGRATIONS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
 
@@ -96,28 +97,6 @@ const FLOW_DATA = {
     ],
   },
 };
-
-function renderHeroTitle(text) {
-  const words = text.split(" ");
-  return (
-    <span className={styles.heroLine}>
-      <span className={styles.heroLineInner}>
-        {words.map((word, wi) => (
-          <span key={wi}>
-            <span className="word">
-              {word.split("").map((c, ci) => (
-                <span key={`${wi}-${ci}`} className={styles.heroLetter}>
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < words.length - 1 && <span className={styles.heroSpace} />}
-          </span>
-        ))}
-      </span>
-    </span>
-  );
-}
 
 export default function IntegrationPage({ slug }) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
@@ -310,7 +289,15 @@ export default function IntegrationPage({ slug }) {
         </div>
 
         <h1 className={styles.heroTagline}>
-          {renderHeroTitle(integration.tagline)}
+          <SplitText
+            text={integration.tagline}
+            classNames={{
+              line: styles.heroLine,
+              lineInner: styles.heroLineInner,
+              letter: styles.heroLetter,
+              space: styles.heroSpace,
+            }}
+          />
         </h1>
         <p className={styles.heroDesc}>{integration.desc}</p>
 

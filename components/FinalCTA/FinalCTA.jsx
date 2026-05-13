@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./FinalCTA.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -90,47 +91,25 @@ export default function FinalCTA({ onDemo }) {
       />
       <div className={styles.inner}>
         <h2 className="heading-lg">
-          {H_LINES.map((line, li) => (
-            <span key={li} className={styles.headLine}>
-              {line.map((w, wi) => (
-                <span key={wi}>
-                  <span className="word">
-                    {w.t.split("").map((c, ci) => (
-                      <span
-                        key={`${wi}-${ci}`}
-                        className={`${styles.headLetter} ${
-                          w.a ? styles.headLetterAccent : ""
-                        }`}
-                      >
-                        {c}
-                      </span>
-                    ))}
-                  </span>
-                  {wi < line.length - 1 && (
-                    <span className={styles.headSpace} />
-                  )}
-                </span>
-              ))}
-            </span>
-          ))}
+          <SplitText
+            tokens={H_LINES}
+            classNames={{
+              line: styles.headLine,
+              letter: styles.headLetter,
+              accent: styles.headLetterAccent,
+              space: styles.headSpace,
+            }}
+          />
         </h2>
         <div className={styles.descWrap}>
-          {DESC_LINES.map((line, li) => (
-            <span key={li} className={styles.descLine}>
-              {line.split(" ").map((word, wi, arr) => (
-                <span key={wi}>
-                  <span className="word">
-                    {word.split("").map((c, ci) => (
-                      <span key={ci} className={styles.descLetter}>
-                        {c}
-                      </span>
-                    ))}
-                  </span>
-                  {wi < arr.length - 1 && <span className={styles.descSpace} />}
-                </span>
-              ))}
-            </span>
-          ))}
+          <SplitText
+            lines={DESC_LINES}
+            classNames={{
+              line: styles.descLine,
+              letter: styles.descLetter,
+              space: styles.descSpace,
+            }}
+          />
         </div>
         <div ref={ctasRef} className={styles.ctas}>
           <CornerButton variant="primary" onClick={onDemo}>

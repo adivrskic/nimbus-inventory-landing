@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./ResourceShell.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -113,27 +114,6 @@ export default function ResourceShell({
     }
   }, [topStrip, eyebrow, title, subtitle, metadata]);
 
-  /* Per-letter title rendering helper */
-  const renderTitle = (text) => {
-    const words = text.split(" ");
-    return (
-      <span className={styles.headLine}>
-        {words.map((word, wi) => (
-          <span key={wi}>
-            <span className="word">
-              {word.split("").map((c, ci) => (
-                <span key={`${wi}-${ci}`} className={styles.headLetter}>
-                  {c}
-                </span>
-              ))}
-            </span>
-            {wi < words.length - 1 && <span className={styles.headSpace} />}
-          </span>
-        ))}
-      </span>
-    );
-  };
-
   return (
     <div className={styles.page}>
       <Nav onDemo={onDemo} />
@@ -159,7 +139,16 @@ export default function ResourceShell({
         <header className={styles.header}>
           {eyebrow && <div className={styles.headerEyebrow}>{eyebrow}</div>}
           {title && (
-            <h1 className={styles.headerTitle}>{renderTitle(title)}</h1>
+            <h1 className={styles.headerTitle}>
+              <SplitText
+                text={title}
+                classNames={{
+                  line: styles.headLine,
+                  letter: styles.headLetter,
+                  space: styles.headSpace,
+                }}
+              />
+            </h1>
           )}
           {subtitle && <p className={styles.headerSub}>{subtitle}</p>}
           {metadata && metadata.length > 0 && (

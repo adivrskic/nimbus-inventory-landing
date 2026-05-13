@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import styles from "./Calculator.module.css";
 
@@ -322,46 +323,6 @@ export default function CalculatorClient() {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  /* Per-letter title: "See what Nimbus is worth to *you.*" */
-  const renderTitle = () => {
-    const parts = [
-      { t: "See", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "what", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "Nimbus", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "is", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "worth", a: false },
-      { t: " ", isSpace: true, a: false },
-      { t: "to", a: false },
-      { t: " ", isSpace: true, a: true },
-      { t: "you.", a: true },
-    ];
-    return (
-      <span className={styles.heroLine}>
-        {parts.map((p, pi) => {
-          if (p.isSpace) return <span key={pi} className={styles.heroSpace} />;
-          return (
-            <span key={pi} className="word">
-              {p.t.split("").map((c, ci) => (
-                <span
-                  key={`${pi}-${ci}`}
-                  className={`${styles.heroLetter} ${
-                    p.a ? styles.heroLetterAccent : ""
-                  }`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-          );
-        })}
-      </span>
-    );
-  };
-
   const breakdown = [
     {
       num: "01",
@@ -400,7 +361,18 @@ export default function CalculatorClient() {
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>ROI Calculator</div>
-        <h1 className={styles.heroTitle}>{renderTitle()}</h1>
+        <h1 className={styles.heroTitle}>
+          <SplitText
+            text="See what Nimbus is worth to you."
+            accentWord="you"
+            classNames={{
+              line: styles.heroLine,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
+        </h1>
         <p className={styles.heroSub}>
           Every number in the paragraph below is editable. Click one, type a new
           value, and the estimate recalculates as you type. No signup, no email.

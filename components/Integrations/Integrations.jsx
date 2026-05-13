@@ -4,6 +4,7 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useGlowCards from "@/lib/useGlowCards";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./Integrations.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -196,42 +197,26 @@ export default function Integrations() {
     <section ref={sectionRef} id="integrations" className={styles.section}>
       <div ref={headerRef} className={styles.header}>
         <h2 className="heading-lg">
-          {H_LINES.map((line, li) => (
-            <span key={li} className={styles.headLine}>
-              {line.map((w, wi) => (
-                <span key={wi}>
-                  {w.t.split("").map((c, ci) => (
-                    <span
-                      key={`${wi}-${ci}`}
-                      className={`${styles.headLetter} ${
-                        w.a ? styles.headLetterAccent : ""
-                      }`}
-                    >
-                      {c}
-                    </span>
-                  ))}
-                  {wi < line.length - 1 && (
-                    <span className={styles.headSpace} />
-                  )}
-                </span>
-              ))}
-            </span>
-          ))}
+          <SplitText
+            tokens={H_LINES}
+            classNames={{
+              line: styles.headLine,
+              letter: styles.headLetter,
+              accent: styles.headLetterAccent,
+              space: styles.headSpace,
+            }}
+          />
         </h2>
+        {/* AFTER */}
         <div className={styles.headerDesc}>
-          {DESC_LINES.map((line, li) => (
-            <span key={li} className={styles.headerDescLine}>
-              {line.split("").map((c, ci) => {
-                if (c === " ")
-                  return <span key={ci} className={styles.headerDescSpace} />;
-                return (
-                  <span key={ci} className={styles.headerDescLetter}>
-                    {c}
-                  </span>
-                );
-              })}
-            </span>
-          ))}
+          <SplitText
+            lines={DESC_LINES}
+            classNames={{
+              line: styles.headerDescLine,
+              letter: styles.headerDescLetter,
+              space: styles.headerDescSpace,
+            }}
+          />
         </div>
       </div>
 

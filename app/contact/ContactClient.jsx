@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import { validateContact } from "@/lib/validation";
 import styles from "./Contact.module.css";
 
@@ -362,36 +363,6 @@ export default function ContactClient() {
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  /* Per-letter title rendering — "Let's talk." with "talk." gold italic */
-  const renderTitle = () => {
-    const parts = [
-      { t: "Let's", a: false },
-      { t: " ", a: false, isSpace: true },
-      { t: "talk.", a: true },
-    ];
-    return (
-      <span className={styles.heroLine}>
-        {parts.map((p, pi) => {
-          if (p.isSpace) return <span key={pi} className={styles.heroSpace} />;
-          return (
-            <span key={pi} className="word">
-              {p.t.split("").map((c, ci) => (
-                <span
-                  key={`${pi}-${ci}`}
-                  className={`${styles.heroLetter} ${
-                    p.a ? styles.heroLetterAccent : ""
-                  }`}
-                >
-                  {c}
-                </span>
-              ))}
-            </span>
-          );
-        })}
-      </span>
-    );
-  };
-
   const isSubmitting = status === "submitting";
   const isSuccess = status === "success";
 
@@ -413,7 +384,19 @@ export default function ContactClient() {
         </span>
 
         <div className={styles.heroEyebrow}>Contact</div>
-        <h1 className={styles.heroTitle}>{renderTitle()}</h1>
+        {/* AFTER */}
+        <h1 className={styles.heroTitle}>
+          <SplitText
+            text="Let's talk."
+            accentWord="talk"
+            classNames={{
+              line: styles.heroLine,
+              letter: styles.heroLetter,
+              accent: styles.heroLetterAccent,
+              space: styles.heroSpace,
+            }}
+          />
+        </h1>
         <p className={styles.heroSub}>
           Tell us about your warehouse. We&apos;ll get back within 4 business
           hours, usually faster. No bots, no qualification calls — just a real
