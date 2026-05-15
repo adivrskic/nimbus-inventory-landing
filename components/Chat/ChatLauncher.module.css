@@ -1,0 +1,139 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   components/Chat/ChatLauncher.module.css
+   Style sweep — sharp rectangle pill in the corner, mono uppercase label,
+   matches the site's primary CTA pattern (white bg, black text, hover to
+   accent). Peek is a sharp card with hairline rules.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.bubble,
+.peek {
+  pointer-events: auto;
+}
+
+.bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 22px;
+  background: var(--white);
+  color: var(--black);
+  border: 1px solid transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: background 0.3s, color 0.3s, border-color 0.3s,
+    transform 0.3s var(--ease-smooth);
+}
+
+.bubble:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.bubble:active {
+  transform: translateY(0);
+}
+
+.peek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 280px;
+  padding: 14px 32px 14px 16px;
+  background: rgba(10, 10, 10, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 168, 83, 0.32);
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  animation: peekIn 0.45s var(--ease-smooth);
+}
+
+@keyframes peekIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.peekTitle {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  color: var(--white);
+}
+
+.peekSub {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--gray-3);
+  letter-spacing: 0.2px;
+}
+
+.peekClose {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--gray-4);
+  padding: 2px 5px;
+  transition: color 0.2s;
+}
+
+.peekClose:hover {
+  color: var(--white);
+}
+
+@media (max-width: 640px) {
+  .root {
+    bottom: 16px;
+    right: 16px;
+  }
+  .peek {
+    display: none;
+  }
+  .bubble {
+    padding: 12px 18px;
+    font-size: 10.5px;
+    letter-spacing: 0.8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peek,
+  .bubble {
+    animation: none;
+    transition: none;
+  }
+  .bubble:hover {
+    transform: none;
+  }
+}
