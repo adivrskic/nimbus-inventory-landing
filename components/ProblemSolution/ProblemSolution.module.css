@@ -84,7 +84,7 @@
    and the black solution phase, but on the gold problem phase we swap to
    a low-opacity dark color so the label is still readable. */
 .phaseProblem .bigLabel {
-  color: rgba(0, 0, 0, 1);
+  color: var(--accent);
 }
 
 /* Per-letter headline */
@@ -205,37 +205,37 @@
 }
 
 .phaseProblem .headline {
-  color: var(--black);
+  color: var(--white);
 }
 .phaseProblem .headlineAccent {
   color: transparent;
-  -webkit-text-stroke: 1.5px var(--black);
+  -webkit-text-stroke: 1.5px var(--accent);
   paint-order: stroke fill;
   background: transparent;
   -webkit-background-clip: text;
   background-clip: text;
 }
 .phaseProblem .body {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--text-secondary);
 }
 .phaseProblem .accentLine {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--accent);
 }
 .phaseProblem .statVal {
-  color: var(--black);
+  color: var(--accent-bright);
 }
 .phaseProblem .statLabel {
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--text-muted);
 }
 
 .phaseSolution .headline {
-  color: var(--black);
+  color: var(--white);
 }
 .phaseSolution .headlineAccent {
   color: var(--accent);
 }
 .phaseSolution .body {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-secondary);
 }
 .phaseSolution .accentLine {
   background: var(--accent);
@@ -244,7 +244,7 @@
   color: var(--accent);
 }
 .phaseSolution .statLabel {
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-muted);
 }
 
 /* Progress bar */
@@ -288,25 +288,25 @@
   background: var(--accent);
 }
 .progressOnAccent .progressLabel {
-  color: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.25);
 }
 .progressOnAccent .active {
-  color: var(--black);
+  color: var(--accent);
 }
 .progressOnAccent .progressTrack {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 .progressOnAccent .progressFill {
-  background: var(--black);
+  background: var(--accent);
 }
 .progressOnLight .progressLabel {
-  color: rgba(0, 0, 0, 0.15);
+  color: rgba(255, 255, 255, 0.25);
 }
 .progressOnLight .active {
   color: var(--accent);
 }
 .progressOnLight .progressTrack {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 .progressOnLight .progressFill {
   background: var(--accent);

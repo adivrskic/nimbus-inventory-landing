@@ -1,3 +1,10 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   CornerButton — Deep Underwater Theme
+   ───────────────────────────────────────────────────────────────────────
+   .primary uses var(--ink) for text on its white-ish bg — explicit solid
+   dark token so this can never disappear again.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .btn {
   position: relative;
   font-family: var(--mono);
@@ -14,36 +21,39 @@
   overflow: visible;
   transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s;
 }
+
 .label {
   display: inline-flex;
   align-items: center;
 }
+
 .primary {
   background: var(--white);
-  color: var(--black);
+  color: var(--ink);
   border: 1px solid transparent;
 }
 .primary:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-bright);
+  color: var(--ink);
+  border-color: var(--accent-bright);
 }
+
 .ghost {
   background: transparent;
   color: var(--white);
-  border: 1px solid var(--gray-4);
+  border: 1px solid var(--border);
 }
 .ghost:hover {
   border-color: var(--accent);
+  color: var(--accent-bright);
 }
 
-/* Disabled / loading state */
 .disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-/* Inline spinner */
 .spinner {
   display: inline-block;
   width: 12px;

@@ -8,7 +8,7 @@ import styles from "./ProblemSolution.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const BG_COLORS = ["#fff", "#D4A853", "#000000"];
+const BG_COLORS = ["transparent", "transparent", "transparent"];
 const PROGRESS_CLASSES = [
   "progressOnLight",
   "progressOnAccent",

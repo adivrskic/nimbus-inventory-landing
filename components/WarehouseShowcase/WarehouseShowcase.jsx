@@ -76,11 +76,11 @@ for (let i = 0; i <= COLS; i++) {
 }
 
 /* ─── COLORS ────────────────────────────────────────────────────────── */
-const C_BG = 0x070710;
-const C_FOG = 0x0a0a14;
-const C_FLOOR = 0x10101a;
-const C_RACK = 0x1f1f26;
-const C_RACK_EDGE = 0x3a3a44;
+const C_BG = 0x020a1f; // navy abyss (only used as fallback)
+const C_FOG = 0x030c1c; // matches gradient mid-stop; objects fade to gradient
+const C_FLOOR = 0x081832; // navy floor — sits in the abyss
+const C_RACK = 0x18304a; // mid-navy racks
+const C_RACK_EDGE = 0x3a5c7a; // lighter navy edges — visible against floor
 const C_GOLD = 0xd4a853;
 const C_GOLD_HOT = 0xf0c878;
 const C_RED = 0xc84a4a;
@@ -503,19 +503,19 @@ export default function WarehouseShowcase() {
     let w = canvas.clientWidth || section.clientWidth || 1280;
     let h = canvas.clientHeight || 720;
 
-    /* ─── RENDERER + SCENE ─────────────────────────────────────────── */
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      alpha: false,
+      alpha: true, // <- transparent canvas
       powerPreference: "high-performance",
     });
     renderer.setSize(w, h, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000, 0); // <- clear to transparent
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(C_BG);
+    scene.background = null; // <- gradient shows through
     scene.fog = new THREE.FogExp2(C_FOG, 0.012);
 
     const camera = new THREE.PerspectiveCamera(46, w / h, 0.5, 700);

@@ -5,6 +5,27 @@ import Logo from "@/components/shared/Logo";
 import { validateDemo } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DemoModal — two-column, clean
+   ───────────────────────────────────────────────────────────────────────
+   LEFT (220px)  Topic selector + brief agenda — visually integrated
+                 into the same panel surface as the center (no separate
+                 gradient, just a hairline border-right).
+
+   CENTER (1fr)  Topic-aware title/desc, Calendly express card,
+                 5-field form.
+
+   Topic selection drives the form heading, Calendly button text, and
+   agenda items — all swappable elements cross-fade together when the
+   topic changes.
+
+   API contract is unchanged — POST /api/demo with the same form +
+   topic + topicLabel payload. DemoContext, validation, and API route
+   work as-is.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const COMMENTS_MAX = 2000;
+
 const FIELDS = [
   {
     name: "name",
@@ -36,117 +57,37 @@ const FIELDS = [
   },
 ];
 
-const STATS = [
-  { val: "<200ms", label: "Scan speed" },
-  { val: "70%", label: "Time saved" },
-  { val: "99.9%", label: "Uptime" },
-];
-
-const COMMENTS_MAX = 2000;
-
-/* ═══════════════════════════════════════════════════════════════════════
-   TOPICS — what the meeting is about
-   ───────────────────────────────────────────────────────────────────────
-   Each topic drives:
-     - the chip label (short, scannable)
-     - the left-panel title/desc (desktop only)
-     - the form title/desc (shown on all viewports)
-     - the Calendly button title (so it's clear what booking means)
-     - the topic value sent to the API and surfaced in the sales email
-     - the utm_content param on the Calendly URL so reps see context
-       on the booking before the call
-   ═══════════════════════════════════════════════════════════════════════ */
-const TOPICS = [
-  {
-    key: "demo",
-    chip: "Live demo",
-    leftTitle: "See Nimbus in action",
-    leftDesc:
-      "Get a personalized walkthrough tailored to your warehouse operations.",
-    formTitle: "Request a demo",
-    formDesc:
-      "Tell us a few details and our team will reach out within 24 hours.",
-    bookTitle: "Book a demo slot",
-    bookSub: "30 minutes, on your calendar",
-    emailLabel: "Live demo",
-  },
-  {
-    key: "sales",
-    chip: "Enterprise pricing",
-    leftTitle: "Plan your Enterprise rollout",
-    leftDesc: "Multi-warehouse pricing, SSO, and dedicated success management.",
-    formTitle: "Talk to Sales",
-    formDesc:
-      "Tell us about your operation and we'll put together a tailored proposal.",
-    bookTitle: "Book a pricing call",
-    bookSub: "30 minutes with our sales team",
-    emailLabel: "Enterprise pricing",
-  },
-  {
-    key: "migration",
-    chip: "Migration",
-    leftTitle: "Plan your migration",
-    leftDesc:
-      "We'll walk through your current setup and show how each piece maps to Nimbus.",
-    formTitle: "Plan a migration",
-    formDesc:
-      "Tell us what you're using today and we'll outline the migration path.",
-    bookTitle: "Book a migration call",
-    bookSub: "30 minutes with a migration engineer",
-    emailLabel: "Migration from another WMS",
-  },
-  {
-    key: "integration",
-    chip: "Custom integration",
-    leftTitle: "Build with Nimbus",
-    leftDesc:
-      "Tell us what you need to connect — we'll discuss the right approach.",
-    formTitle: "Talk to an engineer",
-    formDesc:
-      "Tell us about the integration you need and we'll get back within 24 hours.",
-    bookTitle: "Book an engineering call",
-    bookSub: "30 minutes with the integrations team",
-    emailLabel: "Custom integration",
-  },
-];
-
-const TOPIC_BY_KEY = TOPICS.reduce((acc, t) => {
-  acc[t.key] = t;
-  return acc;
-}, {});
-
-const DEFAULT_TOPIC = "demo";
-const getTopic = (key) => TOPIC_BY_KEY[key] || TOPIC_BY_KEY[DEFAULT_TOPIC];
-
-const INITIAL_FORM = {
-  name: "",
-  email: "",
-  company: "",
-  warehouseSize: "",
-  comments: "",
-  website: "",
-};
-
-const CheckIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+/* ─── ICONS ────────────────────────────────────────────────────────── */
+const ArrowIcon = ({ size = 12 }) => (
+  <svg
+    width={size}
+    height={size * (10 / 12)}
+    viewBox="0 0 12 10"
+    fill="none"
+    aria-hidden="true"
+  >
     <path
-      d="M4 8.5L7 11.5L12.5 5.5"
+      d="M1 5H11M8 1L11 5L8 9"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.4"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
   </svg>
 );
-
 const CalendarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden="true"
+  >
     <rect
       x="2"
       y="3.5"
       width="12"
       height="11"
-      rx="1.5"
       stroke="currentColor"
       strokeWidth="1.4"
     />
@@ -159,24 +100,261 @@ const CalendarIcon = () => (
     />
   </svg>
 );
-
-const ArrowIcon = ({ size = 12 }) => (
-  <svg width={size} height={size * (10 / 12)} viewBox="0 0 12 10" fill="none">
-    <path
-      d="M1 5H11M8 1L11 5L8 9"
+const DemoIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <rect
+      x="3"
+      y="5"
+      width="18"
+      height="14"
       stroke="currentColor"
       strokeWidth="1.4"
+    />
+    <polygon points="10,9 16,12 10,15" fill="currentColor" />
+  </svg>
+);
+const SalesIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <rect
+      x="3"
+      y="4"
+      width="7"
+      height="16"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <rect
+      x="14"
+      y="9"
+      width="7"
+      height="11"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="3"
+      y1="8"
+      x2="10"
+      y2="8"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="14"
+      y1="13"
+      x2="21"
+      y2="13"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+  </svg>
+);
+const MigrationIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <rect
+      x="2"
+      y="6"
+      width="7"
+      height="12"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <rect
+      x="15"
+      y="6"
+      width="7"
+      height="12"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="9"
+      y1="12"
+      x2="14"
+      y2="12"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <polyline
+      points="12,9 15,12 12,15"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
   </svg>
 );
+const IntegrationIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <circle cx="6" cy="6" r="2" stroke="currentColor" strokeWidth="1.4" />
+    <circle cx="18" cy="6" r="2" stroke="currentColor" strokeWidth="1.4" />
+    <circle cx="6" cy="18" r="2" stroke="currentColor" strokeWidth="1.4" />
+    <circle cx="18" cy="18" r="2" stroke="currentColor" strokeWidth="1.4" />
+    <line
+      x1="6"
+      y1="8"
+      x2="6"
+      y2="16"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="18"
+      y1="8"
+      x2="18"
+      y2="16"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="8"
+      y1="6"
+      x2="16"
+      y2="6"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <line
+      x1="8"
+      y1="18"
+      x2="16"
+      y2="18"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+  </svg>
+);
 
+const TOPIC_ICONS = {
+  demo: DemoIcon,
+  sales: SalesIcon,
+  migration: MigrationIcon,
+  integration: IntegrationIcon,
+};
+
+/* ─── TOPIC CONFIG ─────────────────────────────────────────────────────
+   Each topic drives the LEFT topic chip + agenda, and the CENTER form
+   title/desc + Calendly button label. Switching the topic cross-fades
+   all swappable elements in unison.
+   ──────────────────────────────────────────────────────────────────── */
+const TOPICS = [
+  {
+    key: "demo",
+    chip: "Live demo",
+    formTitle: "Request a demo",
+    formDesc:
+      "Tell us a few details and our team will reach out within 24 hours.",
+    bookTitle: "Book a demo slot",
+    bookSub: "30 minutes, on your calendar",
+    emailLabel: "Live demo",
+    agenda: [
+      "30-min live walkthrough",
+      "Data import from your current system",
+      "Mobile scanner app demo",
+      "Q&A on rollout & timeline",
+    ],
+  },
+  {
+    key: "sales",
+    chip: "Enterprise pricing",
+    formTitle: "Talk to Sales",
+    formDesc:
+      "Tell us about your operation and we'll put together a tailored proposal.",
+    bookTitle: "Book a pricing call",
+    bookSub: "30 minutes with our sales team",
+    emailLabel: "Enterprise pricing",
+    agenda: [
+      "Per-warehouse pricing for your footprint",
+      "SSO, roles, and admin controls",
+      "Dedicated CSM & onboarding",
+      "Contract terms & security review",
+    ],
+  },
+  {
+    key: "migration",
+    chip: "Migration",
+    formTitle: "Plan a migration",
+    formDesc:
+      "Tell us what you're using today and we'll outline the migration path.",
+    bookTitle: "Book a migration call",
+    bookSub: "30 minutes with a migration engineer",
+    emailLabel: "Migration from another WMS",
+    agenda: [
+      "Audit of your current WMS data",
+      "Concept-by-concept mapping doc",
+      "Pilot warehouse & cutover plan",
+      "Training plan for floor staff",
+    ],
+  },
+  {
+    key: "integration",
+    chip: "Custom integration",
+    formTitle: "Talk to an engineer",
+    formDesc:
+      "Tell us about the integration you need and we'll get back within 24 hours.",
+    bookTitle: "Book an engineering call",
+    bookSub: "30 minutes with the integrations team",
+    emailLabel: "Custom integration",
+    agenda: [
+      "REST + webhook API walkthrough",
+      "SDK options and auth model",
+      "Build vs partner discussion",
+      "Sandbox account & docs",
+    ],
+  },
+];
+const TOPIC_BY_KEY = TOPICS.reduce((acc, t) => {
+  acc[t.key] = t;
+  return acc;
+}, {});
+const DEFAULT_TOPIC = "demo";
+const getTopic = (key) => TOPIC_BY_KEY[key] || TOPIC_BY_KEY[DEFAULT_TOPIC];
+
+const INITIAL_FORM = {
+  name: "",
+  email: "",
+  company: "",
+  warehouseSize: "",
+  comments: "",
+  website: "",
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPONENT
+   ═══════════════════════════════════════════════════════════════════════ */
 export default function DemoModal({ isOpen, onClose, initialTopic }) {
   const backdropRef = useRef(null);
   const panelRef = useRef(null);
-  const contentRef = useRef(null);
+  const leftColRef = useRef(null);
+  const centerColRef = useRef(null);
+  const formRef = useRef(null);
   const successRef = useRef(null);
+
   const [mounted, setMounted] = useState(false);
   const [animatingOut, setAnimatingOut] = useState(false);
 
@@ -185,8 +363,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   const [status, setStatus] = useState("idle");
   const [submitError, setSubmitError] = useState("");
 
-  /* Topic state — seeded from initialTopic on each open. The user can
-     change it from inside the modal via the chip selector. */
+  /* Topic state — seeded from initialTopic on each open. */
   const [topicKey, setTopicKey] = useState(initialTopic || DEFAULT_TOPIC);
   useEffect(() => {
     if (isOpen) setTopicKey(initialTopic || DEFAULT_TOPIC);
@@ -194,11 +371,8 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
 
   const topic = getTopic(topicKey);
 
+  /* Calendly URL with topic carried as utm_content */
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || "";
-
-  /* Append topic to the Calendly URL as utm_content so the sales rep
-     can see what the booking is for inside Calendly. Falls back to the
-     plain URL if URL construction fails (e.g. malformed env var). */
   const calendlyHref = useMemo(() => {
     if (!calendlyUrl) return "";
     try {
@@ -245,9 +419,6 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       setStatus("submitting");
       setSubmitError("");
       try {
-        /* Include the topic in the submission so the sales email shows
-           what the lead clicked through on. Falls back gracefully on
-           the backend if the field isn't recognized. */
         const res = await fetch("/api/demo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -275,79 +446,82 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
         setStatus("error");
       }
     },
-    [form, status, topicKey, topic]
+    [form, status, topicKey, topic.emailLabel]
   );
 
-  // Mount/unmount lifecycle
+  /* ── Mount/unmount + open/close animations ────────────────────────── */
   useEffect(() => {
-    if (isOpen) setMounted(true);
-  }, [isOpen]);
-
-  // Intro animation — uses fromTo so elements default to visible if JS hiccups
-  useEffect(() => {
-    if (!mounted || !isOpen || !backdropRef.current) return;
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    tl.to(backdropRef.current, { opacity: 1, duration: 0.4 }).to(
-      panelRef.current,
-      { scale: 1, opacity: 1, duration: 0.6, ease: "power4.out" },
-      "-=0.3"
-    );
-
-    const children = contentRef.current?.children;
-    if (children && children.length) {
-      tl.fromTo(
-        children,
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.45, stagger: 0.05 },
-        "-=0.3"
-      );
-    }
-  }, [mounted, isOpen]);
-
-  // Outro animation — animates whichever view is currently mounted (form OR success)
-  // so closing from the success screen feels identical to closing from the form.
-  useEffect(() => {
-    if (!isOpen && mounted && !animatingOut) {
+    if (isOpen) {
+      setMounted(true);
+      setAnimatingOut(false);
+    } else if (mounted) {
       setAnimatingOut(true);
-      const tl = gsap.timeline({
-        defaults: { ease: "power3.in" },
-        onComplete: () => {
-          setMounted(false);
-          setAnimatingOut(false);
-          resetForm();
-        },
-      });
-
-      // Pick whichever view is currently rendered
-      const formChildren = contentRef.current?.children;
-      const successItems = successRef.current?.querySelectorAll(
-        "[data-success-item]"
-      );
-      const target =
-        formChildren && formChildren.length
-          ? formChildren
-          : successItems && successItems.length
-          ? successItems
-          : null;
-
-      if (target) {
-        tl.to(target, {
-          y: -16,
-          opacity: 0,
-          duration: 0.22,
-          stagger: 0.02,
-        });
-      }
-
-      tl.to(
-        panelRef.current,
-        { scale: 0.95, opacity: 0, duration: 0.35 },
-        "-=0.15"
-      ).to(backdropRef.current, { opacity: 0, duration: 0.3 }, "-=0.2");
+      const t = setTimeout(() => {
+        setMounted(false);
+        setAnimatingOut(false);
+        resetForm();
+      }, 400);
+      return () => clearTimeout(t);
     }
-  }, [isOpen, mounted, animatingOut, resetForm]);
+  }, [isOpen, mounted, resetForm]);
 
-  // Escape
+  useEffect(() => {
+    if (!mounted) return;
+    if (isOpen && !animatingOut) {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.fromTo(
+        backdropRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3 }
+      )
+        .fromTo(
+          panelRef.current,
+          { scale: 0.96, opacity: 0, y: 16 },
+          { scale: 1, opacity: 1, y: 0, duration: 0.45 },
+          "-=0.18"
+        )
+        .fromTo(
+          [leftColRef.current, centerColRef.current].filter(Boolean),
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.08 },
+          "-=0.3"
+        );
+    } else if (animatingOut) {
+      const tl = gsap.timeline({ defaults: { ease: "power2.in" } });
+      tl.to([leftColRef.current, centerColRef.current].filter(Boolean), {
+        opacity: 0,
+        y: -8,
+        duration: 0.2,
+        stagger: 0.04,
+      })
+        .to(
+          panelRef.current,
+          { scale: 0.95, opacity: 0, duration: 0.3 },
+          "-=0.1"
+        )
+        .to(backdropRef.current, { opacity: 0, duration: 0.25 }, "-=0.18");
+    }
+  }, [isOpen, mounted, animatingOut]);
+
+  /* Smooth topic-swap animation */
+  const lastTopicRef = useRef(topicKey);
+  useEffect(() => {
+    if (!mounted) {
+      lastTopicRef.current = topicKey;
+      return;
+    }
+    if (lastTopicRef.current === topicKey) return;
+    lastTopicRef.current = topicKey;
+    const targets = document.querySelectorAll(`.${styles.topicSwap}`);
+    if (targets.length === 0) return;
+    gsap.fromTo(
+      targets,
+      { opacity: 0, y: 6 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.02 }
+    );
+  }, [topicKey, mounted]);
+
+  /* Escape key */
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
@@ -357,7 +531,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  // Intro animation for the success view (when it first appears after submit)
+  /* Success view intro animation */
   useEffect(() => {
     if (status === "success" && successRef.current) {
       gsap.fromTo(
@@ -411,327 +585,370 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
         className={styles.panel}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={styles.left}>
-          <div className={styles.leftGrid} />
-          <div style={{ marginBottom: 32 }}>
-            <Logo size={80} />
-          </div>
-          {/* Left-panel title/desc track the topic so the dominant
-              promise on opening matches what was clicked. */}
-          <h3 className={styles.leftTitle} id="demo-modal-title">
-            {topic.leftTitle}
-          </h3>
-          <p className={styles.leftDesc}>{topic.leftDesc}</p>
-          <div className={styles.stats}>
-            {STATS.map((s, i) => (
-              <div key={i}>
-                <div className={styles.statVal}>{s.val}</div>
-                <div className={styles.statLabel}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Decorative gold corner brackets */}
+        <div
+          className={`${styles.cornerBracket} ${styles.cornerTL}`}
+          aria-hidden="true"
+        />
+        <div
+          className={`${styles.cornerBracket} ${styles.cornerBR}`}
+          aria-hidden="true"
+        />
 
-        <div className={styles.right}>
-          <button
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="Close dialog"
-            type="button"
-          >
-            ✕
-          </button>
+        {/* Close button */}
+        <button
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Close dialog"
+          type="button"
+        >
+          ✕
+        </button>
 
-          {isSuccess ? (
-            <div ref={successRef} className={styles.successWrap}>
-              <div className={styles.successIcon} data-success-item>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <circle
-                    cx="16"
-                    cy="16"
-                    r="15"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M10 16.5L14.5 21L22 12.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div className={styles.successTitle} data-success-item>
-                Thanks{form.name ? `, ${form.name.split(" ")[0]}` : ""}.
-              </div>
-              <p className={styles.successDesc} data-success-item>
-                We received your request. Our team will reach out within 24
-                hours.
-              </p>
-
-              {calendlyHref ? (
-                <>
-                  <div className={styles.successDivider} data-success-item>
-                    <span>or skip the wait</span>
-                  </div>
-                  <a
-                    href={calendlyHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.calendlyBtn}
-                    data-success-item
-                  >
-                    Book a time directly
-                    <span style={{ marginLeft: 8, display: "inline-flex" }}>
-                      <ArrowIcon />
-                    </span>
-                  </a>
-                </>
-              ) : null}
-
-              <button
-                className={styles.successClose}
-                onClick={onClose}
-                data-success-item
-                type="button"
-              >
-                Close
-              </button>
+        {isSuccess ? (
+          /* ═══════════════════════════════════════════════════════════
+             SUCCESS VIEW — single-column, centered
+             ═════════════════════════════════════════════════════════ */
+          <div ref={successRef} className={styles.successWrap}>
+            <div className={styles.successIcon} data-success-item>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="15"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M10 16.5L14.5 21L22 12.5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-          ) : (
-            <form
-              ref={contentRef}
-              onSubmit={handleSubmit}
-              noValidate
-              autoComplete="on"
-            >
-              {/* Form title/desc also track the topic — this is what
-                  mobile users see (the left panel is hidden < 768px). */}
-              <div className={styles.formTitle}>{topic.formTitle}</div>
-              <p className={styles.formDesc}>{topic.formDesc}</p>
-
-              {/* ── Topic chips ──
-                  Lets the user confirm or change what the conversation
-                  is about. Drives the Calendly utm_content param and
-                  the topic field on the form submission, so sales has
-                  context before the first reply. */}
-              <div className={styles.topicBlock}>
-                <div className={styles.topicQuestion}>What's this about?</div>
-                <div className={styles.topicChips} role="radiogroup">
-                  {TOPICS.map((t) => (
-                    <button
-                      key={t.key}
-                      type="button"
-                      role="radio"
-                      aria-checked={topicKey === t.key}
-                      onClick={() => setTopicKey(t.key)}
-                      className={`${styles.topicChip} ${
-                        topicKey === t.key ? styles.topicChipActive : ""
-                      }`}
-                    >
-                      {t.chip}
-                    </button>
-                  ))}
+            <div className={styles.successTitle} data-success-item>
+              Thanks{form.name ? `, ${form.name.split(" ")[0]}` : ""}.
+            </div>
+            <p className={styles.successDesc} data-success-item>
+              We received your request. Our team will reach out within 24 hours.
+            </p>
+            {calendlyHref ? (
+              <>
+                <div className={styles.successDivider} data-success-item>
+                  <span>or skip the wait</span>
                 </div>
+                <a
+                  href={calendlyHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.calendlyBtn}
+                  data-success-item
+                >
+                  Book a time directly
+                  <span style={{ marginLeft: 8, display: "inline-flex" }}>
+                    <ArrowIcon />
+                  </span>
+                </a>
+              </>
+            ) : null}
+            <button
+              className={styles.successClose}
+              onClick={onClose}
+              data-success-item
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          /* ═══════════════════════════════════════════════════════════
+             MAIN VIEW — two columns
+             ═════════════════════════════════════════════════════════ */
+          <>
+            {/* ─── LEFT — topic + agenda ────────────────────────────── */}
+            <div ref={leftColRef} className={styles.leftCol}>
+              <div className={styles.logoMark}>
+                <Logo size={28} />
+                <span className={styles.logoMarkText}>Nimbus</span>
               </div>
 
-              {/* ── Prominent Calendly card ──
-                  Sits above the form so users who already know what
-                  they want can skip the form entirely. URL carries the
-                  selected topic as utm_content. Hidden if no Calendly
-                  URL is configured. */}
+              <div className={styles.leftSection}>
+                <span className={styles.eyebrow}>Topic</span>
+                <ul
+                  role="radiogroup"
+                  aria-label="Meeting topic"
+                  className={styles.topicList}
+                >
+                  {TOPICS.map((t) => {
+                    const Icon = TOPIC_ICONS[t.key];
+                    const active = topicKey === t.key;
+                    return (
+                      <li key={t.key}>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setTopicKey(t.key)}
+                          className={`${styles.topicItem} ${
+                            active ? styles.topicItemActive : ""
+                          }`}
+                        >
+                          <span className={styles.topicIcon}>
+                            <Icon />
+                          </span>
+                          <span className={styles.topicName}>{t.chip}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              <div
+                className={`${styles.leftSection} ${styles.topicSwap}`}
+                key={`agenda-${topicKey}`}
+              >
+                <span className={styles.eyebrow}>We'll cover</span>
+                <ul className={styles.agendaList}>
+                  {topic.agenda.map((item, i) => (
+                    <li key={i} className={styles.agendaItem}>
+                      <span
+                        className={styles.agendaItemDot}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.agendaItemText}>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* ─── CENTER — form ─────────────────────────────────────── */}
+            <div ref={centerColRef} className={styles.centerCol}>
+              <div className={styles.formHeader}>
+                <h2
+                  id="demo-modal-title"
+                  className={`${styles.formTitle} ${styles.topicSwap}`}
+                  key={`title-${topicKey}`}
+                >
+                  {topic.formTitle}
+                </h2>
+                <p
+                  className={`${styles.formDesc} ${styles.topicSwap}`}
+                  key={`desc-${topicKey}`}
+                >
+                  {topic.formDesc}
+                </p>
+              </div>
+
+              {/* Calendly express card */}
               {calendlyHref ? (
-                <>
-                  <a
-                    href={calendlyHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.calendlyTop}
-                  >
-                    <span className={styles.calendlyTopIcon}>
-                      <CalendarIcon />
+                <a
+                  href={calendlyHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.calendlyCard} ${styles.topicSwap}`}
+                  key={`cal-${topicKey}`}
+                >
+                  <span className={styles.calendlyCardIcon}>
+                    <CalendarIcon />
+                  </span>
+                  <span className={styles.calendlyCardText}>
+                    <span className={styles.calendlyCardTitle}>
+                      {topic.bookTitle}
                     </span>
-                    <span className={styles.calendlyTopText}>
-                      <span className={styles.calendlyTopTitle}>
-                        {topic.bookTitle}
-                      </span>
-                      <span className={styles.calendlyTopSub}>
-                        {topic.bookSub}
-                      </span>
+                    <span className={styles.calendlyCardSub}>
+                      {topic.bookSub}
                     </span>
-                    <span className={styles.calendlyTopArrow}>
-                      <ArrowIcon size={14} />
-                    </span>
-                  </a>
-                  <div className={styles.calendlyOrDivider}>
-                    <span>or send us a note</span>
-                  </div>
-                </>
+                  </span>
+                  <span className={styles.calendlyCardArrow}>
+                    <ArrowIcon size={14} />
+                  </span>
+                </a>
               ) : null}
 
-              <div className={styles.honeypot} aria-hidden="true">
-                <label>
-                  Website
+              <div className={styles.formDivider}>
+                <span>or share details below</span>
+              </div>
+
+              <form
+                ref={formRef}
+                onSubmit={handleSubmit}
+                noValidate
+                autoComplete="on"
+                className={styles.form}
+              >
+                {/* Honeypot */}
+                <div className={styles.honeypot} aria-hidden="true">
+                  <label htmlFor="demo-website">Website</label>
                   <input
+                    id="demo-website"
                     type="text"
                     tabIndex={-1}
                     autoComplete="off"
                     value={form.website}
                     onChange={(e) => updateField("website", e.target.value)}
                   />
-                </label>
-              </div>
+                </div>
 
-              {FIELDS.map((field) => {
-                const err = errors[field.name];
-                const valid = isFieldValid(field.name);
-                const id = `demo-${field.name}`;
-                return (
-                  <div key={field.name} className={styles.fieldGroup}>
-                    <div
-                      className={`${styles.fieldShell} ${
-                        err ? styles.fieldShellError : ""
-                      } ${valid ? styles.fieldShellValid : ""}`}
-                    >
-                      <input
-                        id={id}
-                        name={field.name}
-                        type={field.type}
-                        placeholder=" "
-                        autoComplete={field.autoComplete}
-                        className={styles.fieldInput}
-                        value={form[field.name]}
-                        onChange={(e) =>
-                          updateField(field.name, e.target.value)
-                        }
-                        disabled={isSubmitting}
-                        required={field.required}
-                        aria-required={field.required ? "true" : undefined}
-                        aria-invalid={err ? "true" : "false"}
-                        aria-describedby={
-                          err
-                            ? `${id}-error`
-                            : field.hint
-                            ? `${id}-hint`
-                            : undefined
-                        }
-                      />
-                      <label className={styles.floatLabel} htmlFor={id}>
-                        {field.label}
-                        {field.required ? (
-                          <span className={styles.req} aria-hidden="true">
-                            *
+                {FIELDS.map((field) => {
+                  const valid = isFieldValid(field.name);
+                  const err = errors[field.name];
+                  return (
+                    <div key={field.name} className={styles.fieldGroup}>
+                      <div
+                        className={`${styles.fieldShell} ${
+                          err ? styles.fieldShellError : ""
+                        } ${valid ? styles.fieldShellValid : ""}`}
+                      >
+                        <input
+                          id={`demo-${field.name}`}
+                          name={field.name}
+                          type={field.type}
+                          autoComplete={field.autoComplete || "off"}
+                          placeholder=" "
+                          value={form[field.name]}
+                          onChange={(e) =>
+                            updateField(field.name, e.target.value)
+                          }
+                          disabled={isSubmitting}
+                          aria-invalid={err ? "true" : "false"}
+                          aria-describedby={
+                            err
+                              ? `demo-${field.name}-error`
+                              : field.hint
+                              ? `demo-${field.name}-hint`
+                              : undefined
+                          }
+                          className={styles.fieldInput}
+                        />
+                        <label
+                          htmlFor={`demo-${field.name}`}
+                          className={styles.floatLabel}
+                        >
+                          {field.label}
+                          {field.required ? (
+                            <span className={styles.req}>*</span>
+                          ) : null}
+                        </label>
+                        {valid ? (
+                          <span
+                            className={styles.fieldCheck}
+                            data-show="true"
+                            aria-hidden="true"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M4 8.5L7 11.5L12.5 5.5"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           </span>
                         ) : null}
-                      </label>
-                      <div
-                        className={styles.fieldCheck}
-                        aria-hidden="true"
-                        data-show={valid ? "true" : "false"}
-                      >
-                        <CheckIcon />
                       </div>
+                      {err ? (
+                        <span
+                          id={`demo-${field.name}-error`}
+                          className={styles.fieldError}
+                          role="alert"
+                        >
+                          {err}
+                        </span>
+                      ) : field.hint ? (
+                        <span
+                          id={`demo-${field.name}-hint`}
+                          className={styles.fieldHint}
+                        >
+                          {field.hint}
+                        </span>
+                      ) : null}
                     </div>
-                    {err ? (
-                      <div id={`${id}-error`} className={styles.fieldError}>
-                        {err}
-                      </div>
-                    ) : field.hint ? (
-                      <div id={`${id}-hint`} className={styles.fieldHint}>
-                        {field.hint}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              <div className={styles.fieldGroup}>
-                <div
-                  className={`${styles.fieldShell} ${
-                    errors.comments ? styles.fieldShellError : ""
-                  } ${isFieldValid("comments") ? styles.fieldShellValid : ""}`}
-                >
-                  <textarea
-                    id="demo-comments"
-                    name="comments"
-                    placeholder=" "
-                    className={`${styles.fieldInput} ${styles.fieldTextarea}`}
-                    rows={3}
-                    maxLength={COMMENTS_MAX}
-                    value={form.comments}
-                    onChange={(e) => updateField("comments", e.target.value)}
-                    disabled={isSubmitting}
-                    required
-                    aria-required="true"
-                    aria-invalid={errors.comments ? "true" : "false"}
-                    aria-describedby={
-                      errors.comments
-                        ? "demo-comments-error"
-                        : "demo-comments-meta"
-                    }
-                  />
-                  <label className={styles.floatLabel} htmlFor="demo-comments">
-                    Comments
-                    <span className={styles.req} aria-hidden="true">
-                      *
-                    </span>
-                  </label>
-                </div>
-                <div id="demo-comments-meta" className={styles.fieldMetaRow}>
-                  {errors.comments ? (
-                    <span
-                      id="demo-comments-error"
-                      className={styles.fieldError}
+                {/* Comments */}
+                <div className={styles.fieldGroup}>
+                  <div
+                    className={`${styles.fieldShell} ${
+                      errors.comments ? styles.fieldShellError : ""
+                    }`}
+                  >
+                    <textarea
+                      id="demo-comments"
+                      name="comments"
+                      placeholder=" "
+                      value={form.comments}
+                      onChange={(e) => updateField("comments", e.target.value)}
+                      disabled={isSubmitting}
+                      maxLength={COMMENTS_MAX}
+                      rows={3}
+                      className={`${styles.fieldInput} ${styles.fieldTextarea}`}
+                    />
+                    <label
+                      htmlFor="demo-comments"
+                      className={styles.floatLabel}
                     >
-                      {errors.comments}
-                    </span>
-                  ) : (
-                    <span className={styles.fieldHint}>
-                      Tell us about your operation, challenges, or questions
-                    </span>
-                  )}
-                  <span className={styles.charCount}>
-                    {form.comments.length}/{COMMENTS_MAX}
-                  </span>
-                </div>
-              </div>
-
-              {submitError ? (
-                <div className={styles.submitError} role="alert">
-                  {submitError}
-                </div>
-              ) : null}
-
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={isSubmitting}
-                aria-busy={isSubmitting ? "true" : "false"}
-              >
-                <span className={styles.submitBtnLabel}>
-                  {isSubmitting ? (
-                    <>
-                      <span className={styles.spinner} aria-hidden="true" />
-                      Sending…
-                    </>
-                  ) : (
-                    <>
-                      Send request
-                      <span
-                        className={styles.submitArrow}
-                        aria-hidden="true"
-                        style={{ display: "inline-flex" }}
-                      >
-                        <ArrowIcon />
+                      Anything else? (optional)
+                    </label>
+                  </div>
+                  <div className={styles.fieldMetaRow}>
+                    {errors.comments ? (
+                      <span className={styles.fieldError}>
+                        {errors.comments}
                       </span>
-                    </>
-                  )}
-                </span>
-              </button>
-            </form>
-          )}
-        </div>
+                    ) : (
+                      <span className={styles.fieldHint}>
+                        Integrations you use, pain points, timeline…
+                      </span>
+                    )}
+                    <span className={styles.charCount}>
+                      {form.comments.length}/{COMMENTS_MAX}
+                    </span>
+                  </div>
+                </div>
+
+                {submitError ? (
+                  <div className={styles.submitError} role="alert">
+                    {submitError}
+                  </div>
+                ) : null}
+
+                <button
+                  type="submit"
+                  className={styles.submitBtn}
+                  disabled={isSubmitting}
+                  aria-busy={isSubmitting ? "true" : "false"}
+                >
+                  <span className={styles.submitBtnLabel}>
+                    {isSubmitting ? (
+                      <>
+                        <span className={styles.spinner} aria-hidden="true" />
+                        Sending…
+                      </>
+                    ) : (
+                      <>
+                        Send request
+                        <span className={styles.submitArrow} aria-hidden="true">
+                          <ArrowIcon />
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </button>
+              </form>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

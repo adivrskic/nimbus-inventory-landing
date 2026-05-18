@@ -1,5 +1,12 @@
 /* SVGs are fully visible in static state.
-   Animations add motion, highlights, and effects when row is active. */
+   Animations add motion, highlights, and effects when row is active.
+
+   ── Color palette (ocean theme) ──
+   GRAPHICS (strokes/fills): rgba(180, 205, 230, X) — cool blue-grey on navy
+   TEXT:                     rgba(220, 232, 246, X) — slightly brighter cool-light
+   GOLD ACCENT:              #D4A853 + rgba(212, 168, 83, X) — unchanged
+   ZONE TINTS (floorplan):   green/blue/red/purple — unchanged, read fine on navy
+*/
 
 export function ScannerSVG() {
   return (
@@ -11,7 +18,7 @@ export function ScannerSVG() {
         width="140"
         height="200"
         rx="12"
-        stroke="rgba(0,0,0,0.08)"
+        stroke="rgba(180, 205, 230, 0.22)"
         strokeWidth="1.5"
       />
       <rect
@@ -21,7 +28,7 @@ export function ScannerSVG() {
         width="124"
         height="168"
         rx="4"
-        fill="rgba(0,0,0,0.02)"
+        fill="rgba(180, 205, 230, 0.05)"
       />
       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
         <rect
@@ -31,7 +38,7 @@ export function ScannerSVG() {
           y="70"
           width={i % 3 === 0 ? 4 : 2}
           height="60"
-          fill="rgba(0,0,0,0.12)"
+          fill="rgba(180, 205, 230, 0.35)"
         />
       ))}
       {/* Scan beam — hidden until animated */}
@@ -75,7 +82,7 @@ export function ScannerSVG() {
         width="60"
         height="4"
         rx="2"
-        fill="rgba(0,0,0,0.08)"
+        fill="rgba(180, 205, 230, 0.22)"
         opacity="0"
       />
       <rect
@@ -85,7 +92,7 @@ export function ScannerSVG() {
         width="45"
         height="4"
         rx="2"
-        fill="rgba(0,0,0,0.05)"
+        fill="rgba(180, 205, 230, 0.15)"
         opacity="0"
       />
       <rect
@@ -95,7 +102,7 @@ export function ScannerSVG() {
         width="70"
         height="4"
         rx="2"
-        fill="rgba(0,0,0,0.05)"
+        fill="rgba(180, 205, 230, 0.15)"
         opacity="0"
       />
       <circle
@@ -122,7 +129,7 @@ export function ScannerSVG() {
         width="60"
         height="3"
         rx="1.5"
-        fill="rgba(0,0,0,0.04)"
+        fill="rgba(180, 205, 230, 0.12)"
         className="feat-conf-bg"
         opacity="0"
       />
@@ -150,7 +157,7 @@ export function FloorPlanSVG() {
         width="320"
         height="180"
         rx="4"
-        stroke="rgba(0,0,0,0.08)"
+        stroke="rgba(180, 205, 230, 0.22)"
         strokeWidth="1"
       />
       {[0, 1, 2].map((i) => (
@@ -161,7 +168,7 @@ export function FloorPlanSVG() {
           y1="20"
           x2={110 + i * 80}
           y2="200"
-          stroke="rgba(0,0,0,0.03)"
+          stroke="rgba(180, 205, 230, 0.08)"
           strokeWidth="1"
         />
       ))}
@@ -173,7 +180,7 @@ export function FloorPlanSVG() {
           y1={80 + i * 60}
           x2="350"
           y2={80 + i * 60}
-          stroke="rgba(0,0,0,0.03)"
+          stroke="rgba(180, 205, 230, 0.08)"
           strokeWidth="1"
         />
       ))}
@@ -239,8 +246,8 @@ export function FloorPlanSVG() {
         width="300"
         height="30"
         rx="3"
-        fill="rgba(0,0,0,0.015)"
-        stroke="rgba(0,0,0,0.04)"
+        fill="rgba(180, 205, 230, 0.04)"
+        stroke="rgba(180, 205, 230, 0.12)"
         strokeWidth="1"
       />
       <text
@@ -250,7 +257,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         A-01
       </text>
@@ -261,7 +268,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         B-01
       </text>
@@ -272,7 +279,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         A-02
       </text>
@@ -283,7 +290,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         B-02
       </text>
@@ -294,7 +301,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         C-01
       </text>
@@ -305,7 +312,7 @@ export function FloorPlanSVG() {
         textAnchor="middle"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.2)"
+        fill="rgba(220, 232, 246, 0.4)"
       >
         DOCK
       </text>
@@ -357,7 +364,7 @@ export function AnalyticsSVG() {
         y1="180"
         x2="350"
         y2="180"
-        stroke="rgba(0,0,0,0.06)"
+        stroke="rgba(180, 205, 230, 0.18)"
         strokeWidth="1"
       />
       <line
@@ -366,7 +373,7 @@ export function AnalyticsSVG() {
         y1="20"
         x2="50"
         y2="180"
-        stroke="rgba(0,0,0,0.06)"
+        stroke="rgba(180, 205, 230, 0.18)"
         strokeWidth="1"
       />
       {[0, 1, 2, 3].map((i) => (
@@ -377,7 +384,7 @@ export function AnalyticsSVG() {
           y1={180 - (i + 1) * 38}
           x2="350"
           y2={180 - (i + 1) * 38}
-          stroke="rgba(0,0,0,0.02)"
+          stroke="rgba(180, 205, 230, 0.05)"
           strokeWidth="1"
         />
       ))}
@@ -393,7 +400,7 @@ export function AnalyticsSVG() {
               width="18"
               height={staticH}
               rx="2"
-              fill="rgba(0,0,0,0.06)"
+              fill="rgba(180, 205, 230, 0.18)"
             />
             <rect
               className="feat-bar-accent"
@@ -410,7 +417,7 @@ export function AnalyticsSVG() {
       <polyline
         className="feat-trend"
         points="79,155 107,128 135,140 163,105 191,118 219,108 247,145 275,95 303,115 331,102"
-        stroke="rgba(0,0,0,0.06)"
+        stroke="rgba(180, 205, 230, 0.18)"
         strokeWidth="1"
         fill="none"
       />
@@ -481,14 +488,14 @@ export function InventorySVG() {
         width="340"
         height="28"
         rx="4"
-        fill="rgba(0,0,0,0.03)"
+        fill="rgba(180, 205, 230, 0.08)"
       />
       <text
         x="40"
         y="38"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.3)"
+        fill="rgba(220, 232, 246, 0.55)"
       >
         PRODUCT
       </text>
@@ -497,7 +504,7 @@ export function InventorySVG() {
         y="38"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.3)"
+        fill="rgba(220, 232, 246, 0.55)"
       >
         SKU
       </text>
@@ -506,7 +513,7 @@ export function InventorySVG() {
         y="38"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.3)"
+        fill="rgba(220, 232, 246, 0.55)"
       >
         QTY
       </text>
@@ -515,7 +522,7 @@ export function InventorySVG() {
         y="38"
         fontSize="8"
         fontFamily="monospace"
-        fill="rgba(0,0,0,0.3)"
+        fill="rgba(220, 232, 246, 0.55)"
       >
         LOC
       </text>
@@ -542,7 +549,7 @@ export function InventorySVG() {
             y={74 + i * 32}
             fontSize="9"
             fontFamily="monospace"
-            fill="rgba(0,0,0,0.4)"
+            fill="rgba(220, 232, 246, 0.7)"
           >
             {name}
           </text>
@@ -551,7 +558,7 @@ export function InventorySVG() {
             y={74 + i * 32}
             fontSize="9"
             fontFamily="monospace"
-            fill="rgba(0,0,0,0.2)"
+            fill="rgba(220, 232, 246, 0.4)"
           >
             FL-{String(1024 + i * 37).padStart(4, "0")}
           </text>
@@ -560,7 +567,7 @@ export function InventorySVG() {
             y={74 + i * 32}
             fontSize="9"
             fontFamily="monospace"
-            fill="rgba(0,0,0,0.2)"
+            fill="rgba(220, 232, 246, 0.4)"
           >
             {[248, 82, 35, 164, 91][i]}
           </text>
@@ -569,7 +576,7 @@ export function InventorySVG() {
             y={74 + i * 32}
             fontSize="9"
             fontFamily="monospace"
-            fill="rgba(0,0,0,0.2)"
+            fill="rgba(220, 232, 246, 0.4)"
           >
             {["A-03", "B-07", "C-02", "A-11", "D-04"][i]}
           </text>
@@ -612,8 +619,8 @@ export function CycleCountSVG() {
               width="100"
               height="65"
               rx="4"
-              fill="rgba(0,0,0,0.02)"
-              stroke="rgba(0,0,0,0.05)"
+              fill="rgba(180, 205, 230, 0.05)"
+              stroke="rgba(180, 205, 230, 0.15)"
               strokeWidth="1"
             />
             <text
@@ -621,7 +628,7 @@ export function CycleCountSVG() {
               y={y + 20}
               fontSize="9"
               fontFamily="monospace"
-              fill="rgba(0,0,0,0.3)"
+              fill="rgba(220, 232, 246, 0.55)"
             >
               {sec}
             </text>
@@ -632,7 +639,7 @@ export function CycleCountSVG() {
               width="76"
               height="3"
               rx="1.5"
-              fill="rgba(0,0,0,0.04)"
+              fill="rgba(180, 205, 230, 0.12)"
             />
             <rect
               className="feat-sprog"
@@ -649,7 +656,7 @@ export function CycleCountSVG() {
               cy={y + 18}
               r="7"
               fill="none"
-              stroke="rgba(0,0,0,0.06)"
+              stroke="rgba(180, 205, 230, 0.18)"
               strokeWidth="1"
             />
             <path
@@ -672,7 +679,7 @@ export function CycleCountSVG() {
         width="320"
         height="6"
         rx="3"
-        fill="rgba(0,0,0,0.04)"
+        fill="rgba(180, 205, 230, 0.12)"
       />
       <rect
         className="feat-oprog"
@@ -709,8 +716,8 @@ export function LabelSVG() {
         width="200"
         height="24"
         rx="4"
-        fill="rgba(0,0,0,0.04)"
-        stroke="rgba(0,0,0,0.06)"
+        fill="rgba(180, 205, 230, 0.12)"
+        stroke="rgba(180, 205, 230, 0.18)"
         strokeWidth="1"
       />
       <rect
@@ -720,7 +727,7 @@ export function LabelSVG() {
         width="160"
         height="4"
         rx="2"
-        fill="rgba(0,0,0,0.08)"
+        fill="rgba(180, 205, 230, 0.22)"
       />
       {/* Printer indicator light */}
       <circle
@@ -728,7 +735,7 @@ export function LabelSVG() {
         cx="270"
         cy="18"
         r="3"
-        fill="rgba(0,0,0,0.06)"
+        fill="rgba(180, 205, 230, 0.18)"
       />
 
       {/* Label — clips from printer slot, slides down */}
@@ -744,8 +751,8 @@ export function LabelSVG() {
             width="150"
             height="110"
             rx="3"
-            fill="rgba(0,0,0,0.015)"
-            stroke="rgba(0,0,0,0.06)"
+            fill="rgba(180, 205, 230, 0.04)"
+            stroke="rgba(180, 205, 230, 0.18)"
             strokeWidth="1"
           />
           {/* Barcode */}
@@ -757,7 +764,7 @@ export function LabelSVG() {
               y="46"
               width={i % 3 === 0 ? 4 : 2}
               height="28"
-              fill="rgba(0,0,0,0.12)"
+              fill="rgba(180, 205, 230, 0.35)"
             />
           ))}
           {/* Label text lines */}
@@ -767,7 +774,7 @@ export function LabelSVG() {
             width="90"
             height="4"
             rx="2"
-            fill="rgba(0,0,0,0.06)"
+            fill="rgba(180, 205, 230, 0.18)"
           />
           <rect
             x="130"
@@ -775,7 +782,7 @@ export function LabelSVG() {
             width="60"
             height="3"
             rx="1.5"
-            fill="rgba(0,0,0,0.04)"
+            fill="rgba(180, 205, 230, 0.12)"
           />
           <rect
             x="130"
@@ -783,7 +790,7 @@ export function LabelSVG() {
             width="75"
             height="3"
             rx="1.5"
-            fill="rgba(0,0,0,0.03)"
+            fill="rgba(180, 205, 230, 0.08)"
           />
           {/* QR code block */}
           <rect
@@ -792,8 +799,8 @@ export function LabelSVG() {
             width="24"
             height="24"
             rx="2"
-            fill="rgba(0,0,0,0.03)"
-            stroke="rgba(0,0,0,0.06)"
+            fill="rgba(180, 205, 230, 0.08)"
+            stroke="rgba(180, 205, 230, 0.18)"
             strokeWidth="0.5"
           />
           {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -806,7 +813,7 @@ export function LabelSVG() {
               rx="0.5"
               fill={
                 [1, 0, 1, 1, 1, 0, 0, 1, 1][i]
-                  ? "rgba(0,0,0,0.08)"
+                  ? "rgba(180, 205, 230, 0.22)"
                   : "transparent"
               }
             />

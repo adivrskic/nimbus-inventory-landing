@@ -16,6 +16,7 @@ import styles from "./AISection.module.css";
 
 const PARTICLE_COUNT = 50000;
 const OFFSET = 5.5;
+const TO_RAD = Math.PI / 180;
 
 const SHAPE_GENERATORS = {
   rings: generateSoundRings,
@@ -28,10 +29,15 @@ const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
 
 /* ─────────────────────────────────────────────────────────────────────
    SECTIONS
-   Each section now carries TWO shape configs — `desktop` and `mobile`.
-   The debug panel edits these separately and the renderer selects the
-   right one based on viewport width (with optional override from the
-   debug panel's preview mode toggle).
+   Each section now has START and END poses. The shape interpolates
+   from its start rotation+offset to its end rotation+offset as you
+   scroll through that shape's display window. Defaults give each shape
+   a gentle Y rotation through its window — easy to tune via the debug
+   panel.
+
+   Both `desktop` and `mobile` keys carry: rotX/Y/Z, offsetX/Y for the
+   START pose, scale (single value, not animated), and rotXEnd/Y/Z,
+   offsetXEnd/Y for the END pose.
    ───────────────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
@@ -43,17 +49,27 @@ const SECTIONS = [
       rotX: -33,
       rotY: -52,
       rotZ: 67,
-      scale: 0.6,
       offsetX: -1,
       offsetY: 0,
+      scale: 0.6,
+      rotXEnd: -33,
+      rotYEnd: -22,
+      rotZEnd: 67,
+      offsetXEnd: -1,
+      offsetYEnd: 0,
     },
     mobile: {
       rotX: -33,
       rotY: -52,
       rotZ: 67,
-      scale: 0.55,
       offsetX: 0,
       offsetY: 0,
+      scale: 0.55,
+      rotXEnd: -33,
+      rotYEnd: -22,
+      rotZEnd: 67,
+      offsetXEnd: 0,
+      offsetYEnd: 0,
     },
     badge: "Hands-free",
     title: "Voice commands",
@@ -68,17 +84,27 @@ const SECTIONS = [
       rotX: -57,
       rotY: -19,
       rotZ: 0,
-      scale: 0.8,
       offsetX: 0,
       offsetY: 0,
+      scale: 0.8,
+      rotXEnd: -57,
+      rotYEnd: 11,
+      rotZEnd: 0,
+      offsetXEnd: 0,
+      offsetYEnd: 0,
     },
     mobile: {
       rotX: -57,
       rotY: -19,
       rotZ: 0,
-      scale: 0.65,
       offsetX: 0,
       offsetY: 0,
+      scale: 0.65,
+      rotXEnd: -57,
+      rotYEnd: 11,
+      rotZEnd: 0,
+      offsetXEnd: 0,
+      offsetYEnd: 0,
     },
     badge: "Real-time",
     title: "Spatial intelligence",
@@ -93,17 +119,27 @@ const SECTIONS = [
       rotX: -12,
       rotY: -34,
       rotZ: -9,
-      scale: 0.6,
       offsetX: -1.25,
       offsetY: 1,
+      scale: 0.6,
+      rotXEnd: -12,
+      rotYEnd: -4,
+      rotZEnd: -9,
+      offsetXEnd: -1.25,
+      offsetYEnd: 1,
     },
     mobile: {
       rotX: -12,
       rotY: -34,
       rotZ: -9,
-      scale: 0.55,
       offsetX: 0,
       offsetY: 0,
+      scale: 0.55,
+      rotXEnd: -12,
+      rotYEnd: -4,
+      rotZEnd: -9,
+      offsetXEnd: 0,
+      offsetYEnd: 0,
     },
     badge: "AI-powered",
     title: "Intelligent search",
@@ -118,17 +154,27 @@ const SECTIONS = [
       rotX: -8,
       rotY: 14,
       rotZ: 0,
-      scale: 0.55,
       offsetX: 1,
       offsetY: 0,
+      scale: 0.55,
+      rotXEnd: -8,
+      rotYEnd: 44,
+      rotZEnd: 0,
+      offsetXEnd: 1,
+      offsetYEnd: 0,
     },
     mobile: {
       rotX: -8,
       rotY: 14,
       rotZ: 0,
-      scale: 0.55,
       offsetX: 0,
       offsetY: 0,
+      scale: 0.55,
+      rotXEnd: -8,
+      rotYEnd: 44,
+      rotZEnd: 0,
+      offsetXEnd: 0,
+      offsetYEnd: 0,
     },
     badge: "Forecasting",
     title: "Predictive analytics",
@@ -142,10 +188,8 @@ const DEFAULT_PARAMS = {
   mobile: extractParams("mobile"),
 };
 
-/* Bumped storage key version because the data shape changed
-   (object with desktop/mobile, not a flat array). Old saved tunings
-   from v1 are ignored, which is the correct behavior. */
-const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v2";
+/* v3 — added start/end pose fields. Old v2 saves are ignored. */
+const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v3";
 
 function smoothstep(x) {
   const c = Math.max(0, Math.min(1, x));
@@ -159,8 +203,15 @@ function formationCurve(p) {
   return 1 - smoothstep((p - 0.6) / 0.25);
 }
 
+/* Maps the block's viewport progress (0=just entering, 1=just left)
+   to an animation progress (0=at start pose, 1=at end pose). Shape is
+   visible roughly between p=0.15 and p=0.85, so we map that window. */
+function animProgress(p) {
+  return Math.max(0, Math.min(1, (p - 0.15) / 0.7));
+}
+
 /* ─────────────────────────────────────────────────────────────────────
-   SCRAMBLE TEXT RENDERER (unchanged — already correct)
+   SCRAMBLE TEXT RENDERER
    ───────────────────────────────────────────────────────────────────── */
 function renderScramble(text, keyPrefix = "") {
   const parts = text.split(/(\s+)/);
@@ -205,14 +256,7 @@ function Slider({ label, value, min, max, step, unit, onChange }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   DEBUG PANEL
-   - Mode toggle at top (Desktop / Mobile) — flips both the editing
-     target AND the rendered preview so you can tune mobile shapes
-     without resizing your browser.
-   - Section tabs (01/02/03/04).
-   - Six sliders (rotX/Y/Z, scale, offsetX/Y).
-   - Reset (resets current mode only).
-   - Copy Config (writes a paste-ready SECTIONS literal to clipboard).
+   DEBUG PANEL — Start / End pose tuning
    ───────────────────────────────────────────────────────────────────── */
 function DebugPanel({
   params,
@@ -223,12 +267,11 @@ function DebugPanel({
   onCopy,
   onClose,
   copiedFlash,
+  previewAnimP,
+  onPreviewAnimPChange,
 }) {
   const [active, setActive] = useState(0);
 
-  /* The mode being EDITED is the same as the preview mode, but we
-     also accept 'auto' from outside — in that case we fall back to
-     whatever the current viewport is. */
   const [viewport, setViewport] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1280
   );
@@ -259,7 +302,7 @@ function DebugPanel({
         </button>
       </div>
 
-      {/* Mode toggle — forces preview to selected mode */}
+      {/* Desktop / Mobile preview toggle */}
       <div className={styles.dbgModeToggle}>
         <button
           type="button"
@@ -291,6 +334,7 @@ function DebugPanel({
         )}
       </div>
 
+      {/* Section tabs */}
       <div className={styles.dbgTabs}>
         {SECTIONS.map((s, i) => (
           <button
@@ -308,6 +352,30 @@ function DebugPanel({
 
       <div className={styles.dbgSectionName}>{SECTIONS[active].title}</div>
 
+      {/* Preview scrubber — drag through animation without scrolling */}
+      <div className={styles.dbgPreviewRow}>
+        <div className={styles.dbgPreviewLabel}>
+          <span>Preview pose</span>
+          <span className={styles.dbgPreviewValue}>
+            {previewAnimP < 0 ? "auto" : `${Math.round(previewAnimP * 100)}%`}
+          </span>
+        </div>
+        <input
+          type="range"
+          min={-1}
+          max={1}
+          step={0.01}
+          value={previewAnimP}
+          onChange={(e) => onPreviewAnimPChange(parseFloat(e.target.value))}
+          className={styles.dbgRange}
+        />
+        <div className={styles.dbgPreviewHint}>
+          Drag below 0 for auto (follow scroll). 0 = start pose, 1 = end pose.
+        </div>
+      </div>
+
+      {/* START POSE */}
+      <div className={styles.dbgSectionHead}>Start pose</div>
       <Slider
         label="Rotation X"
         value={p.rotX}
@@ -336,15 +404,6 @@ function DebugPanel({
         onChange={(v) => update("rotZ", v)}
       />
       <Slider
-        label="Scale"
-        value={p.scale}
-        min={0.3}
-        max={1.5}
-        step={0.05}
-        unit="×"
-        onChange={(v) => update("scale", v)}
-      />
-      <Slider
         label="Offset X"
         value={p.offsetX}
         min={-10}
@@ -361,6 +420,66 @@ function DebugPanel({
         step={0.25}
         unit=""
         onChange={(v) => update("offsetY", v)}
+      />
+
+      {/* END POSE */}
+      <div className={styles.dbgSectionHead}>End pose</div>
+      <Slider
+        label="Rotation X"
+        value={p.rotXEnd}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotXEnd", v)}
+      />
+      <Slider
+        label="Rotation Y"
+        value={p.rotYEnd}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotYEnd", v)}
+      />
+      <Slider
+        label="Rotation Z"
+        value={p.rotZEnd}
+        min={-180}
+        max={180}
+        step={1}
+        unit="°"
+        onChange={(v) => update("rotZEnd", v)}
+      />
+      <Slider
+        label="Offset X"
+        value={p.offsetXEnd}
+        min={-10}
+        max={10}
+        step={0.25}
+        unit=""
+        onChange={(v) => update("offsetXEnd", v)}
+      />
+      <Slider
+        label="Offset Y"
+        value={p.offsetYEnd}
+        min={-10}
+        max={10}
+        step={0.25}
+        unit=""
+        onChange={(v) => update("offsetYEnd", v)}
+      />
+
+      {/* SCALE (single, not animated) */}
+      <div className={styles.dbgSectionHead}>Scale</div>
+      <Slider
+        label="Scale"
+        value={p.scale}
+        min={0.3}
+        max={1.5}
+        step={0.05}
+        unit="×"
+        onChange={(v) => update("scale", v)}
       />
 
       <div className={styles.dbgActions}>
@@ -389,10 +508,8 @@ function DebugPanel({
 export default function AISection() {
   const canvasRef = useRef(null);
   const sectionRef = useRef(null);
-
   const cardRefs = useRef([]);
   const blockRefs = useRef([]);
-
   const formationsRef = useRef([]);
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -406,21 +523,26 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
-  /* Debug state */
-  const [debugAvailable, setDebugAvailable] = useState(false);
+  /* Debug — always available, no URL param gate. Toggle button shows
+     in the corner; click to open the panel. */
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugParams, setDebugParams] = useState(DEFAULT_PARAMS);
   const [debugPreviewMode, setDebugPreviewMode] = useState("auto");
+  const [previewAnimP, setPreviewAnimP] = useState(-1); // -1 means "auto (follow scroll)"
   const [copiedFlash, setCopiedFlash] = useState(false);
 
   const debugParamsRef = useRef(debugParams);
   const debugPreviewModeRef = useRef(debugPreviewMode);
+  const previewAnimPRef = useRef(previewAnimP);
   useEffect(() => {
     debugParamsRef.current = debugParams;
   }, [debugParams]);
   useEffect(() => {
     debugPreviewModeRef.current = debugPreviewMode;
   }, [debugPreviewMode]);
+  useEffect(() => {
+    previewAnimPRef.current = previewAnimP;
+  }, [previewAnimP]);
 
   const rebuildShapesRef = useRef(null);
 
@@ -440,21 +562,20 @@ export default function AISection() {
     }));
   }, []);
 
-  /* Copy-config: emit a paste-ready SECTIONS literal so the user can
-     replace the SECTIONS array at the top of this file once they're
-     done tuning. */
   const handleCopyConfig = useCallback(async () => {
     const fmtStr = (v) => `"${String(v).replace(/"/g, '\\"')}"`;
-    const fmtNum = (n) => {
-      if (Number.isInteger(n)) return String(n);
-      return Number(n.toFixed(2)).toString();
-    };
+    const fmtNum = (n) =>
+      Number.isInteger(n) ? String(n) : Number(n.toFixed(2)).toString();
     const fmtCfg = (c) =>
-      `{ rotX: ${fmtNum(c.rotX)}, rotY: ${fmtNum(c.rotY)}, rotZ: ${fmtNum(
-        c.rotZ
-      )}, scale: ${fmtNum(c.scale)}, offsetX: ${fmtNum(
-        c.offsetX
-      )}, offsetY: ${fmtNum(c.offsetY)} }`;
+      `{
+      rotX: ${fmtNum(c.rotX)}, rotY: ${fmtNum(c.rotY)}, rotZ: ${fmtNum(c.rotZ)},
+      offsetX: ${fmtNum(c.offsetX)}, offsetY: ${fmtNum(c.offsetY)},
+      scale: ${fmtNum(c.scale)},
+      rotXEnd: ${fmtNum(c.rotXEnd)}, rotYEnd: ${fmtNum(
+        c.rotYEnd
+      )}, rotZEnd: ${fmtNum(c.rotZEnd)},
+      offsetXEnd: ${fmtNum(c.offsetXEnd)}, offsetYEnd: ${fmtNum(c.offsetYEnd)},
+    }`;
 
     const params = debugParamsRef.current;
     const body = SECTIONS.map(
@@ -465,7 +586,7 @@ export default function AISection() {
     side: ${fmtStr(s.side)},
     gen: ${fmtStr(s.gen)},
     desktop: ${fmtCfg(params.desktop[i])},
-    mobile:  ${fmtCfg(params.mobile[i])},
+    mobile: ${fmtCfg(params.mobile[i])},
     badge: ${fmtStr(s.badge)},
     title: ${fmtStr(s.title)},
     desc: ${fmtStr(s.desc)},
@@ -479,15 +600,6 @@ export default function AISection() {
       setTimeout(() => setCopiedFlash(false), 1400);
     } catch (e) {
       console.error("[AISection] clipboard write failed:", e);
-    }
-  }, []);
-
-  /* Unlock the debug panel when ?debug is in the URL. */
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("debug")) {
-      setDebugAvailable(true);
     }
   }, []);
 
@@ -508,7 +620,13 @@ export default function AISection() {
             Array.isArray(parsed.mobile) &&
             parsed.mobile.length === SECTIONS.length
           ) {
-            setDebugParams(parsed);
+            /* Backfill any missing end-pose fields so older saves still load */
+            const fill = (arr, defaults) =>
+              arr.map((p, i) => ({ ...defaults[i], ...p }));
+            setDebugParams({
+              desktop: fill(parsed.desktop, DEFAULT_PARAMS.desktop),
+              mobile: fill(parsed.mobile, DEFAULT_PARAMS.mobile),
+            });
           }
         }
       } catch {
@@ -526,16 +644,15 @@ export default function AISection() {
     }
   }, [debugParams]);
 
-  /* Trigger shape rebuilds when params or preview-mode change */
+  /* Trigger shape rebuilds when params change */
   useEffect(() => {
     rebuildShapesRef.current?.();
   }, [debugParams, debugPreviewMode]);
 
-  /* Reset preview override when the debug panel closes, so production
-     behavior resumes (mode follows viewport). */
   const handleCloseDebug = useCallback(() => {
     setDebugOpen(false);
     setDebugPreviewMode("auto");
+    setPreviewAnimP(-1);
   }, []);
 
   /* Section visibility observer */
@@ -559,16 +676,11 @@ export default function AISection() {
     });
   }, []);
 
-  /* CFG — Tuned for smooth, no-bounce motion with visible ambient jitter.
-     The old `physicsStiff` + `physicsDamping` spring system has been
-     removed (it caused the bounce). Replaced with `smoothPosition`,
-     a single critical-damping coefficient that approaches the target
-     monotonically. */
   const CFG = {
     smoothFormation: 0.18,
-    smoothPosition: 0.085, // exponential smoothing toward target — no overshoot
-    jitterBase: 0.045, // up from 0.018 — visible breath when formed
-    jitterFreqBase: 0.55, // up from 0.18 — feels more "alive"
+    smoothPosition: 0.085,
+    jitterBase: 0.045,
+    jitterFreqBase: 0.55,
     camZ: 16,
     camZMobile: 22,
   };
@@ -577,9 +689,11 @@ export default function AISection() {
     activeShape: 0,
     formation: 0,
     globalAlpha: 0,
+    shapeProgresses: [0, 0, 0, 0],
+    fadeOut: 0,
   });
 
-  /* Scroll-driven formation values */
+  /* Scroll-driven formation + shape progress + fade-out */
   useEffect(() => {
     const section = sectionRef.current;
     const blocks = blockRefs.current.filter(Boolean);
@@ -590,6 +704,7 @@ export default function AISection() {
 
     const onScroll = () => {
       const formations = [];
+      const shapeProgresses = [];
 
       if (blocks.length > 1) {
         const fTop =
@@ -603,6 +718,7 @@ export default function AISection() {
         const total = vh + r.height;
         const p = Math.max(0, Math.min(1, (vh - r.top) / total));
         formations.push(formationCurve(p));
+        shapeProgresses.push(p);
       }
 
       let maxF = 0;
@@ -616,12 +732,27 @@ export default function AISection() {
 
       stateRef.current.formation = maxF;
       stateRef.current.activeShape = dom;
-
+      stateRef.current.shapeProgresses = shapeProgresses;
       formationsRef.current = formations;
 
-      if (maxF > 0.5) {
-        setActiveIdx(dom);
+      /* Fade-out — as the last block exits the top of the viewport,
+         fade the canvas so particles aren't visible when the next
+         section (Features) is overlapping. Fully faded by the time
+         the last block bottom is at viewport.top. */
+      const lastBlock = blocks[blocks.length - 1];
+      if (lastBlock) {
+        const r = lastBlock.getBoundingClientRect();
+        if (r.bottom < vh * 0.6) {
+          stateRef.current.fadeOut = Math.max(
+            0,
+            Math.min(1, 1 - r.bottom / (vh * 0.6))
+          );
+        } else {
+          stateRef.current.fadeOut = 0;
+        }
       }
+
+      if (maxF > 0.5) setActiveIdx(dom);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -629,7 +760,7 @@ export default function AISection() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* Text scramble RAF loop (unchanged) */
+  /* Text scramble RAF loop */
   useEffect(() => {
     let raf;
     const REVEAL_END = 0.7;
@@ -648,129 +779,102 @@ export default function AISection() {
         if (!card) continue;
 
         const f = formationsRef.current[ci] ?? 0;
-
         const sideBar = card.querySelector(`.${styles.sideBar}`);
         if (sideBar) {
           sideBar.style.opacity = String(f);
           sideBar.style.pointerEvents = f > 0.5 ? "auto" : "none";
         }
 
-        const letters = card.querySelectorAll(`.${styles.scrambleChar}`);
-        const total = letters.length;
-        if (!total) continue;
+        const chars = card.querySelectorAll(`.${styles.scrambleChar}`);
+        if (f <= 0) {
+          chars.forEach((ch) => {
+            ch.textContent = "\u00A0";
+            ch.style.opacity = "0";
+          });
+          continue;
+        }
 
-        const denom = REVEAL_END - SCRAMBLE_WINDOW;
+        const revealProgress = Math.min(1, f / REVEAL_END);
+        const totalChars = chars.length;
 
-        for (let li = 0; li < total; li++) {
-          const el = letters[li];
-          const real = el.dataset.char;
-          if (real === " ") continue;
+        for (let i = 0; i < totalChars; i++) {
+          const ch = chars[i];
+          const charProgress = i / Math.max(1, totalChars - 1);
+          const localProgress =
+            (revealProgress - charProgress) / SCRAMBLE_WINDOW + 0.5;
+          const c = Math.max(0, Math.min(1, localProgress));
 
-          const startAt = (li / total) * denom;
-          const lp = (f - startAt) / SCRAMBLE_WINDOW;
-
-          if (lp <= 0) {
-            if (el.dataset.state !== "hidden") {
-              el.textContent = "\u00A0";
-              el.style.opacity = "0";
-              el.style.color = "";
-              el.dataset.state = "hidden";
-            }
-          } else if (lp >= 1) {
-            if (el.dataset.state !== "real") {
-              el.textContent = real;
-              el.style.opacity = "1";
-              el.style.color = "";
-              el.dataset.state = "real";
-            }
+          if (c >= 1) {
+            ch.textContent = ch.dataset.char || "";
+            ch.style.opacity = "1";
+          } else if (c <= 0) {
+            ch.textContent = "\u00A0";
+            ch.style.opacity = "0";
           } else {
             if (reroll) {
-              el.textContent =
-                MATRIX_CHARS[(Math.random() * MATRIX_CHARS.length) | 0];
+              ch.textContent =
+                MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
             }
-            el.style.opacity = String(MIN_OPACITY + lp * (1 - MIN_OPACITY));
-            el.style.color = "var(--accent)";
-            el.dataset.state = "scrambling";
+            ch.style.opacity = String(MIN_OPACITY + (1 - MIN_OPACITY) * c);
           }
         }
       }
-
       raf = requestAnimationFrame(tick);
     };
-
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  /* THREE init + animate.
-     Key behavioral changes vs the previous version:
-       1. Physics — replaced spring/velocity system with exponential
-          smoothing toward the target. Particles approach monotonically,
-          no overshoot, no bounce.
-       2. Jitter — 3D, two-frequency noise per particle with per-particle
-          amplitude variation. Visible even when the shape is fully formed
-          so it never feels frozen.
-       3. Build per mode — each rebuild reads the desktop or mobile
-          sub-config based on the debug preview override (or, if not
-          overridden, the live viewport width). */
+  /* ── THREE.JS init + animate loop ─────────────────────────────────── */
   useEffect(() => {
-    let frameId;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     let cleanup = () => {};
+    let frameId;
 
     const init = async () => {
       const THREE = await import("three");
-
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-      camera.position.z = window.innerWidth < 768 ? CFG.camZMobile : CFG.camZ;
 
       const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
         antialias: true,
+        powerPreference: "high-performance",
       });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 0);
 
+      const scene = new THREE.Scene();
+      scene.background = null;
+
+      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+      camera.position.set(0, 0, CFG.camZ);
+
       const resize = () => {
-        const w = canvas.parentElement.clientWidth;
-        const h = canvas.parentElement.clientHeight;
-        renderer.setSize(w, h);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        renderer.setSize(w, h, false);
         camera.aspect = w / h;
+        const mobile = w < 768;
+        camera.position.z = mobile ? CFG.camZMobile : CFG.camZ;
         camera.updateProjectionMatrix();
-
-        /* If we crossed the breakpoint and we're in auto mode,
-           rebuild shapes so the mobile/desktop config swap takes
-           effect without a reload. */
-        if (debugPreviewModeRef.current === "auto") {
-          rebuildShapes();
-        }
       };
-
+      resize();
       window.addEventListener("resize", resize);
 
-      const isMobile = window.innerWidth < 768;
-      const scattered = generateScattered(PARTICLE_COUNT, isMobile);
+      const scattered = generateScattered(PARTICLE_COUNT);
       const shapes = [null, null, null, null];
 
-      /* Resolve which mode's params to use right now. The preview-mode
-         ref wins if it's been forced via debug; otherwise we use the
-         live viewport. */
-      const resolveMode = () => {
-        const o = debugPreviewModeRef.current;
-        if (o === "desktop" || o === "mobile") return o;
-        return window.innerWidth < 768 ? "mobile" : "desktop";
-      };
-
+      /* buildShape — generate WITHOUT rotation. Rotation is applied
+         per-frame in the animate loop so we can interpolate between
+         start and end poses. Scale is baked here (single value). */
       const buildShape = (i, mode) => {
         const sec = SECTIONS[i];
         const params = debugParamsRef.current[mode][i];
         const fn = SHAPE_GENERATORS[sec.gen];
 
-        let pts = fn(PARTICLE_COUNT, params.rotX, params.rotY, params.rotZ);
+        let pts = fn(PARTICLE_COUNT, 0, 0, 0);
 
         const mobile = mode === "mobile";
         const mobileFactor = mobile ? 0.85 : 1;
@@ -778,41 +882,26 @@ export default function AISection() {
 
         if (scale !== 1) {
           const out = new Float32Array(pts.length);
-          for (let j = 0; j < pts.length; j++) {
-            out[j] = pts[j] * scale;
-          }
+          for (let j = 0; j < pts.length; j++) out[j] = pts[j] * scale;
           pts = out;
         }
-
-        const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
-        const defaultY = mobile ? -3.5 : 0;
-        const finalX = defaultX + params.offsetX;
-        const finalY = defaultY + params.offsetY;
-
-        if (finalX !== 0) pts = offsetShape(pts, finalX);
-        if (finalY !== 0) pts = offsetShapeY(pts, finalY);
 
         return pts;
       };
 
       const rebuildShapes = () => {
-        const mode = resolveMode();
-        for (let i = 0; i < SECTIONS.length; i++) {
+        const preview = debugPreviewModeRef.current;
+        const auto = window.innerWidth < 768 ? "mobile" : "desktop";
+        const mode = preview === "auto" ? auto : preview;
+        for (let i = 0; i < SECTIONS.length; i++)
           shapes[i] = buildShape(i, mode);
-        }
       };
-
       rebuildShapes();
       rebuildShapesRef.current = rebuildShapes;
 
-      /* Initial size/aspect now that rebuildShapes exists — resize()
-         forward-references it, so we must NOT call it before this
-         line or we hit a TDZ ReferenceError that silently rejects the
-         async init and the scene never renders. */
-      resize();
-
+      const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
+      for (let i = 0; i < PARTICLE_COUNT * 3; i++) physicsPos[i] = scattered[i];
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
-      currentPos.set(scattered);
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
@@ -820,26 +909,16 @@ export default function AISection() {
         new THREE.BufferAttribute(currentPos, 3)
       );
 
-      /* physicsPos is the smoothed-to-target position. currentPos =
-         physicsPos + jitter. No velocity buffer — we don't need one
-         with exponential smoothing. */
-      const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
-      physicsPos.set(scattered);
-
       const baseSizes = new Float32Array(PARTICLE_COUNT);
-      const sizeScale = isMobile ? 1.6 : 1.25;
+      const mobileInit = window.innerWidth < 768;
+      const sizeScale = mobileInit ? 1.6 : 1.25;
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         baseSizes[i] = (0.7 + Math.random() * 1.2) * sizeScale;
       }
       geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
 
-      /* Three seeds per particle drive frequency / phase / amplitude
-         variation in the jitter. Constant for the particle's lifetime
-         so each particle has a consistent personality. */
       const seeds = new Float32Array(PARTICLE_COUNT * 3);
-      for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
-        seeds[i] = Math.random();
-      }
+      for (let i = 0; i < PARTICLE_COUNT * 3; i++) seeds[i] = Math.random();
 
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -865,9 +944,7 @@ export default function AISection() {
       const animate = () => {
         frameId = requestAnimationFrame(animate);
 
-        if (pausedRef.current || !sectionVisibleRef.current) {
-          return;
-        }
+        if (pausedRef.current || !sectionVisibleRef.current) return;
 
         const t = performance.now() * 0.001;
         const s = stateRef.current;
@@ -875,12 +952,56 @@ export default function AISection() {
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
 
+        /* Alpha — base + formation lift, multiplied by (1 - fadeOut)
+           so the canvas fades out as we scroll past the last block. */
+        const fadeOut = s.fadeOut || 0;
         const baseAlpha = 0.4;
-        const targetAlpha = baseAlpha + (1 - baseAlpha) * sFormation;
+        const targetAlpha =
+          (baseAlpha + (1 - baseAlpha) * sFormation) * (1 - fadeOut);
         sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
 
         const activeShape = shapes[s.activeShape];
         if (!activeShape) return;
+
+        /* ── Compute interpolated pose for the active shape ──
+           previewAnimPRef: if >= 0, use it (debug scrubber). Else use
+           scroll-driven shape progress mapped to anim progress 0..1.  */
+        const previewP = previewAnimPRef.current;
+        const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
+        const animP = previewP >= 0 ? previewP : animProgress(scrollP);
+
+        const preview = debugPreviewModeRef.current;
+        const autoMode = window.innerWidth < 768 ? "mobile" : "desktop";
+        const mode = preview === "auto" ? autoMode : preview;
+        const params = debugParamsRef.current[mode][s.activeShape];
+
+        /* Lerp start→end rotation (degrees) and offset */
+        const rotXDeg = params.rotX + (params.rotXEnd - params.rotX) * animP;
+        const rotYDeg = params.rotY + (params.rotYEnd - params.rotY) * animP;
+        const rotZDeg = params.rotZ + (params.rotZEnd - params.rotZ) * animP;
+        const rotX = rotXDeg * TO_RAD;
+        const rotY = rotYDeg * TO_RAD;
+        const rotZ = rotZDeg * TO_RAD;
+
+        const cX = Math.cos(rotX),
+          sX = Math.sin(rotX);
+        const cY = Math.cos(rotY),
+          sY = Math.sin(rotY);
+        const cZ = Math.cos(rotZ),
+          sZ = Math.sin(rotZ);
+
+        const mobile = mode === "mobile";
+        const sec = SECTIONS[s.activeShape];
+        const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
+        const defaultY = mobile ? -3.5 : 0;
+        const offX =
+          defaultX +
+          params.offsetX +
+          (params.offsetXEnd - params.offsetX) * animP;
+        const offY =
+          defaultY +
+          params.offsetY +
+          (params.offsetYEnd - params.offsetY) * animP;
 
         const k = CFG.smoothPosition;
         const jb = CFG.jitterBase;
@@ -889,28 +1010,48 @@ export default function AISection() {
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          const targetX =
-            scattered[i3] * (1 - sFormation) + activeShape[i3] * sFormation;
-          const targetY =
-            scattered[i3 + 1] * (1 - sFormation) +
-            activeShape[i3 + 1] * sFormation;
-          const targetZ =
-            scattered[i3 + 2] * (1 - sFormation) +
-            activeShape[i3 + 2] * sFormation;
+          /* Active shape position with per-frame rotation applied */
+          let px = activeShape[i3];
+          let py = activeShape[i3 + 1];
+          let pz = activeShape[i3 + 2];
 
-          /* Critical-damping approach to target. Monotonic, no overshoot.
-             Replaces the old spring + velocity + damping triad that
-             caused the bouncy settle. */
+          /* Rotate X */
+          const py1 = py * cX - pz * sX;
+          const pz1 = py * sX + pz * cX;
+          py = py1;
+          pz = pz1;
+
+          /* Rotate Y */
+          const px1 = px * cY + pz * sY;
+          const pz2 = -px * sY + pz * cY;
+          px = px1;
+          pz = pz2;
+
+          /* Rotate Z */
+          const px2 = px * cZ - py * sZ;
+          const py2 = px * sZ + py * cZ;
+          px = px2;
+          py = py2;
+
+          const formedX = px + offX;
+          const formedY = py + offY;
+          const formedZ = pz;
+
+          const targetX =
+            scattered[i3] * (1 - sFormation) + formedX * sFormation;
+          const targetY =
+            scattered[i3 + 1] * (1 - sFormation) + formedY * sFormation;
+          const targetZ =
+            scattered[i3 + 2] * (1 - sFormation) + formedZ * sFormation;
+
           physicsPos[i3] += (targetX - physicsPos[i3]) * k;
           physicsPos[i3 + 1] += (targetY - physicsPos[i3 + 1]) * k;
           physicsPos[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * k;
 
-          /* Ambient jitter — 3D, two-frequency noise with per-particle
-             amplitude. Visible when formed (so the cloud breathes) but
-             low enough not to soften the shape outlines. */
-          const s1 = seeds[i3];
-          const s2 = seeds[i3 + 1];
-          const s3 = seeds[i3 + 2];
+          /* Ambient jitter */
+          const s1 = seeds[i3],
+            s2 = seeds[i3 + 1],
+            s3 = seeds[i3 + 2];
           const f1 = jf + s1 * 0.3;
           const f2 = jf * 2.4 + s2 * 0.4;
           const ph1 = t * f1 + s1 * TAU;
@@ -984,9 +1125,7 @@ export default function AISection() {
                           ? styles.sideTickFilled
                           : ""
                       } ${activeIdx === idx ? styles.sideTickCurrent : ""}`}
-                      style={{
-                        top: `${(idx / (SECTIONS.length - 1)) * 100}%`,
-                      }}
+                      style={{ top: `${(idx / (SECTIONS.length - 1)) * 100}%` }}
                       aria-label={`Jump to ${s.shortName}`}
                     />
                   ))}
@@ -995,11 +1134,9 @@ export default function AISection() {
                 <div className={styles.cardEyebrow}>
                   {renderScramble(sec.badge, `${sec.key}-eyebrow`)}
                 </div>
-
                 <h3 className={styles.cardTitle}>
                   {renderScramble(sec.title, `${sec.key}-title`)}
                 </h3>
-
                 <p className={styles.cardDesc}>
                   {renderScramble(sec.desc, `${sec.key}-desc`)}
                 </p>
@@ -1019,7 +1156,7 @@ export default function AISection() {
         <div className={styles.trailingSpacer} />
       </div>
 
-      {debugAvailable && !debugOpen && (
+      {!debugOpen && (
         <button
           type="button"
           onClick={() => setDebugOpen(true)}
@@ -1029,7 +1166,7 @@ export default function AISection() {
         </button>
       )}
 
-      {debugAvailable && debugOpen && (
+      {debugOpen && (
         <DebugPanel
           params={debugParams}
           previewMode={debugPreviewMode}
@@ -1039,6 +1176,8 @@ export default function AISection() {
           onCopy={handleCopyConfig}
           onClose={handleCloseDebug}
           copiedFlash={copiedFlash}
+          previewAnimP={previewAnimP}
+          onPreviewAnimPChange={setPreviewAnimP}
         />
       )}
     </section>

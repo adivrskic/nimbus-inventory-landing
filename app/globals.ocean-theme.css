@@ -1,0 +1,412 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   NIMBUS — DEEP UNDERWATER THEME (v5)
+   ───────────────────────────────────────────────────────────────────────
+   v5 changes vs v4:
+   - Gradient is now darker overall AND uses background-attachment: scroll
+     instead of fixed. The result: the WHOLE page gradient spans the
+     document height, so as you scroll down, you literally descend
+     through deeper water. Top of page = "twilight zone" navy. Bottom of
+     page = near-black abyss. No more "same viewport gradient at every
+     scroll position" — the depth maps to scroll.
+   - Caustic shimmer (html::before) stays position:fixed so the "sun
+     from above" effect remains anchored at the top of the viewport,
+     but its opacity is dropped because the darker top doesn't need as
+     much spotting.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Ocean palette — darker stops ────────────────────────────────── */
+  --ocean-surface: #0a2240; /* twilight zone — already darkish at top */
+  --ocean-mesophotic: #061a32;
+  --ocean-twilight: #03122a;
+  --ocean-midnight: #020a1f;
+  --ocean-abyssal: #010715;
+  --ocean-abyss: #00020a; /* deepest abyss — only at very bottom */
+
+  /* ── Neutrals ────────────────────────────────────────────────────── */
+  --black: #02060f;
+  --near-black: #050d1a;
+  --bg: transparent;
+  --dark: transparent;
+
+  --abyss-solid: #02060f;
+  --twilight-solid: #061a32;
+  --surface-solid: #0a1d36;
+  --ink: #02060f;
+
+  --white: #f0f6fc;
+
+  /* ── Navy-grays ──────────────────────────────────────────────────── */
+  --gray-1: #f5f8fb;
+  --gray-2: #b8c8d8;
+  --gray-3: #8497ad;
+  --gray-4: #3d536e;
+  --gray-5: #1a2940;
+  --gray-6: #0e1c33;
+  --gray-7: #07111f;
+
+  /* ── Accent ──────────────────────────────────────────────────────── */
+  --accent: #d4a853;
+  --accent-bright: #e7c074;
+  --accent-deep: #9a7732;
+  --accent-dim: rgba(212, 168, 83, 0.18);
+  --accent-soft: rgba(212, 168, 83, 0.55);
+  --accent-glow: rgba(212, 168, 83, 0.1);
+
+  /* ── Semantic ─────────────────────────────────────────────────────── */
+  --success: #34d399;
+  --success-dim: rgba(52, 211, 153, 0.14);
+  --warning: #fbbf24;
+  --warning-dim: rgba(251, 191, 36, 0.14);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.12);
+  --info: #7dd3fc;
+  --info-dim: rgba(125, 211, 252, 0.14);
+
+  /* ── Text ─────────────────────────────────────────────────────────── */
+  --text: #f0f6fc;
+  --text-secondary: #c5d4e4;
+  --text-muted: #8aa2bb;
+  --text-dim: #5e7591;
+
+  /* ── Borders ──────────────────────────────────────────────────────── */
+  --border: rgba(160, 200, 235, 0.16);
+  --border-hover: rgba(160, 200, 235, 0.3);
+  --border-subtle: rgba(160, 200, 235, 0.1);
+  --border-faint: rgba(160, 200, 235, 0.05);
+
+  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  --surface: #0a1d36;
+  --bg-elevated: #0c2240;
+  --surface-2: rgba(160, 200, 235, 0.04);
+  --surface-3: rgba(160, 200, 235, 0.08);
+
+  /* ── Glass — frosted navy ─────────────────────────────────────────── */
+  --glass-bg: rgba(6, 24, 45, 0.55);
+  --glass-bg-heavy: rgba(2, 10, 22, 0.75);
+  --glass-border: rgba(160, 200, 235, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  /* ── Hero overlay ─────────────────────────────────────────────────── */
+  --hero-overlay: linear-gradient(
+      180deg,
+      rgba(2, 10, 22, 0.55) 0%,
+      rgba(6, 24, 45, 0.18) 28%,
+      rgba(6, 24, 45, 0.22) 55%,
+      rgba(2, 6, 15, 0.92) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(2, 10, 22, 0.55) 0%,
+      rgba(2, 10, 22, 0.1) 45%,
+      transparent 60%
+    );
+
+  /* ── Auth card ────────────────────────────────────────────────────── */
+  --auth-card-bg: rgba(2, 10, 22, 0.6);
+  --auth-card-blur: blur(16px);
+
+  /* ── Legacy aliases ───────────────────────────────────────────────── */
+  --primary: var(--accent);
+  --light: var(--gray-1);
+  --dark-secondary: var(--gray-2);
+  --muted: var(--gray-3);
+  --divider: rgba(160, 200, 235, 0.16);
+  --divider-light: rgba(160, 200, 235, 0.1);
+  --divider-subtle: rgba(160, 200, 235, 0.08);
+  --dark-card-bg: rgba(160, 200, 235, 0.04);
+  --dark-card-border: rgba(160, 200, 235, 0.1);
+  --dark-card-bg-hover: rgba(160, 200, 235, 0.06);
+  --dark-card-border-hover: rgba(160, 200, 235, 0.18);
+  --dark-text: rgba(180, 205, 230, 0.55);
+  --dark-text-dim: rgba(180, 205, 230, 0.38);
+  --dark-text-ghost: rgba(180, 205, 230, 0.08);
+  --dark-grid-primary: rgba(212, 168, 83, 0.06);
+  --dark-grid-accent: rgba(212, 168, 83, 0.1);
+
+  color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     PAGE-WIDE GRADIENT — scroll-attached, spans the whole document
+     ─────────────────────────────────────────────────────────────────────
+     `background-attachment: scroll` (default) means the gradient is sized
+     to the html element and SCROLLS with the page. html's natural height
+     is the document height (because body lives inside it), so the
+     gradient stretches from top-of-document to bottom-of-document.
+  
+     Stops are calibrated nonlinearly — the lighter "twilight" colors
+     only occupy the first ~15% of the page (i.e. the first viewport on
+     a 6vh+ landing page), then it darkens fast through the mid-section,
+     then plateaus into near-black for the lower half. This gives the
+     strong sensation of descending as you scroll, rather than the
+     linear-and-bland gradient curve.
+  ───────────────────────────────────────────────────────────────────── */
+html {
+  background: var(--ocean-abyss);
+  background-image: linear-gradient(
+    180deg,
+    var(--ocean-surface) 0%,
+    var(--ocean-mesophotic) 8%,
+    var(--ocean-twilight) 22%,
+    var(--ocean-midnight) 42%,
+    var(--ocean-abyssal) 65%,
+    var(--ocean-abyss) 90%,
+    var(--ocean-abyss) 100%
+  );
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  min-height: 100vh;
+}
+
+body {
+  background: transparent !important;
+  min-height: 100vh;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     CAUSTIC — soft sun-from-above, fixed at viewport top
+     ─────────────────────────────────────────────────────────────────────
+     With the gradient now darker at the top, the caustic still works as
+     "light filtering down from above" but it's dimmer than before so it
+     doesn't clash with the deeper feel.
+  ───────────────────────────────────────────────────────────────────── */
+html::before {
+  content: "";
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: 60vh;
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(140, 190, 230, 0.06) 0%,
+    rgba(140, 190, 230, 0.03) 35%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     HERO VIDEO TINT + OVERLAY FALLBACK
+  ───────────────────────────────────────────────────────────────────── */
+[class*="hero" i] video,
+[class*="Hero" i] video {
+  filter: saturate(0.85) hue-rotate(190deg) brightness(0.78);
+}
+
+[class*="hero" i] [class*="overlay" i],
+[class*="Hero" i] [class*="overlay" i] {
+  background: var(--hero-overlay) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     PARTICLES — canvas brightness boost
+  ───────────────────────────────────────────────────────────────────── */
+[class*="helixWrap" i] canvas,
+[class*="canvasWrap" i] canvas,
+[class*="particleCanvas" i] canvas,
+[class*="ParticleField" i] canvas {
+  filter: brightness(1.25) saturate(1.15);
+}
+
+body::after {
+  opacity: 0.04 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     BUTTONS / LINKS
+  ───────────────────────────────────────────────────────────────────── */
+.bracket-btn:hover {
+  box-shadow: 0 0 0 1px rgba(212, 168, 83, 0.15),
+    0 0 24px rgba(212, 168, 83, 0.18);
+}
+
+a:not([class]):not([href^="#"]) {
+  color: inherit;
+  text-decoration-color: var(--accent-soft);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s, color 0.2s;
+}
+a:not([class]):not([href^="#"]):hover {
+  color: var(--accent-bright);
+  text-decoration-color: var(--accent);
+}
+
+.nav-link {
+  color: var(--gray-2);
+}
+.nav-link:hover {
+  color: var(--white);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     GLOW CARDS
+  ───────────────────────────────────────────────────────────────────── */
+.glow-card::before {
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(212, 168, 83, 0.1),
+    transparent 40%
+  );
+}
+.glow-card > .glow-card-border {
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(212, 168, 83, 0.34),
+    transparent 40%
+  );
+}
+.glow-card > .glow-card-content {
+  background: var(--surface);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     FIELD SHELL
+  ───────────────────────────────────────────────────────────────────── */
+.field-shell {
+  background: rgba(160, 200, 235, 0.04);
+  border-color: rgba(160, 200, 235, 0.12);
+}
+.field-shell:hover {
+  border-color: rgba(160, 200, 235, 0.22);
+}
+.field-shell:focus-within {
+  background: rgba(160, 200, 235, 0.07);
+  border-color: var(--accent-soft);
+  box-shadow: 0 0 0 4px rgba(212, 168, 83, 0.1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     SCROLLBAR
+  ───────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+  background: var(--ocean-abyss);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(160, 200, 235, 0.14);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 200, 235, 0.26);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+     LIGHT MODE — SHALLOW WATER
+  ───────────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --shallow-sky: #eaf6fa;
+  --shallow-foam: #d4ecf2;
+  --shallow-clear: #b5dbe6;
+  --shallow-reef: #88c0d0;
+  --shallow-deep: #5fa3bf;
+
+  --black: #0a2030;
+  --near-black: #1a3a52;
+  --bg: var(--shallow-sky);
+  --dark: transparent;
+  --ink: #0a2030;
+
+  --cream-bg: var(--shallow-sky);
+  --cream-surface: #f5fbfd;
+  --cream-elevated: #ffffff;
+  --warm-ink: #0a2030;
+
+  --white: #ffffff;
+
+  --accent: #d4a853;
+  --accent-bright: #e7c074;
+  --accent-deep: #7a5519;
+
+  --success: #0f6e36;
+  --warning: #a04708;
+  --danger: #a01a1a;
+  --info: #144faa;
+
+  --bg-elevated: var(--cream-surface);
+  --text: var(--warm-ink);
+  --text-secondary: #1a3a52;
+  --text-muted: #43617a;
+  --text-dim: #6e8ba3;
+
+  --border: rgba(10, 32, 48, 0.2);
+  --border-hover: rgba(10, 32, 48, 0.35);
+  --border-subtle: rgba(10, 32, 48, 0.1);
+  --border-faint: rgba(10, 32, 48, 0.05);
+
+  --surface: var(--cream-surface);
+  --surface-2: rgba(10, 32, 48, 0.04);
+  --surface-3: rgba(10, 32, 48, 0.07);
+  --glass-bg: rgba(245, 251, 253, 0.55);
+  --glass-bg-heavy: rgba(245, 251, 253, 0.78);
+  --glass-border: rgba(10, 32, 48, 0.12);
+
+  --auth-card-bg: rgba(245, 251, 253, 0.78);
+
+  --hero-overlay: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(180, 215, 230, 0.1) 30%,
+      rgba(95, 163, 191, 0.4) 100%
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+
+  color-scheme: light;
+}
+
+[data-theme="light"] html,
+html[data-theme="light"] {
+  background: var(--shallow-deep);
+  background-image: linear-gradient(
+    180deg,
+    var(--shallow-sky) 0%,
+    var(--shallow-foam) 12%,
+    var(--shallow-clear) 35%,
+    var(--shallow-reef) 65%,
+    var(--shallow-deep) 90%,
+    var(--shallow-deep) 100%
+  );
+  background-attachment: scroll;
+}
+
+[data-theme="light"] html::before {
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    transparent 65%
+  );
+}
+
+[data-theme="light"] [class*="hero" i] video,
+[data-theme="light"] [class*="Hero" i] video {
+  filter: saturate(0.9) brightness(1.05);
+}
+
+[data-theme="light"] body::after {
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+}
+
+[data-theme="light"] [class*="helixWrap" i] canvas,
+[data-theme="light"] [class*="canvasWrap" i] canvas {
+  filter: brightness(0.9) saturate(1.1);
+}
+
+[data-theme="light"] ::-webkit-scrollbar {
+  background: var(--shallow-clear);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(10, 32, 48, 0.18);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(10, 32, 48, 0.32);
+}

@@ -56,7 +56,7 @@ export default function Error({ error, reset }) {
           fontFamily: "var(--mono)",
           fontSize: 11,
           letterSpacing: 0.5,
-          color: "var(--black)",
+          color: "var(--ink)",
           background: "var(--white)",
           padding: "10px 28px",
           border: "none",

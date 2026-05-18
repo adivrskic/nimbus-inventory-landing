@@ -115,17 +115,22 @@ const MORE_GROUPS = [
   {
     label: "Resources",
     items: [
+      {
+        title: "Ask Nimbus",
+        desc: "Chat with our AI assistant",
+        href: "/ask",
+      },
       { title: "Blog", desc: "Operations insights & updates", href: "/blog" },
       { title: "Help Center", desc: "Guides and FAQs", href: "/help" },
-      // { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
+      { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
     ],
   },
   {
     label: "Company",
     items: [
-      // { title: "Trust", desc: "Security and SOC 2 details", href: "/trust" },
       { title: "Contact", desc: "Talk to our team", href: "/contact" },
-      // { title: "Status", desc: "Live system health", href: "/status" },
+      { title: "Trust", desc: "Security & SOC 2", href: "/trust" },
+      { title: "Status", desc: "Live system health", href: "/status" },
     ],
   },
   {
@@ -150,15 +155,16 @@ const MORE_GROUPS = [
 /* Surface every secondary page in the mobile "Resources" section —
    mirrors the desktop More mega menu since mobile can't fan out the same way. */
 const EXTRA_LINKS = [
+  { text: "Ask Nimbus", href: "/ask" },
   { text: "Pricing", href: "/pricing" },
   { text: "ROI Calculator", href: "/calculator" },
   { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
-  // { text: "API Docs", href: "/api-docs" },
-  // { text: "Trust", href: "/trust" },
+  { text: "API Docs", href: "/api-docs" },
+  { text: "Trust", href: "/trust" },
   { text: "Contact", href: "/contact" },
-  // { text: "Status", href: "/status" },
+  { text: "Status", href: "/status" },
 ];
 
 function MobileMenu({ open, links, onClose, onDemo }) {
@@ -290,10 +296,10 @@ function MobileMenu({ open, links, onClose, onDemo }) {
 
         <div data-footer="" className={styles.mobileFooter}>
           <a
-            href="mailto:sales@nimbuswms.com"
+            href="mailto:sales@nautilusinventory.com"
             className={styles.mobileFooterLink}
           >
-            sales@nimbuswms.com
+            sales@nautilusinventory.com
           </a>
         </div>
       </div>
@@ -477,7 +483,7 @@ export default function Nav({ onDemo, dark }) {
         <TransitionLink href="/" className={styles.logo}>
           <Logo size={27} />
           <div>
-            <span className={styles.logoText}>Nimbus</span>
+            <span className={styles.logoText}>Nautilus</span>
             <span className={styles.logoSub}>Inventory Management Systems</span>
           </div>
         </TransitionLink>
@@ -615,7 +621,7 @@ export default function Nav({ onDemo, dark }) {
             <div className={styles.megaLeft}>
               <div className={styles.megaTag}>Integrations</div>
               <p className={styles.megaDesc}>
-                Nimbus connects to your existing tools. No rip-and-replace.
+                Nautilus connects to your existing tools. No rip-and-replace.
               </p>
               <TransitionLink
                 href="/integration"
@@ -727,14 +733,14 @@ export default function Nav({ onDemo, dark }) {
                 Plans, resources, company information, and legal documents.
               </p>
               <TransitionLink
-                href="/calculator"
+                href="/ask"
                 className={styles.megaFeatured}
                 onClick={() => setOpenMenu(null)}
               >
-                <div className={styles.megaFeaturedTag}>Tool</div>
-                <div className={styles.megaFeaturedTitle}>ROI Calculator</div>
+                <div className={styles.megaFeaturedTitle}>Ask Nimbus</div>
                 <div className={styles.megaFeaturedDesc}>
-                  See your annual savings in 30 seconds.
+                  Chat with our AI for pricing, comparisons, and instant
+                  answers.
                 </div>
                 <svg
                   className={styles.megaFeaturedArrow}
@@ -744,9 +750,9 @@ export default function Nav({ onDemo, dark }) {
                   fill="none"
                 >
                   <path
-                    d="M1 5H12M9 1L13 5L9 9"
+                    d="M1 5H13M10 1L13 5L10 9"
                     stroke="currentColor"
-                    strokeWidth="1.2"
+                    strokeWidth="1.4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />

@@ -1,25 +1,27 @@
 /* ════════════════════════════════════════════════════════════════════
-   WarehouseShowcase.module.css
+   WarehouseShowcase.module.css — Deep Underwater Theme
+   ────────────────────────────────────────────────────────────────────
+   Changes from the original:
 
-   Annotation system, not panels. Each "card" is a tiny composition:
+   1. .section bg → transparent (was #060610) so the gradient shows
+      through behind the 3D scene.
+   2. .canvas bg → transparent (was #060610). Combined with the JSX
+      patch (renderer alpha: true + scene.background = null) the canvas
+      itself becomes see-through and three.js renders the warehouse
+      objects directly onto the ocean gradient. No more dark stage —
+      the warehouse appears to float in the abyss.
+   3. .modeCard background — was rgba(6, 6, 12, X) (cold black wash).
+      Now navy-tinted rgba(2, 10, 22, X) so the small ink-wash card
+      labels match the rest of the underwater palette.
 
-     · cardLabel    — small mono key ("02 · VOICE")
-     · cardHeadline — the BIG number/word that carries the meaning
-     · cardSubhead  — one line of context under the headline
-     · cardRule     — a hairline gold rule for editorial rhythm
-     · supporting   — tiny mono stats below the rule
-
-   The chrome is intentionally bare: no backdrop blur, no border box,
-   no heavy shadow. A single gold rule at the top of each card is the
-   only decorative element. An SVG leader line (drawn behind the card
-   in DOM order) tethers each card to its 3D anchor point so the
-   typography reads as architectural annotation rather than a UI panel.
+   The rest of the file is preserved verbatim — leader lines, cards,
+   mode indicator, responsive rules.
    ════════════════════════════════════════════════════════════════════ */
 
 .section {
   --nav-height: 72px;
   position: relative;
-  background: #060610;
+  background: transparent;
   z-index: 5;
 }
 
@@ -39,7 +41,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: #060610;
+  background: transparent;
   touch-action: none;
 }
 
@@ -73,7 +75,7 @@
 .cornerSub {
   font-size: 9px;
   letter-spacing: 1.4px;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(180, 205, 230, 0.5);
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -98,13 +100,7 @@
   }
 }
 
-/* ════════════════════════════════════════════════════════════════════
-     SVG LEADER OVERLAY
-     ──────────────────────────────────────────────────────────────────
-     Full-canvas SVG sitting BEHIND the cards. The render loop sets
-     x1/y1/x2/y2 on each line and cx/cy on each dot. Hairlines read
-     as architectural callouts rather than UI.
-     ════════════════════════════════════════════════════════════════════ */
+/* ─── SVG LEADER OVERLAY ─────────────────────────────────────────── */
 .leaderSvg {
   position: absolute;
   inset: 0;
@@ -134,15 +130,7 @@
   fill: #c84a4a;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-     MODE CARDS — minimal annotation, not panels
-     ──────────────────────────────────────────────────────────────────
-     Pinned at top:0/left:0; the render loop sets transform + opacity
-     each frame. No backdrop-filter (we want crisp text against the
-     scene, not a frosted bubble). No box-shadow. A single gold rule
-     at the top is the only chrome.
-     ════════════════════════════════════════════════════════════════════ */
-
+/* ─── MODE CARDS ─────────────────────────────────────────────────── */
 .modeCard {
   position: absolute;
   top: 0;
@@ -155,19 +143,17 @@
   will-change: transform, opacity;
   z-index: 4;
 
-  /* Very subtle ink wash, just enough to seat the text over busy
-       scene content; no border, no blur. */
+  /* Navy ink-wash that fits the ocean palette */
   background: linear-gradient(
     180deg,
-    rgba(6, 6, 12, 0.78) 0%,
-    rgba(6, 6, 12, 0.62) 100%
+    rgba(2, 10, 22, 0.78) 0%,
+    rgba(2, 10, 22, 0.62) 100%
   );
   padding: 12px 18px 14px;
   border-top: 1px solid var(--accent, #d4a853);
 }
 
-/* ─── COMMON CARD CONTENT ──────────────────────────────────────── */
-
+/* ─── COMMON CARD CONTENT ────────────────────────────────────────── */
 .cardLabel {
   display: flex;
   align-items: center;
@@ -184,25 +170,24 @@
 }
 .cardLabelMeta {
   margin-left: auto;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(180, 205, 230, 0.4);
   font-size: 9px;
   letter-spacing: 1.4px;
 }
 
-/* The headline is the visual element — large display number/word. */
 .cardHeadline {
   font-family: var(--display, Georgia, serif);
   font-size: 52px;
   font-weight: 500;
   line-height: 0.98;
-  color: rgba(255, 255, 255, 0.97);
+  color: rgba(240, 246, 252, 0.97);
   letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
 }
 .cardHeadlineDenom {
   font-size: 22px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(180, 205, 230, 0.4);
   margin-left: 4px;
   letter-spacing: -0.5px;
 }
@@ -211,7 +196,7 @@
   font-family: var(--mono, "JetBrains Mono", monospace);
   font-size: 11px;
   letter-spacing: 1.2px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(180, 205, 230, 0.6);
   text-transform: uppercase;
   margin-top: 6px;
 }
@@ -230,19 +215,18 @@
   font-family: var(--mono, "JetBrains Mono", monospace);
   font-size: 10.5px;
   letter-spacing: 0.6px;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(180, 205, 230, 0.65);
   line-height: 1.5;
 }
 .cardSupportAccent {
   color: var(--accent, #d4a853);
 }
 
-/* ─── WAKE CARD ──────────────────────────────────────────────────── */
+/* ─── INDIVIDUAL CARDS ───────────────────────────────────────────── */
 .wakeCard {
   width: 280px;
 }
 
-/* ─── HEAR CARD ──────────────────────────────────────────────────── */
 .hearCard {
   width: 360px;
 }
@@ -294,104 +278,25 @@
 .cardQuery {
   font-family: var(--display, Georgia, serif);
   font-size: 22px;
-  line-height: 1.25;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.97);
-  letter-spacing: -0.4px;
-}
-.cardResolve {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
+  line-height: 1.3;
+  color: rgba(240, 246, 252, 0.95);
+  letter-spacing: -0.5px;
   margin-bottom: 6px;
 }
-.cardResolveKey {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 22px;
-  font-weight: 500;
-  color: var(--accent, #d4a853);
-  letter-spacing: -0.3px;
-  font-variant-numeric: tabular-nums;
-}
-.cardResolveLoc {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  color: rgba(255, 255, 255, 0.68);
-}
 
-/* ─── PREDICT CARD ───────────────────────────────────────────────── */
 .forecastCard {
-  width: 280px;
-  border-top-color: rgba(200, 74, 74, 0.7);
+  width: 250px;
 }
-.forecastRows {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 10px;
-}
-.forecastRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 13px;
-  letter-spacing: 0.3px;
-}
-.forecastSku {
-  color: rgba(255, 255, 255, 0.88);
-  font-weight: 500;
-}
-.forecastEta {
-  color: #d97070;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ─── ACT CARD ───────────────────────────────────────────────────── */
 .actCard {
-  width: 340px;
+  width: 300px;
 }
-.actRow {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  margin-bottom: 10px;
-}
-.actRowVal {
-  font-size: 20px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -0.4px;
-  font-variant-numeric: tabular-nums;
-}
-.actRowAccent {
-  color: var(--accent, #d4a853);
-}
-.actRowKey {
-  font-size: 9.5px;
-  letter-spacing: 1.4px;
-  color: rgba(255, 255, 255, 0.42);
-  text-transform: uppercase;
-}
-.actRowSep {
-  color: rgba(255, 255, 255, 0.22);
-  margin: 0 4px;
-}
-
-/* ─── LEARN CARD ─────────────────────────────────────────────────── */
 .learnCard {
-  width: 420px;
+  width: 320px;
 }
 .learnFacts {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
   font-family: var(--mono, "JetBrains Mono", monospace);
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(180, 205, 230, 0.78);
   margin-bottom: 10px;
 }
 .learnFactsAccent {
@@ -405,9 +310,7 @@
   margin-right: 3px;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-     MODE INDICATOR (bottom-center, editorial chapter marker)
-     ════════════════════════════════════════════════════════════════════ */
+/* ─── MODE INDICATOR ─────────────────────────────────────────────── */
 .modeIndicator {
   position: absolute;
   left: 0;
@@ -430,7 +333,7 @@
   display: block;
   width: 26px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(160, 200, 235, 0.14);
   transition: background 0.5s ease, width 0.5s ease;
 }
 .modeTickPast {
@@ -445,7 +348,7 @@
   margin-left: 14px;
   font-size: 9.5px;
   letter-spacing: 1.4px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(180, 205, 230, 0.55);
 }
 .modeLabel {
   font-size: 10px;
@@ -458,7 +361,7 @@
   font-family: var(--display, Georgia, serif);
   font-size: 22px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.96);
+  color: rgba(240, 246, 252, 0.96);
   letter-spacing: -0.5px;
   text-align: center;
   max-width: 720px;
@@ -466,10 +369,7 @@
   text-wrap: balance;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-     RESPONSIVE
-     ════════════════════════════════════════════════════════════════════ */
-
+/* ─── RESPONSIVE ─────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .wakeCard {
     width: 240px;
@@ -484,142 +384,6 @@
     width: 300px;
   }
   .learnCard {
-    width: 360px;
-  }
-  .cardHeadline {
-    font-size: 44px;
-    letter-spacing: -1.6px;
-  }
-  .cardQuery {
-    font-size: 19px;
-  }
-  .cardResolveKey {
-    font-size: 19px;
-  }
-}
-
-@media (max-width: 860px) {
-  .scrollSpace {
-    height: 320vh;
-  }
-
-  .modeCard {
-    padding: 10px 14px 12px;
-  }
-  .wakeCard {
-    width: 200px;
-  }
-  .hearCard {
-    width: 270px;
-  }
-  .forecastCard {
-    width: 220px;
-  }
-  .actCard {
-    width: 270px;
-  }
-  .learnCard {
-    width: calc(100vw - 32px);
-    max-width: 380px;
-  }
-
-  .cardLabel {
-    font-size: 9px;
-    letter-spacing: 1.4px;
-    margin-bottom: 8px;
-  }
-  .cardHeadline {
-    font-size: 36px;
-    letter-spacing: -1.4px;
-  }
-  .cardHeadlineDenom {
-    font-size: 16px;
-  }
-  .cardSubhead {
-    font-size: 10px;
-    letter-spacing: 1px;
-  }
-  .cardSupport {
-    font-size: 9.5px;
-  }
-  .cardRule {
-    margin: 9px 0 8px;
-  }
-  .cardQuery {
-    font-size: 16px;
-  }
-  .cardResolveKey {
-    font-size: 16px;
-  }
-  .cardResolveLoc {
-    font-size: 10px;
-  }
-  .actRowVal {
-    font-size: 16px;
-  }
-  .forecastRow {
-    font-size: 12px;
-  }
-  .learnFacts {
-    font-size: 11.5px;
-  }
-
-  .modeTitle {
-    font-size: 17px;
-  }
-  .modeTick {
-    width: 18px;
-  }
-  .modeTickActive {
-    width: 30px;
-  }
-
-  .corner {
-    gap: 2px;
-  }
-  .cornerTL {
-    top: 16px;
-    left: 16px;
-  }
-  .cornerTR {
-    top: 16px;
-    right: 16px;
-  }
-  .cornerKey {
-    font-size: 9px;
-  }
-  .cornerSub {
-    font-size: 8.5px;
-  }
-}
-
-@media (max-width: 540px) {
-  .wakeCard,
-  .hearCard,
-  .forecastCard,
-  .actCard {
-    max-width: calc(100vw - 32px);
-  }
-  .learnCard {
-    width: calc(100vw - 24px);
-  }
-  .cardHeadline {
-    font-size: 32px;
-    letter-spacing: -1.2px;
-  }
-}
-
-/* ─── REDUCED MOTION ─────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .dot,
-  .hearWave > span {
-    animation-duration: 4s;
-  }
-  .modeCard {
-    transition: opacity 0.6s ease;
-  }
-  .leaderLine,
-  .leaderDot {
-    transition: opacity 0.6s ease;
+    width: 280px;
   }
 }

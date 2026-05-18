@@ -4,7 +4,9 @@ import TransitionProvider from "@/components/TransitionProvider/TransitionProvid
 import { AnimationProvider } from "@/lib/AnimationContext";
 import DemoHost from "@/lib/DemoContext";
 import Nav from "@/components/Nav/Nav";
+import ChatProvider from "@/components/Chat/ChatProvider";
 import "./globals.css";
+import "./globals.ocean-theme.css";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -91,14 +93,9 @@ export default function RootLayout({ children }) {
               {/* DemoHost owns the modal + provides openDemo via context.
                   Wraps everything below so any descendant can pop the modal. */}
               <DemoHost>
-                {/* Nav is the persistent shelf — mounted ONCE here, never
-                    unmounted by page navigation. Sits OUTSIDE the
-                    data-page-content wrapper so it doesn't fade. */}
                 <Nav />
-
-                {/* Page content. TransitionProvider's fade and the
-                    shelf-style overlay both target this wrapper. */}
                 <main data-page-content>{children}</main>
+                <ChatProvider />
               </DemoHost>
             </TransitionProvider>
           </LenisProvider>

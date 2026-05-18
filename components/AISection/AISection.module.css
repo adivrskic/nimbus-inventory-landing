@@ -1,16 +1,54 @@
 .section {
   position: relative;
   z-index: 1;
-  background: #ffffff;
-  margin-bottom: -150vh;
+  background: transparent;
+  margin-bottom: -150vh; /* restored — original value, drives the section's scroll length */
+  /* overflow: hidden REMOVED — was clipping the canvas and breaking sticky behavior */
 }
 .canvasWrap {
   position: sticky;
   top: 0;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   z-index: 0;
   pointer-events: none;
+
+  /* Soft alpha falloff on all four edges so particles appear scattered
+     and fade out gracefully toward the screen edges — no hard cutoff
+     lines. The bottom fade is wider (~25vh) than the top (~10vh) so
+     particles fade out before they'd visually bleed into the next
+     section, and the side fades (~8vw each) catch any horizontal
+     drift. */
+  mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 10%,
+      black 75%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 10%,
+      black 75%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
 }
 .canvasWrap canvas {
   display: block;
@@ -111,7 +149,7 @@
   height: 7px;
   margin-top: -3.5px;
   padding: 0;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(160, 200, 235, 0.25);
   border: none;
   border-radius: 0;
   cursor: pointer;
@@ -164,7 +202,7 @@
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -1.5px;
-  color: var(--dark);
+  color: var(--white);
   margin: 0 0 18px;
 }
 .cardDesc {
@@ -172,7 +210,7 @@
   font-size: 16px;
   line-height: 1.7;
   font-weight: 400;
-  color: var(--dark-secondary);
+  color: rgba(180, 205, 230, 0.65);
   margin: 0;
 }
 
@@ -183,9 +221,8 @@
 }
 
 .trailingSpacer {
-  min-height: 150vh;
+  min-height: 150vh; /* restored — original value */
 }
-
 /* ═══════════════════════════════════════════════════════════════════════
    DEBUG PANEL — only mounted when ?debug is in the URL
    Fixed-position dark overlay. Sliders are native range inputs styled
@@ -297,7 +334,52 @@
 .dbgModeBtnActive:hover {
   color: #0a0a0a;
 }
+/* Section header inside debug panel — splits START / END sections */
+.dbgSectionHead {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 16px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.18);
+}
 
+.dbgSectionHead:first-of-type {
+  margin-top: 8px;
+}
+
+/* Animation preview scrubber — lets user drag through the shape's
+   start→end animation without scrolling the page */
+.dbgPreviewRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dbgPreviewLabel {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: rgba(242, 240, 239, 0.6);
+  text-transform: uppercase;
+}
+.dbgPreviewValue {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.dbgPreviewHint {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(242, 240, 239, 0.35);
+  margin-top: -2px;
+}
 /* Live viewport readout — small caption that shows the actual viewport
    width and whether the preview is overriding it. Helps the user know
    that "this is what the shape looks like at mobile config even though

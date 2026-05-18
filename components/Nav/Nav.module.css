@@ -1,3 +1,12 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   NAV — Deep Underwater Theme
+   ───────────────────────────────────────────────────────────────────────
+   Frosted glass on scroll, with the full set of mega menu styles that
+   the previous drop accidentally trimmed: .megaRichItem (title+desc
+   menu links), .megaRichTitle, .megaRichDesc, and the .megaFeatured*
+   block (the ROI Calculator promo card in the More menu).
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .nav {
   position: fixed;
   top: 0;
@@ -10,18 +19,23 @@
   align-items: center;
   justify-content: space-between;
   background: transparent;
-  transition: background 0.4s;
+  transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+  border-bottom: 1px solid transparent;
 }
+
 .scrolled {
-  background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(2, 10, 22, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom-color: rgba(160, 200, 235, 0.08);
 }
-.dark {
-  background: var(--dark);
-}
+
+.dark,
 .dark.scrolled {
-  background: var(--dark);
+  background: rgba(2, 10, 22, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom-color: rgba(160, 200, 235, 0.08);
 }
 
 .logo {
@@ -31,7 +45,6 @@
   text-decoration: none;
   color: var(--white);
 }
-
 .logo > div {
   display: flex;
   flex-direction: column;
@@ -51,7 +64,7 @@
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(180, 205, 230, 0.4);
   display: block;
   line-height: 1;
   margin-top: 3px;
@@ -106,16 +119,17 @@
   font-weight: 500;
   letter-spacing: 0.5px;
   text-decoration: none;
-  color: var(--black);
+  color: var(--ink);
   background: var(--white);
   padding: 8px 24px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.3s, border-color 0.3s;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
 }
 .cta:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  color: var(--ink);
 }
 
 .rightGroup {
@@ -130,8 +144,8 @@
   align-items: center;
   justify-content: center;
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(160, 200, 235, 0.12);
+  color: rgba(180, 205, 230, 0.5);
   cursor: pointer;
   transition: color 0.3s, border-color 0.3s;
 }
@@ -140,9 +154,9 @@
   border-color: var(--accent);
 }
 
-/* ─────────────────────────────────────────────────────
-   MEGA MENU SHELL
-───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+     MEGA MENU SHELL — frosted glass
+     ═══════════════════════════════════════════════════════════════════════ */
 
 .megaWrap {
   position: fixed;
@@ -153,13 +167,13 @@
   height: 0;
   opacity: 0;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(2, 10, 22, 0.78);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid rgba(160, 200, 235, 0.08);
 }
 .megaWrapDark {
-  background: var(--dark);
+  background: rgba(2, 10, 22, 0.85);
 }
 .megaPanel {
   position: absolute;
@@ -187,7 +201,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(160, 200, 235, 0.08);
   padding-right: 40px;
 }
 .megaTag {
@@ -202,7 +216,7 @@
   font-family: var(--display);
   font-size: 14px;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(180, 205, 230, 0.55);
   margin-bottom: 24px;
 }
 .megaViewAll {
@@ -219,40 +233,31 @@
   color: var(--white);
 }
 
-/* ─────────────────────────────────────────────────────
-   ALL THREE MEGA MENUS NOW SHARE THE SAME ITEM TREATMENT
-   
-   .megaRichItem (title + desc, brighter title, gold hover) is used by
-   Integrations, Industries, AND More — unified visual vocabulary.
-   
-   Layout differs per menu:
-     - Integrations: .megaCols (3 cat columns, each with label + items)
-     - Industries:   .megaIndustriesGrid (4-col rich grid, no labels)
-     - More:         .megaMoreGrid (4 cat columns with labels)
-───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+     MEGA MENU GRIDS
+     ───────────────────────────────────────────────────────────────────────
+     All three mega menus share .megaRichItem (title + desc, brighter
+     title, gold hover) but lay out differently:
+       - Integrations:  3-col category grid (.megaCols + .megaMoreCol)
+       - Industries:    4-col flat grid (.megaIndustriesGrid)
+       - More:          4-col category grid (.megaMoreGrid + .megaMoreCol)
+     ═══════════════════════════════════════════════════════════════════════ */
 
-/* Integrations 3-col with categories */
 .megaCols {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
 }
-
-/* Industries — 4-col flat grid, 8 items in 4×2 */
 .megaIndustriesGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px 24px;
 }
-
-/* More 4-col with categories (already defined below) */
 .megaMoreGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 28px;
 }
-
-/* Shared column wrapper for category-style menus (Integrations + More) */
 .megaMoreCol {
   display: flex;
   flex-direction: column;
@@ -262,15 +267,19 @@
   font-size: 8px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(180, 205, 230, 0.3);
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(160, 200, 235, 0.06);
 }
 
-/* Rich item — title + descriptor. Used in all three mega menus.
-   Negative horizontal margin lets the hover background extend slightly
-   past the column's natural item width so it feels generous, not boxy. */
+/* ═══════════════════════════════════════════════════════════════════════
+     MEGA RICH ITEM — title + descriptor link
+     ───────────────────────────────────────────────────────────────────────
+     Used by all three mega menus. Negative horizontal margin lets the
+     hover background extend slightly past the column's natural item
+     width so it feels generous, not boxy.
+     ═══════════════════════════════════════════════════════════════════════ */
 .megaRichItem {
   display: flex;
   flex-direction: column;
@@ -278,17 +287,16 @@
   padding: 9px 12px;
   margin: 0 -12px;
   text-decoration: none;
-  border-radius: 8px;
   transition: background 0.2s;
 }
 .megaRichItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(160, 200, 235, 0.05);
 }
 .megaRichTitle {
   font-family: var(--display);
   font-size: 13.5px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(240, 246, 252, 0.92);
   letter-spacing: -0.2px;
   transition: color 0.2s;
 }
@@ -299,13 +307,16 @@
   font-family: var(--display);
   font-size: 11.5px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(180, 205, 230, 0.45);
   font-weight: 400;
 }
 
-/* Featured callout on the left side of the More mega.
-   Used here for the ROI Calculator promo, but reusable for any
-   highlighted destination. Gold-tinted, subtle border, arrow lower-right. */
+/* ═══════════════════════════════════════════════════════════════════════
+     MEGA FEATURED CALLOUT — used in the More mega menu (ROI Calculator)
+     ───────────────────────────────────────────────────────────────────────
+     Gold-tinted promo card with arrow lower-right. Sits on the LEFT side
+     of the More mega menu below the .megaDesc.
+     ═══════════════════════════════════════════════════════════════════════ */
 .megaFeatured {
   position: relative;
   display: block;
@@ -333,7 +344,7 @@
   font-family: var(--display);
   font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(240, 246, 252, 0.95);
   letter-spacing: -0.3px;
   margin-bottom: 5px;
 }
@@ -341,7 +352,7 @@
   font-family: var(--display);
   font-size: 11.5px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(180, 205, 230, 0.5);
   margin-right: 28px;
 }
 .megaFeaturedArrow {
@@ -355,15 +366,22 @@
   transform: translateX(4px);
 }
 
+/* ─── Scrim (behind mega when open) ──────────────────────────────── */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 98;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(2, 6, 15, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.3s;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+     RESPONSIVE — mega menu
+     ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .nav {
     padding: 0 24px;
@@ -392,6 +410,7 @@
     grid-template-columns: 1fr;
   }
 }
+
 @media (max-width: 768px) {
   .nav {
     padding: 0 20px;
@@ -419,7 +438,10 @@
   }
 }
 
-/* Hamburger */
+/* ═══════════════════════════════════════════════════════════════════════
+     HAMBURGER + MOBILE MENU
+     ═══════════════════════════════════════════════════════════════════════ */
+
 .hamburger {
   display: none;
   flex-direction: column;
@@ -453,15 +475,14 @@
   }
 }
 
-/* Mobile menu overlay */
 .mobileMenu {
   position: fixed;
   inset: 0;
   top: 60px;
   z-index: 9998;
-  background: rgba(0, 0, 0, 0.98);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(2, 10, 22, 0.85);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
   flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -493,11 +514,11 @@
   gap: 14px;
   text-decoration: none;
   padding: 18px 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(160, 200, 235, 0.06);
   transition: background 0.3s;
 }
 .mobileLink:active {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(160, 200, 235, 0.04);
 }
 .mobileLinkNum {
   font-family: var(--mono);
@@ -516,7 +537,7 @@
   flex: 1;
 }
 .mobileLinkArrow {
-  color: rgba(255, 255, 255, 0.12);
+  color: rgba(160, 200, 235, 0.18);
   flex-shrink: 0;
   transition: color 0.3s, transform 0.3s;
 }
@@ -527,7 +548,7 @@
 
 .mobileDivider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(160, 200, 235, 0.08);
   margin: 20px 0 24px;
   transform-origin: left;
 }
@@ -537,7 +558,7 @@
   text-decoration: none;
   font-family: var(--display);
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(180, 205, 230, 0.45);
   padding: 12px 4px;
   transition: color 0.3s;
 }
@@ -553,7 +574,7 @@
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--black);
+  color: var(--ink);
   background: var(--white);
   padding: 16px 0;
   border: none;
@@ -562,7 +583,7 @@
   transition: background 0.3s;
 }
 .mobileCta:active {
-  background: var(--accent);
+  background: var(--accent-bright);
 }
 
 .mobileFooter {
@@ -574,7 +595,7 @@
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(180, 205, 230, 0.18);
   text-decoration: none;
   transition: color 0.3s;
 }

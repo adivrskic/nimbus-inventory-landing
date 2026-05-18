@@ -452,7 +452,7 @@
   text-transform: uppercase;
   padding: 0 26px;
   background: var(--accent);
-  color: var(--black);
+  color: var(--ink);
   border: 1px solid var(--accent);
   cursor: pointer;
   transition: background 0.3s, border-color 0.3s, transform 0.3s;
@@ -461,6 +461,7 @@
 .sendBtn:not(:disabled):hover {
   background: var(--white);
   border-color: var(--white);
+  color: var(--ink); /* explicit; was inheriting from .sendBtn */
   transform: translateY(-1px);
 }
 

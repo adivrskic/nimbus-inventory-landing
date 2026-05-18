@@ -30,17 +30,18 @@ const COLUMNS = [
   {
     title: "Resources",
     links: [
+      { text: "Ask Nimbus", href: "/ask" },
       { text: "Blog", href: "/blog" },
       { text: "Help Center", href: "/help" },
-      // { text: "API Docs", href: "/api-docs" },
-      // { text: "Status", href: "/status" },
+      { text: "API Docs", href: "/api-docs" },
     ],
   },
   {
     title: "Company",
     links: [
-      // { text: "Trust", href: "/trust" },
       { text: "Contact", href: "/contact" },
+      { text: "Trust", href: "/trust" },
+      { text: "Status", href: "/status" },
     ],
   },
 ];
@@ -54,7 +55,7 @@ const LEGAL_LINKS = [
   { text: "Security", href: "/legal/security" },
 ];
 
-const HELIX_COUNT = 3000;
+const HELIX_COUNT = 4500;
 
 export default function Footer() {
   const footerRef = useRef(null);
@@ -106,16 +107,14 @@ export default function Footer() {
       const t = i / HELIX_COUNT;
       const strand = i % 2 === 0 ? 1 : -1;
       particles.push({
-        // Scattered position (random across canvas)
-        sx: Math.random(), // 0-1 normalized
+        sx: Math.random(),
         sy: Math.random(),
-        // Helix params
         t,
         strand,
         radius: 30 + Math.random() * 50,
         phase: Math.random() * 0.9,
-        size: 0.5 + Math.random() * 0.775,
-        alpha: 0.15 + Math.random() * 0.44,
+        size: 0.6 + Math.random() * 0.9, // particles a touch larger
+        alpha: 0.35 + Math.random() * 0.55, // alpha 0.35–0.90 instead of 0.15–0.59
       });
     }
 
@@ -176,15 +175,14 @@ export default function Footer() {
         const x = scatX + (hx - scatX) * smoothF;
         const y = scatY + (hy - scatY) * smoothF;
 
-        // Depth (only meaningful when formed)
         const depth = Math.cos(wave);
-        const depthFactor = 0.25 + depth * 0.25 + 0.25;
-        const finalAlpha = p.alpha * (0.15 + smoothF * depthFactor * 0.85);
-        const finalSize = p.size * (0.4 + smoothF * depthFactor * 0.6);
+        const depthFactor = 0.4 + depth * 0.3 + 0.3; // brighter baseline
+        const finalAlpha = p.alpha * (0.35 + smoothF * depthFactor * 0.75);
+        const finalSize = p.size * (0.5 + smoothF * depthFactor * 0.7);
 
         ctx.beginPath();
-        ctx.arc(x, y, Math.max(0.3, finalSize), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(212, 168, 83, ${finalAlpha})`;
+        ctx.arc(x, y, Math.max(0.4, finalSize), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(231, 192, 116, ${finalAlpha})`; // brighter gold (#e7c074)
         ctx.fill();
       }
     }

@@ -9,6 +9,23 @@ import styles from "./Hero.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* ═══════════════════════════════════════════════════════════════════════
+   HERO — faster fade-out
+   ───────────────────────────────────────────────────────────────────────
+   Two timing changes from the previous version:
+
+   1. Content + stats fade now COMPLETES by 30% scroll into the hero
+      (was 70%). Headline/desc/CTAs/stats are gone by the time you've
+      scrolled 30vh.
+
+   2. Whole-section dissolve now COMPLETES by 50% scroll into the hero
+      (was 90%). The entire hero is invisible by the time you're halfway
+      through the section's scroll.
+
+   Result: you scroll a small amount, the hero clears out fast and the
+   next section (AISection) is ready to take over visually.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 const HEADLINE_LINES = [
   {
     words: [
@@ -26,7 +43,6 @@ const HEADLINE_LINES = [
   },
 ];
 
-// Split description into visual lines for the overflow-hidden mask
 const DESC_LINES = [
   "Nimbus unifies scanning, spatial mapping,",
   "and predictive AI into a single platform that",
@@ -51,7 +67,6 @@ export default function Hero({ onDemo }) {
   const valRefs = useRef([]);
   const { paused } = useAnimationPaused();
 
-  // Pause/resume video
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -64,14 +79,12 @@ export default function Hero({ onDemo }) {
 
     const master = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-    // Video fade
     master.to(
       videoRef.current,
       { opacity: 0.3, duration: 1.5, ease: "power2.inOut" },
       0
     );
 
-    // Per-letter headline
     const hLetters = document.querySelectorAll(`.${styles.letter}`);
     master.to(
       hLetters,
@@ -86,7 +99,6 @@ export default function Hero({ onDemo }) {
       0.3
     );
 
-    // Per-letter description — starts at same time as headline
     const dLetters = document.querySelectorAll(`.${styles.descLetter}`);
     master.to(
       dLetters,
@@ -100,37 +112,22 @@ export default function Hero({ onDemo }) {
       0.3
     );
 
-    // CTAs slide up — after text lands
     master.to(
       ctasRef.current,
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out",
-      },
+      { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
       1.1
     );
 
-    // Stats — after buttons
     master.to(sideRef.current, { opacity: 1, duration: 0.01 }, 1.4);
 
     STATS.forEach((stat, i) => {
       const delay = 1.4 + i * 0.35;
-
-      // Stat block fades in + slides
       master.to(
         statRefs.current[i],
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.4,
-          ease: "power3.out",
-        },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
         delay
       );
 
-      // Number counts up
       const counter = { val: 0 };
       const valEl = valRefs.current[i];
       master.to(
@@ -150,20 +147,22 @@ export default function Hero({ onDemo }) {
       );
     });
 
-    // Scroll: content floats up + fades
-    gsap.to(contentRef.current, {
-      y: -100,
+    /* ── FAST CONTENT FADE ─────────────────────────────────────────────
+       Content + stats are gone by 30% scroll into the hero (was 70%).
+       Tighter scrub (1 instead of 1.5) for snappier response. */
+    gsap.to([contentRef.current, sideRef.current], {
+      y: -80,
       opacity: 0,
       ease: "none",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "80% top",
-        scrub: 1.5,
+        end: "30% top",
+        scrub: 1,
       },
     });
 
-    // Scroll: video bg shrinks from 1.35 → 1.0
+    /* Video bg resolves */
     gsap.to(videoBgRef.current, {
       scale: 1,
       ease: "none",
@@ -175,17 +174,21 @@ export default function Hero({ onDemo }) {
       },
     });
 
-    // Scroll: darken the whole section
-    gsap.to(scrollDimRef.current, {
-      opacity: 0.7,
-      ease: "none",
+    /* ── FAST WHOLE-SECTION FADE ───────────────────────────────────────
+       Entire hero dissolves into the gradient by 50% scroll (was 90%).
+       Even tighter scrub (0.5) so the dissolve tracks scroll directly
+       without lagging behind. */
+    gsap.to(sectionRef.current, {
+      opacity: 0,
+      ease: "power2.in",
       scrollTrigger: {
         trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom top",
-        scrub: 1,
+        start: "15% top",
+        end: "50% top",
+        scrub: 0.5,
       },
     });
+
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
@@ -208,7 +211,6 @@ export default function Hero({ onDemo }) {
       <div ref={scrollDimRef} className={styles.scrollDim} />
 
       <div ref={contentRef} className={styles.content}>
-        {/* AFTER */}
         <h1 className={styles.headline}>
           <SplitText
             tokens={HEADLINE_LINES.map((line) =>
