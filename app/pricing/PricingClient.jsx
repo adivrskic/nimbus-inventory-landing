@@ -162,8 +162,6 @@ const fmt = (n) => n.toLocaleString("en-US");
 
 export default function PricingClient() {
   const heroRef = useRef(null);
-  const bracketTLRef = useRef(null);
-  const bracketBRRef = useRef(null);
   const tierRefs = useRef([]);
   const matrixSectionRef = useRef(null);
   const matrixRowRefs = useRef([]);
@@ -190,15 +188,12 @@ export default function PricingClient() {
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-    /* Hero brackets */
-    tl.to(
-      bracketTLRef.current,
-      { width: 56, height: 56, opacity: 0.25, duration: 0.6 },
+    /* Eyebrow */
+    tl.fromTo(
+      `.${styles.heroEyebrow}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.45 },
       0
-    ).to(
-      bracketBRRef.current,
-      { width: 56, height: 56, opacity: 0.25, duration: 0.6 },
-      0.1
     );
 
     /* Headline letters */
@@ -213,25 +208,20 @@ export default function PricingClient() {
         stagger: 0.016,
         ease: "power4.out",
       },
-      0.2
+      0.15
     );
 
-    /* Sub letters */
-    const sLetters = hero.querySelectorAll(`.${styles.subLetter}`);
-    tl.to(
-      sLetters,
-      {
-        opacity: 1,
-        y: "0%",
-        duration: 0.4,
-        stagger: 0.006,
-        ease: "power3.out",
-      },
-      0.45
+    /* Sub — simple fade-up (was per-letter; matching Calculator's
+       simpler editorial reveal). */
+    tl.fromTo(
+      `.${styles.heroSub}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.55 },
+      0.55
     );
 
     /* Toggle */
-    tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, 0.85);
+    tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, 0.8);
 
     /* Tier cards */
     const tiers = tierRefs.current.filter(Boolean);
@@ -339,14 +329,7 @@ export default function PricingClient() {
 
       {/* ── Hero ── */}
       <section ref={heroRef} className={styles.hero}>
-        <div
-          ref={bracketTLRef}
-          className={`${styles.bracket} ${styles.bracketTL}`}
-        />
-        <div
-          ref={bracketBRRef}
-          className={`${styles.bracket} ${styles.bracketBR}`}
-        />
+        <div className={styles.heroEyebrow}>Pricing</div>
 
         <h1 className={styles.headline}>
           <SplitText
@@ -360,16 +343,7 @@ export default function PricingClient() {
           />
         </h1>
 
-        <div className={styles.subWrap}>
-          <SplitText
-            text={SUB_TEXT}
-            classNames={{
-              line: styles.subLine,
-              letter: styles.subLetter,
-              space: styles.subSpace,
-            }}
-          />
-        </div>
+        <p className={styles.heroSub}>{SUB_TEXT}</p>
 
         {/* ─────────────────────────────────────────────────────
             BILLING SELECTOR — pill toggle with sliding gold pill

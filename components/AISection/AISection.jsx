@@ -29,11 +29,9 @@ const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
 
 /* ─────────────────────────────────────────────────────────────────────
    SECTIONS
-   Each section now has START and END poses. The shape interpolates
-   from its start rotation+offset to its end rotation+offset as you
-   scroll through that shape's display window. Defaults give each shape
-   a gentle Y rotation through its window — easy to tune via the debug
-   panel.
+   Each section has START and END poses. The shape interpolates from
+   its start rotation+offset to its end rotation+offset as you scroll
+   through that shape's display window.
 
    Both `desktop` and `mobile` keys carry: rotX/Y/Z, offsetX/Y for the
    START pose, scale (single value, not animated), and rotXEnd/Y/Z,
@@ -46,30 +44,18 @@ const SECTIONS = [
     side: "left",
     gen: "rings",
     desktop: {
-      rotX: -33,
-      rotY: -52,
-      rotZ: 67,
-      offsetX: -1,
-      offsetY: 0,
+      rotX: -51, rotY: -36, rotZ: 57,
+      offsetX: 0, offsetY: 0,
       scale: 0.6,
-      rotXEnd: -33,
-      rotYEnd: -22,
-      rotZEnd: 67,
-      offsetXEnd: -1,
-      offsetYEnd: 0,
+      rotXEnd: -47, rotYEnd: -36, rotZEnd: 57,
+      offsetXEnd: 2.75, offsetYEnd: 0,
     },
     mobile: {
-      rotX: -33,
-      rotY: -52,
-      rotZ: 67,
-      offsetX: 0,
-      offsetY: 0,
+      rotX: -33, rotY: -52, rotZ: 67,
+      offsetX: 0, offsetY: 0,
       scale: 0.55,
-      rotXEnd: -33,
-      rotYEnd: -22,
-      rotZEnd: 67,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
+      rotXEnd: -33, rotYEnd: -22, rotZEnd: 67,
+      offsetXEnd: 0, offsetYEnd: 0,
     },
     badge: "Hands-free",
     title: "Voice commands",
@@ -81,30 +67,18 @@ const SECTIONS = [
     side: "right",
     gen: "cube",
     desktop: {
-      rotX: -57,
-      rotY: -19,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
+      rotX: 67, rotY: 40, rotZ: 0,
+      offsetX: 0, offsetY: 0,
       scale: 0.8,
-      rotXEnd: -57,
-      rotYEnd: 11,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
+      rotXEnd: 2, rotYEnd: 88, rotZEnd: 0,
+      offsetXEnd: 0, offsetYEnd: 0,
     },
     mobile: {
-      rotX: -57,
-      rotY: -19,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
+      rotX: -57, rotY: -19, rotZ: 0,
+      offsetX: 0, offsetY: 0,
       scale: 0.65,
-      rotXEnd: -57,
-      rotYEnd: 11,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
+      rotXEnd: -57, rotYEnd: 11, rotZEnd: 0,
+      offsetXEnd: 0, offsetYEnd: 0,
     },
     badge: "Real-time",
     title: "Spatial intelligence",
@@ -116,30 +90,18 @@ const SECTIONS = [
     side: "left",
     gen: "magnifier",
     desktop: {
-      rotX: -12,
-      rotY: -34,
-      rotZ: -9,
-      offsetX: -1.25,
-      offsetY: 1,
+      rotX: -12, rotY: -34, rotZ: -9,
+      offsetX: -1.25, offsetY: 1,
       scale: 0.6,
-      rotXEnd: -12,
-      rotYEnd: -4,
-      rotZEnd: -9,
-      offsetXEnd: -1.25,
-      offsetYEnd: 1,
+      rotXEnd: -12, rotYEnd: -4, rotZEnd: -9,
+      offsetXEnd: -1.25, offsetYEnd: 1,
     },
     mobile: {
-      rotX: -12,
-      rotY: -34,
-      rotZ: -9,
-      offsetX: 0,
-      offsetY: 0,
+      rotX: -12, rotY: -34, rotZ: -9,
+      offsetX: 0, offsetY: 0,
       scale: 0.55,
-      rotXEnd: -12,
-      rotYEnd: -4,
-      rotZEnd: -9,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
+      rotXEnd: -12, rotYEnd: -4, rotZEnd: -9,
+      offsetXEnd: 0, offsetYEnd: 0,
     },
     badge: "AI-powered",
     title: "Intelligent search",
@@ -151,45 +113,24 @@ const SECTIONS = [
     side: "right",
     gen: "arrow",
     desktop: {
-      rotX: -8,
-      rotY: 14,
-      rotZ: 0,
-      offsetX: 1,
-      offsetY: 0,
+      rotX: -2, rotY: 25, rotZ: 6,
+      offsetX: 0.25, offsetY: 0,
       scale: 0.55,
-      rotXEnd: -8,
-      rotYEnd: 44,
-      rotZEnd: 0,
-      offsetXEnd: 1,
-      offsetYEnd: 0,
+      rotXEnd: -8, rotYEnd: 44, rotZEnd: 0,
+      offsetXEnd: 1, offsetYEnd: 0,
     },
     mobile: {
-      rotX: -8,
-      rotY: 14,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
+      rotX: -8, rotY: 14, rotZ: 0,
+      offsetX: 0, offsetY: 0,
       scale: 0.55,
-      rotXEnd: -8,
-      rotYEnd: 44,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
+      rotXEnd: -8, rotYEnd: 44, rotZEnd: 0,
+      offsetXEnd: 0, offsetYEnd: 0,
     },
     badge: "Forecasting",
     title: "Predictive analytics",
     desc: "Nimbus doesn't just report what happened — it forecasts what's next.",
   },
 ];
-
-const extractParams = (mode) => SECTIONS.map((s) => ({ ...s[mode] }));
-const DEFAULT_PARAMS = {
-  desktop: extractParams("desktop"),
-  mobile: extractParams("mobile"),
-};
-
-/* v3 — added start/end pose fields. Old v2 saves are ignored. */
-const DEBUG_STORAGE_KEY = "aiSectionDebugParams_v3";
 
 function smoothstep(x) {
   const c = Math.max(0, Math.min(1, x));
@@ -232,276 +173,6 @@ function renderScramble(text, keyPrefix = "") {
   });
 }
 
-function Slider({ label, value, min, max, step, unit, onChange }) {
-  return (
-    <div className={styles.dbgSlider}>
-      <div className={styles.dbgSliderHead}>
-        <span className={styles.dbgSliderLabel}>{label}</span>
-        <span className={styles.dbgSliderValue}>
-          {step < 1 ? value.toFixed(2) : Math.round(value)}
-          {unit}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className={styles.dbgRange}
-      />
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   DEBUG PANEL — Start / End pose tuning
-   ───────────────────────────────────────────────────────────────────── */
-function DebugPanel({
-  params,
-  previewMode,
-  onPreviewModeChange,
-  onParamChange,
-  onReset,
-  onCopy,
-  onClose,
-  copiedFlash,
-  previewAnimP,
-  onPreviewAnimPChange,
-}) {
-  const [active, setActive] = useState(0);
-
-  const [viewport, setViewport] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1280
-  );
-  useEffect(() => {
-    const onR = () => setViewport(window.innerWidth);
-    window.addEventListener("resize", onR);
-    return () => window.removeEventListener("resize", onR);
-  }, []);
-
-  const actualMode = viewport < 768 ? "mobile" : "desktop";
-  const editMode = previewMode === "auto" ? actualMode : previewMode;
-
-  const p = params[editMode][active];
-  const update = (field, value) =>
-    onParamChange(editMode, active, field, value);
-
-  return (
-    <div className={styles.dbgPanel}>
-      <div className={styles.dbgHead}>
-        <span className={styles.dbgTitle}>SHAPE DEBUG</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className={styles.dbgClose}
-          aria-label="close debug panel"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Desktop / Mobile preview toggle */}
-      <div className={styles.dbgModeToggle}>
-        <button
-          type="button"
-          onClick={() => onPreviewModeChange("desktop")}
-          className={`${styles.dbgModeBtn} ${
-            editMode === "desktop" ? styles.dbgModeBtnActive : ""
-          }`}
-        >
-          Desktop
-        </button>
-        <button
-          type="button"
-          onClick={() => onPreviewModeChange("mobile")}
-          className={`${styles.dbgModeBtn} ${
-            editMode === "mobile" ? styles.dbgModeBtnActive : ""
-          }`}
-        >
-          Mobile
-        </button>
-      </div>
-
-      <div className={styles.dbgViewport}>
-        viewport {viewport}px · {actualMode}
-        {editMode !== actualMode && (
-          <span className={styles.dbgViewportWarn}>
-            {" "}
-            · preview forced to {editMode}
-          </span>
-        )}
-      </div>
-
-      {/* Section tabs */}
-      <div className={styles.dbgTabs}>
-        {SECTIONS.map((s, i) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => setActive(i)}
-            className={`${styles.dbgTab} ${
-              active === i ? styles.dbgTabActive : ""
-            }`}
-          >
-            {String(i + 1).padStart(2, "0")}
-          </button>
-        ))}
-      </div>
-
-      <div className={styles.dbgSectionName}>{SECTIONS[active].title}</div>
-
-      {/* Preview scrubber — drag through animation without scrolling */}
-      <div className={styles.dbgPreviewRow}>
-        <div className={styles.dbgPreviewLabel}>
-          <span>Preview pose</span>
-          <span className={styles.dbgPreviewValue}>
-            {previewAnimP < 0 ? "auto" : `${Math.round(previewAnimP * 100)}%`}
-          </span>
-        </div>
-        <input
-          type="range"
-          min={-1}
-          max={1}
-          step={0.01}
-          value={previewAnimP}
-          onChange={(e) => onPreviewAnimPChange(parseFloat(e.target.value))}
-          className={styles.dbgRange}
-        />
-        <div className={styles.dbgPreviewHint}>
-          Drag below 0 for auto (follow scroll). 0 = start pose, 1 = end pose.
-        </div>
-      </div>
-
-      {/* START POSE */}
-      <div className={styles.dbgSectionHead}>Start pose</div>
-      <Slider
-        label="Rotation X"
-        value={p.rotX}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotX", v)}
-      />
-      <Slider
-        label="Rotation Y"
-        value={p.rotY}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotY", v)}
-      />
-      <Slider
-        label="Rotation Z"
-        value={p.rotZ}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotZ", v)}
-      />
-      <Slider
-        label="Offset X"
-        value={p.offsetX}
-        min={-10}
-        max={10}
-        step={0.25}
-        unit=""
-        onChange={(v) => update("offsetX", v)}
-      />
-      <Slider
-        label="Offset Y"
-        value={p.offsetY}
-        min={-10}
-        max={10}
-        step={0.25}
-        unit=""
-        onChange={(v) => update("offsetY", v)}
-      />
-
-      {/* END POSE */}
-      <div className={styles.dbgSectionHead}>End pose</div>
-      <Slider
-        label="Rotation X"
-        value={p.rotXEnd}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotXEnd", v)}
-      />
-      <Slider
-        label="Rotation Y"
-        value={p.rotYEnd}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotYEnd", v)}
-      />
-      <Slider
-        label="Rotation Z"
-        value={p.rotZEnd}
-        min={-180}
-        max={180}
-        step={1}
-        unit="°"
-        onChange={(v) => update("rotZEnd", v)}
-      />
-      <Slider
-        label="Offset X"
-        value={p.offsetXEnd}
-        min={-10}
-        max={10}
-        step={0.25}
-        unit=""
-        onChange={(v) => update("offsetXEnd", v)}
-      />
-      <Slider
-        label="Offset Y"
-        value={p.offsetYEnd}
-        min={-10}
-        max={10}
-        step={0.25}
-        unit=""
-        onChange={(v) => update("offsetYEnd", v)}
-      />
-
-      {/* SCALE (single, not animated) */}
-      <div className={styles.dbgSectionHead}>Scale</div>
-      <Slider
-        label="Scale"
-        value={p.scale}
-        min={0.3}
-        max={1.5}
-        step={0.05}
-        unit="×"
-        onChange={(v) => update("scale", v)}
-      />
-
-      <div className={styles.dbgActions}>
-        <button
-          type="button"
-          onClick={() => onReset(editMode)}
-          className={styles.dbgBtn}
-        >
-          Reset {editMode}
-        </button>
-        <button
-          type="button"
-          onClick={onCopy}
-          className={`${styles.dbgBtn} ${styles.dbgBtnPrimary}`}
-        >
-          {copiedFlash ? "Copied" : "Copy Config"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════ */
@@ -523,137 +194,9 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
-  /* Debug — always available, no URL param gate. Toggle button shows
-     in the corner; click to open the panel. */
-  const [debugOpen, setDebugOpen] = useState(false);
-  const [debugParams, setDebugParams] = useState(DEFAULT_PARAMS);
-  const [debugPreviewMode, setDebugPreviewMode] = useState("auto");
-  const [previewAnimP, setPreviewAnimP] = useState(-1); // -1 means "auto (follow scroll)"
-  const [copiedFlash, setCopiedFlash] = useState(false);
-
-  const debugParamsRef = useRef(debugParams);
-  const debugPreviewModeRef = useRef(debugPreviewMode);
-  const previewAnimPRef = useRef(previewAnimP);
-  useEffect(() => {
-    debugParamsRef.current = debugParams;
-  }, [debugParams]);
-  useEffect(() => {
-    debugPreviewModeRef.current = debugPreviewMode;
-  }, [debugPreviewMode]);
-  useEffect(() => {
-    previewAnimPRef.current = previewAnimP;
-  }, [previewAnimP]);
-
+  /* Hook the THREE.js init useEffect lets it ask "rebuild shapes" when
+     the viewport crosses the desktop/mobile breakpoint on resize. */
   const rebuildShapesRef = useRef(null);
-
-  const handleParamChange = useCallback((mode, idx, field, value) => {
-    setDebugParams((prev) => ({
-      ...prev,
-      [mode]: prev[mode].map((p, i) =>
-        i === idx ? { ...p, [field]: value } : p
-      ),
-    }));
-  }, []);
-
-  const handleReset = useCallback((mode) => {
-    setDebugParams((prev) => ({
-      ...prev,
-      [mode]: DEFAULT_PARAMS[mode].map((p) => ({ ...p })),
-    }));
-  }, []);
-
-  const handleCopyConfig = useCallback(async () => {
-    const fmtStr = (v) => `"${String(v).replace(/"/g, '\\"')}"`;
-    const fmtNum = (n) =>
-      Number.isInteger(n) ? String(n) : Number(n.toFixed(2)).toString();
-    const fmtCfg = (c) =>
-      `{
-      rotX: ${fmtNum(c.rotX)}, rotY: ${fmtNum(c.rotY)}, rotZ: ${fmtNum(c.rotZ)},
-      offsetX: ${fmtNum(c.offsetX)}, offsetY: ${fmtNum(c.offsetY)},
-      scale: ${fmtNum(c.scale)},
-      rotXEnd: ${fmtNum(c.rotXEnd)}, rotYEnd: ${fmtNum(
-        c.rotYEnd
-      )}, rotZEnd: ${fmtNum(c.rotZEnd)},
-      offsetXEnd: ${fmtNum(c.offsetXEnd)}, offsetYEnd: ${fmtNum(c.offsetYEnd)},
-    }`;
-
-    const params = debugParamsRef.current;
-    const body = SECTIONS.map(
-      (s, i) =>
-        `  {
-    key: ${fmtStr(s.key)},
-    shortName: ${fmtStr(s.shortName)},
-    side: ${fmtStr(s.side)},
-    gen: ${fmtStr(s.gen)},
-    desktop: ${fmtCfg(params.desktop[i])},
-    mobile: ${fmtCfg(params.mobile[i])},
-    badge: ${fmtStr(s.badge)},
-    title: ${fmtStr(s.title)},
-    desc: ${fmtStr(s.desc)},
-  },`
-    ).join("\n");
-    const output = `const SECTIONS = [\n${body}\n];`;
-
-    try {
-      await navigator.clipboard.writeText(output);
-      setCopiedFlash(true);
-      setTimeout(() => setCopiedFlash(false), 1400);
-    } catch (e) {
-      console.error("[AISection] clipboard write failed:", e);
-    }
-  }, []);
-
-  /* Persist debug tuning across reloads */
-  const debugMountedRef = useRef(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!debugMountedRef.current) {
-      debugMountedRef.current = true;
-      try {
-        const saved = window.localStorage.getItem(DEBUG_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (
-            parsed &&
-            Array.isArray(parsed.desktop) &&
-            parsed.desktop.length === SECTIONS.length &&
-            Array.isArray(parsed.mobile) &&
-            parsed.mobile.length === SECTIONS.length
-          ) {
-            /* Backfill any missing end-pose fields so older saves still load */
-            const fill = (arr, defaults) =>
-              arr.map((p, i) => ({ ...defaults[i], ...p }));
-            setDebugParams({
-              desktop: fill(parsed.desktop, DEFAULT_PARAMS.desktop),
-              mobile: fill(parsed.mobile, DEFAULT_PARAMS.mobile),
-            });
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-    try {
-      window.localStorage.setItem(
-        DEBUG_STORAGE_KEY,
-        JSON.stringify(debugParams)
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [debugParams]);
-
-  /* Trigger shape rebuilds when params change */
-  useEffect(() => {
-    rebuildShapesRef.current?.();
-  }, [debugParams, debugPreviewMode]);
-
-  const handleCloseDebug = useCallback(() => {
-    setDebugOpen(false);
-    setDebugPreviewMode("auto");
-    setPreviewAnimP(-1);
-  }, []);
 
   /* Section visibility observer */
   useEffect(() => {
@@ -794,7 +337,14 @@ export default function AISection() {
           continue;
         }
 
-        const revealProgress = Math.min(1, f / REVEAL_END);
+        /* Allow revealProgress to overshoot 1 so the wave can fully
+           pass the last character. With the old Math.min(1, …) cap,
+           the last char's localProgress maxed at 0.5 and never
+           resolved — text stayed half-scrambled. The plateau of
+           formationCurve (f → 1.0) provides enough headroom for the
+           wave to clear every char. The per-character clamp below
+           still bounds c to [0,1]. */
+        const revealProgress = f / REVEAL_END;
         const totalChars = chars.length;
 
         for (let i = 0; i < totalChars; i++) {
@@ -851,6 +401,10 @@ export default function AISection() {
       const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
       camera.position.set(0, 0, CFG.camZ);
 
+      /* Track which mode the shapes were built for so we can rebuild
+         only when the viewport crosses the breakpoint. */
+      let builtMode = window.innerWidth < 768 ? "mobile" : "desktop";
+
       const resize = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -859,6 +413,13 @@ export default function AISection() {
         const mobile = w < 768;
         camera.position.z = mobile ? CFG.camZMobile : CFG.camZ;
         camera.updateProjectionMatrix();
+
+        /* Rebuild shapes if we crossed the mobile/desktop breakpoint */
+        const nextMode = mobile ? "mobile" : "desktop";
+        if (nextMode !== builtMode) {
+          builtMode = nextMode;
+          rebuildShapesRef.current?.();
+        }
       };
       resize();
       window.addEventListener("resize", resize);
@@ -871,7 +432,7 @@ export default function AISection() {
          start and end poses. Scale is baked here (single value). */
       const buildShape = (i, mode) => {
         const sec = SECTIONS[i];
-        const params = debugParamsRef.current[mode][i];
+        const params = sec[mode];
         const fn = SHAPE_GENERATORS[sec.gen];
 
         let pts = fn(PARTICLE_COUNT, 0, 0, 0);
@@ -890,9 +451,7 @@ export default function AISection() {
       };
 
       const rebuildShapes = () => {
-        const preview = debugPreviewModeRef.current;
-        const auto = window.innerWidth < 768 ? "mobile" : "desktop";
-        const mode = preview === "auto" ? auto : preview;
+        const mode = window.innerWidth < 768 ? "mobile" : "desktop";
         for (let i = 0; i < SECTIONS.length; i++)
           shapes[i] = buildShape(i, mode);
       };
@@ -964,16 +523,13 @@ export default function AISection() {
         if (!activeShape) return;
 
         /* ── Compute interpolated pose for the active shape ──
-           previewAnimPRef: if >= 0, use it (debug scrubber). Else use
-           scroll-driven shape progress mapped to anim progress 0..1.  */
-        const previewP = previewAnimPRef.current;
+           Always scroll-driven now — debug preview scrubber removed. */
         const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
-        const animP = previewP >= 0 ? previewP : animProgress(scrollP);
+        const animP = animProgress(scrollP);
 
-        const preview = debugPreviewModeRef.current;
-        const autoMode = window.innerWidth < 768 ? "mobile" : "desktop";
-        const mode = preview === "auto" ? autoMode : preview;
-        const params = debugParamsRef.current[mode][s.activeShape];
+        const mode = window.innerWidth < 768 ? "mobile" : "desktop";
+        const sec = SECTIONS[s.activeShape];
+        const params = sec[mode];
 
         /* Lerp start→end rotation (degrees) and offset */
         const rotXDeg = params.rotX + (params.rotXEnd - params.rotX) * animP;
@@ -991,7 +547,6 @@ export default function AISection() {
           sZ = Math.sin(rotZ);
 
         const mobile = mode === "mobile";
-        const sec = SECTIONS[s.activeShape];
         const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
         const defaultY = mobile ? -3.5 : 0;
         const offX =
@@ -1155,31 +710,6 @@ export default function AISection() {
 
         <div className={styles.trailingSpacer} />
       </div>
-
-      {!debugOpen && (
-        <button
-          type="button"
-          onClick={() => setDebugOpen(true)}
-          className={styles.dbgToggle}
-        >
-          DEBUG
-        </button>
-      )}
-
-      {debugOpen && (
-        <DebugPanel
-          params={debugParams}
-          previewMode={debugPreviewMode}
-          onPreviewModeChange={setDebugPreviewMode}
-          onParamChange={handleParamChange}
-          onReset={handleReset}
-          onCopy={handleCopyConfig}
-          onClose={handleCloseDebug}
-          copiedFlash={copiedFlash}
-          previewAnimP={previewAnimP}
-          onPreviewAnimPChange={setPreviewAnimP}
-        />
-      )}
     </section>
   );
 }

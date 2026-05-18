@@ -1,8 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   TRUST — Conversion type, evolved with editorial section numerals
+   TRUST — Editorial type, section-numeral pattern
    ───────────────────────────────────────────────────────────────────────
-   Same vocabulary as Contact:
-   - Conversion hero (brackets, per-letter, italic gold accent)
+   Vocabulary:
+   - Editorial hero matching ROI Calculator: left-aligned column, mono
+     eyebrow, per-letter title with italic gold accent, simple paragraph
+     sub, left-aligned CTA row
    - Marketing pattern: huge outlined section numerals
    - Sharp corners, hairline borders, mono labels
    ═══════════════════════════════════════════════════════════════════════ */
@@ -16,28 +18,12 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     HERO (same chrome as Contact)
-  ───────────────────────────────────────────────────── */
+       HERO  — Calculator-style left-aligned editorial column
+    ───────────────────────────────────────────────────── */
 .hero {
-  position: relative;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 180px 48px 100px;
-  text-align: center;
-}
-.heroBracket {
-  position: absolute;
-  color: var(--accent);
-  opacity: 0;
-  pointer-events: none;
-}
-.heroBracketTL {
-  top: 100px;
-  left: 48px;
-}
-.heroBracketBR {
-  bottom: 60px;
-  right: 48px;
+  padding: 160px 48px 60px;
 }
 .heroEyebrow {
   font-family: var(--mono);
@@ -50,12 +36,13 @@
 }
 .heroTitle {
   font-family: var(--display);
-  font-size: clamp(64px, 9vw, 132px);
+  font-size: clamp(48px, 7vw, 96px);
   font-weight: 700;
-  letter-spacing: -3.5px;
-  line-height: 0.95;
-  margin: 0 0 40px;
+  letter-spacing: -3px;
+  line-height: 1;
+  margin: 0 0 36px;
   color: var(--white);
+  max-width: 1000px;
 }
 .heroLine {
   display: inline-block;
@@ -83,13 +70,13 @@
   line-height: 1.65;
   color: rgba(242, 240, 239, 0.55);
   max-width: 640px;
-  margin: 0 auto 40px;
+  margin: 0 0 32px;
   opacity: 0;
 }
 .heroCTA {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
   flex-wrap: wrap;
   opacity: 0;
@@ -110,8 +97,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     SECTIONS — same editorial-numeral pattern
-  ───────────────────────────────────────────────────── */
+       SECTIONS — same editorial-numeral pattern
+    ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1200px;
@@ -174,8 +161,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     COMPLIANCE GRID
-  ───────────────────────────────────────────────────── */
+       COMPLIANCE GRID
+    ───────────────────────────────────────────────────── */
 .complianceGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -253,8 +240,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     PRACTICES LIST
-  ───────────────────────────────────────────────────── */
+       PRACTICES LIST
+    ───────────────────────────────────────────────────── */
 .practiceList {
   display: flex;
   flex-direction: column;
@@ -296,8 +283,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     INFRA SPEC LIST
-  ───────────────────────────────────────────────────── */
+       INFRA SPEC LIST
+    ───────────────────────────────────────────────────── */
 .infraList {
   margin: 0;
   padding: 0;
@@ -328,8 +315,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     RESPONSIBLE DISCLOSURE
-  ───────────────────────────────────────────────────── */
+       RESPONSIBLE DISCLOSURE
+    ───────────────────────────────────────────────────── */
 .disclosureBlock {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -401,8 +388,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     FINAL CTA
-  ───────────────────────────────────────────────────── */
+       FINAL CTA
+    ───────────────────────────────────────────────────── */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -449,8 +436,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+       RESPONSIVE
+    ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
@@ -481,15 +468,7 @@
 
 @media (max-width: 768px) {
   .hero {
-    padding: 140px 24px 80px;
-  }
-  .heroBracketTL {
-    top: 80px;
-    left: 24px;
-  }
-  .heroBracketBR {
-    bottom: 40px;
-    right: 24px;
+    padding: 120px 24px 40px;
   }
   .section {
     grid-template-columns: 1fr;

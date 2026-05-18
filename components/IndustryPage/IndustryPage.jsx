@@ -8,6 +8,7 @@ import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import { INDUSTRIES } from "./industryData";
 import styles from "./IndustryPage.module.css";
@@ -148,19 +149,6 @@ export default function IndustryPage({ slug }) {
           trigger: `.${styles.crossLinks}`,
           start: "top 80%",
         },
-      }
-    );
-
-    /* Final CTA */
-    gsap.fromTo(
-      `.${styles.finalCTA}`,
-      { opacity: 0, y: 18 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out",
-        scrollTrigger: { trigger: `.${styles.finalCTA}`, start: "top 85%" },
       }
     );
 
@@ -374,24 +362,13 @@ export default function IndustryPage({ slug }) {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className={styles.finalCTA}>
-        <div className={styles.finalCTAInner}>
-          <div className={styles.finalCTALabel}>Ready when you are</div>
-          <h2 className={styles.finalCTATitle}>
-            See Nimbus running in a {industry.title.toLowerCase()} warehouse.
-          </h2>
-          <p className={styles.finalCTADesc}>
-            Live demo with a warehouse engineer. 30 minutes. We bring the data,
-            you bring the questions.
-          </p>
-          <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={openDemo}>Request a demo</CornerButton>
-            <TransitionLink href="/contact" className={styles.heroSecondary}>
-              Or just reach out →
-            </TransitionLink>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Ready when you are"
+        title={`See Nimbus running in a ${industry.title.toLowerCase()} warehouse.`}
+        desc="Live demo with a warehouse engineer. 30 minutes. We bring the data, you bring the questions."
+        primaryAction={{ onClick: openDemo, label: "Request a demo" }}
+        secondaryAction={{ href: "/contact", label: "Or just reach out →" }}
+      />
 
       <Footer />
     </div>

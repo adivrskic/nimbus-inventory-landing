@@ -9,6 +9,7 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
@@ -218,18 +219,6 @@ export default function CompareClient({ slug }) {
           trigger: `.${styles.crossLinks}`,
           start: "top 80%",
         },
-      }
-    );
-
-    gsap.fromTo(
-      `.${styles.finalCTA}`,
-      { opacity: 0, y: 18 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out",
-        scrollTrigger: { trigger: `.${styles.finalCTA}`, start: "top 85%" },
       }
     );
 
@@ -509,29 +498,19 @@ export default function CompareClient({ slug }) {
       )}
 
       {/* ── FINAL CTA ── */}
-      <section className={styles.finalCTA}>
-        <div className={styles.finalCTAInner}>
-          <div className={styles.finalCTALabel}>
-            Ready to leave {competitor.name} behind?
-          </div>
-          <h2 className={styles.finalCTATitle}>
-            Let&apos;s show you Nimbus running on your data.
-          </h2>
-          <p className={styles.finalCTADesc}>
-            A 30-minute call with a Nimbus engineer. We&apos;ll walk through
-            your current {competitor.name} setup and show how each piece would
-            work in Nimbus — including the migration path.
-          </p>
-          <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={() => openDemo("migration")}>
-              Book the demo
-            </CornerButton>
-            <TransitionLink href="/calculator" className={styles.heroSecondary}>
-              Or run the ROI numbers →
-            </TransitionLink>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Ready when you are"
+        title="Let's show you Nimbus running on your data."
+        desc={`A 30-minute call with a Nimbus engineer. We'll walk through your current ${competitor.name} setup and show how each piece would work in Nimbus — including the migration path.`}
+        primaryAction={{
+          onClick: () => openDemo("migration"),
+          label: "Book the demo",
+        }}
+        secondaryAction={{
+          href: "/calculator",
+          label: "Or run the ROI numbers →",
+        }}
+      />
 
       <Footer />
     </div>

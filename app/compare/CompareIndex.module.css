@@ -17,9 +17,9 @@
      HERO
   ───────────────────────────────────────────────────── */
 .hero {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 160px 48px 60px;
+  padding: 160px 0px 60px;
 }
 
 .heroEyebrow {
@@ -77,9 +77,9 @@
      CARD GRID
   ───────────────────────────────────────────────────── */
 .grid {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 60px 48px 100px;
+  padding: 60px 0px 100px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
@@ -226,68 +226,6 @@
 }
 .card:hover .cardFootArrow {
   transform: translateX(6px);
-}
-
-/* ─────────────────────────────────────────────────────
-     OUTRO CTA
-  ───────────────────────────────────────────────────── */
-.outro {
-  max-width: 1200px;
-  margin: 0 auto 100px;
-  padding: 0 48px;
-  opacity: 0;
-}
-.outroInner {
-  padding: 60px 56px 64px;
-  background: rgba(212, 168, 83, 0.025);
-  border: 1px solid rgba(212, 168, 83, 0.2);
-  border-left: 2px solid var(--accent);
-}
-.outroLabel {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 18px;
-}
-.outroTitle {
-  font-family: var(--display);
-  font-size: clamp(28px, 3.2vw, 40px);
-  font-weight: 700;
-  letter-spacing: -1px;
-  color: var(--white);
-  line-height: 1.15;
-  margin: 0 0 18px;
-  max-width: 640px;
-}
-.outroDesc {
-  font-family: var(--display);
-  font-size: 16px;
-  line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
-  max-width: 580px;
-  margin: 0 0 32px;
-}
-.outroButtons {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.outroSecondary {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: rgba(242, 240, 239, 0.7);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
-  padding: 8px 0;
-  transition: color 0.2s, border-color 0.2s;
-}
-.outroSecondary:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 
 /* ─────────────────────────────────────────────────────

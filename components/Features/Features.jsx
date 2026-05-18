@@ -462,7 +462,7 @@ export default function Features() {
   return (
     <section id="features" ref={sectionRef} className={styles.section}>
       <div ref={headerRef} className={styles.header}>
-        <h2 className="heading-lg gsap-hidden" style={{ color: "var(--bg)" }}>
+        <h2 className="heading-lg gsap-hidden">
           Engineered for the <em className="accent-italic">warehouse floor</em>
         </h2>
         <p className="body-text--display gsap-hidden-sm">

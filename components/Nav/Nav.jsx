@@ -122,15 +122,15 @@ const MORE_GROUPS = [
       },
       { title: "Blog", desc: "Operations insights & updates", href: "/blog" },
       { title: "Help Center", desc: "Guides and FAQs", href: "/help" },
-      { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
+      // { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
     ],
   },
   {
     label: "Company",
     items: [
       { title: "Contact", desc: "Talk to our team", href: "/contact" },
-      { title: "Trust", desc: "Security & SOC 2", href: "/trust" },
-      { title: "Status", desc: "Live system health", href: "/status" },
+      // { title: "Trust", desc: "Security & SOC 2", href: "/trust" },
+      // { title: "Status", desc: "Live system health", href: "/status" },
     ],
   },
   {

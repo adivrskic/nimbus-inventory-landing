@@ -12,8 +12,12 @@
 .feedback {
   margin-top: 48px;
   padding: 28px 32px;
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(242, 240, 239, 0.08);
+  /* Match the FinalCTACard family — gold-tinted wash, hairline gold
+     border, 2px accent on the left. The widget itself stays fully
+     interactive; only its container chrome is harmonized. */
+  background: rgba(212, 168, 83, 0.025);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-left: 2px solid var(--accent);
 }
 .feedbackLabel {
   font-family: var(--mono);

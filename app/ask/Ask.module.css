@@ -1,24 +1,66 @@
 /* ──────────────────────────────────────────────────────────────────────────
    app/ask/ask.module.css
-   Style sweep — full Nimbus editorial column. Black background, mono body,
-   Satoshi for the h1 and message text, sharp corners on every surface.
+   ──────────────────────────────────────────────────────────────────────────
+   /ask is a focused chat tool. The page is locked to one viewport so the
+   body never scrolls — the .scrollRegion inside scrolls internally, the
+   input bar pins to the bottom of the flex column naturally, and the
+   global ocean gradient (set on html) shows through behind everything.
+   No Nav, no Footer — same deliberate "tool, not a page" intent as
+   before, just no longer scrolling into empty void.
    ────────────────────────────────────────────────────────────────────────── */
 
 .main {
-  min-height: 100vh;
-  background: var(--black);
-  padding: 80px 24px 48px;
+  /* Locked viewport — no body scroll. The flex column inside owns the
+       vertical real estate; .scrollRegion handles internal scroll. */
+  height: 100vh;
+  /* No background — the global ocean gradient on <html> shows through.
+       On a 100vh page with no body scroll, the full surface→abyss range
+       of the gradient compresses into one viewport, which gives the
+       chat surface real depth without us having to paint anything. */
+  padding: 80px 24px 24px;
   display: flex;
   justify-content: center;
   color: var(--white);
   font-family: var(--mono);
+  overflow: hidden;
 }
 
 .column {
   width: 100%;
-  max-width: 720px;
+  max-width: 1400px;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  /* Without min-height: 0, the .scrollRegion child would refuse to
+       shrink below its content height (flex items default to
+       min-height: auto), which would push the input bar off-screen
+       once the transcript got long. Classic flex gotcha — this line
+       fixes it. */
+  min-height: 0;
+}
+
+/* ── Scrolling region (intro state OR transcript) ──────────────────────── */
+
+.scrollRegion {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Thin gold-tinted scrollbar to match the rest of the visual
+       vocabulary instead of defaulting to grey. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
+}
+.scrollRegion::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollRegion::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollRegion::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 83, 0.18);
+}
+.scrollRegion::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 83, 0.32);
 }
 
 /* ── Intro state ───────────────────────────────────────────────────────── */
@@ -147,7 +189,9 @@
   flex-direction: column;
   gap: 26px;
   padding: 28px 0;
-  min-height: 50vh;
+  /* No min-height. The parent .scrollRegion owns sizing now — letting
+       this stretch with min-height: 50vh would create an unnecessary
+       scroll surface even when only one message exists. */
 }
 
 .userMsg {
@@ -409,14 +453,13 @@
 
 .inputBar {
   display: flex;
+  align-items: center;
   gap: 10px;
   padding: 18px 0 10px;
   position: sticky;
   bottom: 0;
-  background: linear-gradient(to top, var(--black) 70%, rgba(0, 0, 0, 0));
   margin-top: 12px;
 }
-
 .input {
   flex: 1;
   font-family: var(--mono);
@@ -443,26 +486,23 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 .sendBtn {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  padding: 0 26px;
-  background: var(--accent);
+  /* Icon-only — same padding/height as the Nav CTA so the two buttons
+     read as the same family. Width grows to fit the icon + padding,
+     ending up a touch wider than a square button. */
   color: var(--ink);
-  border: 1px solid var(--accent);
+  background: var(--white);
   cursor: pointer;
-  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+  border: 1px solid rgba(0, 0, 0, 0);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
 }
 
 .sendBtn:not(:disabled):hover {
-  background: var(--white);
-  border-color: var(--white);
-  color: var(--ink); /* explicit; was inheriting from .sendBtn */
-  transform: translateY(-1px);
+  background: var(--accent);
 }
 
 .sendBtn:disabled {
@@ -484,7 +524,7 @@
 
 @media (max-width: 640px) {
   .main {
-    padding: 40px 18px 24px;
+    padding: 40px 18px 16px;
   }
   .h1 {
     font-size: 30px;

@@ -116,13 +116,6 @@ export default function TrustClient() {
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
     tl.fromTo(
-      `.${styles.heroBracket}`,
-      { opacity: 0, scale: 0.9 },
-      { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08 },
-      0
-    );
-
-    tl.fromTo(
       `.${styles.heroEyebrow}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.45 },
@@ -206,17 +199,6 @@ export default function TrustClient() {
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
-        <span className={`${styles.heroBracket} ${styles.heroBracketTL}`}>
-          <svg viewBox="0 0 40 40" width="40" height="40" fill="none">
-            <path d="M2 14 V2 H14" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </span>
-        <span className={`${styles.heroBracket} ${styles.heroBracketBR}`}>
-          <svg viewBox="0 0 40 40" width="40" height="40" fill="none">
-            <path d="M26 38 H38 V26" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </span>
-
         <div className={styles.heroEyebrow}>Trust & Security</div>
         <h1 className={styles.heroTitle}>
           <SplitText

@@ -1,0 +1,179 @@
+/* ══════════════════════════════════════════════════════════════════════
+   components/FinalCTACard/FinalCTACard.module.css
+   ──────────────────────────────────────────────────────────────────────
+   Layers:
+
+     .section            wrapper — width, margin, padding, fade-in target
+     .card               positioning context; muted gold tint + border;
+                         the visible base state
+     .content            label + title + desc + buttons (rendered in
+                         both base and fill layers with identical layout)
+     .fillLayer          absolute over .card; solid gold; clipped via
+                         clip-path so it wipes in from the left.
+                         Contains a decorative duplicate of .content
+                         with .contentInverted color overrides.
+
+   Why two full content trees instead of "animate the bg, then fade the
+   text color":
+
+     If the bg wipes from left to right and we only fade the text color
+     globally, there's no way for the LEFT half of a word to read dark
+     while the RIGHT half is still over the muted bg. By putting the
+     dark text INSIDE the clipped fill layer, the dark text appears
+     exactly where the gold bg has reached — mid-letter if need be.
+     Mechanically seamless because both are clipped together.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.section {
+  max-width: 1400px;
+  margin: 60px auto 100px;
+  padding: 0;
+  /* Starts at opacity 0; GSAP fades it in on scroll. */
+  opacity: 0;
+}
+
+.card {
+  position: relative;
+  padding: 60px 56px 64px;
+  background: rgba(212, 168, 83, 0.025);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-left: 2px solid var(--accent);
+  /* Clip the fill layer to the card's box edges as a defensive measure.
+       clip-path on the fill layer is what actually drives the wipe; this
+       just guards against any sub-pixel bleed. */
+  overflow: hidden;
+}
+
+/* ─── CONTENT (used by both layers, identical layout) ─────────────── */
+
+.content {
+  position: relative;
+  /* No z-index needed — source-order stacking puts fillLayer above. */
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+.title {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 700px;
+}
+
+.desc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 620px;
+  margin: 0 0 32px;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.secondaryLink {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 8px 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+.secondaryLink:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─── FILL LAYER (sits on top, clipped, decorative) ───────────────── */
+
+.fillLayer {
+  position: absolute;
+  inset: 0;
+  /* Padding must mirror .card so the duplicate .content lines up with
+       the base content pixel-for-pixel. If you ever change .card's
+       padding (including the responsive breakpoints below), match it
+       here too. */
+  padding: 60px 56px 64px;
+  background: var(--accent);
+  /* JS sets the initial state too, but this is the visual fallback if
+       JS hasn't run yet: card stays in its base (muted) state. */
+  clip-path: inset(0 100% 0 0);
+  /* Decorative — never receives events. The inert property (set in
+       JSX via ref) also strips focus + a11y, this is just belt-and-
+       braces for click events. */
+  pointer-events: none;
+}
+
+/* ─── INVERTED CONTENT (dark text for use over gold bg) ───────────── */
+
+.contentInverted .label {
+  /* Was accent gold over muted bg — on solid gold we need ink-on-gold
+       for legibility. Same pairing the primary CornerButton already uses. */
+  color: var(--ink);
+}
+
+.contentInverted .title {
+  color: var(--ink);
+}
+
+.contentInverted .desc {
+  /* Slightly transparent ink keeps the desc visually subordinate to
+       the title (same hierarchy as the light state, just dark side). */
+  color: rgba(2, 6, 15, 0.7);
+}
+
+.contentInverted .secondaryLink {
+  color: rgba(2, 6, 15, 0.85);
+  border-bottom-color: rgba(2, 6, 15, 0.3);
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .section {
+    margin: 40px auto 80px;
+    padding: 0 24px;
+  }
+  .card {
+    padding: 40px 28px 44px;
+  }
+  .fillLayer {
+    /* MUST match .card's padding at this breakpoint. */
+    padding: 40px 28px 44px;
+  }
+  .title {
+    max-width: 100%;
+  }
+  .desc {
+    max-width: 100%;
+  }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    /* JS already skips the GSAP fade for reduced-motion users via its
+         own check, but ensure the section is visible if JS hasn't loaded
+         at all. */
+    opacity: 1;
+  }
+}

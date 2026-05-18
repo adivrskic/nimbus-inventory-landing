@@ -190,47 +190,6 @@
 }
 
 /* ─────────────────────────────────────────────────────
-   BOTTOM CTA
-───────────────────────────────────────────────────── */
-.bottomCta {
-  margin-top: 60px;
-  padding: 32px;
-  background: rgba(212, 168, 83, 0.03);
-  border: 1px solid rgba(212, 168, 83, 0.15);
-  border-left: 2px solid var(--accent);
-  text-align: center;
-}
-.bottomCtaLabel {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 12px;
-}
-.bottomCtaText {
-  font-family: var(--display);
-  font-size: 15px;
-  color: rgba(242, 240, 239, 0.7);
-  margin: 0 0 18px;
-}
-.bottomCtaLink {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: var(--white);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.3);
-  padding-bottom: 4px;
-  transition: color 0.2s, border-color 0.2s;
-}
-.bottomCtaLink:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-/* ─────────────────────────────────────────────────────
    RESPONSIVE
 ───────────────────────────────────────────────────── */
 @media (max-width: 640px) {

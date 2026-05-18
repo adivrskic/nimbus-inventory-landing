@@ -18,9 +18,9 @@
   ───────────────────────────────────────────────────── */
 .shell {
   position: relative;
-  max-width: 1240px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 140px 64px 80px;
+  padding: 140px 0px 80px;
 }
 
 /* ─────────────────────────────────────────────────────

@@ -33,9 +33,9 @@
        HERO
     ───────────────────────────────────────────────────── */
 .hero {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 160px 48px 100px;
+  padding: 160px 0px 100px;
   position: relative;
 }
 
@@ -133,16 +133,13 @@
     ───────────────────────────────────────────────────── */
 .section {
   position: relative;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 100px 48px;
+  padding: 100px 0px;
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 56px;
   align-items: start;
-}
-.section + .section {
-  border-top: 1px solid rgba(242, 240, 239, 0.05);
 }
 
 .sectionNum {
@@ -275,7 +272,6 @@
   gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(212, 168, 83, 0.18);
 }
 .pairStatVal {
   font-family: var(--display);
@@ -352,7 +348,6 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
 }
 .stat {
   padding: 40px 32px 40px 0;
@@ -387,10 +382,9 @@
        CROSS-LINKS — glow-cards
     ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 48px 60px;
-  border-top: 1px solid rgba(242, 240, 239, 0.05);
+  padding: 80px 0px 60px;
 }
 .crossLinksLabel {
   font-family: var(--mono);

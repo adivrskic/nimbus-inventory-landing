@@ -5,53 +5,42 @@
 }
 
 /* ─────────────────────────────────────────────────────
-   HERO  (unchanged)
+   HERO  — Calculator-style left-aligned editorial column
 ───────────────────────────────────────────────────── */
 .hero {
-  position: relative;
-  padding: 200px 48px 100px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  text-align: center;
+  padding: 160px 40px 60px;
 }
 
-/* Decorative corner brackets (animate in via GSAP) */
-.bracket {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
+.heroEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
   opacity: 0;
 }
-.bracketTL {
-  top: 100px;
-  left: 60px;
-  border-top: 2px solid var(--accent);
-  border-left: 2px solid var(--accent);
-}
-.bracketBR {
-  bottom: 60px;
-  right: 60px;
-  border-bottom: 2px solid var(--accent);
-  border-right: 2px solid var(--accent);
-}
 
-/* Per-letter headline */
+/* Per-letter headline. Class name kept (.headline / .headLine /
+   .headLetter / .headLetterAccent / .headSpace) so the existing
+   SplitText props don't need a refactor — only the visual properties
+   change to match Calculator's heroTitle proportions. */
 .headline {
-  position: relative;
-  z-index: 1;
   font-family: var(--display);
   font-size: clamp(48px, 7vw, 96px);
   font-weight: 700;
-  letter-spacing: -2.5px;
-  line-height: 1.02;
+  letter-spacing: -3px;
+  line-height: 1;
   color: var(--white);
-  margin-bottom: 32px;
+  margin: 0 0 36px;
+  max-width: 1400px;
 }
 .headLine {
   display: block;
   overflow: hidden;
-  padding-bottom: 6px;
+  padding-bottom: 10px;
 }
 .headLetter {
   display: inline-block;
@@ -70,31 +59,16 @@
   width: 0.28em;
 }
 
-/* Per-letter subhead */
-.subWrap {
-  position: relative;
-  z-index: 1;
-  max-width: 540px;
-  margin: 0 auto 56px;
-}
-.subLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 2px;
-}
-.subLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(110%);
+/* Subhead — now a plain paragraph instead of per-letter SplitText,
+   matching Calculator's simpler editorial column. */
+.heroSub {
   font-family: var(--display);
-  font-size: 17px;
-  line-height: 1.7;
-  color: rgba(242, 240, 239, 0.45);
-  font-weight: 400;
-}
-.subSpace {
-  display: inline-block;
-  width: 0.28em;
+  font-size: 18px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 640px;
+  margin: 0 0 48px;
+  opacity: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -111,9 +85,12 @@
 .toggleWrap {
   position: relative;
   z-index: 1;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  /* Self-centering — the pill stays visually centered in the hero
+     even though the hero itself is left-aligned. Was inline-flex
+     when the parent .hero had text-align: center; switching to
+     flex + justify-content keeps centering independent of parent. */
+  display: flex;
+  justify-content: center;
   opacity: 0;
 }
 
@@ -196,9 +173,9 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 48px 100px;
+  padding: 0 0px 100px;
 }
 
 .tier {
@@ -244,26 +221,6 @@
 }
 .tier:not(.tierFeatured):hover::before {
   width: 100%;
-}
-
-/* Decorative corner brackets on hover */
-.tier::after {
-  content: "";
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  width: 12px;
-  height: 12px;
-  border-bottom: 1.5px solid var(--accent);
-  border-right: 1.5px solid var(--accent);
-  opacity: 0;
-  transition: opacity 0.3s, width 0.3s, height 0.3s;
-  z-index: 1;
-}
-.tier:hover::after {
-  opacity: 0.5;
-  width: 18px;
-  height: 18px;
 }
 
 /* Big editorial section numeral, behind content */
@@ -480,17 +437,13 @@
   margin-top: 3px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   EVERYTHING BELOW THIS LINE IS UNCHANGED (matrix, FAQ, finalCTA)
-   ═══════════════════════════════════════════════════════════════════════ */
-
 /* ─────────────────────────────────────────────────────
    SIDE-BY-SIDE MATRIX
 ───────────────────────────────────────────────────── */
 .matrixSection {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 120px 48px 60px;
+  padding: 120px 0px 60px;
 }
 .sectionHead {
   text-align: center;
@@ -584,9 +537,9 @@
    FAQ
 ───────────────────────────────────────────────────── */
 .faqSection {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 48px;
+  padding: 80px 0px;
 }
 .faqList {
   margin-top: 56px;
@@ -736,10 +689,7 @@
 ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .hero {
-    padding: 130px 24px 60px;
-  }
-  .bracket {
-    display: none;
+    padding: 120px 24px 40px;
   }
 
   /* Toggle stays as pill but tightens up */

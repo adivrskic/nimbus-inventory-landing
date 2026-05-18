@@ -28,8 +28,7 @@ import { BLOG_POSTS } from "../lib/blogData.js";
 import { HELP_CATEGORIES } from "../lib/helpData.js";
 import { INTEGRATIONS } from "../components/IntegrationPage/integrationData.js";
 import { INDUSTRIES } from "../components/IndustryPage/industryData.js";
-import { COMPARES } from "../app/compare/[slug]/compareData.js";
-
+import { COMPETITORS } from "../app/compare/[slug]/compareData.js";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nimbuswms.com";
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
 const VOYAGE_MODEL = "voyage-3";
@@ -149,7 +148,7 @@ function buildIndustryChunks() {
 }
 
 function buildCompareChunks() {
-  return Object.entries(COMPARES ?? {}).map(([slug, data]) => {
+  return Object.entries(COMPETITORS ?? {}).map(([slug, data]) => {
     const reasons = (data.reasons || [])
       .map((r) => `${r.title}: ${r.desc}`)
       .join("\n");
@@ -157,7 +156,7 @@ function buildCompareChunks() {
       source_type: "compare",
       source_slug: slug,
       source_url: `${SITE_URL}/compare/${slug}`,
-      title: `Nimbus vs ${data.competitorName || slug}`,
+      title: `Nimbus vs ${data.name || slug}`,
       heading: null,
       content:
         `${data.heroDesc}\n\nWhy teams choose Nimbus:\n${reasons}`.trim(),

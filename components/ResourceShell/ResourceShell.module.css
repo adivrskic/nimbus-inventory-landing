@@ -30,7 +30,6 @@
 ───────────────────────────────────────────────────── */
 .topStrip {
   background: rgba(212, 168, 83, 0.04);
-  border-bottom: 1px solid rgba(212, 168, 83, 0.12);
   padding: 10px 24px;
   margin-top: 70px; /* clear fixed nav */
   opacity: 0;
@@ -39,7 +38,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
   font-family: var(--mono);
   font-size: 11px;
@@ -70,9 +69,9 @@
    SHELL
 ───────────────────────────────────────────────────── */
 .shell {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 60px 48px 100px;
+  padding: 60px 40px 100px;
 }
 /* When there's no top strip, shell needs to clear the nav itself */
 .shellNoStrip {
@@ -84,7 +83,6 @@
 ───────────────────────────────────────────────────── */
 .header {
   padding-bottom: 56px;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
   margin-bottom: 60px;
 }
 .headerEyebrow {

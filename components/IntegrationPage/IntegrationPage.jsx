@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
@@ -231,18 +232,6 @@ export default function IntegrationPage({ slug }) {
           trigger: `.${styles.crossLinks}`,
           start: "top 80%",
         },
-      }
-    );
-
-    gsap.fromTo(
-      `.${styles.finalCTA}`,
-      { opacity: 0, y: 18 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out",
-        scrollTrigger: { trigger: `.${styles.finalCTA}`, start: "top 85%" },
       }
     );
 
@@ -505,24 +494,14 @@ export default function IntegrationPage({ slug }) {
       )}
 
       {/* ── FINAL CTA ── */}
-      <section className={styles.finalCTA}>
-        <div className={styles.finalCTAInner}>
-          <div className={styles.finalCTALabel}>Ready to connect?</div>
-          <h2 className={styles.finalCTATitle}>
-            See Nimbus + {integration.title} running on real data.
-          </h2>
-          <p className={styles.finalCTADesc}>
-            30-minute walkthrough with a Nimbus engineer. We&apos;ll connect a
-            sandbox of your {integration.title} account and show the sync live.
-          </p>
-          <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={openDemo}>Request a demo</CornerButton>
-            <TransitionLink href="/contact" className={styles.heroSecondary}>
-              Or just reach out →
-            </TransitionLink>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Ready to connect?"
+        title={`See Nimbus + ${integration.title} running on real data.`}
+        desc={`30-minute walkthrough with a Nimbus engineer. We&apos;ll connect a
+        sandbox of your ${integration.title} account and show the sync live.`}
+        primaryAction={{ onClick: openDemo, label: "Request a demo" }}
+        secondaryAction={{ href: "/contact", label: "Or just reach out" }}
+      />
 
       <Footer />
     </div>

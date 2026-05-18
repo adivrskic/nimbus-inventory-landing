@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import styles from "./Calculator.module.css";
@@ -308,18 +309,6 @@ export default function CalculatorClient() {
       }
     });
 
-    gsap.fromTo(
-      `.${styles.finalCTA}`,
-      { opacity: 0, y: 18 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out",
-        scrollTrigger: { trigger: `.${styles.finalCTA}`, start: "top 85%" },
-      }
-    );
-
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
@@ -551,26 +540,16 @@ export default function CalculatorClient() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className={styles.finalCTA}>
-        <div className={styles.finalCTAInner}>
-          <div className={styles.finalCTALabel}>Want a precise estimate?</div>
-          <h2 className={styles.finalCTATitle}>
-            Get a number based on your data.
-          </h2>
-          <p className={styles.finalCTADesc}>
-            30 minutes with a Nimbus engineer. We use your real operational data
-            to build a more detailed estimate for your specific operation.
-          </p>
-          <div className={styles.finalCTAButtons}>
-            <CornerButton onClick={() => openDemo("sales")}>
-              Book the modeling call
-            </CornerButton>
-            <TransitionLink href="/pricing" className={styles.heroSecondary}>
-              Or see pricing →
-            </TransitionLink>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Want a precise estimate?"
+        title="Get a number based on your data."
+        desc="30 minutes with a Nimbus engineer. We use your real operational data to build a more detailed estimate for your specific operation."
+        primaryAction={{
+          onClick: () => openDemo("sales"),
+          label: "Book the modeling call",
+        }}
+        secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}
+      />
 
       <Footer />
     </div>

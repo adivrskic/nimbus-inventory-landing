@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import gsap from "gsap";
 import { ResourceShell } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import DemoModal from "@/components/DemoModal/DemoModal";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Help.module.css";
@@ -180,17 +181,16 @@ export default function HelpClient() {
             </section>
           ))}
         </div>
-
         {/* Bottom CTA — when search doesn't help */}
-        <div className={pageStyles.bottomCta}>
-          <div className={pageStyles.bottomCtaLabel}>Can&apos;t find it?</div>
-          <p className={pageStyles.bottomCtaText}>
-            Our team responds within 4 hours during business hours.
-          </p>
-          <TransitionLink href="/contact" className={pageStyles.bottomCtaLink}>
-            Contact support →
-          </TransitionLink>
-        </div>
+        <FinalCTACard
+          label="Can't find it?"
+          title="Talk to a human."
+          desc="Our team responds within 4 hours during business hours. Tell us what you're stuck on and we'll get back to you."
+          primaryAction={{
+            onClick: () => (window.location.href = "/contact"),
+            label: "Contact support",
+          }}
+        />
       </ResourceShell>
 
       <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />

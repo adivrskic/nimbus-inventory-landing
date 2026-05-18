@@ -28,13 +28,15 @@
 .scrollSpace {
   height: 380vh;
 }
-
 .sticky {
   position: sticky;
   top: var(--nav-height);
   height: calc(100vh - var(--nav-height));
   width: 100%;
   overflow: hidden;
+  /* Local gradient: top stays transparent so the global ocean gradient
+     reads through; bottom resolves to the exact floor/fog color so the
+     3D floor plane has no visible seam against the bg. */
 }
 
 .canvas {
@@ -144,10 +146,11 @@
   z-index: 4;
 
   /* Navy ink-wash that fits the ocean palette */
+  /* Ink-wash matched to the new bg #050D1C */
   background: linear-gradient(
     180deg,
-    rgba(2, 10, 22, 0.78) 0%,
-    rgba(2, 10, 22, 0.62) 100%
+    rgba(5, 13, 28, 0.78) 0%,
+    rgba(5, 13, 28, 0.62) 100%
   );
   padding: 12px 18px 14px;
   border-top: 1px solid var(--accent, #d4a853);

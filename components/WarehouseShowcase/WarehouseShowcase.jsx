@@ -74,13 +74,19 @@ for (let i = 0; i <= COLS; i++) {
   else if (i === COLS) AISLES_Z.push(OUTER_N_Z);
   else AISLES_Z.push((i - 0.5 - (COLS - 1) / 2) * COL_SPACING);
 }
-
 /* ─── COLORS ────────────────────────────────────────────────────────── */
-const C_BG = 0x020a1f; // navy abyss (only used as fallback)
-const C_FOG = 0x030c1c; // matches gradient mid-stop; objects fade to gradient
-const C_FLOOR = 0x081832; // navy floor — sits in the abyss
-const C_RACK = 0x18304a; // mid-navy racks
-const C_RACK_EDGE = 0x3a5c7a; // lighter navy edges — visible against floor
+/* Palette anchored to #050811 — the deepest stop of the section's
+   gradient. The floor, fog, and (rarely-seen) scene fallback all share
+   that exact value so there is no visible horizon line where the 3D
+   floor meets the background. Racks sit one step up the value scale,
+   edges one step further, so silhouettes still pop without the floor
+   reading as "another object." */
+/* ─── COLORS ────────────────────────────────────────────────────────── */
+const C_BG = 0x050d1c; // bg — lighter "sky" the warehouse floats in
+const C_FOG = 0x050d1c; // matches bg so distant objects fade cleanly
+const C_FLOOR = 0x030812; // floor — darker than bg, reads as a deep pool
+const C_RACK = 0x122842; // mid-navy racks, slightly darker than before
+const C_RACK_EDGE = 0x426b91; // a touch brighter cool edge for silhouette pop
 const C_GOLD = 0xd4a853;
 const C_GOLD_HOT = 0xf0c878;
 const C_RED = 0xc84a4a;
@@ -358,14 +364,16 @@ const FLOOR_FRAG = /* glsl */ `
   uniform vec3 uHeatColor;
   uniform vec3 uHeatPoints[4];
   uniform float uHeatPointsLen;
-
   void main() {
     float d0 = length(vWorld.xz) / 90.0;
-    vec3 col = mix(uBase * 1.5, uBase * 0.55, smoothstep(0.0, 1.0, d0));
+    // Center is a subtle navy lift (~#0d142a) over the base; edges fall
+    // exactly to uBase (= the gradient endpoint #050811) so the floor's
+    // outer ring is invisible against the section background.
+    vec3 col = mix(uBase * 2.5, uBase, smoothstep(0.0, 1.0, d0));
 
     float df = distance(vWorld.xz, uFocus);
     float focus = 1.0 - smoothstep(0.0, 16.0, df);
-    col += uHeatColor * focus * uHeat * 0.5;
+    col += uHeatColor * focus * uHeat * 0.6;
 
     for (int i = 0; i < 4; i++) {
       if (float(i) >= uHeatPointsLen) break;
@@ -554,9 +562,12 @@ export default function WarehouseShowcase() {
     const gridGroup = new THREE.Group();
     scene.add(gridGroup);
     const gridMat = new THREE.LineBasicMaterial({
-      color: 0x2a2a36,
+      // Navy-tinted instead of cool grey — sits in the same family as
+      // racks + floor. Opacity nudged up slightly because the much
+      // darker floor would otherwise eat the grid entirely.
+      color: 0x223a5a,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.22,
     });
     // longitudinal grid (along x): one line per column boundary
     for (let c = 0; c <= COLS; c++) {

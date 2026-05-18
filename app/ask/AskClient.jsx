@@ -2,14 +2,23 @@
 // app/ask/AskClient.jsx
 // ──────────────────────────────────────────────────────────────────────────
 // Full-page version of the chat. Same useChatStream hook as the drawer.
-// Includes the new "New chat" button, inline linkification, and rate-limit
+// Includes the "New chat" button, inline linkification, and rate-limit
 // error state.
+//
+// Layout: locked to 100vh, no body scroll. The intro (when empty) or
+// transcript (when there are messages) lives inside a single flex-1
+// .scrollRegion that scrolls internally; the input bar and disclaimer
+// sit naturally at the bottom of the flex column. scrollRef is on the
+// outer .scrollRegion now — that's the element with overflow-y: auto,
+// so the auto-scroll-to-bottom effect needs to target it (not the
+// .transcript div, which no longer scrolls).
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useChatStream } from "@/components/Chat/useChatStream";
+import Footer from "@/components/Footer/Footer";
 import styles from "./ask.module.css";
 
 const STARTERS = [
@@ -51,6 +60,9 @@ export default function AskClient({ userEmail, userName } = {}) {
     inputRef.current?.focus();
   }, []);
 
+  /* Auto-scroll-to-bottom when new content arrives. scrollRef is on
+     the outer .scrollRegion wrapper — that's where overflow-y: auto
+     lives now that the page itself doesn't scroll. */
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -76,81 +88,107 @@ export default function AskClient({ userEmail, userName } = {}) {
   const isEmpty = messages.length === 0;
 
   return (
-    <main className={styles.main}>
-      <div className={styles.column}>
-        {isEmpty ? (
-          <header className={styles.intro}>
-            <div className={styles.kicker}>ASK NIMBUS</div>
-            <h1 className={styles.h1}>
-              Instant answers about Nimbus.
-              <span className={styles.h1Dim}> Sources cited.</span>
-            </h1>
-            <p className={styles.lead}>
-              Pricing, features, integrations, comparisons, migration planning —
-              anything our docs cover, plus help drafting emails and booking
-              time with our team.
-            </p>
-            <div className={styles.starters}>
-              {STARTERS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={styles.starter}
-                  onClick={() => send(s, { sourceUrl: "/ask" })}
-                >
-                  <span className={styles.starterArrow}>→</span>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </header>
-        ) : (
-          <>
-            <div className={styles.transcriptHeader}>
-              <div className={styles.kicker}>CONVERSATION</div>
-              <button
-                type="button"
-                className={styles.resetBtn}
-                onClick={handleReset}
-                disabled={streaming}
-              >
-                New chat
-              </button>
-            </div>
-            <div ref={scrollRef} className={styles.transcript}>
-              {messages.map((m) => (
-                <AskMessage key={m.id} message={m} streaming={streaming} />
-              ))}
-              {cta && <AskCTA cta={cta} onDismiss={() => setCta(null)} />}
-            </div>
-          </>
-        )}
+    <>
+      <main className={styles.main}>
+        <div className={styles.column}>
+          {/* Single scrollable region. Contains EITHER the intro state
+            OR the transcript header + transcript — whichever is active.
+            The form + disclaimer below sit outside it, pinned to the
+            bottom of the flex column. */}
+          <div ref={scrollRef} className={styles.scrollRegion}>
+            {isEmpty ? (
+              <header className={styles.intro}>
+                <div className={styles.kicker}>ASK NIMBUS</div>
+                <h1 className={styles.h1}>
+                  Instant answers about Nimbus.
+                  <span className={styles.h1Dim}> Sources cited.</span>
+                </h1>
+                <p className={styles.lead}>
+                  Pricing, features, integrations, comparisons, migration
+                  planning — anything our docs cover, plus help drafting emails
+                  and booking time with our team.
+                </p>
+                <div className={styles.starters}>
+                  {STARTERS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={styles.starter}
+                      onClick={() => send(s, { sourceUrl: "/ask" })}
+                    >
+                      <span className={styles.starterArrow}>→</span>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </header>
+            ) : (
+              <>
+                <div className={styles.transcriptHeader}>
+                  <div className={styles.kicker}>CONVERSATION</div>
+                  <button
+                    type="button"
+                    className={styles.resetBtn}
+                    onClick={handleReset}
+                    disabled={streaming}
+                  >
+                    New chat
+                  </button>
+                </div>
+                <div className={styles.transcript}>
+                  {messages.map((m) => (
+                    <AskMessage key={m.id} message={m} streaming={streaming} />
+                  ))}
+                  {cta && <AskCTA cta={cta} onDismiss={() => setCta(null)} />}
+                </div>
+              </>
+            )}
+          </div>
 
-        <form className={styles.inputBar} onSubmit={submit}>
-          <input
-            ref={inputRef}
-            type="text"
-            className={styles.input}
-            placeholder={streaming ? "Waiting…" : "Ask anything about Nimbus…"}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={streaming}
-            autoComplete="off"
-            spellCheck="false"
-          />
-          <button
-            type="submit"
-            className={styles.sendBtn}
-            disabled={streaming || !input.trim()}
-          >
-            Send
-          </button>
-        </form>
-        <div className={styles.disclaimer}>
-          AI-generated — verify pricing details with your rep
+          <form className={styles.inputBar} onSubmit={submit}>
+            <input
+              ref={inputRef}
+              type="text"
+              className={styles.input}
+              placeholder={
+                streaming ? "Waiting…" : "Ask anything about Nimbus…"
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={streaming}
+              autoComplete="off"
+              spellCheck="false"
+            />
+            <button
+              type="submit"
+              className={styles.sendBtn}
+              disabled={streaming || !input.trim()}
+              aria-label="Send"
+            >
+              <svg
+                width="12"
+                height="10"
+                viewBox="0 0 12 10"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1 5H11M8 1L11 5L8 9"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </form>
+          <div className={styles.disclaimer}>
+            AI-generated — verify pricing details with your rep
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <Footer />
+    </>
   );
 }
 
@@ -210,6 +248,8 @@ function AskMessage({ message, streaming }) {
   );
 }
 
+// ── Email draft ───────────────────────────────────────────────────────────
+
 function AskEmail({ draft }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -241,6 +281,8 @@ function AskEmail({ draft }) {
     </div>
   );
 }
+
+// ── CTA card ──────────────────────────────────────────────────────────────
 
 function AskCTA({ cta, onDismiss }) {
   const COPY = {

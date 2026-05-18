@@ -33,15 +33,15 @@ const COLUMNS = [
       { text: "Ask Nimbus", href: "/ask" },
       { text: "Blog", href: "/blog" },
       { text: "Help Center", href: "/help" },
-      { text: "API Docs", href: "/api-docs" },
+      // { text: "API Docs", href: "/api-docs" },
     ],
   },
   {
     title: "Company",
     links: [
       { text: "Contact", href: "/contact" },
-      { text: "Trust", href: "/trust" },
-      { text: "Status", href: "/status" },
+      // { text: "Trust", href: "/trust" },
+      // { text: "Status", href: "/status" },
     ],
   },
 ];

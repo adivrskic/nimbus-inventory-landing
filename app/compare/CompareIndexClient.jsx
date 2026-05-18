@@ -6,6 +6,7 @@ import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
@@ -71,18 +72,6 @@ export default function CompareIndexClient() {
           trigger: cards[0],
           start: "top 85%",
         },
-      }
-    );
-
-    gsap.fromTo(
-      `.${styles.outro}`,
-      { opacity: 0, y: 18 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        scrollTrigger: { trigger: `.${styles.outro}`, start: "top 85%" },
       }
     );
 
@@ -164,30 +153,19 @@ export default function CompareIndexClient() {
       </section>
 
       {/* ── OUTRO ── */}
-      <section className={styles.outro}>
-        <div className={styles.outroInner}>
-          <div className={styles.outroLabel}>Not seeing your vendor?</div>
-          <h2 className={styles.outroTitle}>
-            We&apos;ll run the comparison live.
-          </h2>
-          <p className={styles.outroDesc}>
-            Tell us what you&apos;re evaluating against. We&apos;ll put together
-            a tailored side-by-side using your real requirements and walk you
-            through it in 30 minutes.
-          </p>
-          <div className={styles.outroButtons}>
-            <CornerButton onClick={() => openDemo("migration")}>
-              Book a comparison call
-            </CornerButton>
-            <TransitionLink
-              href="/calculator"
-              className={styles.outroSecondary}
-            >
-              Or run the ROI numbers →
-            </TransitionLink>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Not seeing your vendor?"
+        title="We'll run the comparison live."
+        desc="Tell us what you're evaluating against. We'll put together a tailored side-by-side using your real requirements and walk you through it in 30 minutes."
+        primaryAction={{
+          onClick: () => openDemo("migration"),
+          label: "Book a comparison call",
+        }}
+        secondaryAction={{
+          href: "/calculator",
+          label: "Or run the ROI numbers →",
+        }}
+      />
 
       <Footer />
     </div>
