@@ -27,9 +27,9 @@
            HERO  — Calculator-style left-aligned editorial column
         ───────────────────────────────────────────────────── */
 .hero {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 160px 48px 60px;
+  padding: 160px 0px 60px;
 }
 
 .heroEyebrow {
@@ -91,14 +91,14 @@
         ───────────────────────────────────────────────────── */
 .section {
   position: relative;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 100px 48px;
+  padding: 100px 0px;
 }
 
 .sectionContent {
   min-width: 0;
-  max-width: 720px;
+
   /* Centered inside the section so the form sits in the eye-line rather
          than hugging the left edge where the editorial numeral used to be. */
   margin: 0 auto;
@@ -144,7 +144,7 @@
   flex-direction: column;
   gap: 24px;
   opacity: 0;
-  max-width: 720px;
+  max-width: 1400px;
 }
 .honeypot {
   position: absolute;

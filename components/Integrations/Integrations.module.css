@@ -23,7 +23,7 @@
 .header {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 140px 48px 80px;
+  padding: 140px 0 80px;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -80,7 +80,7 @@
   z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0x;
 }
 .grid {
   display: grid;

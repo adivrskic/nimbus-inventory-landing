@@ -10,34 +10,39 @@ import styles from "./WarehouseShowcase.module.css";
 gsap.registerPlugin(ScrollTrigger);
 
 /* ════════════════════════════════════════════════════════════════════
-   WarehouseShowcase
+   WarehouseShowcase — Cinematic Edition
 
-   One warehouse, one scroll, five glimpses of what AI actually does
-   inside it:
+   Same five-act story (WAKE · HEAR · ANTICIPATE · ACT · LEARN),
+   dramatically refined:
 
-     01 · AWAKE       — spatial intelligence boots; the floor renders
-                        itself from prior scans
-     02 · HEAR        — a worker speaks; the system locates + responds
-     03 · ANTICIPATE  — depletion forecast flags 3 SKUs; drafts a PO
-     04 · ACT         — one picker traces an optimized route
-     05 · LEARN       — the day rolls up; the floor "remembers"
-
-   All on-screen text is anchored to 3D world positions — projected to
-   screen space each frame so it appears *in* the warehouse rather than
-   floating beside it.
+   - Floor + fog now share the EXACT navy of the section below, so
+     the 3D scene appears to float in a continuous dark sea with no
+     visible horizon line where the canvas ends.
+   - Three-point cinematic lighting: warm key, cool blue rim, soft
+     amber fill from below. Racks read as illuminated objects, not
+     flat boxes.
+   - Racks gain capped tops (subtle emissive slab) + a shelf bar at
+     mid-height. Edges are crisper.
+   - Items get billboard halos with additive blending — proper glow
+     without a postprocessing pass.
+   - Atmospheric haze planes layered through the scene for depth.
+   - Forecast curves use Catmull-Rom interpolation for smooth arcs
+     instead of jagged sin curves.
+   - AMR picker redesigned: lower, sleeker silhouette with a soft
+     forward-cast scan glow.
+   - Camera moves get subtle breathing motion during static beats
+     and slow pull-backs to add cinematic life.
    ════════════════════════════════════════════════════════════════════ */
 
-/* ─── LAYOUT ─────────────────────────────────────────────────────────
-   95m × 43m warehouse. 4 zones × 5 bays = 20 bays along x. 8 columns
-   along z, 5m spacing → ~3.2m walkable aisles between racks. */
+/* ─── LAYOUT (unchanged) ────────────────────────────────────────── */
 const ZONE_COUNT = 4;
 const ZONE_LEN = 20;
 const ZONE_GAP = 5;
 const BAYS_PER_ZONE = 5;
-const BAY_W = ZONE_LEN / BAYS_PER_ZONE; // 4
-const TOTAL_BAYS = ZONE_COUNT * BAYS_PER_ZONE; // 20
-const TOTAL_X = ZONE_COUNT * ZONE_LEN + (ZONE_COUNT - 1) * ZONE_GAP; // 95
-const X_START = -TOTAL_X / 2; // -47.5
+const BAY_W = ZONE_LEN / BAYS_PER_ZONE;
+const TOTAL_BAYS = ZONE_COUNT * BAYS_PER_ZONE;
+const TOTAL_X = ZONE_COUNT * ZONE_LEN + (ZONE_COUNT - 1) * ZONE_GAP;
+const X_START = -TOTAL_X / 2;
 
 const COLS = 8;
 const COL_SPACING = 5;
@@ -45,54 +50,53 @@ const RACK_W = 3.6;
 const RACK_H = 5.4;
 const RACK_D = 0.9;
 
-const W_DEPTH = (COLS - 1) * COL_SPACING + RACK_D * 2 + 6; // ~42.8
-const W_HALF_DEPTH = W_DEPTH / 2; // ~21.4
-const DOCK_Z = W_HALF_DEPTH + 8; // ~29.4
+const W_DEPTH = (COLS - 1) * COL_SPACING + RACK_D * 2 + 6;
+const W_HALF_DEPTH = W_DEPTH / 2;
+const DOCK_Z = W_HALF_DEPTH + 8;
 
-/* End-cap cross-aisle z-positions (perimeter loops). */
 const OUTER_N_Z = 19;
 const OUTER_S_Z = -19;
 const OUTER_E_X = 50;
 const OUTER_W_X = -50;
 
-/* Cross-aisle x positions: outer ends + zone gap centers. */
 const CROSS_X = [
   OUTER_W_X,
-  X_START + 1 * ZONE_LEN + 0.5 * ZONE_GAP, // -25
-  X_START + 2 * ZONE_LEN + 1.5 * ZONE_GAP, // 0
-  X_START + 3 * ZONE_LEN + 2.5 * ZONE_GAP, // 25
+  X_START + 1 * ZONE_LEN + 0.5 * ZONE_GAP,
+  X_START + 2 * ZONE_LEN + 1.5 * ZONE_GAP,
+  X_START + 3 * ZONE_LEN + 2.5 * ZONE_GAP,
   OUTER_E_X,
 ];
 
-/* Access aisles between columns (and outer wall aisles).
-   AISLES_Z[c + s] is the z-coordinate of the aisle from which an item
-   at column c, side s is reachable. With COLS=8 and COL_SPACING=5,
-   that's [-19, -15, -10, -5, 0, 5, 10, 15, 19]. */
 const AISLES_Z = [];
 for (let i = 0; i <= COLS; i++) {
   if (i === 0) AISLES_Z.push(OUTER_S_Z);
   else if (i === COLS) AISLES_Z.push(OUTER_N_Z);
   else AISLES_Z.push((i - 0.5 - (COLS - 1) / 2) * COL_SPACING);
 }
-/* ─── COLORS ────────────────────────────────────────────────────────── */
-/* Palette anchored to #050811 — the deepest stop of the section's
-   gradient. The floor, fog, and (rarely-seen) scene fallback all share
-   that exact value so there is no visible horizon line where the 3D
-   floor meets the background. Racks sit one step up the value scale,
-   edges one step further, so silhouettes still pop without the floor
-   reading as "another object." */
-/* ─── COLORS ────────────────────────────────────────────────────────── */
-const C_BG = 0x050d1c; // bg — lighter "sky" the warehouse floats in
-const C_FOG = 0x050d1c; // matches bg so distant objects fade cleanly
-const C_FLOOR = 0x040812; // floor — darker than bg, reads as a deep pool
-const C_RACK = 0x122842; // mid-navy racks, slightly darker than before
-const C_RACK_EDGE = 0x426b91; // a touch brighter cool edge for silhouette pop
-const C_GOLD = 0xd4a853;
-const C_GOLD_HOT = 0xf0c878;
-const C_RED = 0xc84a4a;
-const C_GREEN = 0x6dac5a;
 
-/* ─── MATH ─────────────────────────────────────────────────────────── */
+/* ─── COLORS — UNIFIED OCEAN PALETTE ────────────────────────────────
+   The single biggest visual change is here: C_BG, C_FOG, C_FLOOR
+   share the exact same navy as the page section beneath this one.
+   The warehouse no longer sits in its own dark stage — it floats
+   in a continuous dark sea. The floor shader fades cleanly to that
+   exact value at the edges, so the canvas boundary is invisible. */
+const SECTION_BG_HEX = "#04091c";
+const C_BG = 0x04091c; // matches the section below the canvas
+const C_FOG = 0x04091c; // fog fades to the exact same value
+const C_FLOOR_OUTER = 0x04091c; // floor edges == section bg → no seam
+const C_FLOOR_INNER = 0x0c1730; // subtle navy lift in the middle
+const C_RACK = 0x0f1d36; // racks barely brighter than the floor
+const C_RACK_CAP = 0x1f3a62; // top caps read as "lit"
+const C_RACK_EDGE = 0x5278a8; // brighter cool edge for silhouette
+const C_GRID = 0x1a2a4a; // blueprint underlay
+const C_GOLD = 0xd4a853;
+const C_GOLD_HOT = 0xf3cd84;
+const C_RED = 0xc84a4a;
+const C_RED_HOT = 0xe26666;
+const C_GREEN = 0x6dac5a;
+const C_RIM = 0x4f8acc; // cool rim light tint
+
+/* ─── MATH ──────────────────────────────────────────────────────── */
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 function smoothstep(t) {
@@ -108,30 +112,22 @@ function bayToX(b) {
   return X_START + zi * (ZONE_LEN + ZONE_GAP) + (bi + 0.5) * BAY_W;
 }
 
-/* ─── ITEMS ─────────────────────────────────────────────────────────
-   12 items clustered into 4 access aisles (3 per aisle), arranged so
-   a single 4-aisle serpentine route visits every one without
-   backtracking. Each (col, side) determines its access aisle. */
+/* ─── ITEMS (unchanged data, 12 SKUs across 4 aisles) ───────────── */
 const ITEMS_RAW = [
-  // Aisle z=10 (between col 5 and col 6)  — east → west
   { bay: 18, col: 6, side: 0, h: 3.8, code: "I1-009", zone: "I" },
   { bay: 8, col: 5, side: 1, h: 2.4, code: "F2-095", zone: "F" },
   { bay: 2, col: 6, side: 0, h: 2.2, code: "B3-441", zone: "A" },
-  // Aisle z=5 (between col 4 and col 5)   — west → east
   { bay: 4, col: 4, side: 1, h: 2.6, code: "I3-392", zone: "C" },
   { bay: 11, col: 5, side: 0, h: 2.6, code: "G2-538", zone: "G" },
   { bay: 14, col: 4, side: 1, h: 3.4, code: "H3-133", zone: "H" },
-  // Aisle z=-5 (between col 2 and col 3)  — east → west
   { bay: 16, col: 3, side: 0, h: 3.0, code: "E4-628", zone: "E" },
   { bay: 9, col: 2, side: 1, h: 3.2, code: "D1-776", zone: "D" },
   { bay: 3, col: 3, side: 0, h: 3.6, code: "J1-854", zone: "J" },
-  // Aisle z=-10 (between col 1 and col 2) — west → east
   { bay: 1, col: 1, side: 1, h: 3.4, code: "B1-047", zone: "B" },
   { bay: 6, col: 2, side: 0, h: 2.8, code: "C3-201", zone: "C" },
   { bay: 15, col: 1, side: 1, h: 3.8, code: "A1-217", zone: "A" },
 ];
 
-/* Compute every derived position once. */
 const ITEMS = ITEMS_RAW.map((it) => {
   const zC = (it.col - (COLS - 1) / 2) * COL_SPACING;
   const itemZ = zC + (it.side === 0 ? -RACK_D / 2 - 0.32 : RACK_D / 2 + 0.32);
@@ -144,8 +140,6 @@ const ITEMS = ITEMS_RAW.map((it) => {
   };
 });
 const ITEM_POS = ITEMS.map((it) => ({ x: it.x, y: it.y, z: it.z }));
-
-/* Lookup by code so we don't tie narrative beats to array indices. */
 const codeIdx = (code) => ITEMS.findIndex((it) => it.code === code);
 
 const HEAR_TARGET_CODE = "B3-441";
@@ -154,10 +148,7 @@ const HEAR_TARGET = codeIdx(HEAR_TARGET_CODE);
 const PREDICT_CODES = ["I3-392", "D1-776", "A1-217"];
 const PREDICT_INDICES = PREDICT_CODES.map(codeIdx);
 
-/* ─── ROUTE ─────────────────────────────────────────────────────────
-   Every waypoint is either on a cross-aisle (outer wall or zone gap)
-   or on an access aisle z-coordinate. The route never crosses a rack.
-   Picks happen at the exact (item.x, item.accessZ) waypoint. */
+/* ─── ROUTE (unchanged) ─────────────────────────────────────────── */
 const I = (code) => {
   const it = ITEMS[codeIdx(code)];
   return [it.x, it.accessZ];
@@ -166,25 +157,25 @@ const ROUTE = [
   [0, DOCK_Z],
   [0, OUTER_N_Z],
   [OUTER_E_X, OUTER_N_Z],
-  [OUTER_E_X, 10], // drop into aisle z=10
-  I("I1-009"), // pick at x=41.5
-  I("F2-095"), // pick at x=-8.5
-  I("B3-441"), // pick at x=-37.5
+  [OUTER_E_X, 10],
+  I("I1-009"),
+  I("F2-095"),
+  I("B3-441"),
   [OUTER_W_X, 10],
-  [OUTER_W_X, 5], // drop into aisle z=5
-  I("I3-392"), // pick at x=-29.5
-  I("G2-538"), // pick at x=8.5
-  I("H3-133"), // pick at x=20.5
+  [OUTER_W_X, 5],
+  I("I3-392"),
+  I("G2-538"),
+  I("H3-133"),
   [OUTER_E_X, 5],
-  [OUTER_E_X, -5], // drop into aisle z=-5
-  I("E4-628"), // pick at x=33.5
-  I("D1-776"), // pick at x=-4.5
-  I("J1-854"), // pick at x=-33.5
+  [OUTER_E_X, -5],
+  I("E4-628"),
+  I("D1-776"),
+  I("J1-854"),
   [OUTER_W_X, -5],
-  [OUTER_W_X, -10], // drop into aisle z=-10
-  I("B1-047"), // pick at x=-41.5
-  I("C3-201"), // pick at x=-16.5
-  I("A1-217"), // pick at x=29.5
+  [OUTER_W_X, -10],
+  I("B1-047"),
+  I("C3-201"),
+  I("A1-217"),
   [OUTER_E_X, -10],
   [OUTER_E_X, OUTER_N_Z],
   [0, OUTER_N_Z],
@@ -205,19 +196,13 @@ function buildRoute(waypoints) {
 }
 const OPT = buildRoute(ROUTE);
 
-/* ─── MATH (single source of truth) ─────────────────────────────────
-   Every displayed number is derived from OPT.total + WALK_SPEED +
-   NAIVE_RATIO. Change a waypoint, the readouts adjust to match. */
-const WALK_SPEED = 1.5; // m/s — picker / AMR average
-const NAIVE_RATIO = 1.55; // naive route is ~55% longer than optimal
-
+const WALK_SPEED = 1.5;
+const NAIVE_RATIO = 1.55;
 const OPT_TOTAL = OPT.total;
 const OPT_TIME = OPT_TOTAL / WALK_SPEED;
 const NAIVE_TOTAL = Math.round(OPT_TOTAL * NAIVE_RATIO);
 const NAIVE_TIME = NAIVE_TOTAL / WALK_SPEED;
 const SAVED_PCT = Math.round((1 - 1 / NAIVE_RATIO) * 100);
-const SAVED_METERS = Math.round(NAIVE_TOTAL - OPT_TOTAL);
-const SAVED_SECONDS = Math.round(NAIVE_TIME - OPT_TIME);
 const OPT_M = Math.round(OPT_TOTAL);
 
 function fmtTime(s) {
@@ -238,9 +223,6 @@ function positionOnRoute(t) {
   return { x: last[0], z: last[1] };
 }
 
-/* PICK_TS — the route progress at which each item is reached. We find
-   the waypoint that matches the item's (x, accessZ), then divide its
-   cumulative segment distance by OPT_TOTAL. */
 const PICK_TS = ITEMS.map((it) => {
   let cum = 0;
   for (let i = 0; i < ROUTE.length; i++) {
@@ -256,7 +238,7 @@ const PICK_TS = ITEMS.map((it) => {
   return 0.5;
 });
 
-/* ─── MODE WINDOWS ─────────────────────────────────────────────────── */
+/* ─── MODE WINDOWS ──────────────────────────────────────────────── */
 const M_WAKE = [0.0, 0.14];
 const M_HEAR = [0.14, 0.32];
 const M_PREDICT = [0.32, 0.52];
@@ -299,29 +281,23 @@ function modeFromP(p) {
   return 4;
 }
 
-/* ─── CAMERA STATES ─────────────────────────────────────────────────
-   Tighter framing throughout — the warehouse should fill the screen,
-   not float in a sea of negative space. ACT mode is now strictly
-   overhead so the optimized path reads as a single continuous figure.
-   LEARN ends in the same near-vertical pose WAKE started in, so the
-   warehouse "going back to sleep" closes the loop on the intro. */
+/* ─── CAMERA STATES — refined cinematography ────────────────────── */
 const CAMS = [
-  // WAKE: straight-down top-down → drop into oblique reveal
-  { p: 0.0, ang: Math.PI * 0.5, rad: 5, h: 95, tx: 0, ty: 4, tz: 0 },
-  { p: 0.1, ang: Math.PI * 0.55, rad: 55, h: 36, tx: 0, ty: 3, tz: 0 },
-  // HEAR: drop in, ground-level, near the worker
-  { p: 0.18, ang: Math.PI * 0.42, rad: 38, h: 13, tx: -14, ty: 3, tz: 4 },
-  { p: 0.3, ang: Math.PI * 0.4, rad: 36, h: 11, tx: -12, ty: 3, tz: 4 },
-  // PREDICT: side oblique, low and close
-  { p: 0.38, ang: Math.PI * 0.3, rad: 46, h: 14, tx: 4, ty: 4, tz: 2 },
-  { p: 0.5, ang: Math.PI * 0.36, rad: 44, h: 13, tx: 8, ty: 4, tz: 4 },
-  // ACT: OVERHEAD — fixed top-down, the path is the subject
-  { p: 0.58, ang: Math.PI * 0.5, rad: 4, h: 72, tx: 0, ty: 0, tz: 0 },
-  { p: 0.78, ang: Math.PI * 0.5, rad: 4, h: 70, tx: 0, ty: 0, tz: 0 },
-  // LEARN: hold overhead while the floor "remembers", then lift to
-  //        the WAKE-start pose as the racks collapse back to 2D
-  { p: 0.88, ang: Math.PI * 0.5, rad: 4, h: 78, tx: 0, ty: 0, tz: 0 },
-  { p: 1.0, ang: Math.PI * 0.5, rad: 5, h: 95, tx: 0, ty: 4, tz: 0 },
+  // WAKE: pure top-down ortho-feel → drop into low oblique reveal
+  { p: 0.0, ang: Math.PI * 0.5, rad: 3, h: 98, tx: 0, ty: 2, tz: 0 },
+  { p: 0.1, ang: Math.PI * 0.55, rad: 58, h: 32, tx: 0, ty: 3, tz: 0 },
+  // HEAR: low cinematic angle near the worker
+  { p: 0.18, ang: Math.PI * 0.4, rad: 36, h: 12, tx: -16, ty: 3, tz: 4 },
+  { p: 0.3, ang: Math.PI * 0.36, rad: 34, h: 10, tx: -14, ty: 3, tz: 4 },
+  // PREDICT: side oblique with slow drift
+  { p: 0.38, ang: Math.PI * 0.28, rad: 44, h: 13, tx: 4, ty: 4, tz: 2 },
+  { p: 0.5, ang: Math.PI * 0.34, rad: 42, h: 12, tx: 8, ty: 4, tz: 4 },
+  // ACT: overhead, slight pull-back for cinematic life
+  { p: 0.58, ang: Math.PI * 0.5, rad: 4, h: 70, tx: 0, ty: 0, tz: 0 },
+  { p: 0.78, ang: Math.PI * 0.5, rad: 4, h: 80, tx: 0, ty: 0, tz: 0 },
+  // LEARN: hold overhead, then lift back to pure top-down close
+  { p: 0.88, ang: Math.PI * 0.5, rad: 4, h: 84, tx: 0, ty: 0, tz: 0 },
+  { p: 1.0, ang: Math.PI * 0.5, rad: 3, h: 98, tx: 0, ty: 2, tz: 0 },
 ];
 
 function camAt(t) {
@@ -343,9 +319,14 @@ function camAt(t) {
   return CAMS[CAMS.length - 1];
 }
 
-/* ─── CUSTOM FLOOR SHADER ────────────────────────────────────────────
-   A dark gradient floor with a subtle radial glow under whatever the
-   active mode focuses on, plus persistent learning heat-points. */
+/* ─── CUSTOM FLOOR SHADER ───────────────────────────────────────────
+   Key changes vs original:
+   - Outer radius fades to EXACTLY C_FLOOR_OUTER (= section bg).
+     The transition is wide and gentle, so the floor disappears
+     into the page background long before the canvas edge.
+   - Inner navy lift is subtle (one stop, not 2.5x).
+   - Optional blueprint grid that breathes with time.
+   - Memory heat-points pulse with uTime for the LEARN beat. */
 const FLOOR_VERT = /* glsl */ `
   varying vec3 vWorld;
   void main() {
@@ -357,35 +338,71 @@ const FLOOR_VERT = /* glsl */ `
 const FLOOR_FRAG = /* glsl */ `
   precision highp float;
   varying vec3 vWorld;
-  uniform vec3 uBase;
+  uniform vec3 uOuter;
+  uniform vec3 uInner;
   uniform vec2 uFocus;
   uniform float uHeat;
   uniform float uGlobal;
   uniform vec3 uHeatColor;
   uniform vec3 uHeatPoints[4];
   uniform float uHeatPointsLen;
+  uniform float uTime;
+  uniform float uGridStrength;
+
+  // Soft 2D pseudo-noise via fract
+  float n2(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
   void main() {
-    float d0 = length(vWorld.xz) / 90.0;
-    // Center is a subtle navy lift (~#0d142a) over the base; edges fall
-    // exactly to uBase (= the gradient endpoint #050811) so the floor's
-    // outer ring is invisible against the section background.
-    vec3 col = mix(uBase * 2.5, uBase, smoothstep(0.0, 1.0, d0));
+    float d0 = length(vWorld.xz);
+    // Wide gentle fade: lift is fully present until r≈12, blends out
+    // by r≈70 so the visible floor never reaches the canvas edge.
+    float fadeOut = smoothstep(10.0, 70.0, d0);
+    vec3 col = mix(uInner, uOuter, fadeOut);
 
+    // Whisper-thin blueprint grid — only readable near the action
+    vec2 gridUV = vWorld.xz * 0.2;
+    vec2 grid = abs(fract(gridUV + 0.5) - 0.5);
+    float gMin = min(grid.x, grid.y);
+    float gridLine = (1.0 - smoothstep(0.0, 0.035, gMin));
+    col += vec3(0.025, 0.045, 0.085) * gridLine * (1.0 - fadeOut) * uGridStrength;
+
+    // Active focus glow (current mode's interest point)
     float df = distance(vWorld.xz, uFocus);
-    float focus = 1.0 - smoothstep(0.0, 16.0, df);
-    col += uHeatColor * focus * uHeat * 0.6;
+    float focus = 1.0 - smoothstep(0.0, 18.0, df);
+    col += uHeatColor * focus * uHeat * 0.75;
 
+    // Memory heat points — pulse slowly for "the floor remembers"
     for (int i = 0; i < 4; i++) {
       if (float(i) >= uHeatPointsLen) break;
       vec3 p = uHeatPoints[i];
       float dd = distance(vWorld.xz, p.xz);
-      float k = 1.0 - smoothstep(0.0, 20.0, dd);
-      col += uHeatColor * k * p.y * uGlobal * 0.35;
+      float k = 1.0 - smoothstep(0.0, 22.0, dd);
+      float pulse = 0.65 + sin(uTime * 0.8 + float(i) * 1.7) * 0.35;
+      col += uHeatColor * k * p.y * uGlobal * 0.45 * pulse;
     }
 
     gl_FragColor = vec4(col, 1.0);
   }
 `;
+
+/* ─── HALO SPRITE TEXTURE — generated once, reused everywhere ────── */
+function makeHaloTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255, 235, 180, 1)");
+  grad.addColorStop(0.3, "rgba(240, 200, 120, 0.55)");
+  grad.addColorStop(0.7, "rgba(212, 168, 83, 0.12)");
+  grad.addColorStop(1, "rgba(212, 168, 83, 0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
 
 /* ════════════════════════════════════════════════════════════════════
    COMPONENT
@@ -397,7 +414,6 @@ export default function WarehouseShowcase() {
   const canvasRef = useRef(null);
   const progressRef = useRef(0);
 
-  /* Card DOM refs — populated by ref callbacks on each card div. */
   const cardElems = useRef({});
   const setCardRef = useCallback(
     (key) => (el) => {
@@ -406,9 +422,6 @@ export default function WarehouseShowcase() {
     []
   );
 
-  /* SVG leader-line / anchor-dot refs — same callback-ref pattern as
-     cards. The render loop sets x1/y1/x2/y2 on each line and cx/cy on
-     each dot every frame. */
   const lineElems = useRef({});
   const dotElems = useRef({});
   const setLineRef = useCallback(
@@ -424,16 +437,6 @@ export default function WarehouseShowcase() {
     []
   );
 
-  /* Card 3D anchors — mutated each frame and projected to screen
-     space. Fields:
-       x/y/z      world position (the thing being annotated)
-       opacity    fade in/out
-       scale      extra scale multiplier (1 = neutral)
-       lift       screen-space pixels to offset the card upward from
-                  the anchor (creates room for a leader line)
-       slide      screen-space pixels to offset the card sideways
-       showLeader if true, draw an SVG hairline from anchor to card
-                  and a tiny gold dot at the anchor itself */
   const anchorsRef = useRef({
     wake: {
       x: 0,
@@ -487,9 +490,6 @@ export default function WarehouseShowcase() {
     },
   });
 
-  /* Live readouts for mode 4 (ACT) — picker stats update via React
-     state so the DOM numbers stay reactive. Card POSITIONS update via
-     direct DOM mutation in the animation loop. */
   const [ui, setUi] = useState({
     mode: 0,
     distOpt: 0,
@@ -514,25 +514,30 @@ export default function WarehouseShowcase() {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      alpha: true, // <- transparent canvas
+      alpha: true,
       powerPreference: "high-performance",
     });
     renderer.setSize(w, h, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearColor(0x000000, 0); // <- clear to transparent
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
 
     const scene = new THREE.Scene();
-    scene.background = null; // <- gradient shows through
-    scene.fog = new THREE.FogExp2(C_FOG, 0.012);
+    scene.background = null;
+    // Lower density → racks at the far end stay readable; the floor
+    // shader handles the long-range fade to bg color instead.
+    scene.fog = new THREE.FogExp2(C_FOG, 0.008);
 
     const camera = new THREE.PerspectiveCamera(46, w / h, 0.5, 700);
     camera.position.set(80, 30, 0);
     camera.lookAt(0, 3, 0);
 
-    /* ─── FLOOR (custom shader) ────────────────────────────────────── */
+    /* ─── FLOOR ─────────────────────────────────────────────────── */
     const floorUniforms = {
-      uBase: { value: new THREE.Color(C_FLOOR) },
+      uOuter: { value: new THREE.Color(C_FLOOR_OUTER) },
+      uInner: { value: new THREE.Color(C_FLOOR_INNER) },
       uFocus: { value: new THREE.Vector2(0, 0) },
       uHeat: { value: 0 },
       uGlobal: { value: 0 },
@@ -546,6 +551,8 @@ export default function WarehouseShowcase() {
         ],
       },
       uHeatPointsLen: { value: 0 },
+      uTime: { value: 0 },
+      uGridStrength: { value: 1 },
     };
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(420, 420),
@@ -558,18 +565,14 @@ export default function WarehouseShowcase() {
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    /* ─── GRID (blueprint underlay) ─────────────────────────────────── */
+    /* ─── GRID UNDERLAY (architectural blueprint) ───────────────── */
     const gridGroup = new THREE.Group();
     scene.add(gridGroup);
     const gridMat = new THREE.LineBasicMaterial({
-      // Navy-tinted instead of cool grey — sits in the same family as
-      // racks + floor. Opacity nudged up slightly because the much
-      // darker floor would otherwise eat the grid entirely.
-      color: 0x223a5a,
+      color: C_GRID,
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.32,
     });
-    // longitudinal grid (along x): one line per column boundary
     for (let c = 0; c <= COLS; c++) {
       const zC = (c - COLS / 2) * COL_SPACING;
       const geo = new THREE.BufferGeometry().setFromPoints([
@@ -578,7 +581,6 @@ export default function WarehouseShowcase() {
       ]);
       gridGroup.add(new THREE.Line(geo, gridMat));
     }
-    // transverse grid (along z): one line per bay boundary
     for (let b = 0; b <= TOTAL_BAYS; b++) {
       const x = X_START + b * BAY_W + Math.floor(b / BAYS_PER_ZONE) * ZONE_GAP;
       const geo = new THREE.BufferGeometry().setFromPoints([
@@ -588,16 +590,17 @@ export default function WarehouseShowcase() {
       gridGroup.add(new THREE.Line(geo, gridMat));
     }
 
-    /* ─── AISLE STRIPES (subtle gold lines down each aisle) ─────────── */
+    /* ─── AISLE STRIPES ─────────────────────────────────────────── */
     const stripeMat = new THREE.MeshBasicMaterial({
       color: C_GOLD,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.14,
+      depthWrite: false,
     });
     for (let i = 1; i < AISLES_Z.length - 1; i++) {
       const z = AISLES_Z[i];
       const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(TOTAL_X + 14, 0.07),
+        new THREE.PlaneGeometry(TOTAL_X + 14, 0.06),
         stripeMat
       );
       mesh.rotation.x = -Math.PI / 2;
@@ -605,20 +608,51 @@ export default function WarehouseShowcase() {
       scene.add(mesh);
     }
 
-    /* ─── RACKS (instanced) ─────────────────────────────────────────── */
+    /* ─── RACKS (instanced body + instanced cap + instanced shelf) ──
+       Adding two thin instanced meshes on top of every rack gives
+       each rack much more visual weight without breaking the
+       single-draw efficiency of InstancedMesh. */
     const rackGeo = new THREE.BoxGeometry(RACK_W, RACK_H, RACK_D);
     rackGeo.translate(0, RACK_H / 2, 0);
     const rackMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.78,
-      metalness: 0.05,
+      roughness: 0.65,
+      metalness: 0.15,
     });
+
+    // Cap: thin slab on top of each rack, slightly emissive so tops
+    // catch "light" and read as lit even when ambient light is low.
+    const capGeo = new THREE.BoxGeometry(RACK_W * 1.02, 0.15, RACK_D * 1.06);
+    capGeo.translate(0, RACK_H + 0.075, 0);
+    const capMat = new THREE.MeshStandardMaterial({
+      color: C_RACK_CAP,
+      roughness: 0.45,
+      metalness: 0.5,
+      emissive: new THREE.Color(C_RACK_CAP).multiplyScalar(0.4),
+      emissiveIntensity: 0.45,
+    });
+
+    // Shelf: one horizontal bar at mid-height for added structural
+    // detail. Subtle but reads as "this is a rack with shelves."
+    const shelfGeo = new THREE.BoxGeometry(RACK_W * 0.98, 0.06, RACK_D * 1.01);
+    shelfGeo.translate(0, RACK_H * 0.5, 0);
+    const shelfMat = new THREE.MeshStandardMaterial({
+      color: C_RACK_EDGE,
+      roughness: 0.4,
+      metalness: 0.3,
+      transparent: true,
+      opacity: 0.55,
+    });
+
     const RACK_INSTANCES = TOTAL_BAYS * COLS * 2;
     const racks = new THREE.InstancedMesh(rackGeo, rackMat, RACK_INSTANCES);
     racks.instanceColor = new THREE.InstancedBufferAttribute(
       new Float32Array(RACK_INSTANCES * 3),
       3
     );
+    const caps = new THREE.InstancedMesh(capGeo, capMat, RACK_INSTANCES);
+    const shelves = new THREE.InstancedMesh(shelfGeo, shelfMat, RACK_INSTANCES);
+
     const dummy = new THREE.Object3D();
     const baseRackColor = new THREE.Color(C_RACK);
     const rackPositions = [];
@@ -634,6 +668,8 @@ export default function WarehouseShowcase() {
           dummy.scale.set(1, 0, 1);
           dummy.updateMatrix();
           racks.setMatrixAt(idx, dummy.matrix);
+          caps.setMatrixAt(idx, dummy.matrix);
+          shelves.setMatrixAt(idx, dummy.matrix);
           racks.setColorAt(idx, baseRackColor);
           rackPositions.push({ x, z, bay: b, col, side: s });
           rackIdByKey[`${b}-${col}-${s}`] = idx;
@@ -643,9 +679,15 @@ export default function WarehouseShowcase() {
     }
     racks.instanceMatrix.needsUpdate = true;
     racks.instanceColor.needsUpdate = true;
+    caps.instanceMatrix.needsUpdate = true;
+    shelves.instanceMatrix.needsUpdate = true;
     scene.add(racks);
+    scene.add(caps);
+    scene.add(shelves);
 
-    /* Single buffered LineSegments for every rack's edges. */
+    /* Edge silhouettes — a single LineSegments containing the edges of
+       every rack body. Adds the crisp outline that reads even at
+       distance. */
     const edgeGeo = new THREE.EdgesGeometry(rackGeo);
     const ep = edgeGeo.attributes.position.array;
     const allEdges = [];
@@ -662,50 +704,135 @@ export default function WarehouseShowcase() {
       new THREE.LineBasicMaterial({
         color: C_RACK_EDGE,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.65,
       })
     );
     racksEdges.scale.y = 0;
     scene.add(racksEdges);
 
-    /* ─── LIGHTING ──────────────────────────────────────────────────── */
-    scene.add(new THREE.AmbientLight(0xcfcfd6, 0.78));
-    scene.add(new THREE.HemisphereLight(0xfff0d4, 0x202028, 0.4));
-    const key = new THREE.DirectionalLight(0xfff4dc, 0.35);
-    key.position.set(20, 50, 18);
+    /* ─── LIGHTING — 3-point cinematic ──────────────────────────── */
+    // Ambient: cool, low — provides base illumination without
+    // washing out shadows
+    scene.add(new THREE.AmbientLight(0x4a5878, 0.35));
+
+    // Hemisphere: warm sky over cool ground — natural light feel
+    scene.add(new THREE.HemisphereLight(0xfff0d4, 0x0a1428, 0.45));
+
+    // Key: warm directional from above & one side — defines form
+    const key = new THREE.DirectionalLight(0xffe7c2, 0.7);
+    key.position.set(30, 60, 22);
     scene.add(key);
 
-    /* ─── ITEMS (gold orbs, light beams, ground rings) ──────────────── */
+    // Rim: cool blue from opposite side — creates separation at edges
+    const rim = new THREE.DirectionalLight(C_RIM, 0.35);
+    rim.position.set(-30, 22, -18);
+    scene.add(rim);
+
+    // Fill: soft amber from below to lift undersides of caps/shelves
+    const fill = new THREE.PointLight(0xd4a853, 0.5, 80);
+    fill.position.set(0, -8, 0);
+    scene.add(fill);
+
+    /* ─── ATMOSPHERIC HAZE PLANES ───────────────────────────────────
+       Two large additive-blended quads at different heights create
+       cinematic depth without expensive volumetrics. Subtle, but
+       transforms distant racks from "flat boxes" to "objects in
+       space." */
+    function makeHazePlane(y, opacity, scale) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 256;
+      const g = c.getContext("2d");
+      const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, "rgba(80, 120, 180, 0.55)");
+      grad.addColorStop(0.4, "rgba(60, 90, 150, 0.22)");
+      grad.addColorStop(1, "rgba(20, 40, 80, 0)");
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 256, 256);
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(220 * scale, 220 * scale),
+        new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
+      );
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.y = y;
+      scene.add(mesh);
+      return mesh;
+    }
+    const haze1 = makeHazePlane(2, 0.5, 1);
+    const haze2 = makeHazePlane(7, 0.35, 1.4);
+
+    /* ─── ITEMS — sphere + halo billboard + beam + ground ring ─── */
+    const haloTex = makeHaloTexture();
+
     function makeItem(p, idxItem) {
       const grp = new THREE.Group();
+
+      // Inner emissive core
       const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.24, 16, 12),
-        new THREE.MeshBasicMaterial({ color: C_GOLD })
+        new THREE.SphereGeometry(0.22, 18, 14),
+        new THREE.MeshBasicMaterial({ color: C_GOLD_HOT })
       );
       sphere.position.set(p.x, p.y, p.z);
       grp.add(sphere);
 
+      // Outer halo billboard — gives the orb proper glow
+      const haloMat = new THREE.SpriteMaterial({
+        map: haloTex,
+        color: C_GOLD,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const halo = new THREE.Sprite(haloMat);
+      halo.position.set(p.x, p.y, p.z);
+      halo.scale.set(1.6, 1.6, 1);
+      grp.add(halo);
+
+      // Vertical beam with gradient via 2-segment line
       const beamGeo = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(p.x, p.y, p.z),
-        new THREE.Vector3(p.x, 9, p.z),
+        new THREE.Vector3(p.x, p.y + 1.2, p.z),
+        new THREE.Vector3(p.x, 9.5, p.z),
       ]);
+      const beamColors = new Float32Array([
+        1,
+        1,
+        1, // bright at item
+        0.85,
+        0.7,
+        0.3,
+        0.1,
+        0.08,
+        0.04, // fades upward
+      ]);
+      beamGeo.setAttribute("color", new THREE.BufferAttribute(beamColors, 3));
       const beam = new THREE.Line(
         beamGeo,
         new THREE.LineBasicMaterial({
-          color: C_GOLD,
+          vertexColors: true,
           transparent: true,
-          opacity: 0.2,
+          opacity: 0.55,
         })
       );
       grp.add(beam);
 
+      // Ground ring
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.46, 0.62, 32),
+        new THREE.RingGeometry(0.46, 0.62, 36),
         new THREE.MeshBasicMaterial({
           color: C_GOLD,
           transparent: true,
           opacity: 0.7,
           side: THREE.DoubleSide,
+          depthWrite: false,
         })
       );
       ring.rotation.x = -Math.PI / 2;
@@ -716,6 +843,8 @@ export default function WarehouseShowcase() {
       return {
         grp,
         sphere,
+        halo,
+        haloMat,
         beam,
         ring,
         sphereMat: sphere.material,
@@ -729,83 +858,165 @@ export default function WarehouseShowcase() {
     }
     const itemObjs = ITEM_POS.map(makeItem);
 
-    /* ─── FORECAST CURVES (3D space curves for ANTICIPATE) ───────── */
+    /* ─── FORECAST CURVES — Catmull-Rom for smoothness ─────────── */
     const forecastCurves = PREDICT_INDICES.map((itemIdx) => {
       const p = ITEM_POS[itemIdx];
-      const pts = [];
-      const N = 60;
-      for (let i = 0; i < N; i++) {
-        const t = i / (N - 1);
-        const x = p.x + Math.sin(t * Math.PI * 0.7) * 1.8;
-        const y = p.y + t * 6.4;
-        const z = p.z - t * 2.6;
-        pts.push(new THREE.Vector3(x, y, z));
-      }
+      // Control points: ground level → slight wave up → arching peak
+      const controls = [
+        new THREE.Vector3(p.x, p.y, p.z),
+        new THREE.Vector3(p.x + 0.6, p.y + 1.6, p.z - 0.4),
+        new THREE.Vector3(p.x - 0.4, p.y + 3.4, p.z - 1.2),
+        new THREE.Vector3(p.x + 1.1, p.y + 5.0, p.z - 2.0),
+        new THREE.Vector3(p.x - 0.5, p.y + 6.4, p.z - 2.6),
+      ];
+      const curve = new THREE.CatmullRomCurve3(controls, false, "centripetal");
+      const N = 72;
+      const pts = curve.getPoints(N - 1);
       const positions = new Float32Array(N * 3);
+      const colors = new Float32Array(N * 3);
+      const red = new THREE.Color(C_RED);
+      const redHot = new THREE.Color(C_RED_HOT);
+      const tmpCol = new THREE.Color();
       for (let i = 0; i < N; i++) {
         positions[i * 3] = pts[i].x;
         positions[i * 3 + 1] = pts[i].y;
         positions[i * 3 + 2] = pts[i].z;
+        // Color gradient: red at base → bright red-hot at tip
+        tmpCol.copy(red).lerp(redHot, i / (N - 1));
+        colors[i * 3] = tmpCol.r;
+        colors[i * 3 + 1] = tmpCol.g;
+        colors[i * 3 + 2] = tmpCol.b;
       }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
       geo.setDrawRange(0, 0);
       const mat = new THREE.LineBasicMaterial({
-        color: C_RED,
+        vertexColors: true,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
       });
       const line = new THREE.Line(geo, mat);
       scene.add(line);
 
+      // Pulsing tip with its own halo billboard
       const tip = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 12, 10),
-        new THREE.MeshBasicMaterial({ color: C_RED })
+        new THREE.SphereGeometry(0.16, 12, 10),
+        new THREE.MeshBasicMaterial({ color: C_RED_HOT })
       );
       tip.visible = false;
       scene.add(tip);
 
-      return { line, mat, geo, N, pts, tip, itemIdx };
+      const tipHaloMat = new THREE.SpriteMaterial({
+        map: haloTex,
+        color: C_RED,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const tipHalo = new THREE.Sprite(tipHaloMat);
+      tipHalo.scale.set(1.3, 1.3, 1);
+      tipHalo.visible = false;
+      scene.add(tipHalo);
+
+      return { line, mat, geo, N, pts, tip, tipHalo, tipHaloMat, itemIdx };
     });
 
-    /* ─── PICKER (procedural AMR) ───────────────────────────────────── */
+    /* ─── PICKER (AMR) — sleeker silhouette + forward scan glow ── */
     function makePicker() {
       const g = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(1.6, 0.8, 1.1),
+
+      // Lower, wider base — reads as an autonomous mobile robot
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.5, 1.2),
         new THREE.MeshStandardMaterial({
-          color: 0x303038,
-          roughness: 0.48,
-          metalness: 0.55,
+          color: 0x2a2a36,
+          roughness: 0.5,
+          metalness: 0.6,
         })
       );
-      body.position.y = 0.4;
-      g.add(body);
+      base.position.y = 0.25;
+      g.add(base);
+
+      // Beveled top stack (suggests a cargo platform)
       const top = new THREE.Mesh(
-        new THREE.BoxGeometry(1.0, 0.18, 0.8),
-        new THREE.MeshStandardMaterial({ color: 0x1a1a20 })
+        new THREE.BoxGeometry(1.5, 0.18, 1.0),
+        new THREE.MeshStandardMaterial({
+          color: 0x1a1a24,
+          roughness: 0.35,
+          metalness: 0.65,
+        })
       );
-      top.position.y = 0.89;
+      top.position.y = 0.59;
       g.add(top);
-      const beaconMat = new THREE.MeshBasicMaterial({ color: C_GOLD });
-      const beacon = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 10, 8),
-        beaconMat
-      );
-      beacon.position.y = 1.09;
-      g.add(beacon);
-      const glow = new THREE.Mesh(
-        new THREE.CircleGeometry(1.05, 24),
+
+      // Cargo "slot" — visual indication that picked items live here
+      const slot = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.06, 0.7),
         new THREE.MeshBasicMaterial({
           color: C_GOLD,
           transparent: true,
-          opacity: 0.35,
+          opacity: 0.6,
+        })
+      );
+      slot.position.y = 0.72;
+      g.add(slot);
+
+      // Beacon: bright top accent
+      const beaconMat = new THREE.MeshBasicMaterial({ color: C_GOLD_HOT });
+      const beacon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 12, 10),
+        beaconMat
+      );
+      beacon.position.y = 0.85;
+      g.add(beacon);
+
+      // Beacon halo billboard
+      const beaconHalo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: haloTex,
+          color: C_GOLD,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
+      );
+      beaconHalo.position.y = 0.85;
+      beaconHalo.scale.set(1.0, 1.0, 1);
+      g.add(beaconHalo);
+
+      // Ground glow
+      const glow = new THREE.Mesh(
+        new THREE.CircleGeometry(1.2, 32),
+        new THREE.MeshBasicMaterial({
+          color: C_GOLD,
+          transparent: true,
+          opacity: 0.4,
+          depthWrite: false,
         })
       );
       glow.rotation.x = -Math.PI / 2;
       glow.position.y = 0.005;
       g.add(glow);
-      g.userData = { beaconMat, glow };
+
+      // Forward scan beam — a thin glowing wedge in front of the AMR
+      const scanGeo = new THREE.PlaneGeometry(2.2, 1.4);
+      const scanMat = new THREE.MeshBasicMaterial({
+        color: C_GOLD_HOT,
+        transparent: true,
+        opacity: 0.18,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const scan = new THREE.Mesh(scanGeo, scanMat);
+      scan.rotation.x = -Math.PI / 2;
+      scan.position.set(0, 0.008, 0.9); // in front of body
+      g.add(scan);
+
+      g.userData = { beaconMat, glow, beaconHalo, scanMat };
       return g;
     }
     const picker = makePicker();
@@ -813,36 +1024,50 @@ export default function WarehouseShowcase() {
     picker.visible = false;
     scene.add(picker);
 
-    /* ─── WORKER (HEAR mode) ────────────────────────────────────────── */
+    /* ─── WORKER ───────────────────────────────────────────────── */
     const worker = (() => {
       const g = new THREE.Group();
       const torso = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.34, 0.48, 1.3, 12),
-        new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.6 })
+        new THREE.CylinderGeometry(0.32, 0.48, 1.3, 14),
+        new THREE.MeshStandardMaterial({
+          color: 0x2a2a30,
+          roughness: 0.55,
+          metalness: 0.15,
+        })
       );
       torso.position.y = 0.9;
       g.add(torso);
       const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.24, 14, 12),
-        new THREE.MeshStandardMaterial({ color: 0x36363c, roughness: 0.6 })
+        new THREE.SphereGeometry(0.24, 16, 14),
+        new THREE.MeshStandardMaterial({
+          color: 0x36363c,
+          roughness: 0.6,
+        })
       );
       head.position.y = 1.85;
       g.add(head);
+      // Hi-vis vest band
+      const vest = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.42, 0.42, 0.18, 14),
+        new THREE.MeshBasicMaterial({ color: C_GOLD_HOT })
+      );
+      vest.position.y = 1.15;
+      g.add(vest);
+      // Hardhat
       const helmet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.29, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.SphereGeometry(0.29, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2),
         new THREE.MeshBasicMaterial({ color: C_GOLD })
       );
       helmet.position.y = 1.93;
       g.add(helmet);
-      // Worker stands east of the target item, in the same aisle, so
-      // the beam arcs across the warehouse to the resolved SKU.
+
       g.position.set(-10, 0, 6);
       g.visible = false;
       return g;
     })();
     scene.add(worker);
 
-    /* ─── VOICE BEAM (HEAR mode) ────────────────────────────────────── */
+    /* ─── VOICE BEAM ───────────────────────────────────────────── */
     const beamMat = new THREE.LineBasicMaterial({
       color: C_GOLD_HOT,
       transparent: true,
@@ -856,8 +1081,8 @@ export default function WarehouseShowcase() {
     const voiceBeam = new THREE.Line(voiceGeo, beamMat);
     scene.add(voiceBeam);
 
-    /* ─── PICKER TRAIL ──────────────────────────────────────────────── */
-    function makeTrail(color) {
+    /* ─── PICKER TRAIL (with subtle additive glow underlay) ────── */
+    function makeTrail(color, additive = false) {
       const maxSeg = 220;
       const positions = new Float32Array(maxSeg * 4 * 3);
       const indices = new Uint16Array(maxSeg * 6);
@@ -874,17 +1099,20 @@ export default function WarehouseShowcase() {
         transparent: true,
         opacity: 0.85,
         side: THREE.DoubleSide,
+        depthWrite: false,
+        ...(additive && { blending: THREE.AdditiveBlending }),
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.visible = false;
       scene.add(mesh);
       return { mesh, positions, indices, geo, mat };
     }
-    const trail = makeTrail(C_GOLD);
+    const trailGlow = makeTrail(C_GOLD, true); // wide soft additive glow
+    const trail = makeTrail(C_GOLD); // crisp ribbon
 
-    function updateTrail(waypoints, width, yOffset) {
-      const positions = trail.positions;
-      const indices = trail.indices;
+    function updateTrailMesh(t, waypoints, width, yOffset) {
+      const positions = t.positions;
+      const indices = t.indices;
       let vi = 0,
         ii = 0;
       for (let i = 0; i < waypoints.length - 1; i++) {
@@ -918,9 +1146,13 @@ export default function WarehouseShowcase() {
         ii += 6;
         if (vi + 4 > positions.length / 3) break;
       }
-      trail.geo.attributes.position.needsUpdate = true;
-      trail.geo.index.needsUpdate = true;
-      trail.geo.setDrawRange(0, ii);
+      t.geo.attributes.position.needsUpdate = true;
+      t.geo.index.needsUpdate = true;
+      t.geo.setDrawRange(0, ii);
+    }
+    function updateTrail(waypoints) {
+      updateTrailMesh(trail, waypoints, 0.7, 0.06);
+      updateTrailMesh(trailGlow, waypoints, 2.2, 0.05);
     }
 
     function waypointsUpTo(t) {
@@ -937,22 +1169,37 @@ export default function WarehouseShowcase() {
       return out;
     }
 
-    /* ─── DOCK RING ─────────────────────────────────────────────────── */
+    /* ─── DOCK RING + DOCK PAD ─────────────────────────────────── */
     const dockRing = new THREE.Mesh(
-      new THREE.RingGeometry(2.0, 2.4, 40),
+      new THREE.RingGeometry(2.0, 2.4, 48),
       new THREE.MeshBasicMaterial({
         color: C_GOLD,
         transparent: true,
         opacity: 0,
         side: THREE.DoubleSide,
+        depthWrite: false,
       })
     );
     dockRing.rotation.x = -Math.PI / 2;
     dockRing.position.set(0, 0.03, DOCK_Z);
     scene.add(dockRing);
 
-    /* ─── PARTICLE ATTENTION SWARM ──────────────────────────────────── */
-    const N_PARTICLES = 240;
+    // Subtle dock pad — a slightly raised platform indicator
+    const dockPad = new THREE.Mesh(
+      new THREE.PlaneGeometry(6, 6),
+      new THREE.MeshBasicMaterial({
+        color: C_GOLD,
+        transparent: true,
+        opacity: 0.05,
+        depthWrite: false,
+      })
+    );
+    dockPad.rotation.x = -Math.PI / 2;
+    dockPad.position.set(0, 0.012, DOCK_Z);
+    scene.add(dockPad);
+
+    /* ─── PARTICLE SWARM ────────────────────────────────────────── */
+    const N_PARTICLES = 260;
     const partGeo = new THREE.BufferGeometry();
     const partPos = new Float32Array(N_PARTICLES * 3);
     const partRand = new Float32Array(N_PARTICLES * 3);
@@ -967,23 +1214,50 @@ export default function WarehouseShowcase() {
     );
     const partMat = new THREE.PointsMaterial({
       color: C_GOLD,
-      size: 0.12,
+      size: 0.14,
       transparent: true,
       opacity: 0,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
     });
     const particles = new THREE.Points(partGeo, partMat);
     scene.add(particles);
 
-    /* ─── 3D-ANCHORED CARD PROJECTION ────────────────────────────────
-       For each card key:
-         1. Project the 3D anchor to screen.
-         2. Position the card at (anchor + screen-space lift/slide) so
-            it sits above/beside the action instead of on top of it.
-         3. Update the SVG leader line from anchor → card edge.
-         4. Update the small gold tick dot at the anchor itself.
-       Direct DOM/SVG mutation each frame — no React re-render. */
+    /* ─── AMBIENT DUST — always-on subtle motes for atmosphere ──
+       A second much sparser, slower particle system drifting through
+       the whole warehouse. Never the focus, but gives the empty air
+       a hint of life. */
+    const N_DUST = 90;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(N_DUST * 3);
+    const dustRand = new Float32Array(N_DUST * 4);
+    for (let i = 0; i < N_DUST; i++) {
+      dustPos[i * 3] = (Math.random() - 0.5) * 110;
+      dustPos[i * 3 + 1] = Math.random() * 12;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 50;
+      dustRand[i * 4] = Math.random() * Math.PI * 2;
+      dustRand[i * 4 + 1] = 0.08 + Math.random() * 0.18;
+      dustRand[i * 4 + 2] = 0.5 + Math.random() * 1.5;
+      dustRand[i * 4 + 3] = Math.random();
+    }
+    dustGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(dustPos, 3).setUsage(THREE.DynamicDrawUsage)
+    );
+    const dustMat = new THREE.PointsMaterial({
+      color: 0x88a8c8,
+      size: 0.06,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    });
+    const dust = new THREE.Points(dustGeo, dustMat);
+    scene.add(dust);
+
+    /* ─── 3D-ANCHORED CARDS — projection unchanged ─────────────── */
     const tmpProj = new THREE.Vector3();
 
     function projectAnchor(key) {
@@ -1005,8 +1279,6 @@ export default function WarehouseShowcase() {
       }
 
       tmpProj.set(a.x, a.y, a.z).project(camera);
-
-      // Behind the camera: hide.
       if (tmpProj.z > 1) {
         hide();
         return;
@@ -1015,7 +1287,6 @@ export default function WarehouseShowcase() {
       const sx = (tmpProj.x * 0.5 + 0.5) * w;
       const sy = (-tmpProj.y * 0.5 + 0.5) * h;
 
-      // Soft fade as the anchor approaches the frustum edge.
       const FALL = 0.92;
       let edge = 1;
       const ax = Math.abs(tmpProj.x);
@@ -1023,58 +1294,46 @@ export default function WarehouseShowcase() {
       if (ax > FALL) edge *= Math.max(0, 1 - (ax - FALL) * 18);
       if (ay > FALL) edge *= Math.max(0, 1 - (ay - FALL) * 18);
 
-      // Depth-based scale — closer anchors get bigger cards.
       const dx = a.x - camera.position.x;
       const dy = a.y - camera.position.y;
       const dz = a.z - camera.position.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       const distScale = clamp(60 / dist, 0.6, 1.25) * (a.scale ?? 1);
 
-      // Screen-space offset for the card. Lifts it above the action
-      // so the leader line has room. Scales with distScale so the
-      // visual gap stays consistent at different zooms.
       const lift = (a.lift ?? 0) * distScale;
       const slide = (a.slide ?? 0) * distScale;
       const cardX = sx + slide;
       const cardY = sy - lift;
 
-      // Card sits with its BOTTOM-CENTER at (cardX, cardY) when the
-      // anchor is below, so it visually "hangs" from the leader line.
-      // When lift is 0, fall back to a center-anchored card (used for
-      // WAKE/LEARN where the card floats free above the floor).
       const yAnchorPct = lift > 4 ? -100 : -50;
       el.style.transform =
         `translate3d(${cardX}px, ${cardY}px, 0) ` +
         `translate(-50%, ${yAnchorPct}%) scale(${distScale})`;
       el.style.opacity = String(a.opacity * edge);
 
-      // Leader line — anchor → card bottom edge. Hidden when the card
-      // is anchored without a lift (WAKE/LEARN) or when showLeader is
-      // explicitly off.
       if (line) {
         if (a.showLeader && lift > 4) {
           line.setAttribute("x1", sx);
           line.setAttribute("y1", sy - 4);
           line.setAttribute("x2", cardX);
           line.setAttribute("y2", cardY - 2);
-          line.style.opacity = String(a.opacity * edge * 0.55);
+          line.style.opacity = String(a.opacity * edge * 0.6);
         } else {
           line.style.opacity = "0";
         }
       }
-      // Anchor tick — small gold square at the anchor point.
       if (dot) {
         if (a.showLeader) {
           dot.setAttribute("cx", sx);
           dot.setAttribute("cy", sy);
-          dot.style.opacity = String(a.opacity * edge * 0.9);
+          dot.style.opacity = String(a.opacity * edge * 0.95);
         } else {
           dot.style.opacity = "0";
         }
       }
     }
 
-    /* ─── RESIZE ───────────────────────────────────────────────────── */
+    /* ─── RESIZE ───────────────────────────────────────────────── */
     function resize() {
       w = canvas.clientWidth;
       h = canvas.clientHeight;
@@ -1093,7 +1352,7 @@ export default function WarehouseShowcase() {
     window.addEventListener("resize", onResize);
     resize();
 
-    /* ─── SCROLLTRIGGER ────────────────────────────────────────────── */
+    /* ─── SCROLLTRIGGER ─────────────────────────────────────────── */
     const st = ScrollTrigger.create({
       trigger: section,
       start: "top 72px",
@@ -1104,8 +1363,7 @@ export default function WarehouseShowcase() {
       },
     });
 
-    /* ─── HELPERS ──────────────────────────────────────────────────── */
-    const tmpColor = new THREE.Color();
+    /* ─── HELPERS ──────────────────────────────────────────────── */
     const tmpMatrix = new THREE.Matrix4();
     const tmpVec = new THREE.Vector3();
     const tmpQuat = new THREE.Quaternion();
@@ -1118,8 +1376,12 @@ export default function WarehouseShowcase() {
         tmpScale.set(1, scale, 1);
         tmpMatrix.compose(tmpVec, tmpQuat, tmpScale);
         racks.setMatrixAt(i, tmpMatrix);
+        caps.setMatrixAt(i, tmpMatrix);
+        shelves.setMatrixAt(i, tmpMatrix);
       }
       racks.instanceMatrix.needsUpdate = true;
+      caps.instanceMatrix.needsUpdate = true;
+      shelves.instanceMatrix.needsUpdate = true;
       racksEdges.scale.y = scale;
     }
 
@@ -1143,7 +1405,7 @@ export default function WarehouseShowcase() {
       return rackIdByKey[`${it.bay}-${it.col}-${it.side}`];
     }
 
-    /* ─── RENDER LOOP ───────────────────────────────────────────────── */
+    /* ─── RENDER LOOP ──────────────────────────────────────────── */
     let uiTick = 0;
     const t0 = performance.now();
     let rafId;
@@ -1154,27 +1416,39 @@ export default function WarehouseShowcase() {
       const mode = modeFromP(p);
       const isPaused = pausedRef.current;
 
-      /* Camera */
+      floorUniforms.uTime.value = time;
+
+      /* Camera — base position + subtle breathing for cinematic life */
       const cs = camAt(p);
-      camera.position.x = Math.cos(cs.ang) * cs.rad + cs.tx * 0.2;
-      camera.position.z = Math.sin(cs.ang) * cs.rad + cs.tz * 0.2;
+      // Sub-beat breathing: tiny radial drift + ang sway during static
+      // holds, scaled DOWN aggressively during ACT (overhead) so the
+      // path remains pinned.
+      const isOverhead = p > M_ACT[0] && p < M_LEARN[1];
+      const breathScale = isOverhead ? 0.0 : 1.0;
+      const breathRad = Math.sin(time * 0.32) * 0.6 * breathScale;
+      const breathAng = Math.sin(time * 0.22) * 0.008 * breathScale;
+      const ang = cs.ang + breathAng;
+      const rad = cs.rad + breathRad;
+      camera.position.x = Math.cos(ang) * rad + cs.tx * 0.2;
+      camera.position.z = Math.sin(ang) * rad + cs.tz * 0.2;
       camera.position.y = cs.h;
       camera.lookAt(cs.tx, cs.ty, cs.tz);
 
-      /* Defaults — modes override */
+      /* Defaults */
       picker.visible = false;
       worker.visible = false;
       voiceBeam.material.opacity = 0;
       trail.mesh.visible = false;
+      trailGlow.mesh.visible = false;
       dockRing.material.opacity = 0;
       partMat.opacity = 0;
       forecastCurves.forEach((fc) => {
         fc.geo.setDrawRange(0, 0);
         fc.tip.visible = false;
-        fc.mat.opacity = 0.9;
+        fc.tipHalo.visible = false;
+        fc.mat.opacity = 0.95;
       });
 
-      // Reset all card anchors to invisible; modes set their own.
       const A = anchorsRef.current;
       A.wake.opacity = 0;
       A.hear.opacity = 0;
@@ -1185,10 +1459,9 @@ export default function WarehouseShowcase() {
       let liveDist = 0,
         livePicks = 0;
 
-      // ─── MODE 0 · WAKE ─────────────────────────────────────────────
+      // ─── MODE 0 · WAKE ─────────────────────────────────────────
       if (mode === 0) {
         const t = localT(p, M_WAKE);
-        // Racks rise in cascade — by bay index, staggered.
         for (const r of rackPositions) {
           const stagger = (r.bay / TOTAL_BAYS) * 0.5;
           const s = smoothstep((t - stagger) / 0.5);
@@ -1198,61 +1471,69 @@ export default function WarehouseShowcase() {
           tmpScale.set(1, s, 1);
           tmpMatrix.compose(tmpVec, tmpQuat, tmpScale);
           racks.setMatrixAt(id, tmpMatrix);
+          caps.setMatrixAt(id, tmpMatrix);
+          shelves.setMatrixAt(id, tmpMatrix);
         }
         racks.instanceMatrix.needsUpdate = true;
+        caps.instanceMatrix.needsUpdate = true;
+        shelves.instanceMatrix.needsUpdate = true;
         racksEdges.scale.y = smoothstep(t * 1.4 - 0.3);
 
         const itemAlpha = smoothstep((t - 0.6) / 0.4);
         for (const it of itemObjs) {
           it.sphere.scale.setScalar(itemAlpha * 0.9);
+          it.halo.scale.setScalar(itemAlpha * 1.6);
+          it.haloMat.opacity = 0.7 * itemAlpha;
           it.ringMat.opacity = 0.6 * itemAlpha;
-          it.beamMat.opacity = 0.16 * itemAlpha;
-          it.sphereMat.color.setHex(C_GOLD);
+          it.beamMat.opacity = 0.5 * itemAlpha;
+          it.sphereMat.color.setHex(C_GOLD_HOT);
           it.ringMat.color.setHex(C_GOLD);
-          it.beamMat.color.setHex(C_GOLD);
+          it.haloMat.color.setHex(C_GOLD);
           it.sphere.position.y = it.baseY;
         }
 
         floorUniforms.uHeat.value = 0;
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
+        floorUniforms.uGridStrength.value = 1 * (0.4 + 0.6 * t);
 
-        // Anchor the WAKE card high above the warehouse center.
         A.wake.x = 0;
         A.wake.y = 16;
         A.wake.z = -4;
         A.wake.opacity = smoothstep((t - 0.05) / 0.4);
       }
 
-      // ─── MODE 1 · HEAR ─────────────────────────────────────────────
+      // ─── MODE 1 · HEAR ─────────────────────────────────────────
       else if (mode === 1) {
         const t = localT(p, M_HEAR);
         setRackRiseY(1);
         racksEdges.scale.y = 1;
         resetRackColors();
 
-        // Worker stays in place; faces the target.
         worker.visible = true;
         const tgt = ITEM_POS[HEAR_TARGET];
         const fdx = tgt.x - worker.position.x;
         const fdz = tgt.z - worker.position.z;
         worker.rotation.y = Math.atan2(fdx, fdz);
 
-        // Items: dim except the target SKU.
         for (let i = 0; i < itemObjs.length; i++) {
           const it = itemObjs[i];
           const isTarget = i === HEAR_TARGET;
-          it.sphere.scale.setScalar(
-            isTarget ? 1 + 0.18 * Math.sin(time * 5) : 0.65
+          const targetScale = isTarget ? 1 + 0.18 * Math.sin(time * 5) : 0.65;
+          it.sphere.scale.setScalar(targetScale);
+          it.halo.scale.setScalar(
+            isTarget ? 2.2 + 0.3 * Math.sin(time * 4) : 1.2
           );
+          it.haloMat.opacity = isTarget ? 1 : 0.35;
           it.sphereMat.color.setHex(isTarget ? C_GOLD_HOT : C_GOLD);
           it.ringMat.color.setHex(isTarget ? C_GOLD_HOT : C_GOLD);
+          it.haloMat.color.setHex(isTarget ? C_GOLD_HOT : C_GOLD);
           it.ringMat.opacity = isTarget ? 0.95 : 0.22;
-          it.beamMat.color.setHex(isTarget ? C_GOLD_HOT : C_GOLD);
-          it.beamMat.opacity = isTarget ? 0.65 : 0.05;
+          it.beamMat.opacity = isTarget ? 0.85 : 0.18;
           if (!isPaused) {
             it.sphere.position.y =
               it.baseY + (isTarget ? Math.sin(time * 3) * 0.12 : 0);
+            it.halo.position.y = it.sphere.position.y;
           }
         }
 
@@ -1260,7 +1541,6 @@ export default function WarehouseShowcase() {
         const beamReveal = smoothstep((t - 0.2) / 0.35);
         highlightRack(targetRackId, C_GOLD_HOT, 0.6 * beamReveal);
 
-        // Voice beam from worker to target item.
         const sx = worker.position.x,
           sy = 1.9,
           sz = worker.position.z;
@@ -1296,19 +1576,15 @@ export default function WarehouseShowcase() {
         floorUniforms.uHeatColor.value.setHex(C_GOLD);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
+        floorUniforms.uGridStrength.value = 1;
 
-        // Card anchor: midway between worker and target, raised up so
-        // it doesn't overlap either entity, and visible at the HEAR
-        // camera angle.
-        // Anchor at the resolved SKU. The leader line will trace from
-        // the item's actual 3D position up to the card.
         A.hear.x = tgt.x;
         A.hear.y = tgt.y;
         A.hear.z = tgt.z;
         A.hear.opacity = smoothstep((t - 0.2) / 0.3);
       }
 
-      // ─── MODE 2 · ANTICIPATE ───────────────────────────────────────
+      // ─── MODE 2 · ANTICIPATE ───────────────────────────────────
       else if (mode === 2) {
         const t = localT(p, M_PREDICT);
         setRackRiseY(1);
@@ -1318,7 +1594,7 @@ export default function WarehouseShowcase() {
         const pulse = 0.7 + Math.sin(time * 2.4) * 0.3;
         PREDICT_INDICES.forEach((iIdx) => {
           const rid = rackIdForItem(iIdx);
-          highlightRack(rid, C_RED, 0.4 + 0.25 * pulse);
+          highlightRack(rid, C_RED, 0.45 + 0.25 * pulse);
         });
 
         for (let i = 0; i < itemObjs.length; i++) {
@@ -1327,14 +1603,17 @@ export default function WarehouseShowcase() {
           it.sphere.scale.setScalar(
             isPred ? 1 + 0.22 * Math.sin(time * 4 + i) : 0.55
           );
-          it.sphereMat.color.setHex(isPred ? C_RED : C_GOLD);
+          it.halo.scale.setScalar(isPred ? 2.0 : 0.9);
+          it.haloMat.opacity = isPred ? 0.95 : 0.22;
+          it.sphereMat.color.setHex(isPred ? C_RED_HOT : C_GOLD);
           it.ringMat.color.setHex(isPred ? C_RED : C_GOLD);
+          it.haloMat.color.setHex(isPred ? C_RED : C_GOLD);
           it.ringMat.opacity = isPred ? 0.9 : 0.13;
-          it.beamMat.color.setHex(isPred ? C_RED : C_GOLD);
-          it.beamMat.opacity = isPred ? 0.65 : 0.03;
+          it.beamMat.opacity = isPred ? 0.85 : 0.1;
           if (!isPaused) {
             it.sphere.position.y =
               it.baseY + (isPred ? Math.sin(time * 3 + i) * 0.13 : 0);
+            it.halo.position.y = it.sphere.position.y;
           }
         }
 
@@ -1342,17 +1621,20 @@ export default function WarehouseShowcase() {
           const fk = smoothstep((t - 0.15 - k * 0.06) / 0.35);
           const n = Math.floor(fc.N * fk);
           fc.geo.setDrawRange(0, n);
-          fc.mat.opacity = 0.85 * fk;
+          fc.mat.opacity = 0.95 * fk;
           if (n > 0) {
             fc.tip.visible = true;
-            fc.tip.position.copy(fc.pts[Math.max(0, n - 1)]);
+            fc.tipHalo.visible = true;
+            const tipPos = fc.pts[Math.max(0, n - 1)];
+            fc.tip.position.copy(tipPos);
+            fc.tipHalo.position.copy(tipPos);
             const s = 0.18 + Math.sin(time * 4 + k) * 0.04;
             fc.tip.scale.setScalar(1 + s);
+            fc.tipHalo.scale.setScalar(1.3 + s * 1.5);
+            fc.tipHaloMat.opacity = 0.85 * fk;
           }
         });
 
-        // Centroid of predicted items — both the floor focus and the
-        // forecast card anchor.
         let cx = 0,
           cz = 0;
         PREDICT_INDICES.forEach((i) => {
@@ -1375,21 +1657,19 @@ export default function WarehouseShowcase() {
         partGeo.attributes.position.needsUpdate = true;
 
         floorUniforms.uFocus.value.set(cx, cz);
-        floorUniforms.uHeat.value = swarmA * 0.7;
+        floorUniforms.uHeat.value = swarmA * 0.75;
         floorUniforms.uHeatColor.value.setHex(C_RED);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
+        floorUniforms.uGridStrength.value = 1;
 
-        // Anchor at the centroid of the three predicted items, at
-        // their typical bin height — the leader rises from "the
-        // things that are depleting" up to the forecast card.
         A.forecast.x = cx;
         A.forecast.y = 3;
         A.forecast.z = cz;
         A.forecast.opacity = smoothstep((t - 0.4) / 0.3);
       }
 
-      // ─── MODE 3 · ACT ──────────────────────────────────────────────
+      // ─── MODE 3 · ACT ──────────────────────────────────────────
       else if (mode === 3) {
         const t = localT(p, M_ACT);
         setRackRiseY(1);
@@ -1409,13 +1689,15 @@ export default function WarehouseShowcase() {
         }
 
         const wp = waypointsUpTo(optT);
-        updateTrail(wp, 0.7, 0.05);
+        updateTrail(wp);
         trail.mesh.visible = true;
+        trailGlow.mesh.visible = true;
         trail.mat.opacity = 0.9;
-        trail.mat.color.setHex(C_GOLD);
+        trailGlow.mat.opacity = 0.45;
 
         picker.userData.beaconMat.color.setHex(C_GOLD_HOT);
-        picker.userData.glow.material.opacity = 0.32 + Math.sin(time * 5) * 0.1;
+        picker.userData.glow.material.opacity = 0.4 + Math.sin(time * 5) * 0.12;
+        picker.userData.scanMat.opacity = 0.16 + Math.sin(time * 3) * 0.06;
 
         let picked = 0;
         for (let i = 0; i < itemObjs.length; i++) {
@@ -1424,28 +1706,35 @@ export default function WarehouseShowcase() {
           if (wasPicked) picked++;
           const sinceWindow = clamp((optT - PICK_TS[i]) / 0.02, 0, 1);
           if (wasPicked && sinceWindow < 1) {
-            // pickup animation: item lifts toward the picker
             const lift = sinceWindow;
             it.sphere.position.x = lerp(it.x, pos.x, lift);
-            it.sphere.position.y = lerp(it.baseY, 1.3, lift);
+            it.sphere.position.y = lerp(it.baseY, 1.0, lift);
             it.sphere.position.z = lerp(it.z, pos.z, lift);
+            it.halo.position.copy(it.sphere.position);
             it.sphere.scale.setScalar(1 + 0.5 * (1 - lift));
+            it.halo.scale.setScalar(2.2 * (1 - lift * 0.6));
+            it.haloMat.opacity = 0.9 * (1 - lift);
             it.sphereMat.color.setHex(C_GOLD_HOT);
             it.ringMat.opacity = 0.5 * (1 - lift);
             it.beamMat.opacity = 0;
           } else if (wasPicked) {
             it.sphere.scale.setScalar(0);
-            it.ringMat.opacity = 0.25;
+            it.halo.scale.setScalar(0);
+            it.haloMat.opacity = 0;
+            it.ringMat.opacity = 0.3;
             it.ringMat.color.setHex(C_GREEN);
             it.beamMat.opacity = 0;
           } else {
             it.sphere.position.set(it.x, it.baseY, it.z);
+            it.halo.position.copy(it.sphere.position);
             it.sphere.scale.setScalar(0.88);
-            it.sphereMat.color.setHex(C_GOLD);
+            it.halo.scale.setScalar(1.5);
+            it.haloMat.opacity = 0.6;
+            it.sphereMat.color.setHex(C_GOLD_HOT);
             it.ringMat.color.setHex(C_GOLD);
+            it.haloMat.color.setHex(C_GOLD);
             it.ringMat.opacity = 0.55;
-            it.beamMat.color.setHex(C_GOLD);
-            it.beamMat.opacity = 0.18;
+            it.beamMat.opacity = 0.45;
           }
         }
         livePicks = picked;
@@ -1463,42 +1752,29 @@ export default function WarehouseShowcase() {
         partGeo.attributes.position.needsUpdate = true;
 
         floorUniforms.uFocus.value.set(pos.x, pos.z);
-        floorUniforms.uHeat.value = 0.75;
+        floorUniforms.uHeat.value = 0.8;
         floorUniforms.uHeatColor.value.setHex(C_GOLD);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
+        floorUniforms.uGridStrength.value = 1;
 
         dockRing.material.opacity = 0.4;
         dockRing.material.color.setHex(C_GOLD);
 
-        // ACT card floats above and slightly behind the picker, in
-        // world space — it follows the picker around the warehouse.
-        // Anchor at the picker. From the overhead camera, the leader
-        // line traces straight up from the picker's position on the
-        // floor to the live-stats card hanging above.
         A.act.x = pos.x;
         A.act.y = 0.5;
         A.act.z = pos.z;
         A.act.opacity = smoothstep(t * 4);
       }
 
-      // ─── MODE 4 · LEARN ────────────────────────────────────────────
-      // Two phases:
-      //   1) t in [0, 0.55]: "the floor remembers" — racks held up,
-      //      heat-points pulse, particles drift, card visible.
-      //   2) t in [0.55, 1.0]: reverse the WAKE intro. Racks cascade
-      //      back to scale.y=0 with REVERSE bay stagger so the
-      //      last-built racks collapse first. Items, particles,
-      //      picker, dock, trail, and card all fade to zero. We end
-      //      on an empty 2D floor — same composition WAKE began with.
+      // ─── MODE 4 · LEARN ────────────────────────────────────────
       else {
         const t = localT(p, M_LEARN);
         const collapseT = smoothstep((t - 0.55) / 0.45);
-        const standing = 1 - collapseT; // 1 → 0 across the collapse
+        const standing = 1 - collapseT;
 
         resetRackColors();
 
-        // Per-rack cascading collapse — last-built first.
         let maxScale = 0;
         for (const r of rackPositions) {
           const stagger = (1 - r.bay / TOTAL_BAYS) * 0.55;
@@ -1511,34 +1787,40 @@ export default function WarehouseShowcase() {
           tmpScale.set(1, s, 1);
           tmpMatrix.compose(tmpVec, tmpQuat, tmpScale);
           racks.setMatrixAt(id, tmpMatrix);
+          caps.setMatrixAt(id, tmpMatrix);
+          shelves.setMatrixAt(id, tmpMatrix);
         }
         racks.instanceMatrix.needsUpdate = true;
+        caps.instanceMatrix.needsUpdate = true;
+        shelves.instanceMatrix.needsUpdate = true;
         racksEdges.scale.y = maxScale;
 
-        // Items collapse and fade with the racks.
         for (const it of itemObjs) {
           it.sphere.position.set(it.x, it.baseY * standing, it.z);
+          it.halo.position.copy(it.sphere.position);
           it.sphere.scale.setScalar(0.65 * standing);
+          it.halo.scale.setScalar(1.3 * standing);
+          it.haloMat.opacity = 0.5 * standing;
           it.sphereMat.color.setHex(C_GREEN);
           it.ringMat.color.setHex(C_GREEN);
+          it.haloMat.color.setHex(C_GREEN);
           it.ringMat.opacity = 0.35 * standing;
-          it.beamMat.color.setHex(C_GREEN);
           it.beamMat.opacity = 0;
         }
 
-        // Picker: parked at dock, beacon green, fades out at the end.
         picker.visible = standing > 0.02;
         picker.position.set(0, 0, DOCK_Z);
         picker.rotation.y = 0;
         picker.userData.beaconMat.color.setHex(C_GREEN);
-        picker.userData.glow.material.opacity = 0.25 * standing;
+        picker.userData.glow.material.opacity = 0.3 * standing;
+        picker.userData.scanMat.opacity = 0.1 * standing;
 
-        updateTrail(ROUTE, 0.5, 0.04);
+        updateTrail(ROUTE);
         trail.mesh.visible = standing > 0.02;
-        trail.mat.opacity = 0.26 * standing;
-        trail.mat.color.setHex(C_GOLD);
+        trailGlow.mesh.visible = standing > 0.02;
+        trail.mat.opacity = 0.32 * standing;
+        trailGlow.mat.opacity = 0.18 * standing;
 
-        // Heat-points pulse and then fade with the collapse.
         const heatPulse = 0.6 + Math.sin(time * 1.4) * 0.15;
         const hp = floorUniforms.uHeatPoints.value;
         hp[0].set(bayToX(2), heatPulse * 0.9, 0);
@@ -1549,6 +1831,7 @@ export default function WarehouseShowcase() {
         floorUniforms.uHeatColor.value.setHex(C_GOLD);
         floorUniforms.uGlobal.value = smoothstep(t * 2.4) * standing;
         floorUniforms.uHeat.value = 0;
+        floorUniforms.uGridStrength.value = 1 * standing + 0.4 * collapseT;
 
         partMat.opacity = 0.35 * standing;
         partMat.color.setHex(C_GOLD);
@@ -1564,26 +1847,34 @@ export default function WarehouseShowcase() {
         dockRing.material.opacity = 0.5 * standing;
         dockRing.material.color.setHex(C_GREEN);
 
-        // LEARN card sits at warehouse center. Fades in during phase 1
-        // and out during the collapse so the final frame is empty.
         A.learn.x = 0;
         A.learn.y = 8;
         A.learn.z = 0;
         A.learn.opacity = smoothstep(t * 2.6) * standing;
       }
 
+      /* Ambient dust — always animated, regardless of mode */
+      for (let i = 0; i < N_DUST; i++) {
+        const phase = dustRand[i * 4] + time * dustRand[i * 4 + 1];
+        dustPos[i * 3] += Math.cos(phase) * 0.005;
+        dustPos[i * 3 + 1] += Math.sin(phase * 0.7) * 0.003 + 0.002;
+        dustPos[i * 3 + 2] += Math.sin(phase) * 0.005;
+        if (dustPos[i * 3 + 1] > 13) dustPos[i * 3 + 1] = 0;
+      }
+      dustGeo.attributes.position.needsUpdate = true;
+
+      /* Haze gentle motion */
+      haze1.rotation.z = time * 0.015;
+      haze2.rotation.z = -time * 0.012;
+
       renderer.render(scene, camera);
 
-      /* Project all card anchors to screen space. Direct DOM mutation
-         (no React re-render) for per-frame performance. */
       projectAnchor("wake");
       projectAnchor("hear");
       projectAnchor("forecast");
       projectAnchor("act");
       projectAnchor("learn");
 
-      /* React state — only for live numeric readouts that flow into
-         React-controlled DOM (the ACT stats card). Throttled. */
       uiTick++;
       if (uiTick >= 5) {
         uiTick = 0;
@@ -1596,7 +1887,6 @@ export default function WarehouseShowcase() {
     }
     render();
 
-    /* ─── CLEANUP ──────────────────────────────────────────────────── */
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
@@ -1610,28 +1900,53 @@ export default function WarehouseShowcase() {
           else obj.material.dispose();
         }
       });
+      haloTex.dispose();
     };
   }, []);
 
-  /* ════════════════════════════════════════════════════════════════
-     OVERLAY UI — every panel is anchored to a 3D world position via
-     direct DOM transform updates in the render loop. Cards live in
-     the scene.
-     ════════════════════════════════════════════════════════════════ */
   const m = ui.mode;
   const def = MODE_DEFS[m];
 
   return (
-    <section ref={sectionRef} className={styles.section} id="wareh">
+    <section
+      ref={sectionRef}
+      className={styles.section}
+      id="wareh"
+      style={{ "--section-bg": SECTION_BG_HEX }}
+    >
       <div ref={stickyRef} className={styles.sticky}>
         <canvas ref={canvasRef} className={styles.canvas} />
 
-        {/* ─── Corner editorial keys (only true 2D affordances) ─── */}
+        {/* Vignette overlay — pure CSS, layered above canvas, gives the
+            scene cinematic edges without costing GPU cycles */}
+        <div className={styles.vignette} aria-hidden="true" />
+
+        {/* ─── Corner editorial keys ─── */}
         <div className={styles.corner + " " + styles.cornerTL}>
+          <span className={styles.cornerBracket}>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path
+                d="M0 0 L16 0 M0 0 L0 16"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                fill="none"
+              />
+            </svg>
+          </span>
           <span className={styles.cornerKey}>FLOOR · 01</span>
           <span className={styles.cornerSub}>Nautilus / live</span>
         </div>
         <div className={styles.corner + " " + styles.cornerTR}>
+          <span className={styles.cornerBracket + " " + styles.cornerBracketTR}>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path
+                d="M0 0 L16 0 M16 0 L16 16"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                fill="none"
+              />
+            </svg>
+          </span>
           <span className={styles.cornerKey}>
             {def.num} · {def.label}
           </span>
@@ -1640,12 +1955,7 @@ export default function WarehouseShowcase() {
           </span>
         </div>
 
-        {/* ─── LEADER-LINE OVERLAY ───────────────────────────────────
-            One SVG fills the canvas area; one line + one dot per card.
-            The render loop sets endpoints each frame so each leader
-            tethers its card to the 3D anchor it annotates.
-            Rendered BEFORE the cards so leaders terminate behind the
-            card edge instead of running across it. */}
+        {/* ─── LEADER-LINE OVERLAY ─── */}
         <svg className={styles.leaderSvg} aria-hidden="true">
           <line ref={setLineRef("wake")} className={styles.leaderLine} />
           <line ref={setLineRef("hear")} className={styles.leaderLine} />
@@ -1678,19 +1988,15 @@ export default function WarehouseShowcase() {
           />
         </svg>
 
-        {/* ─── 3D-ANCHORED CARDS ─────────────────────────────────────
-            Each card is absolutely positioned at (0,0) and moved into
-            place by the render loop via transform: translate. Content
-            follows a HEADLINE + SUPPORT hierarchy — the big number /
-            word is the visual element; tiny mono key/value rows back
-            it up. */}
-
-        {/* WAKE — system boot, floats above warehouse center */}
+        {/* ─── 3D-ANCHORED CARDS ─── */}
         <div
           ref={setCardRef("wake")}
           className={styles.modeCard + " " + styles.wakeCard}
         >
-          <div className={styles.cardLabel}>01 · BOOTING</div>
+          <div className={styles.cardLabel}>
+            <span className={styles.cardLabelTick} />
+            01 · BOOTING
+          </div>
           <div className={styles.cardHeadline}>99.7%</div>
           <div className={styles.cardSubhead}>spatial coverage</div>
           <div className={styles.cardRule} />
@@ -1700,7 +2006,6 @@ export default function WarehouseShowcase() {
           </div>
         </div>
 
-        {/* HEAR — voice command card, anchored at resolved SKU */}
         <div
           ref={setCardRef("hear")}
           className={styles.modeCard + " " + styles.hearCard}
@@ -1724,12 +2029,14 @@ export default function WarehouseShowcase() {
           <div className={styles.cardSupport}>28m walk · 0:14 ETA</div>
         </div>
 
-        {/* PREDICT — depletion forecast, anchored at item centroid */}
         <div
           ref={setCardRef("forecast")}
           className={styles.modeCard + " " + styles.forecastCard}
         >
           <div className={styles.cardLabel + " " + styles.cardLabelRed}>
+            <span
+              className={styles.cardLabelTick + " " + styles.cardLabelTickRed}
+            />
             03 · DEPLETION FORECAST
           </div>
           <div className={styles.cardHeadline}>3 SKUs</div>
@@ -1738,14 +2045,23 @@ export default function WarehouseShowcase() {
           <div className={styles.forecastRows}>
             <div className={styles.forecastRow}>
               <span className={styles.forecastSku}>I3-392</span>
+              <span className={styles.forecastBar}>
+                <span style={{ width: "78%" }} />
+              </span>
               <span className={styles.forecastEta}>31h</span>
             </div>
             <div className={styles.forecastRow}>
               <span className={styles.forecastSku}>D1-776</span>
+              <span className={styles.forecastBar}>
+                <span style={{ width: "61%" }} />
+              </span>
               <span className={styles.forecastEta}>38h</span>
             </div>
             <div className={styles.forecastRow}>
               <span className={styles.forecastSku}>A1-217</span>
+              <span className={styles.forecastBar}>
+                <span style={{ width: "44%" }} />
+              </span>
               <span className={styles.forecastEta}>47h</span>
             </div>
           </div>
@@ -1755,12 +2071,12 @@ export default function WarehouseShowcase() {
           </div>
         </div>
 
-        {/* ACT — live picker stats, follows the AMR from overhead */}
         <div
           ref={setCardRef("act")}
           className={styles.modeCard + " " + styles.actCard}
         >
           <div className={styles.cardLabel}>
+            <span className={styles.cardLabelTick} />
             04 · ROUTE
             <span className={styles.cardLabelMeta}>executing</span>
           </div>
@@ -1785,12 +2101,12 @@ export default function WarehouseShowcase() {
           </div>
         </div>
 
-        {/* LEARN — day rollup, centered above the warehouse */}
         <div
           ref={setCardRef("learn")}
           className={styles.modeCard + " " + styles.learnCard}
         >
           <div className={styles.cardLabel}>
+            <span className={styles.cardLabelTick} />
             05 · DAY ROLLUP
             <span className={styles.cardLabelMeta}>floor learned</span>
           </div>
@@ -1812,7 +2128,7 @@ export default function WarehouseShowcase() {
           </div>
         </div>
 
-        {/* ─── MODE INDICATOR (bottom, editorial chapter marker) ─── */}
+        {/* ─── MODE INDICATOR ─── */}
         <div className={styles.modeIndicator}>
           <div className={styles.modeRow}>
             {MODE_DEFS.map((mdef, i) => (

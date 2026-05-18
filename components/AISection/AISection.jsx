@@ -32,10 +32,6 @@ const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
    Each section has START and END poses. The shape interpolates from
    its start rotation+offset to its end rotation+offset as you scroll
    through that shape's display window.
-
-   Both `desktop` and `mobile` keys carry: rotX/Y/Z, offsetX/Y for the
-   START pose, scale (single value, not animated), and rotXEnd/Y/Z,
-   offsetXEnd/Y for the END pose.
    ───────────────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
@@ -154,7 +150,11 @@ const SECTIONS = [
       rotZ: 6,
       offsetX: 0.25,
       offsetY: 0,
-      scale: 0.55,
+      /* Bumped 0.55 → 0.7 to give the bar chart proper visual mass.
+         Combined with the larger bar geometry in shapes.js, the chart
+         now occupies meaningful canvas instead of getting lost in the
+         scattered cloud. */
+      scale: 0.7,
       rotXEnd: -8,
       rotYEnd: 44,
       rotZEnd: 0,
@@ -167,7 +167,7 @@ const SECTIONS = [
       rotZ: 0,
       offsetX: 0,
       offsetY: 0,
-      scale: 0.55,
+      scale: 0.65,
       rotXEnd: -8,
       rotYEnd: 44,
       rotZEnd: 0,
@@ -192,9 +192,6 @@ function formationCurve(p) {
   return 1 - smoothstep((p - 0.6) / 0.25);
 }
 
-/* Maps the block's viewport progress (0=just entering, 1=just left)
-   to an animation progress (0=at start pose, 1=at end pose). Shape is
-   visible roughly between p=0.15 and p=0.85, so we map that window. */
 function animProgress(p) {
   return Math.max(0, Math.min(1, (p - 0.15) / 0.7));
 }
@@ -223,9 +220,6 @@ function renderScramble(text, keyPrefix = "") {
 
 /* ═══════════════════════════════════════════════════════════════════════
    DEBUG PANEL — depth + motion + parallax
-   Lives behind ?debug. Mutates shader uniforms and the motion ref
-   directly so changes are instant — no re-render, the next animate
-   frame just picks up the new values.
    ═══════════════════════════════════════════════════════════════════════ */
 const DEPTH_DEFAULTS = {
   near: 11,
@@ -241,10 +235,6 @@ const MOTION_DEFAULTS = {
   damping: 0.78,
   jitterAmp: 0.06,
   jitterFreq: 0.4,
-  /* Parallax — small per-frame rotation applied to the scattered field
-     based on the active shape's animation progress. Yaw and pitch are
-     in radians, scaled by parallaxT ∈ [-1..1]. Defaults give ~3° max
-     yaw and ~2° max pitch at the extremes — subtle but visible. */
   parallaxYaw: 0.05,
   parallaxPitch: 0.035,
 };
@@ -326,7 +316,6 @@ function DebugPanel({ uniformsRef, motionRef }) {
     );
   }
 
-  /* Each row: [label, key, min, max, step, formatter] */
   const depthSliders = [
     ["Focus near", "near", 0, 30, 0.5, (n) => n.toFixed(1)],
     ["Focus far", "far", 5, 60, 0.5, (n) => n.toFixed(1)],
@@ -489,13 +478,7 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
-  /* Hook the THREE.js init useEffect lets it ask "rebuild shapes" when
-     the viewport crosses the desktop/mobile breakpoint on resize. */
   const rebuildShapesRef = useRef(null);
-
-  /* Live-tunable refs exposed to the debug panel. Both are mutated
-     directly so the next animate() frame picks up changes — no
-     re-creating the THREE scene. */
   const uniformsRef = useRef(null);
   const motionRef = useRef({ ...MOTION_DEFAULTS });
 
@@ -504,7 +487,6 @@ export default function AISection() {
     setDebug(new URLSearchParams(window.location.search).has("debug"));
   }, []);
 
-  /* Section visibility observer */
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -539,7 +521,6 @@ export default function AISection() {
     fadeOut: 0,
   });
 
-  /* Scroll-driven formation + shape progress + fade-out */
   useEffect(() => {
     const section = sectionRef.current;
     const blocks = blockRefs.current.filter(Boolean);
@@ -581,10 +562,6 @@ export default function AISection() {
       stateRef.current.shapeProgresses = shapeProgresses;
       formationsRef.current = formations;
 
-      /* Fade-out — as the last block exits the top of the viewport,
-         fade the canvas so particles aren't visible when the next
-         section (Features) is overlapping. Fully faded by the time
-         the last block bottom is at viewport.top. */
       const lastBlock = blocks[blocks.length - 1];
       if (lastBlock) {
         const r = lastBlock.getBoundingClientRect();
@@ -606,7 +583,6 @@ export default function AISection() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* Text scramble RAF loop */
   useEffect(() => {
     let raf;
     const REVEAL_END = 0.7;
@@ -640,13 +616,6 @@ export default function AISection() {
           continue;
         }
 
-        /* Allow revealProgress to overshoot 1 so the wave can fully
-           pass the last character. With the old Math.min(1, …) cap,
-           the last char's localProgress maxed at 0.5 and never
-           resolved — text stayed half-scrambled. The plateau of
-           formationCurve (f → 1.0) provides enough headroom for the
-           wave to clear every char. The per-character clamp below
-           still bounds c to [0,1]. */
         const revealProgress = f / REVEAL_END;
         const totalChars = chars.length;
 
@@ -678,7 +647,6 @@ export default function AISection() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  /* ── THREE.JS init + animate loop ─────────────────────────────────── */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -704,8 +672,6 @@ export default function AISection() {
       const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
       camera.position.set(0, 0, CFG.camZ);
 
-      /* Track which mode the shapes were built for so we can rebuild
-         only when the viewport crosses the breakpoint. */
       let builtMode = window.innerWidth < 768 ? "mobile" : "desktop";
 
       const resize = () => {
@@ -717,7 +683,6 @@ export default function AISection() {
         camera.position.z = mobile ? CFG.camZMobile : CFG.camZ;
         camera.updateProjectionMatrix();
 
-        /* Rebuild shapes if we crossed the mobile/desktop breakpoint */
         const nextMode = mobile ? "mobile" : "desktop";
         if (nextMode !== builtMode) {
           builtMode = nextMode;
@@ -730,9 +695,6 @@ export default function AISection() {
       const scattered = generateScattered(PARTICLE_COUNT);
       const shapes = [null, null, null, null];
 
-      /* buildShape — generate WITHOUT rotation. Rotation is applied
-         per-frame in the animate loop so we can interpolate between
-         start and end poses. Scale is baked here (single value). */
       const buildShape = (i, mode) => {
         const sec = SECTIONS[i];
         const params = sec[mode];
@@ -764,10 +726,6 @@ export default function AISection() {
       const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
       for (let i = 0; i < PARTICLE_COUNT * 3; i++) physicsPos[i] = scattered[i];
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
-
-      /* Per-particle velocity buffer. The spring-damper integrator
-         needs persistent velocity so particles carry momentum frame
-         to frame — that's what gives them weight on settle. */
       const physicsVel = new Float32Array(PARTICLE_COUNT * 3);
 
       const geometry = new THREE.BufferGeometry();
@@ -794,20 +752,13 @@ export default function AISection() {
         depthWrite: false,
         uniforms: {
           uColorMix: { value: 0 },
-          /* Footer-matched gold — #e7c074, same warm tone as the helix
-             particles in the footer. Was #d4a853 (slightly more amber). */
+          /* Footer-matched warm gold — #e7c074, same tone as the helix
+             particles in the footer. The fragment shader uses 50% of
+             this for the scattered/unformed base so every particle reads
+             as gold, not just the formed shape. */
           uAccentColor: { value: new THREE.Color(0xe7c074) },
           uGlobalAlpha: { value: 0 },
 
-          /* Depth / DoF / atmospheric perspective.
-             uDepthRange — view-space distances [near, far]. Inside this
-               band, particles are sharp and bright; outside, they fade
-               and soften. Camera sits at z=16 desktop / z=22 mobile, so
-               11..32 covers shape body → atmospheric falloff.
-             uDepthAlphaMin — alpha floor for far particles.
-             uPerspectiveScale — base 1/d size attenuation strength.
-             uBlurExpand — how much far particles grow to fake bokeh.
-             uBlurSoftness — width of the soft-edge falloff at far end. */
           uDepthRange: { value: new THREE.Vector2(11.0, 32.0) },
           uDepthAlphaMin: { value: 0.18 },
           uPerspectiveScale: { value: 22.0 },
@@ -816,7 +767,6 @@ export default function AISection() {
         },
       });
 
-      /* Expose uniforms to the debug panel for live tweaking. */
       uniformsRef.current = material.uniforms;
 
       const points = new THREE.Points(geometry, material);
@@ -839,8 +789,6 @@ export default function AISection() {
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
 
-        /* Alpha — base + formation lift, multiplied by (1 - fadeOut)
-           so the canvas fades out as we scroll past the last block. */
         const fadeOut = s.fadeOut || 0;
         const baseAlpha = 0.4;
         const targetAlpha =
@@ -850,7 +798,6 @@ export default function AISection() {
         const activeShape = shapes[s.activeShape];
         if (!activeShape) return;
 
-        /* ── Compute interpolated pose for the active shape ── */
         const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
         const animP = animProgress(scrollP);
 
@@ -858,7 +805,6 @@ export default function AISection() {
         const sec = SECTIONS[s.activeShape];
         const params = sec[mode];
 
-        /* Lerp start→end rotation (degrees) and offset */
         const rotXDeg = params.rotX + (params.rotXEnd - params.rotX) * animP;
         const rotYDeg = params.rotY + (params.rotYEnd - params.rotY) * animP;
         const rotZDeg = params.rotZ + (params.rotZEnd - params.rotZ) * animP;
@@ -885,45 +831,33 @@ export default function AISection() {
           params.offsetY +
           (params.offsetYEnd - params.offsetY) * animP;
 
-        /* Motion params live in a ref so the debug panel can tune them
-           live without re-creating the THREE scene. */
         const mot = motionRef.current;
         const k = mot.stiffness;
         const damp = mot.damping;
         const jb = mot.jitterAmp;
         const jf = mot.jitterFreq;
 
-        /* ── Parallax: small-angle rotation of the scattered field ──
-           As you scroll through a shape's window, the scattered cloud
-           subtly counter-rotates — closer particles shift more than
-           far ones, which is the classic camera-pan parallax cue. The
-           formed shape is unaffected (it has its own rotation), so the
-           effect only shows where particles aren't fully formed. */
-        const parallaxT = (animP - 0.5) * 2; // [-1..1]
+        const parallaxT = (animP - 0.5) * 2;
         const pYaw = parallaxT * mot.parallaxYaw;
         const pPitch = parallaxT * mot.parallaxPitch;
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          /* Active shape position with per-frame rotation applied */
           let px = activeShape[i3];
           let py = activeShape[i3 + 1];
           let pz = activeShape[i3 + 2];
 
-          /* Rotate X */
           const py1 = py * cX - pz * sX;
           const pz1 = py * sX + pz * cX;
           py = py1;
           pz = pz1;
 
-          /* Rotate Y */
           const px1 = px * cY + pz * sY;
           const pz2 = -px * sY + pz * cY;
           px = px1;
           pz = pz2;
 
-          /* Rotate Z */
           const px2 = px * cZ - py * sZ;
           const py2 = px * sZ + py * cZ;
           px = px2;
@@ -933,12 +867,6 @@ export default function AISection() {
           const formedY = py + offY;
           const formedZ = pz;
 
-          /* ── Apply parallax to the scattered position ──
-             Standard small-angle camera rotation: a point at depth z
-             appears shifted by -z*yaw horizontally and +z*pitch
-             vertically. We also fix up z by the corresponding amount
-             so the rotation stays a proper rotation rather than a
-             pure shear. */
           const sxRaw = scattered[i3];
           const syRaw = scattered[i3 + 1];
           const szRaw = scattered[i3 + 2];
@@ -950,11 +878,6 @@ export default function AISection() {
           const targetY = sy * (1 - sFormation) + formedY * sFormation;
           const targetZ = sz * (1 - sFormation) + formedZ * sFormation;
 
-          /* ── Spring-damper convergence ──
-             Velocity persists frame-to-frame (scaled by `damp`) and
-             accelerates toward the target (scaled by `k`). Slightly
-             underdamped — particles arrive with a barely-perceptible
-             settle, giving them weight rather than asymptotic ease. */
           const dx = targetX - physicsPos[i3];
           const dy = targetY - physicsPos[i3 + 1];
           const dz = targetZ - physicsPos[i3 + 2];
@@ -967,12 +890,6 @@ export default function AISection() {
           physicsPos[i3 + 1] += physicsVel[i3 + 1];
           physicsPos[i3 + 2] += physicsVel[i3 + 2];
 
-          /* ── Pseudo-curl ambient drift ──
-             Each axis is driven by sin of a *different* phase, with
-             golden-ratio frequency offsets. This decorrelates X/Y/Z
-             so particles trace small wandering loops rather than
-             synchronized oscillations. Per-particle frequency
-             variation (via seed s3) further breaks up group rhythm. */
           const s1 = seeds[i3];
           const s2 = seeds[i3 + 1];
           const s3 = seeds[i3 + 2];
@@ -982,8 +899,6 @@ export default function AISection() {
           const tB = t * fScale * 1.618 + s2 * TAU + 1.7;
           const tC = t * fScale * 0.611 + s3 * TAU + 3.1;
 
-          /* Amplitude breathes harder while particles are unformed.
-             The 0.55 floor keeps formed shapes alive — not frozen. */
           const ampScale = 0.55 + (1 - sFormation) * 0.75;
           const amp = jb * (0.5 + s3 * 0.9) * ampScale;
 
