@@ -19,7 +19,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useChatStream } from "@/components/Chat/useChatStream";
 import Footer from "@/components/Footer/Footer";
-import styles from "./ask.module.css";
+import styles from "./ask-client.module.css";
 
 const STARTERS = [
   "Pricing for 3 warehouses",
