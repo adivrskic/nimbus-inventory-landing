@@ -2,7 +2,7 @@
    MARKETING PAGE TYPE — Integration pages
    ───────────────────────────────────────────────────────────────────────
    Same Marketing vocabulary as Industry pages, but with:
-   - Connection mark in hero (Nimbus × Partner — partnership signature)
+   - Connection mark in hero (Nautilus × Partner — partnership signature)
    - Bidirectional data-flow diagram (glow-card)
    - Setup steps grid — glow-cards
    - FAQ block
@@ -50,7 +50,7 @@
   color: var(--accent);
 }
 
-/* ── THE SIGNATURE: Nimbus × Partner connection mark ── */
+/* ── THE SIGNATURE: Nautilus × Partner connection mark ── */
 .mark {
   display: flex;
   align-items: baseline;
@@ -274,7 +274,7 @@
        ───────────────────────────────────────────────────────────────────
        .flowWrap is just the glow-cards container (no visual styling — it's
        the ref target for useGlowCards). .flow is the single glow-card. The
-       3-column grid (Nimbus | connector | Partner) lives inside .flowInner
+       3-column grid (Nautilus | connector | Partner) lives inside .flowInner
        (= glow-card-content).
     ═══════════════════════════════════════════════════════════════════════ */
 .flowWrap {

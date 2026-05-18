@@ -1,13 +1,13 @@
 /* ─────────────────────────────────────────────────────────────────────
-   COMPARE DATA — Nimbus vs competitor matrices.
+   COMPARE DATA — Nautilus vs competitor matrices.
    
    To add a new competitor, follow the schema:
    - slug, name, category (short label for the eyebrow)
    - headline: array of strings (lines), accentWord: italic-gold word
    - heroDesc: paragraph under the title
-   - quickCompare: { nimbus[], competitor[] } — 5 pairs of positioning
-       statements (each string in nimbus[] pairs with same-index in competitor[])
-   - matrix: array of { feature, nimbus, competitor }
+   - quickCompare: { Nautilus[], competitor[] } — 5 pairs of positioning
+       statements (each string in Nautilus[] pairs with same-index in competitor[])
+   - matrix: array of { feature, Nautilus, competitor }
        values: "yes" | "no" | "partial" | string (used for short notes)
    - reasons: 4 reasons teams switch (title + desc)
    - competitorStrengths: 3-4 "when this competitor is actually right"
@@ -22,10 +22,10 @@ export const COMPETITORS = {
     headline: ["Modern AI vs", "legacy desktop."],
     accentWord: "legacy",
     heroDesc:
-      "Fishbowl is a classic SMB inventory management product, often paired with QuickBooks Desktop. Nimbus is what teams move to when they need real-time AI, native mobile, and operations that scale beyond a single warehouse.",
+      "Fishbowl is a classic SMB inventory management product, often paired with QuickBooks Desktop. Nautilus is what teams move to when they need real-time AI, native mobile, and operations that scale beyond a single warehouse.",
 
     quickCompare: {
-      nimbus: [
+      Nautilus: [
         "AI-powered route optimization, built in",
         "Cloud-native, accessible from any device",
         "iOS + Android apps included with every plan",
@@ -44,50 +44,54 @@ export const COMPETITORS = {
     matrix: [
       {
         feature: "AI-powered route optimization",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Native iOS + Android apps",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "Real-time multi-location sync",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "Multi-tenant for 3PL operators",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Built-in barcode scanning",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "yes",
       },
-      { feature: "Continuous cycle counting", nimbus: "yes", competitor: "no" },
-      { feature: "AI demand forecasting", nimbus: "yes", competitor: "no" },
+      {
+        feature: "Continuous cycle counting",
+        Nautilus: "yes",
+        competitor: "no",
+      },
+      { feature: "AI demand forecasting", Nautilus: "yes", competitor: "no" },
       {
         feature: "Modern REST API + webhooks",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "Cloud-native deployment",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "SOC 2 Type II certified", nimbus: "yes", competitor: "no" },
+      { feature: "SOC 2 Type II certified", Nautilus: "yes", competitor: "no" },
       {
         feature: "Native ERP integrations (50+)",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "QuickBooks Desktop integration",
-        nimbus: "partial",
+        Nautilus: "partial",
         competitor: "yes",
       },
     ],
@@ -126,10 +130,10 @@ export const COMPETITORS = {
     headline: ["When simple", "isn't enough."],
     accentWord: "simple",
     heroDesc:
-      "Sortly is a clean, mobile-friendly inventory tracker. It works well for small teams with a few hundred items. Nimbus is what you move to when inventory tracking turns into warehouse operations — pick paths, pack workflows, multi-location, real WMS.",
+      "Sortly is a clean, mobile-friendly inventory tracker. It works well for small teams with a few hundred items. Nautilus is what you move to when inventory tracking turns into warehouse operations — pick paths, pack workflows, multi-location, real WMS.",
 
     quickCompare: {
-      nimbus: [
+      Nautilus: [
         "Full WMS: pick, pack, ship, cycle count",
         "AI-powered route and replenishment",
         "Multi-warehouse with per-location pricing",
@@ -148,42 +152,46 @@ export const COMPETITORS = {
     matrix: [
       {
         feature: "Full WMS (pick, pack, ship)",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "AI-powered route optimization",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Multi-warehouse support",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "Custom workflow builder", nimbus: "yes", competitor: "no" },
+      { feature: "Custom workflow builder", Nautilus: "yes", competitor: "no" },
       {
         feature: "Multi-tenant for 3PL operators",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
-      { feature: "Continuous cycle counting", nimbus: "yes", competitor: "no" },
-      { feature: "AI demand forecasting", nimbus: "yes", competitor: "no" },
+      {
+        feature: "Continuous cycle counting",
+        Nautilus: "yes",
+        competitor: "no",
+      },
+      { feature: "AI demand forecasting", Nautilus: "yes", competitor: "no" },
       {
         feature: "ERP integrations (SAP, NetSuite, etc.)",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Native API + webhooks",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "SOC 2 Type II certified", nimbus: "yes", competitor: "no" },
-      { feature: "SSO + RBAC", nimbus: "yes", competitor: "partial" },
+      { feature: "SOC 2 Type II certified", Nautilus: "yes", competitor: "no" },
+      { feature: "SSO + RBAC", Nautilus: "yes", competitor: "partial" },
       {
         feature: "Mobile-first inventory tracking",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "yes",
       },
     ],
@@ -191,7 +199,7 @@ export const COMPETITORS = {
     reasons: [
       {
         title: "You outgrew inventory tracking",
-        desc: "Sortly is great at counting things. Nimbus runs the operations that move them — pick paths, pack stations, ship workflows, cycle counts.",
+        desc: "Sortly is great at counting things. Nautilus runs the operations that move them — pick paths, pack stations, ship workflows, cycle counts.",
       },
       {
         title: "Real warehouse workflows",
@@ -199,7 +207,7 @@ export const COMPETITORS = {
       },
       {
         title: "Multi-warehouse without spreadsheets",
-        desc: "Real-time sync across locations, transfer orders between sites, location-level reporting. Sortly handles single-site well; Nimbus handles networks.",
+        desc: "Real-time sync across locations, transfer orders between sites, location-level reporting. Sortly handles single-site well; Nautilus handles networks.",
       },
       {
         title: "Enterprise integrations",
@@ -222,10 +230,10 @@ export const COMPETITORS = {
     headline: ["Lighter than", "enterprise."],
     accentWord: "Lighter",
     heroDesc:
-      "NetSuite WMS is Oracle's warehouse module for teams already running NetSuite ERP. It's powerful but heavy — typically a 6–12 month implementation led by a systems integrator. Nimbus delivers the same core warehouse operations in two weeks, works with any ERP, and costs a fraction of the implementation.",
+      "NetSuite WMS is Oracle's warehouse module for teams already running NetSuite ERP. It's powerful but heavy — typically a 6–12 month implementation led by a systems integrator. Nautilus delivers the same core warehouse operations in two weeks, works with any ERP, and costs a fraction of the implementation.",
 
     quickCompare: {
-      nimbus: [
+      Nautilus: [
         "Self-serve setup, live in under 2 weeks",
         "Modern AI-first architecture",
         "Works with any ERP (NetSuite, SAP, QuickBooks, etc.)",
@@ -244,46 +252,50 @@ export const COMPETITORS = {
     matrix: [
       {
         feature: "Self-serve setup (< 2 weeks)",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Modern AI-first architecture",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
-      { feature: "Works with any ERP", nimbus: "yes", competitor: "no" },
+      { feature: "Works with any ERP", Nautilus: "yes", competitor: "no" },
       {
         feature: "Per-warehouse predictable pricing",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
       {
         feature: "Native iOS + Android apps",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "Real-time updates (sub-30s sync)",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "AI route optimization", nimbus: "yes", competitor: "no" },
+      { feature: "AI route optimization", Nautilus: "yes", competitor: "no" },
       {
         feature: "Modern REST API + webhooks",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "partial",
       },
       {
         feature: "Deep NetSuite ERP integration",
-        nimbus: "partial",
+        Nautilus: "partial",
         competitor: "yes",
       },
-      { feature: "SOC 2 Type II certified", nimbus: "yes", competitor: "yes" },
-      { feature: "SSO + SAML", nimbus: "yes", competitor: "yes" },
+      {
+        feature: "SOC 2 Type II certified",
+        Nautilus: "yes",
+        competitor: "yes",
+      },
+      { feature: "SSO + SAML", Nautilus: "yes", competitor: "yes" },
       {
         feature: "Multi-tenant for 3PL operators",
-        nimbus: "yes",
+        Nautilus: "yes",
         competitor: "no",
       },
     ],
@@ -291,15 +303,15 @@ export const COMPETITORS = {
     reasons: [
       {
         title: "Weeks instead of quarters",
-        desc: "Most Nimbus deployments are live in under 2 weeks. NetSuite WMS implementations typically run 6 to 12 months and require a systems integrator.",
+        desc: "Most Nautilus deployments are live in under 2 weeks. NetSuite WMS implementations typically run 6 to 12 months and require a systems integrator.",
       },
       {
         title: "ERP-agnostic",
-        desc: "You don't have to be on NetSuite. Nimbus connects to NetSuite, SAP, QuickBooks, Sage, and dozens of others as a first-class integration.",
+        desc: "You don't have to be on NetSuite. Nautilus connects to NetSuite, SAP, QuickBooks, Sage, and dozens of others as a first-class integration.",
       },
       {
         title: "Predictable pricing",
-        desc: "Per-warehouse pricing means no surprises. NetSuite's per-user model plus implementation costs can run 5–10x what Nimbus charges.",
+        desc: "Per-warehouse pricing means no surprises. NetSuite's per-user model plus implementation costs can run 5–10x what Nautilus charges.",
       },
       {
         title: "Modern AI, not legacy rules",

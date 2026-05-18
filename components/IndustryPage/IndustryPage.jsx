@@ -26,7 +26,7 @@ const WORKFLOW = [
   },
   {
     label: "Pick",
-    desc: "Orders come in. Nimbus generates the shortest pick route across your floor.",
+    desc: "Orders come in. Nautilus generates the shortest pick route across your floor.",
   },
   {
     label: "Pack & Ship",
@@ -230,7 +230,7 @@ export default function IndustryPage({ slug }) {
           </h2>
           <p className={styles.sectionDesc}>
             We&apos;ve mapped the operational quirks of{" "}
-            {industry.title.toLowerCase()} against Nimbus capabilities. Each
+            {industry.title.toLowerCase()} against Nautilus capabilities. Each
             challenge here pairs with how we handle it.
           </p>
 
@@ -247,7 +247,7 @@ export default function IndustryPage({ slug }) {
                 </div>
                 <div className={styles.pairSolution}>
                   <div className={styles.pairLabelAccent}>
-                    How Nimbus handles it
+                    How Nautilus handles it
                   </div>
                   {pair.solution && (
                     <>
@@ -282,7 +282,7 @@ export default function IndustryPage({ slug }) {
           <h2 className={styles.sectionTitle}>From dock to door.</h2>
           <p className={styles.sectionDesc}>
             Every action a {industry.title.toLowerCase()} warehouse takes,
-            mapped to a Nimbus flow — running on phones, tablets, or rugged
+            mapped to a Nautilus flow — running on phones, tablets, or rugged
             scanners.
           </p>
 
@@ -364,7 +364,7 @@ export default function IndustryPage({ slug }) {
       {/* ── FINAL CTA ── */}
       <FinalCTACard
         label="Ready when you are"
-        title={`See Nimbus running in a ${industry.title.toLowerCase()} warehouse.`}
+        title={`See Nautilus running in a ${industry.title.toLowerCase()} warehouse.`}
         desc="Live demo with a warehouse engineer. 30 minutes. We bring the data, you bring the questions."
         primaryAction={{ onClick: openDemo, label: "Request a demo" }}
         secondaryAction={{ href: "/contact", label: "Or just reach out →" }}

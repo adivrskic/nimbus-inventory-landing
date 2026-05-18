@@ -30,7 +30,7 @@ const COLUMNS = [
   {
     title: "Resources",
     links: [
-      { text: "Ask Nimbus", href: "/ask" },
+      { text: "Ask Nautilus", href: "/ask" },
       { text: "Blog", href: "/blog" },
       { text: "Help Center", href: "/help" },
       // { text: "API Docs", href: "/api-docs" },
@@ -204,7 +204,7 @@ export default function Footer() {
             <div className={styles.brandRow}>
               <Logo size={22} />
               <div>
-                <div className={styles.brandName}>Nimbus</div>
+                <div className={styles.brandName}>Nautilus</div>
                 <div className={styles.brandSub}>
                   Inventory Management Systems
                 </div>
@@ -267,7 +267,7 @@ export default function Footer() {
         </div>
         <div ref={bottomRef} className={styles.bottom}>
           <div className={styles.copy}>
-            &copy; 2026 Nimbus WMS. All rights reserved.
+            &copy; 2026 Nautilus WMS. All rights reserved.
           </div>
           <div className={styles.legalLinks}>
             {LEGAL_LINKS.map((link) => (

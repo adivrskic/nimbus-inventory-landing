@@ -21,7 +21,7 @@ export default function CompareIndexClient() {
   const gridRef = useGlowCards();
 
   /* All compare-index CTAs are migration conversations — visitors here
-     are evaluating Nimbus against an existing tool. */
+     are evaluating Nautilus against an existing tool. */
   const { openDemo } = useDemo();
 
   const competitors = COMPARE_SLUGS.map((slug) => ({
@@ -87,7 +87,7 @@ export default function CompareIndexClient() {
         <div className={styles.heroEyebrow}>Compare</div>
         <h1 className={styles.heroTitle}>
           <SplitText
-            text="Compare Nimbus to the alternatives."
+            text="Compare Nautilus to the alternatives."
             accentWord="alternatives"
             classNames={{
               line: styles.heroLine,
@@ -99,7 +99,7 @@ export default function CompareIndexClient() {
         </h1>
         <p className={styles.heroSub}>
           Honest side-by-side comparisons against the WMS platforms teams
-          evaluate alongside Nimbus. Each one includes a feature matrix and a
+          evaluate alongside Nautilus. Each one includes a feature matrix and a
           note on when the alternative is actually the better fit.
         </p>
       </section>
@@ -127,7 +127,7 @@ export default function CompareIndexClient() {
 
               <div className={styles.cardKeysLabel}>Key differences</div>
               <ul className={styles.cardKeys}>
-                {c.quickCompare.nimbus.slice(0, 3).map((point, j) => (
+                {c.quickCompare.Nautilus.slice(0, 3).map((point, j) => (
                   <li key={j} className={styles.cardKey}>
                     <span className={styles.cardKeyCheck}>✓</span>
                     <span>{point}</span>

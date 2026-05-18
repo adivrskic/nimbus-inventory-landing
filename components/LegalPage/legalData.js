@@ -8,14 +8,14 @@ export const LEGAL_PAGES = {
         summary:
           "What you tell us when you sign up, plus what the platform records as you use it — scans, inventory moves, floor plans. Device info collected automatically for compatibility.",
         content:
-          "Nimbus collects information you provide directly when creating an account, configuring your warehouse, or contacting support. This includes your name, email address, company name, warehouse address, and billing information. We also collect operational data generated through your use of the platform — scan logs, inventory movements, floor plan configurations, and analytics queries. Device information such as device type, operating system, and app version is collected automatically to ensure compatibility and performance.",
+          "Nautilus collects information you provide directly when creating an account, configuring your warehouse, or contacting support. This includes your name, email address, company name, warehouse address, and billing information. We also collect operational data generated through your use of the platform — scan logs, inventory movements, floor plan configurations, and analytics queries. Device information such as device type, operating system, and app version is collected automatically to ensure compatibility and performance.",
       },
       {
         heading: "How we use your information",
         summary:
           "To run the platform and make it better. Your scan data trains AI models scoped to your warehouse only — never shared with other customers.",
         content:
-          "We use collected information to operate and improve the Nimbus platform, including powering AI features like predictive analytics, route optimization, and anomaly detection. Your scan and inventory data trains models specific to your warehouse — these models are isolated to your account and never shared with other customers. We use aggregated, anonymized data to improve our algorithms and benchmark performance. We may use your contact information to send product updates, security notices, and support communications.",
+          "We use collected information to operate and improve the Nautilus platform, including powering AI features like predictive analytics, route optimization, and anomaly detection. Your scan and inventory data trains models specific to your warehouse — these models are isolated to your account and never shared with other customers. We use aggregated, anonymized data to improve our algorithms and benchmark performance. We may use your contact information to send product updates, security notices, and support communications.",
       },
       {
         heading: "Data storage and security",
@@ -34,16 +34,16 @@ export const LEGAL_PAGES = {
       {
         heading: "Your rights and choices",
         summary:
-          "Access, correct, or delete your data anytime. Export in CSV or JSON whenever you want. EU and California residents have additional rights — email privacy@nimbuswms.com.",
+          "Access, correct, or delete your data anytime. Export in CSV or JSON whenever you want. EU and California residents have additional rights — email privacy@Nautiluswms.com.",
         content:
-          "You may access, correct, or delete your personal information at any time through your account settings or by contacting support. You can export all your warehouse data in standard formats (CSV, JSON) at any time. If you close your account, we will delete your data within 30 days, except where retention is required by law. You may opt out of non-essential communications at any time. California residents have additional rights under the CCPA, and EU residents have rights under GDPR — contact privacy@nimbuswms.com for details.",
+          "You may access, correct, or delete your personal information at any time through your account settings or by contacting support. You can export all your warehouse data in standard formats (CSV, JSON) at any time. If you close your account, we will delete your data within 30 days, except where retention is required by law. You may opt out of non-essential communications at any time. California residents have additional rights under the CCPA, and EU residents have rights under GDPR — contact privacy@Nautiluswms.com for details.",
       },
       {
         heading: "Cookies and tracking",
         summary:
           "Essential cookies for login. Analytics cookies to improve the product. No advertising cookies, no ad-network tracking.",
         content:
-          "The Nimbus web application uses essential cookies for authentication and session management. We use analytics cookies to understand how users interact with the platform, which helps us prioritize feature development. We do not use advertising cookies or share browsing data with ad networks. You can disable non-essential cookies through your browser settings without affecting core functionality.",
+          "The Nautilus web application uses essential cookies for authentication and session management. We use analytics cookies to understand how users interact with the platform, which helps us prioritize feature development. We do not use advertising cookies or share browsing data with ad networks. You can disable non-essential cookies through your browser settings without affecting core functionality.",
       },
       {
         heading: "Data retention",
@@ -57,7 +57,7 @@ export const LEGAL_PAGES = {
         summary:
           "We may update this policy. Material changes get notified 30 days before they take effect.",
         content:
-          "We may update this privacy policy to reflect changes in our practices or applicable law. We will notify you of material changes by email and through in-app notifications at least 30 days before they take effect. Your continued use of Nimbus after changes become effective constitutes acceptance of the updated policy.",
+          "We may update this privacy policy to reflect changes in our practices or applicable law. We will notify you of material changes by email and through in-app notifications at least 30 days before they take effect. Your continued use of Nautilus after changes become effective constitutes acceptance of the updated policy.",
       },
     ],
   },
@@ -68,16 +68,16 @@ export const LEGAL_PAGES = {
       {
         heading: "Acceptance of terms",
         summary:
-          "Using Nimbus means agreeing to these terms. Signing up on behalf of a company means confirming you have authority to do so.",
+          "Using Nautilus means agreeing to these terms. Signing up on behalf of a company means confirming you have authority to do so.",
         content:
-          'By accessing or using the Nimbus Warehouse Management System ("Service"), you agree to be bound by these Terms of Service. If you are using the Service on behalf of a company or organization, you represent that you have authority to bind that entity to these terms. If you do not agree to these terms, do not use the Service.',
+          'By accessing or using the Nautilus Warehouse Management System ("Service"), you agree to be bound by these Terms of Service. If you are using the Service on behalf of a company or organization, you represent that you have authority to bind that entity to these terms. If you do not agree to these terms, do not use the Service.',
       },
       {
         heading: "Service description",
         summary:
-          "Nimbus is a cloud-based WMS provided on a subscription basis. Features vary by plan. We may modify, suspend, or discontinue features with reasonable notice.",
+          "Nautilus is a cloud-based WMS provided on a subscription basis. Features vary by plan. We may modify, suspend, or discontinue features with reasonable notice.",
         content:
-          "Nimbus provides a cloud-based warehouse management platform that includes barcode scanning, inventory tracking, floor plan management, AI-powered analytics, route optimization, and related features. The Service is provided on a subscription basis. Features and functionality may vary by plan level. We reserve the right to modify, suspend, or discontinue any feature with reasonable notice.",
+          "Nautilus provides a cloud-based warehouse management platform that includes barcode scanning, inventory tracking, floor plan management, AI-powered analytics, route optimization, and related features. The Service is provided on a subscription basis. Features and functionality may vary by plan level. We reserve the right to modify, suspend, or discontinue any feature with reasonable notice.",
       },
       {
         heading: "Account responsibilities",
@@ -89,9 +89,9 @@ export const LEGAL_PAGES = {
       {
         heading: "Acceptable use",
         summary:
-          "Use Nimbus for legal purposes only. No reverse engineering, no scraping outside the public API, no using Nimbus to build a competing product.",
+          "Use Nautilus for legal purposes only. No reverse engineering, no scraping outside the public API, no using Nautilus to build a competing product.",
         content:
-          "You agree to use the Service only for lawful purposes and in accordance with these terms. You may not use the Service to store or process data that violates any applicable law or regulation. You may not attempt to reverse engineer, decompile, or disassemble any part of the Service. You may not use automated means to access the Service except through our published APIs. You may not use the Service to compete with Nimbus or build a competing product.",
+          "You agree to use the Service only for lawful purposes and in accordance with these terms. You may not use the Service to store or process data that violates any applicable law or regulation. You may not attempt to reverse engineer, decompile, or disassemble any part of the Service. You may not use automated means to access the Service except through our published APIs. You may not use the Service to compete with Nautilus or build a competing product.",
       },
       {
         heading: "Data ownership",
@@ -105,14 +105,14 @@ export const LEGAL_PAGES = {
         summary:
           "99.9% monthly uptime. Scheduled maintenance excluded from uptime math. SLA breach gets service credits per your subscription. Emergency security maintenance may happen without notice.",
         content:
-          "Nimbus commits to 99.9% uptime for the core platform, measured monthly. Scheduled maintenance windows are excluded from uptime calculations and will be communicated at least 48 hours in advance. In the event of an SLA breach, affected customers are eligible for service credits as outlined in your subscription agreement. Emergency maintenance for security issues may be performed without advance notice.",
+          "Nautilus commits to 99.9% uptime for the core platform, measured monthly. Scheduled maintenance windows are excluded from uptime calculations and will be communicated at least 48 hours in advance. In the event of an SLA breach, affected customers are eligible for service credits as outlined in your subscription agreement. Emergency maintenance for security issues may be performed without advance notice.",
       },
       {
         heading: "Limitation of liability",
         summary:
           "No liability for indirect damages. Total liability capped at what you paid us in the prior 12 months.",
         content:
-          "To the maximum extent permitted by law, Nimbus shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or business opportunities. Our total liability under these terms shall not exceed the amount you paid for the Service in the twelve months preceding the claim. These limitations apply regardless of the theory of liability.",
+          "To the maximum extent permitted by law, Nautilus shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or business opportunities. Our total liability under these terms shall not exceed the amount you paid for the Service in the twelve months preceding the claim. These limitations apply regardless of the theory of liability.",
       },
       {
         heading: "Termination",
@@ -132,7 +132,7 @@ export const LEGAL_PAGES = {
         summary:
           "Zero-trust. Every request authenticated regardless of where it came from. Internal services talk to each other over mutual TLS. Defense in depth at network, app, and data levels.",
         content:
-          "Nimbus is built on a zero-trust security architecture. Every request is authenticated and authorized regardless of network location. Our infrastructure runs on isolated virtual private clouds with no public-facing databases. All internal service communication is encrypted and authenticated using mutual TLS. We employ defense-in-depth with multiple layers of security controls at the network, application, and data levels.",
+          "Nautilus is built on a zero-trust security architecture. Every request is authenticated and authorized regardless of network location. Our infrastructure runs on isolated virtual private clouds with no public-facing databases. All internal service communication is encrypted and authenticated using mutual TLS. We employ defense-in-depth with multiple layers of security controls at the network, application, and data levels.",
       },
       {
         heading: "Encryption",
@@ -146,7 +146,7 @@ export const LEGAL_PAGES = {
         summary:
           "MFA supported for everyone, required for admins. SAML 2.0 SSO with major identity providers. Role-based access control. Sessions expire after 24h inactivity.",
         content:
-          "Nimbus supports multi-factor authentication (MFA) for all user accounts and requires it for administrator accounts. We support SAML 2.0 SSO integration with major identity providers. Role-based access control (RBAC) allows granular permission management. Session tokens expire after 24 hours of inactivity. All authentication events are logged and monitored for anomalous patterns.",
+          "Nautilus supports multi-factor authentication (MFA) for all user accounts and requires it for administrator accounts. We support SAML 2.0 SSO integration with major identity providers. Role-based access control (RBAC) allows granular permission management. Session tokens expire after 24 hours of inactivity. All authentication events are logged and monitored for anomalous patterns.",
       },
       {
         heading: "Infrastructure security",
@@ -167,7 +167,7 @@ export const LEGAL_PAGES = {
         summary:
           "SOC 2 Type II, audited annually. GDPR, CCPA, HIPAA compliant where applicable. NIST CSF and CIS Controls aligned. Audit reports available to enterprise customers under NDA.",
         content:
-          "Nimbus maintains SOC 2 Type II certification, audited annually by an independent third party. We are compliant with GDPR, CCPA, and HIPAA where applicable. Our security practices align with the NIST Cybersecurity Framework and CIS Controls. We conduct annual third-party penetration tests and quarterly internal vulnerability assessments. Audit reports are available to enterprise customers under NDA.",
+          "Nautilus maintains SOC 2 Type II certification, audited annually by an independent third party. We are compliant with GDPR, CCPA, and HIPAA where applicable. Our security practices align with the NIST Cybersecurity Framework and CIS Controls. We conduct annual third-party penetration tests and quarterly internal vulnerability assessments. Audit reports are available to enterprise customers under NDA.",
       },
       {
         heading: "Vulnerability management",
@@ -194,21 +194,21 @@ export const LEGAL_PAGES = {
         summary:
           "All systems operational. No ongoing incidents or scheduled maintenance.",
         content:
-          "All Nimbus systems are operational. The core platform, API, mobile applications, barcode scanning infrastructure, and real-time sync services are running normally. There are no ongoing incidents or scheduled maintenance windows at this time.",
+          "All Nautilus systems are operational. The core platform, API, mobile applications, barcode scanning infrastructure, and real-time sync services are running normally. There are no ongoing incidents or scheduled maintenance windows at this time.",
       },
       {
         heading: "Platform uptime",
         summary:
           "99.95% over the past 12 months. SLA commitment is 99.9% monthly. Scheduled maintenance excluded from uptime math.",
         content:
-          "Nimbus maintains a 99.95% uptime record over the past 12 months. Our SLA commitment is 99.9% monthly uptime for all production services. Uptime is measured across the core application, API endpoints, real-time sync layer, and barcode scanning infrastructure. Scheduled maintenance windows are excluded from uptime calculations.",
+          "Nautilus maintains a 99.95% uptime record over the past 12 months. Our SLA commitment is 99.9% monthly uptime for all production services. Uptime is measured across the core application, API endpoints, real-time sync layer, and barcode scanning infrastructure. Scheduled maintenance windows are excluded from uptime calculations.",
       },
       {
         heading: "Service components",
         summary:
           "Several independently monitored services: web app, API, mobile backend, sync engine, scanning infrastructure, AI engine, and reporting pipeline.",
         content:
-          "The Nimbus platform consists of several independently monitored services: the web application and dashboard, the REST API and webhook delivery system, the mobile application backend (iOS and Android), the real-time inventory sync engine, the barcode scanning and label printing infrastructure, the AI analytics and route optimization engine, and the data export and reporting pipeline. Each component is monitored with sub-minute granularity.",
+          "The Nautilus platform consists of several independently monitored services: the web application and dashboard, the REST API and webhook delivery system, the mobile application backend (iOS and Android), the real-time inventory sync engine, the barcode scanning and label printing infrastructure, the AI analytics and route optimization engine, and the data export and reporting pipeline. Each component is monitored with sub-minute granularity.",
       },
       {
         heading: "Incident history",
@@ -220,9 +220,9 @@ export const LEGAL_PAGES = {
       {
         heading: "Monitoring and alerts",
         summary:
-          "Synthetic checks every 30 seconds from global locations. On-call engineers alerted within 60 seconds of anomalies. Subscribe via status@nimbuswms.com.",
+          "Synthetic checks every 30 seconds from global locations. On-call engineers alerted within 60 seconds of anomalies. Subscribe via status@Nautiluswms.com.",
         content:
-          "Nimbus uses multi-layer monitoring including synthetic checks every 30 seconds from global locations, real-time error rate tracking, latency percentile monitoring (p50, p95, p99), and infrastructure health metrics. Our on-call engineering team is alerted within 60 seconds of any anomaly detection. Customers can subscribe to status updates via email at status@nimbuswms.com.",
+          "Nautilus uses multi-layer monitoring including synthetic checks every 30 seconds from global locations, real-time error rate tracking, latency percentile monitoring (p50, p95, p99), and infrastructure health metrics. Our on-call engineering team is alerted within 60 seconds of any anomaly detection. Customers can subscribe to status updates via email at status@Nautiluswms.com.",
       },
       {
         heading: "Scheduled maintenance",

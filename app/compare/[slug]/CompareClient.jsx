@@ -120,7 +120,7 @@ export default function CompareClient({ slug }) {
       0
     );
 
-    /* The Nimbus × vs × Competitor mark animates in */
+    /* The Nautilus × vs × Competitor mark animates in */
     tl.fromTo(
       `.${styles.markBrand}`,
       { opacity: 0, x: -20 },
@@ -248,10 +248,10 @@ export default function CompareClient({ slug }) {
     );
   }
 
-  /* Build the quick-compare pairs (Nimbus side, competitor side, matched
+  /* Build the quick-compare pairs (Nautilus side, competitor side, matched
      by index for visual alignment) */
-  const quickPairs = competitor.quickCompare.nimbus.map((nm, i) => ({
-    nimbus: nm,
+  const quickPairs = competitor.quickCompare.Nautilus.map((nm, i) => ({
+    Nautilus: nm,
     competitor: competitor.quickCompare.competitor[i],
   }));
 
@@ -269,9 +269,9 @@ export default function CompareClient({ slug }) {
           </span>
         </div>
 
-        {/* The Nimbus vs Competitor mark */}
+        {/* The Nautilus vs Competitor mark */}
         <div className={styles.mark}>
-          <span className={styles.markBrand}>Nimbus</span>
+          <span className={styles.markBrand}>Nautilus</span>
           <span className={styles.markVs} aria-hidden="true">
             vs
           </span>
@@ -298,7 +298,7 @@ export default function CompareClient({ slug }) {
             See a live comparison
           </CornerButton>
           <TransitionLink href="/pricing" className={styles.heroSecondary}>
-            See Nimbus pricing →
+            See Nautilus pricing →
           </TransitionLink>
         </div>
       </section>
@@ -311,7 +311,7 @@ export default function CompareClient({ slug }) {
         <div className={styles.sectionContent}>
           <div className={styles.sectionLabel}>At a glance</div>
           <h2 className={styles.sectionTitle}>
-            Nimbus vs {competitor.name}, quickly.
+            Nautilus vs {competitor.name}, quickly.
           </h2>
           <p className={styles.sectionDesc}>
             Five positioning differences that matter most when teams are
@@ -319,10 +319,10 @@ export default function CompareClient({ slug }) {
           </p>
 
           <div className={styles.quickCompare}>
-            {/* Nimbus column */}
-            <div className={`${styles.quickCol} ${styles.quickColNimbus}`}>
+            {/* Nautilus column */}
+            <div className={`${styles.quickCol} ${styles.quickColNautilus}`}>
               <div className={styles.quickColHead}>
-                <span className={styles.quickColName}>Nimbus</span>
+                <span className={styles.quickColName}>Nautilus</span>
                 <span className={styles.quickColTag}>
                   Modern · cloud-native
                 </span>
@@ -331,7 +331,7 @@ export default function CompareClient({ slug }) {
                 {quickPairs.map((p, i) => (
                   <li key={i} className={styles.quickItem}>
                     <span className={styles.quickCheck}>✓</span>
-                    <span>{p.nimbus}</span>
+                    <span>{p.Nautilus}</span>
                   </li>
                 ))}
               </ul>
@@ -374,7 +374,7 @@ export default function CompareClient({ slug }) {
           <div className={styles.matrix}>
             <div className={styles.matrixHead}>
               <div className={styles.matrixHeadFeature}>Feature</div>
-              <div className={styles.matrixHeadBrand}>Nimbus</div>
+              <div className={styles.matrixHeadBrand}>Nautilus</div>
               <div className={styles.matrixHeadCompetitor}>
                 {competitor.name}
               </div>
@@ -384,7 +384,7 @@ export default function CompareClient({ slug }) {
               <div key={i} className={styles.matrixRow}>
                 <div className={styles.matrixFeature}>{row.feature}</div>
                 <div className={styles.matrixCol}>
-                  <MatrixCell value={row.nimbus} accent />
+                  <MatrixCell value={row.Nautilus} accent />
                 </div>
                 <div className={styles.matrixCol}>
                   <MatrixCell value={row.competitor} />
@@ -458,9 +458,9 @@ export default function CompareClient({ slug }) {
               ))}
             </ul>
             <div className={styles.honestCardFoot}>
-              If none of these apply, you&apos;re likely a good fit for Nimbus.
-              The next step is a 30-minute call where we walk through your
-              actual operation.
+              If none of these apply, you&apos;re likely a good fit for
+              Nautilus. The next step is a 30-minute call where we walk through
+              your actual operation.
             </div>
           </div>
         </div>
@@ -500,8 +500,8 @@ export default function CompareClient({ slug }) {
       {/* ── FINAL CTA ── */}
       <FinalCTACard
         label="Ready when you are"
-        title="Let's show you Nimbus running on your data."
-        desc={`A 30-minute call with a Nimbus engineer. We'll walk through your current ${competitor.name} setup and show how each piece would work in Nimbus — including the migration path.`}
+        title="Let's show you Nautilus running on your data."
+        desc={`A 30-minute call with a Nautilus engineer. We'll walk through your current ${competitor.name} setup and show how each piece would work in Nautilus — including the migration path.`}
         primaryAction={{
           onClick: () => openDemo("migration"),
           label: "Book the demo",

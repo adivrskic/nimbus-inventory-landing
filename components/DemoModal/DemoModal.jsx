@@ -377,7 +377,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     if (!calendlyUrl) return "";
     try {
       const url = new URL(calendlyUrl);
-      url.searchParams.set("utm_source", "nimbus_site");
+      url.searchParams.set("utm_source", "Nautilus_site");
       url.searchParams.set("utm_content", topicKey);
       return url.toString();
     } catch {
@@ -671,7 +671,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
             <div ref={leftColRef} className={styles.leftCol}>
               <div className={styles.logoMark}>
                 <Logo size={28} />
-                <span className={styles.logoMarkText}>Nimbus</span>
+                <span className={styles.logoMarkText}>Nautilus</span>
               </div>
 
               <div className={styles.leftSection}>

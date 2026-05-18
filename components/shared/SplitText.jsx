@@ -29,7 +29,7 @@ import { useMemo } from "react";
         classNames={{ line, letter, accent, space }}
       />
       <SplitText
-        lines={["Compare Nimbus to the alternatives."]}
+        lines={["Compare Nautilus to the alternatives."]}
         accentWord="alternatives"        // matches by case-insensitive
         classNames={{ line, lineInner, letter, accent, space }}
       />

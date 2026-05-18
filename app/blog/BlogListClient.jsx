@@ -60,7 +60,7 @@ export default function BlogListClient() {
     <ResourceShell
       eyebrow="Blog"
       title="Notes from the warehouse."
-      subtitle="Product launches, engineering deep dives, and field reports from real Nimbus operations."
+      subtitle="Product launches, engineering deep dives, and field reports from real Nautilus operations."
       onDemo={openDemo}
     >
       <div className={shellStyles.browse}>

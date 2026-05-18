@@ -2,7 +2,7 @@ export default function Logo({ size = 22 }) {
   return (
     <svg viewBox="0 0 32 32" fill="none" width={size} height={size}>
       <defs>
-        <mask id="nimbus-n">
+        <mask id="Nautilus-n">
           <rect width="32" height="32" fill="white" />
           <text
             x="16"
@@ -17,7 +17,7 @@ export default function Logo({ size = 22 }) {
           </text>
         </mask>
       </defs>
-      <rect width="32" height="32" fill="white" mask="url(#nimbus-n)" />
+      <rect width="32" height="32" fill="white" mask="url(#Nautilus-n)" />
     </svg>
   );
 }

@@ -8,14 +8,14 @@ export async function generateMetadata({ params }) {
   if (!industry) return { title: "Industry Not Found" };
   return {
     title: `${industry.title} Warehouse Management`,
-    description: `Nimbus WMS for ${industry.title.toLowerCase()} operations. ${
+    description: `Nautilus WMS for ${industry.title.toLowerCase()} operations. ${
       industry.heroDesc
     }`,
-    alternates: { canonical: `https://nimbuswms.com/industry/${slug}` },
+    alternates: { canonical: `https://Nautiluswms.com/industry/${slug}` },
     openGraph: {
-      title: `${industry.title} Warehouse Management | Nimbus WMS`,
+      title: `${industry.title} Warehouse Management | Nautilus WMS`,
       description: industry.heroDesc,
-      url: `https://nimbuswms.com/industry/${slug}`,
+      url: `https://Nautiluswms.com/industry/${slug}`,
     },
   };
 }
@@ -28,11 +28,11 @@ export default async function IndustryPage({ params }) {
   const { slug } = await params;
   const industry = INDUSTRIES.find((i) => i.slug === slug);
   const crumbs = [
-    { name: "Home", url: "https://nimbuswms.com" },
-    { name: "Industries", url: "https://nimbuswms.com/#industries" },
+    { name: "Home", url: "https://Nautiluswms.com" },
+    { name: "Industries", url: "https://Nautiluswms.com/#industries" },
     {
       name: industry?.title || slug,
-      url: `https://nimbuswms.com/industry/${slug}`,
+      url: `https://Nautiluswms.com/industry/${slug}`,
     },
   ];
   return (

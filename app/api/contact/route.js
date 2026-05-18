@@ -58,7 +58,7 @@ export async function POST(request) {
         "[contact] Missing env vars — need RESEND_API_KEY, RESEND_FROM_EMAIL, LEAD_TO_EMAIL"
       );
       return NextResponse.json(
-        { error: "Email service isn't configured. Try sales@nimbuswms.com." },
+        { error: "Email service isn't configured. Try sales@Nautiluswms.com." },
         { status: 500 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request) {
     /* Plain-text email body — easier to read on phones, no HTML injection
        risk, fine for an internal lead notification. */
     const text = [
-      "New contact form submission from nimbuswms.com",
+      "New contact form submission from Nautiluswms.com",
       "",
       `Name:    ${name}`,
       `Email:   ${email}`,
@@ -106,7 +106,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           error:
-            "Couldn't send your message. Please try again or email sales@nimbuswms.com.",
+            "Couldn't send your message. Please try again or email sales@Nautiluswms.com.",
         },
         { status: 502 }
       );

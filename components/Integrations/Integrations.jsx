@@ -39,7 +39,7 @@ const CATEGORIES = [
   {
     tag: "Shipping & Logistics",
     title: "Fulfillment layer",
-    desc: "Generate shipping labels, sync tracking, and optimize carrier selection without leaving Nimbus.",
+    desc: "Generate shipping labels, sync tracking, and optimize carrier selection without leaving Nautilus.",
     items: ["ShipStation", "Shippo", "EasyPost", "FedEx", "UPS", "DHL"],
   },
 ];
@@ -75,7 +75,7 @@ const H_LINES = [
 ];
 
 const DESC_LINES = [
-  "Nimbus integrates with your existing tools —",
+  "Nautilus integrates with your existing tools —",
   "accounting, e-commerce, shipping, hardware.",
   "No rip-and-replace. Just plug in.",
 ];

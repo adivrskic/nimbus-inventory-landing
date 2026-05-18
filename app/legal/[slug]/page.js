@@ -13,8 +13,8 @@ export async function generateMetadata({ params }) {
   const title = TITLES[slug] || "Legal";
   return {
     title,
-    description: `${title} for Nimbus WMS warehouse management platform.`,
-    alternates: { canonical: `https://nimbuswms.com/legal/${slug}` },
+    description: `${title} for Nautilus WMS warehouse management platform.`,
+    alternates: { canonical: `https://Nautiluswms.com/legal/${slug}` },
     robots: { index: slug !== "status", follow: true },
   };
 }

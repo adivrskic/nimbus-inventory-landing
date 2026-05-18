@@ -2,8 +2,8 @@
    MARKETING PAGE TYPE — Comparison pages
    ───────────────────────────────────────────────────────────────────────
    Same Marketing vocabulary as Industry/Integration, but with:
-   - "Nimbus vs Competitor" mark in hero (positioning signature)
-   - Two-column "At a glance" with Nimbus favored visually
+   - "Nautilus vs Competitor" mark in hero (positioning signature)
+   - Two-column "At a glance" with Nautilus favored visually
    - Spec-sheet feature matrix table (signature)
    - Honest-take card calling out when competitor is the better fit
    - Cross-link grid at the bottom using the glow-card system
@@ -50,7 +50,7 @@
   color: var(--accent);
 }
 
-/* ── The Nimbus vs Competitor mark ── */
+/* ── The Nautilus vs Competitor mark ── */
 .mark {
   display: flex;
   align-items: baseline;
@@ -217,7 +217,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
        §01 QUICK COMPARE — two columns side by side
-       Nimbus on the left visually favored (gold accents, full opacity).
+       Nautilus on the left visually favored (gold accents, full opacity).
        Competitor on the right (muted dashes, lower opacity).
     ═══════════════════════════════════════════════════════════════════════ */
 .quickCompare {
@@ -231,12 +231,12 @@
   padding: 32px 32px 36px;
   opacity: 0;
 }
-.quickColNimbus {
+.quickColNautilus {
   border-right: 1px solid rgba(212, 168, 83, 0.25);
   background: rgba(212, 168, 83, 0.025);
 }
 .quickColCompetitor {
-  /* Slightly muted to subtly favor Nimbus */
+  /* Slightly muted to subtly favor Nautilus */
 }
 .quickColHead {
   display: flex;
@@ -737,7 +737,7 @@
   .quickCompare {
     grid-template-columns: 1fr;
   }
-  .quickColNimbus {
+  .quickColNautilus {
     border-right: none;
     border-bottom: 1px solid rgba(212, 168, 83, 0.25);
   }

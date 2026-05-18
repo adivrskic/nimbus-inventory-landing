@@ -19,12 +19,12 @@ const SETUP_STEPS = [
   {
     num: "01",
     title: "Connect",
-    desc: "Authenticate with one click. Nimbus uses OAuth — no API keys to copy, no credentials to store.",
+    desc: "Authenticate with one click. Nautilus uses OAuth — no API keys to copy, no credentials to store.",
   },
   {
     num: "02",
     title: "Map",
-    desc: "Match your products, locations, and accounts. Nimbus auto-maps by SKU where possible.",
+    desc: "Match your products, locations, and accounts. Nautilus auto-maps by SKU where possible.",
   },
   {
     num: "03",
@@ -34,7 +34,7 @@ const SETUP_STEPS = [
   {
     num: "04",
     title: "Verify",
-    desc: "Run the sync health check. Nimbus flags any mismatches before they become problems.",
+    desc: "Run the sync health check. Nautilus flags any mismatches before they become problems.",
   },
 ];
 
@@ -45,7 +45,7 @@ const FAQ = [
   },
   {
     q: "What if a sync fails?",
-    a: "Nimbus retries with exponential backoff for 24 hours. After that, the record is flagged in your dashboard for manual review. Sync failures never block your warehouse operations.",
+    a: "Nautilus retries with exponential backoff for 24 hours. After that, the record is flagged in your dashboard for manual review. Sync failures never block your warehouse operations.",
   },
   {
     q: "Can I limit what syncs?",
@@ -61,13 +61,13 @@ const FAQ = [
    integrationData.js per-integration if more specificity is needed. */
 const FLOW_DATA = {
   "Accounting & ERP": {
-    fromNimbus: [
+    fromNautilus: [
       "Stock counts",
       "Scan events",
       "Cost basis",
       "Movement history",
     ],
-    toNimbus: [
+    toNautilus: [
       "Journal entries",
       "PO approvals",
       "COGS posting",
@@ -75,22 +75,22 @@ const FLOW_DATA = {
     ],
   },
   "E-commerce & POS": {
-    fromNimbus: [
+    fromNautilus: [
       "Inventory levels",
       "Reserved stock",
       "Location data",
       "Lot/serial info",
     ],
-    toNimbus: ["Orders", "Returns", "Product catalog", "Channel mappings"],
+    toNautilus: ["Orders", "Returns", "Product catalog", "Channel mappings"],
   },
   "Shipping & Logistics": {
-    fromNimbus: [
+    fromNautilus: [
       "Pick lists",
       "Order weights",
       "Packing slips",
       "Bin locations",
     ],
-    toNimbus: [
+    toNautilus: [
       "Tracking numbers",
       "Carrier rates",
       "Label data",
@@ -140,7 +140,7 @@ export default function IntegrationPage({ slug }) {
       0
     );
 
-    /* Connection mark — Nimbus + ×/connector + Partner — staggered in */
+    /* Connection mark — Nautilus + ×/connector + Partner — staggered in */
     tl.fromTo(
       `.${styles.markBrand}`,
       { opacity: 0, x: -20 },
@@ -268,9 +268,9 @@ export default function IntegrationPage({ slug }) {
           </span>
         </div>
 
-        {/* The signature: Nimbus × Partner */}
+        {/* The signature: Nautilus × Partner */}
         <div className={styles.mark}>
-          <span className={styles.markBrand}>Nimbus</span>
+          <span className={styles.markBrand}>Nautilus</span>
           <span className={styles.markConnector} aria-hidden="true">
             ×
           </span>
@@ -341,7 +341,7 @@ export default function IntegrationPage({ slug }) {
               Bidirectional sync. No manual entry.
             </h2>
             <p className={styles.sectionDesc}>
-              Data moves between Nimbus and {integration.title} in both
+              Data moves between Nautilus and {integration.title} in both
               directions, near-real-time.
             </p>
 
@@ -353,10 +353,10 @@ export default function IntegrationPage({ slug }) {
                 <div className="glow-card-border" />
                 <div className={`${styles.flowInner} glow-card-content`}>
                   <div className={styles.flowNode}>
-                    <div className={styles.flowNodeName}>Nimbus</div>
+                    <div className={styles.flowNodeName}>Nautilus</div>
                     <div className={styles.flowNodeRole}>Source of truth</div>
                     <ul className={styles.flowNodeData}>
-                      {flow.fromNimbus.map((d) => (
+                      {flow.fromNautilus.map((d) => (
                         <li key={d}>{d}</li>
                       ))}
                     </ul>
@@ -382,7 +382,7 @@ export default function IntegrationPage({ slug }) {
                       {integration.category}
                     </div>
                     <ul className={styles.flowNodeData}>
-                      {flow.toNimbus.map((d) => (
+                      {flow.toNautilus.map((d) => (
                         <li key={d}>{d}</li>
                       ))}
                     </ul>
@@ -496,8 +496,8 @@ export default function IntegrationPage({ slug }) {
       {/* ── FINAL CTA ── */}
       <FinalCTACard
         label="Ready to connect?"
-        title={`See Nimbus + ${integration.title} running on real data.`}
-        desc={`30-minute walkthrough with a Nimbus engineer. We&apos;ll connect a
+        title={`See Nautilus + ${integration.title} running on real data.`}
+        desc={`30-minute walkthrough with a Nautilus engineer. We&apos;ll connect a
         sandbox of your ${integration.title} account and show the sync live.`}
         primaryAction={{ onClick: openDemo, label: "Request a demo" }}
         secondaryAction={{ href: "/contact", label: "Or just reach out" }}

@@ -11,15 +11,15 @@ export function orgSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Nimbus WMS",
-    url: "https://nimbuswms.com",
-    logo: "https://nimbuswms.com/logo.png",
+    name: "Nautilus WMS",
+    url: "https://Nautiluswms.com",
+    logo: "https://Nautiluswms.com/logo.png",
     description:
       "AI-powered warehouse management system for modern operations teams.",
     sameAs: [],
     contactPoint: {
       "@type": "ContactPoint",
-      email: "sales@nimbuswms.com",
+      email: "sales@Nautiluswms.com",
       contactType: "sales",
     },
   };
@@ -29,7 +29,7 @@ export function softwareSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Nimbus WMS",
+    name: "Nautilus WMS",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS, Android",
     description:
@@ -66,21 +66,21 @@ export function articleSchema({
   description,
   slug,
   date,
-  author = "Nimbus Team",
+  author = "Nautilus Team",
 }) {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: title,
     description,
-    url: `https://nimbuswms.com/blog/${slug}`,
+    url: `https://Nautiluswms.com/blog/${slug}`,
     datePublished: date,
     dateModified: date,
     author: { "@type": "Person", name: author },
     publisher: {
       "@type": "Organization",
-      name: "Nimbus WMS",
-      logo: { "@type": "ImageObject", url: "https://nimbuswms.com/logo.png" },
+      name: "Nautilus WMS",
+      logo: { "@type": "ImageObject", url: "https://Nautiluswms.com/logo.png" },
     },
   };
 }

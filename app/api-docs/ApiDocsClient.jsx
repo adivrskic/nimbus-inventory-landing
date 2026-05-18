@@ -28,7 +28,7 @@ const SECTIONS = [
 
 const METADATA = [
   { label: "Status", value: "v1 Preview" },
-  { label: "Base URL", value: "api.nimbuswms.com" },
+  { label: "Base URL", value: "api.Nautiluswms.com" },
   { label: "Format", value: "JSON" },
   { label: "Auth", value: "Bearer token" },
 ];
@@ -42,7 +42,7 @@ const CODE_AUTH = [
 const CODE_PRODUCTS = {
   request: [
     { t: "GET ", c: "method" },
-    { t: "https://api.nimbuswms.com/v1/products?limit=50\n" },
+    { t: "https://api.Nautiluswms.com/v1/products?limit=50\n" },
     { t: "Authorization", c: "key" },
     { t: ": Bearer " },
     { t: "sk_live_4Kf2x9aQ8nL...", c: "str" },
@@ -85,7 +85,7 @@ const CODE_PRODUCTS = {
 const CODE_SCANS = {
   request: [
     { t: "POST ", c: "method" },
-    { t: "https://api.nimbuswms.com/v1/scans\n" },
+    { t: "https://api.Nautiluswms.com/v1/scans\n" },
     { t: "Authorization", c: "key" },
     { t: ": Bearer " },
     { t: "sk_live_4Kf2x9aQ8nL...\n", c: "str" },
@@ -133,10 +133,10 @@ const CODE_WEBHOOK = {
   request: [
     { t: "// Sent to your configured endpoint\n", c: "comment" },
     { t: "POST ", c: "method" },
-    { t: "https://your-app.com/nimbus-webhook\n" },
+    { t: "https://your-app.com/Nautilus-webhook\n" },
     { t: "Content-Type", c: "key" },
     { t: ": application/json\n" },
-    { t: "Nimbus-Signature", c: "key" },
+    { t: "Nautilus-Signature", c: "key" },
     { t: ": " },
     { t: '"v1=8a2b..."', c: "str" },
     { t: "\n\n{\n" },
@@ -162,7 +162,7 @@ const CODE_WEBHOOK = {
   response: [
     { t: "// Reply 200 within 5s to acknowledge\n", c: "comment" },
     {
-      t: "// Otherwise Nimbus retries with exponential backoff\n\n",
+      t: "// Otherwise Nautilus retries with exponential backoff\n\n",
       c: "comment",
     },
     { t: "{\n" },
@@ -176,10 +176,10 @@ const CODE_WEBHOOK = {
 const CODE_SDKS = [
   { t: "// Node.js\n", c: "comment" },
   { t: "npm install ", c: "muted" },
-  { t: "@nimbuswms/sdk\n\n", c: "str" },
+  { t: "@Nautiluswms/sdk\n\n", c: "str" },
   { t: "// Python\n", c: "comment" },
   { t: "pip install ", c: "muted" },
-  { t: "nimbuswms", c: "str" },
+  { t: "Nautiluswms", c: "str" },
 ];
 
 const CAPABILITIES = [
@@ -315,7 +315,7 @@ export default function ApiDocsClient() {
           link: { href: "#overview", text: "Join the waitlist →" },
         }}
         eyebrow="API Reference"
-        title="Nimbus API"
+        title="Nautilus API"
         subtitle="A REST API, webhooks, and SDKs for warehouse operations. Pull inventory, record scans, and react to real-time events."
         metadata={METADATA}
         onDemo={openDemo}
@@ -328,10 +328,10 @@ export default function ApiDocsClient() {
             <section id="overview" className={shellStyles.section}>
               <h2 className={shellStyles.h2}>Overview</h2>
               <p className={shellStyles.p}>
-                The Nimbus API is a REST interface to warehouse operations data.
-                Requests use JSON, resource-oriented URLs, and conventional HTTP
-                status codes. v1 enters general availability in{" "}
-                <strong>Q3 2026</strong>. Until then, we&apos;re onboarding
+                The Nautilus API is a REST interface to warehouse operations
+                data. Requests use JSON, resource-oriented URLs, and
+                conventional HTTP status codes. v1 enters general availability
+                in <strong>Q3 2026</strong>. Until then, we&apos;re onboarding
                 select early-access customers.
               </p>
 
@@ -402,9 +402,9 @@ export default function ApiDocsClient() {
               <p className={shellStyles.p}>
                 All requests authenticate with a Bearer token in the{" "}
                 <code className={shellStyles.inlineCode}>Authorization</code>{" "}
-                header. API keys are created in the Nimbus dashboard at launch.
-                Keep secret keys server-side — they grant full access to your
-                warehouse data.
+                header. API keys are created in the Nautilus dashboard at
+                launch. Keep secret keys server-side — they grant full access to
+                your warehouse data.
               </p>
               <div className={shellStyles.codeBlock}>
                 <div className={shellStyles.codeBar}>
@@ -488,7 +488,7 @@ export default function ApiDocsClient() {
                 count results, and 20+ more event types. Configure endpoints in
                 the dashboard. Reply{" "}
                 <code className={shellStyles.inlineCode}>200</code> within 5
-                seconds to acknowledge; otherwise Nimbus retries with
+                seconds to acknowledge; otherwise Nautilus retries with
                 exponential backoff for 24 hours.
               </p>
               <div className={shellStyles.codeDuo}>
@@ -519,7 +519,7 @@ export default function ApiDocsClient() {
             <section id="capabilities" className={shellStyles.section}>
               <h2 className={shellStyles.h2}>Capabilities</h2>
               <p className={shellStyles.p}>
-                Everything in the Nimbus app is exposed through the API.
+                Everything in the Nautilus app is exposed through the API.
                 You&apos;ll find endpoints and webhooks for each of the
                 following.
               </p>
@@ -572,10 +572,10 @@ export default function ApiDocsClient() {
                 Early-access customers get direct access to the engineering
                 team. Email{" "}
                 <a
-                  href="mailto:developers@nimbuswms.com"
+                  href="mailto:developers@Nautiluswms.com"
                   className={shellStyles.link}
                 >
-                  developers@nimbuswms.com
+                  developers@Nautiluswms.com
                 </a>
                 , join our developer Slack at launch, or reach out via the{" "}
                 <a href="/contact" className={shellStyles.link}>

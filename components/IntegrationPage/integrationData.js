@@ -3,7 +3,7 @@ export const INTEGRATIONS = {
     title: "QuickBooks",
     category: "Accounting & ERP",
     tagline: "Sync inventory valuations and purchase orders in real time.",
-    desc: "Nimbus connects directly to QuickBooks Online and Desktop, syncing inventory counts, cost of goods sold, and purchase orders bidirectionally. When stock moves in your warehouse, your books update automatically.",
+    desc: "Nautilus connects directly to QuickBooks Online and Desktop, syncing inventory counts, cost of goods sold, and purchase orders bidirectionally. When stock moves in your warehouse, your books update automatically.",
     features: [
       {
         title: "Real-time COGS sync",
@@ -11,7 +11,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Purchase order generation",
-        desc: "Nimbus AI detects low stock and drafts POs directly in QuickBooks for approval.",
+        desc: "Nautilus AI detects low stock and drafts POs directly in QuickBooks for approval.",
       },
       {
         title: "Multi-location mapping",
@@ -28,7 +28,7 @@ export const INTEGRATIONS = {
     title: "Xero",
     category: "Accounting & ERP",
     tagline: "Automated inventory accounting for Xero-powered businesses.",
-    desc: "Connect Nimbus to Xero and eliminate manual inventory journal entries. Stock adjustments, write-offs, and transfers automatically post to the correct accounts with full audit trails.",
+    desc: "Connect Nautilus to Xero and eliminate manual inventory journal entries. Stock adjustments, write-offs, and transfers automatically post to the correct accounts with full audit trails.",
     features: [
       {
         title: "Automatic journal entries",
@@ -53,7 +53,7 @@ export const INTEGRATIONS = {
     title: "FreshBooks",
     category: "Accounting & ERP",
     tagline: "Inventory-aware invoicing and expense tracking.",
-    desc: "Nimbus enriches FreshBooks with warehouse-level inventory data. Product costs flow into invoices automatically, and expense categories stay aligned with physical stock movements.",
+    desc: "Nautilus enriches FreshBooks with warehouse-level inventory data. Product costs flow into invoices automatically, and expense categories stay aligned with physical stock movements.",
     features: [
       {
         title: "Invoice cost tracking",
@@ -78,7 +78,7 @@ export const INTEGRATIONS = {
     title: "SAP Business One",
     category: "Accounting & ERP",
     tagline: "Enterprise-grade warehouse intelligence for SAP environments.",
-    desc: "Nimbus extends SAP Business One with AI-powered warehouse operations. Inventory transactions, goods receipts, and production orders sync bidirectionally through SAP's Service Layer API.",
+    desc: "Nautilus extends SAP Business One with AI-powered warehouse operations. Inventory transactions, goods receipts, and production orders sync bidirectionally through SAP's Service Layer API.",
     features: [
       {
         title: "Service Layer integration",
@@ -103,7 +103,7 @@ export const INTEGRATIONS = {
     title: "NetSuite",
     category: "Accounting & ERP",
     tagline: "Warehouse execution layer for NetSuite ERP.",
-    desc: "Nimbus acts as the warehouse execution system for NetSuite, handling scanning, putaway, and picking while syncing transactions back to NetSuite's inventory and financial modules via SuiteTalk.",
+    desc: "Nautilus acts as the warehouse execution system for NetSuite, handling scanning, putaway, and picking while syncing transactions back to NetSuite's inventory and financial modules via SuiteTalk.",
     features: [
       {
         title: "SuiteTalk integration",
@@ -111,7 +111,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Bin management",
-        desc: "Warehouse bin locations in Nimbus map to NetSuite inventory locations.",
+        desc: "Warehouse bin locations in Nautilus map to NetSuite inventory locations.",
       },
       {
         title: "Transfer order execution",
@@ -128,7 +128,7 @@ export const INTEGRATIONS = {
     title: "Sage",
     category: "Accounting & ERP",
     tagline: "Warehouse automation for Sage 50 and Sage Intacct.",
-    desc: "Nimbus integrates with Sage 50 and Sage Intacct, syncing inventory counts, adjustments, and valuations. Stock movements on the warehouse floor immediately reflect in your Sage accounts.",
+    desc: "Nautilus integrates with Sage 50 and Sage Intacct, syncing inventory counts, adjustments, and valuations. Stock movements on the warehouse floor immediately reflect in your Sage accounts.",
     features: [
       {
         title: "Dual platform support",
@@ -153,7 +153,7 @@ export const INTEGRATIONS = {
     title: "Shopify",
     category: "E-commerce & POS",
     tagline: "Real-time inventory sync across every Shopify channel.",
-    desc: "Every sale on your Shopify store decrements warehouse stock instantly. Nimbus prevents overselling across all channels and automates fulfillment workflows from pick to ship.",
+    desc: "Every sale on your Shopify store decrements warehouse stock instantly. Nautilus prevents overselling across all channels and automates fulfillment workflows from pick to ship.",
     features: [
       {
         title: "Instant stock sync",
@@ -165,7 +165,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Fulfillment automation",
-        desc: "Orders flow into Nimbus pick queues automatically with optimized routing.",
+        desc: "Orders flow into Nautilus pick queues automatically with optimized routing.",
       },
     ],
     stats: [
@@ -178,7 +178,7 @@ export const INTEGRATIONS = {
     title: "WooCommerce",
     category: "E-commerce & POS",
     tagline: "Warehouse-powered inventory for WooCommerce stores.",
-    desc: "Nimbus connects to WooCommerce via REST API, keeping product stock levels accurate across your store. Variable products, bundles, and backorder logic all sync seamlessly.",
+    desc: "Nautilus connects to WooCommerce via REST API, keeping product stock levels accurate across your store. Variable products, bundles, and backorder logic all sync seamlessly.",
     features: [
       {
         title: "Variable product support",
@@ -186,7 +186,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Backorder automation",
-        desc: "Nimbus manages backorder thresholds and auto-enables when stock drops.",
+        desc: "Nautilus manages backorder thresholds and auto-enables when stock drops.",
       },
       {
         title: "Webhook-driven",
@@ -203,7 +203,7 @@ export const INTEGRATIONS = {
     title: "Amazon",
     category: "E-commerce & POS",
     tagline: "Unified inventory across Amazon and your warehouse.",
-    desc: "Nimbus syncs with Amazon Seller Central and FBA, providing a single view of inventory whether it's in your warehouse, in transit, or at Amazon fulfillment centers.",
+    desc: "Nautilus syncs with Amazon Seller Central and FBA, providing a single view of inventory whether it's in your warehouse, in transit, or at Amazon fulfillment centers.",
     features: [
       {
         title: "FBA inventory tracking",
@@ -228,7 +228,7 @@ export const INTEGRATIONS = {
     title: "Square",
     category: "E-commerce & POS",
     tagline: "Connect your Square POS to warehouse-level inventory.",
-    desc: "Every Square transaction adjusts warehouse stock in real time. Nimbus bridges the gap between point-of-sale and warehouse management for retailers with physical locations.",
+    desc: "Every Square transaction adjusts warehouse stock in real time. Nautilus bridges the gap between point-of-sale and warehouse management for retailers with physical locations.",
     features: [
       {
         title: "POS sync",
@@ -236,7 +236,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Catalog mapping",
-        desc: "Square item catalog maps to Nimbus product database bidirectionally.",
+        desc: "Square item catalog maps to Nautilus product database bidirectionally.",
       },
       {
         title: "Multi-location",
@@ -252,8 +252,8 @@ export const INTEGRATIONS = {
   bigcommerce: {
     title: "BigCommerce",
     category: "E-commerce & POS",
-    tagline: "Enterprise e-commerce inventory powered by Nimbus.",
-    desc: "Nimbus provides warehouse-grade inventory management for BigCommerce stores, with real-time stock sync, automated fulfillment, and multi-channel inventory allocation.",
+    tagline: "Enterprise e-commerce inventory powered by Nautilus.",
+    desc: "Nautilus provides warehouse-grade inventory management for BigCommerce stores, with real-time stock sync, automated fulfillment, and multi-channel inventory allocation.",
     features: [
       {
         title: "Channel inventory rules",
@@ -278,7 +278,7 @@ export const INTEGRATIONS = {
     title: "Lightspeed",
     category: "E-commerce & POS",
     tagline: "Warehouse intelligence for Lightspeed retailers.",
-    desc: "Nimbus connects to Lightspeed Retail and Restaurant, providing warehouse-level inventory visibility that syncs across all your Lightspeed POS terminals and e-commerce channels.",
+    desc: "Nautilus connects to Lightspeed Retail and Restaurant, providing warehouse-level inventory visibility that syncs across all your Lightspeed POS terminals and e-commerce channels.",
     features: [
       {
         title: "Retail + Restaurant",
@@ -286,7 +286,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Supplier management",
-        desc: "Purchase orders generated from Nimbus AI flow directly into Lightspeed.",
+        desc: "Purchase orders generated from Nautilus AI flow directly into Lightspeed.",
       },
       {
         title: "Matrix products",
@@ -303,7 +303,7 @@ export const INTEGRATIONS = {
     title: "ShipStation",
     category: "Shipping & Logistics",
     tagline: "From pick to ship — fully automated.",
-    desc: "Nimbus feeds picked orders directly into ShipStation for label generation and carrier selection. Tracking numbers flow back to update order status and customer notifications.",
+    desc: "Nautilus feeds picked orders directly into ShipStation for label generation and carrier selection. Tracking numbers flow back to update order status and customer notifications.",
     features: [
       {
         title: "Auto label generation",
@@ -311,11 +311,11 @@ export const INTEGRATIONS = {
       },
       {
         title: "Tracking sync",
-        desc: "Tracking numbers push back to Nimbus and connected sales channels.",
+        desc: "Tracking numbers push back to Nautilus and connected sales channels.",
       },
       {
         title: "Batch shipping",
-        desc: "Process hundreds of labels in batch from Nimbus pick confirmations.",
+        desc: "Process hundreds of labels in batch from Nautilus pick confirmations.",
       },
     ],
     stats: [
@@ -328,7 +328,7 @@ export const INTEGRATIONS = {
     title: "Shippo",
     category: "Shipping & Logistics",
     tagline: "Discounted shipping rates connected to your warehouse.",
-    desc: "Nimbus integrates with Shippo to provide discounted shipping rates, automated label creation, and carrier comparison directly from the warehouse floor.",
+    desc: "Nautilus integrates with Shippo to provide discounted shipping rates, automated label creation, and carrier comparison directly from the warehouse floor.",
     features: [
       {
         title: "Rate comparison",
@@ -336,7 +336,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Discounted rates",
-        desc: "Access Shippo's pre-negotiated carrier discounts from Nimbus.",
+        desc: "Access Shippo's pre-negotiated carrier discounts from Nautilus.",
       },
       {
         title: "Return labels",
@@ -353,7 +353,7 @@ export const INTEGRATIONS = {
     title: "EasyPost",
     category: "Shipping & Logistics",
     tagline: "Developer-friendly shipping API for warehouse automation.",
-    desc: "Nimbus leverages EasyPost's unified API to provide carrier-agnostic shipping, address verification, and insurance across all major carriers from a single integration.",
+    desc: "Nautilus leverages EasyPost's unified API to provide carrier-agnostic shipping, address verification, and insurance across all major carriers from a single integration.",
     features: [
       {
         title: "Address verification",
@@ -378,7 +378,7 @@ export const INTEGRATIONS = {
     title: "FedEx",
     category: "Shipping & Logistics",
     tagline: "Direct FedEx integration from warehouse to doorstep.",
-    desc: "Nimbus connects directly to FedEx Ship Manager API for label generation, rate shopping, and real-time tracking. Ground, Express, and Freight services all supported.",
+    desc: "Nautilus connects directly to FedEx Ship Manager API for label generation, rate shopping, and real-time tracking. Ground, Express, and Freight services all supported.",
     features: [
       {
         title: "All service levels",
@@ -386,11 +386,11 @@ export const INTEGRATIONS = {
       },
       {
         title: "Pickup scheduling",
-        desc: "Schedule FedEx pickups from Nimbus when shipment batches are ready.",
+        desc: "Schedule FedEx pickups from Nautilus when shipment batches are ready.",
       },
       {
         title: "Dimensional weight",
-        desc: "Auto-calculate DIM weight from product dimensions in Nimbus.",
+        desc: "Auto-calculate DIM weight from product dimensions in Nautilus.",
       },
     ],
     stats: [
@@ -403,7 +403,7 @@ export const INTEGRATIONS = {
     title: "UPS",
     category: "Shipping & Logistics",
     tagline: "UPS shipping intelligence built into warehouse operations.",
-    desc: "Nimbus integrates with UPS Developer API for automated label generation, rate comparison, and end-to-end tracking from warehouse scan to customer delivery.",
+    desc: "Nautilus integrates with UPS Developer API for automated label generation, rate comparison, and end-to-end tracking from warehouse scan to customer delivery.",
     features: [
       {
         title: "Rate shopping",
@@ -428,7 +428,7 @@ export const INTEGRATIONS = {
     title: "DHL",
     category: "Shipping & Logistics",
     tagline: "Global logistics connected to your warehouse floor.",
-    desc: "Nimbus integrates with DHL Express and DHL eCommerce for international shipping, customs documentation, and global tracking from a single warehouse interface.",
+    desc: "Nautilus integrates with DHL Express and DHL eCommerce for international shipping, customs documentation, and global tracking from a single warehouse interface.",
     features: [
       {
         title: "International shipping",

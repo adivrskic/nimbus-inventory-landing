@@ -1,16 +1,16 @@
 import CompareIndexClient from "./CompareIndexClient";
 
 export const metadata = {
-  title: "Compare Nimbus",
+  title: "Compare Nautilus",
   description:
-    "How does Nimbus compare to other warehouse management systems? Detailed side-by-side comparisons with Fishbowl, Sortly, and NetSuite WMS.",
-  alternates: { canonical: "https://nimbuswms.com/compare" },
+    "How does Nautilus compare to other warehouse management systems? Detailed side-by-side comparisons with Fishbowl, Sortly, and NetSuite WMS.",
+  alternates: { canonical: "https://Nautiluswms.com/compare" },
   openGraph: {
     type: "website",
-    title: "Compare Nimbus to other WMS platforms",
+    title: "Compare Nautilus to other WMS platforms",
     description:
       "Side-by-side comparisons with Fishbowl, Sortly, and NetSuite WMS.",
-    url: "https://nimbuswms.com/compare",
+    url: "https://Nautiluswms.com/compare",
   },
 };
 

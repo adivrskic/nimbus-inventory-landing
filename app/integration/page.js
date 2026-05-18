@@ -1,16 +1,16 @@
 import IntegrationsIndexClient from "./IntegrationsIndexClient";
 
 export const metadata = {
-  title: "Integrations — Nimbus",
+  title: "Integrations — Nautilus",
   description:
-    "Nimbus connects to your accounting, ERP, e-commerce, POS, and shipping platforms. Bidirectional sync, modern APIs, zero manual entry.",
-  alternates: { canonical: "https://nimbuswms.com/integrations" },
+    "Nautilus connects to your accounting, ERP, e-commerce, POS, and shipping platforms. Bidirectional sync, modern APIs, zero manual entry.",
+  alternates: { canonical: "https://Nautiluswms.com/integrations" },
   openGraph: {
     type: "website",
-    title: "Integrations Nimbus supports",
+    title: "Integrations Nautilus supports",
     description:
       "Bidirectional sync with the accounting, ERP, e-commerce, and shipping platforms you already use.",
-    url: "https://nimbuswms.com/integrations",
+    url: "https://Nautiluswms.com/integrations",
   },
 };
 

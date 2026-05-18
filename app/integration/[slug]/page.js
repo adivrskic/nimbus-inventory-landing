@@ -8,12 +8,12 @@ export async function generateMetadata({ params }) {
   if (!integration) return { title: "Integration Not Found" };
   return {
     title: `${integration.title} Integration`,
-    description: `Connect ${integration.title} to Nimbus WMS. ${integration.tagline}`,
-    alternates: { canonical: `https://nimbuswms.com/integration/${slug}` },
+    description: `Connect ${integration.title} to Nautilus WMS. ${integration.tagline}`,
+    alternates: { canonical: `https://Nautiluswms.com/integration/${slug}` },
     openGraph: {
-      title: `${integration.title} Integration | Nimbus WMS`,
+      title: `${integration.title} Integration | Nautilus WMS`,
       description: integration.tagline,
-      url: `https://nimbuswms.com/integration/${slug}`,
+      url: `https://Nautiluswms.com/integration/${slug}`,
     },
   };
 }
@@ -26,11 +26,11 @@ export default async function IntegrationPage({ params }) {
   const { slug } = await params;
   const integration = INTEGRATIONS[slug];
   const crumbs = [
-    { name: "Home", url: "https://nimbuswms.com" },
-    { name: "Integrations", url: "https://nimbuswms.com/#integrations" },
+    { name: "Home", url: "https://Nautiluswms.com" },
+    { name: "Integrations", url: "https://Nautiluswms.com/#integrations" },
     {
       name: integration?.title || slug,
-      url: `https://nimbuswms.com/integration/${slug}`,
+      url: `https://Nautiluswms.com/integration/${slug}`,
     },
   ];
   return (

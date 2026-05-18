@@ -32,7 +32,7 @@ const PHASES = [
       ],
     ],
     bodyLines: [
-      "Nimbus replaces guesswork with intelligence.",
+      "Nautilus replaces guesswork with intelligence.",
       "Three layers of transformation — from identifying",
       "the problem, to understanding the cost, to",
       "deploying the solution.",
@@ -122,7 +122,7 @@ const PHASES = [
       ],
     ],
     bodyLines: [
-      "Nimbus deploys AI across scanning, spatial",
+      "Nautilus deploys AI across scanning, spatial",
       "mapping, and predictive analytics. Every scan",
       "teaches the system. Every movement optimizes",
       "the next.",

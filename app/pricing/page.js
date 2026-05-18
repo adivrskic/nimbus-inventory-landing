@@ -3,14 +3,14 @@ import PricingClient from "./PricingClient";
 export const metadata = {
   title: "Pricing",
   description:
-    "Per-warehouse pricing for Nimbus WMS. Pro from $239/warehouse/month. Enterprise custom. No per-user fees.",
-  alternates: { canonical: "https://nimbuswms.com/pricing" },
+    "Per-warehouse pricing for Nautilus WMS. Pro from $239/warehouse/month. Enterprise custom. No per-user fees.",
+  alternates: { canonical: "https://Nautiluswms.com/pricing" },
   openGraph: {
     type: "website",
-    title: "Pricing — Nimbus WMS",
+    title: "Pricing — Nautilus WMS",
     description:
       "Per-warehouse pricing. Pro from $239/warehouse/month. Enterprise custom.",
-    url: "https://nimbuswms.com/pricing",
+    url: "https://Nautiluswms.com/pricing",
   },
 };
 

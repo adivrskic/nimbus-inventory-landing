@@ -29,10 +29,10 @@ function findArticle(slug) {
 /* ── Feedback localStorage helpers ──
    - feedback:<resource> stores "yes" | "no" per-article so a returning
      visitor sees their previous vote instead of the buttons
-   - nimbus_session_id is a single anonymous-visitor UUID shared across
+   - Nautilus_session_id is a single anonymous-visitor UUID shared across
      all articles, used as soft dedup signal server-side */
-const FEEDBACK_KEY = (resource) => `nimbus_feedback:${resource}`;
-const SESSION_KEY = "nimbus_session_id";
+const FEEDBACK_KEY = (resource) => `Nautilus_feedback:${resource}`;
+const SESSION_KEY = "Nautilus_session_id";
 
 function generateUUID() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {

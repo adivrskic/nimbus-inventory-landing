@@ -26,7 +26,7 @@
 //   <FinalCTACard
 //     label="Want a precise estimate?"
 //     title="Get a number based on your data."
-//     desc="30 minutes with a Nimbus engineer..."
+//     desc="30 minutes with a Nautilus engineer..."
 //     primaryAction={{
 //       onClick: () => openDemo("sales"),
 //       label: "Book the modeling call",

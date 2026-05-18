@@ -85,7 +85,7 @@ function calculate({ size, pickers, accuracy, wage }) {
   const errorSavings = annualOrders * 180 * 0.06 * (errorRate * 0.7);
 
   /* Shrinkage / inventory accuracy — baseline ~$1.50/sqft/year,
-     Nimbus cuts 60%. */
+     Nautilus cuts 60%. */
   const shrinkageSavings = size * 1.5 * 0.6;
 
   /* Cycle counting — saves ~40hrs/yr per picker through continuous
@@ -96,7 +96,7 @@ function calculate({ size, pickers, accuracy, wage }) {
     pickingSavings + errorSavings + shrinkageSavings + cycleCountSavings;
 
   /* "Current loss" framing — assume some inefficiency persists, so the
-     current annual cost is ~1.4x what Nimbus recovers. Used in the
+     current annual cost is ~1.4x what Nautilus recovers. Used in the
      headline "you're losing" line. */
   const currentLoss = total * 1.4;
 
@@ -352,7 +352,7 @@ export default function CalculatorClient() {
         <div className={styles.heroEyebrow}>ROI Calculator</div>
         <h1 className={styles.heroTitle}>
           <SplitText
-            text="See what Nimbus is worth to you."
+            text="See what Nautilus is worth to you."
             accentWord="you"
             classNames={{
               line: styles.heroLine,
@@ -410,7 +410,7 @@ export default function CalculatorClient() {
         </p>
 
         <p className={styles.storyTextSecondary}>
-          Nimbus typically recovers about{" "}
+          Nautilus typically recovers about{" "}
           <span className={styles.storySavings}>
             {formatDollars(animTotal)}
           </span>{" "}
@@ -543,7 +543,7 @@ export default function CalculatorClient() {
       <FinalCTACard
         label="Want a precise estimate?"
         title="Get a number based on your data."
-        desc="30 minutes with a Nimbus engineer. We use your real operational data to build a more detailed estimate for your specific operation."
+        desc="30 minutes with a Nautilus engineer. We use your real operational data to build a more detailed estimate for your specific operation."
         primaryAction={{
           onClick: () => openDemo("sales"),
           label: "Book the modeling call",

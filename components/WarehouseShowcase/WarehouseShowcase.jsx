@@ -1629,7 +1629,7 @@ export default function WarehouseShowcase() {
         {/* ─── Corner editorial keys (only true 2D affordances) ─── */}
         <div className={styles.corner + " " + styles.cornerTL}>
           <span className={styles.cornerKey}>FLOOR · 01</span>
-          <span className={styles.cornerSub}>Nimbus / live</span>
+          <span className={styles.cornerSub}>Nautilus / live</span>
         </div>
         <div className={styles.corner + " " + styles.cornerTR}>
           <span className={styles.cornerKey}>

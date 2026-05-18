@@ -16,8 +16,8 @@ export async function generateMetadata({ params }) {
   if (!found) return { title: "Article Not Found" };
   return {
     title: found.article.title,
-    description: `${found.article.title} — Nimbus WMS help guide in the ${found.category.title} category.`,
-    alternates: { canonical: `https://nimbuswms.com/help/${slug}` },
+    description: `${found.article.title} — Nautilus WMS help guide in the ${found.category.title} category.`,
+    alternates: { canonical: `https://Nautiluswms.com/help/${slug}` },
   };
 }
 
@@ -33,11 +33,11 @@ export default async function HelpArticlePage({ params }) {
   const { slug } = await params;
   const found = findArticle(slug);
   const crumbs = [
-    { name: "Home", url: "https://nimbuswms.com" },
-    { name: "Help", url: "https://nimbuswms.com/help" },
+    { name: "Home", url: "https://Nautiluswms.com" },
+    { name: "Help", url: "https://Nautiluswms.com/help" },
     {
       name: found?.article?.title || slug,
-      url: `https://nimbuswms.com/help/${slug}`,
+      url: `https://Nautiluswms.com/help/${slug}`,
     },
   ];
   return (

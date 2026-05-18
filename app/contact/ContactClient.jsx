@@ -30,7 +30,7 @@ const ROLES = [
 ];
 
 const USAGE_OPTIONS = [
-  "Evaluating Nimbus",
+  "Evaluating Nautilus",
   "Switching from another WMS",
   "Adding to existing stack",
   "Just exploring",
@@ -410,7 +410,7 @@ export default function ContactClient() {
               <p className={styles.successText}>
                 Thanks — we&apos;ve got it. You&apos;ll hear back within 4
                 business hours. Check spam if you don&apos;t see us — we send
-                from <strong>hello@nimbuswms.com</strong>.
+                from <strong>hello@Nautiluswms.com</strong>.
               </p>
               <button
                 type="button"

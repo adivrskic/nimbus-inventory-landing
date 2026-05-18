@@ -25,7 +25,7 @@ gsap.registerPlugin(ScrollTrigger);
 const FEATURED = {
   tag: "3PL & Distribution",
   quote:
-    "Before Nimbus, we ran a 200,000 sq ft warehouse on spreadsheets and prayer. Six months in, we've cut receiving errors by 80% and our team actually believes our inventory numbers. The AI route optimization alone saves us three hours a day on picking.",
+    "Before Nautilus, we ran a 200,000 sq ft warehouse on spreadsheets and prayer. Six months in, we've cut receiving errors by 80% and our team actually believes our inventory numbers. The AI route optimization alone saves us three hours a day on picking.",
   name: "Marcus Rivera",
   role: "Operations Manager",
   company: "BuildRight Supply",
@@ -35,7 +35,7 @@ const TESTIMONIALS = [
   {
     tag: "Manufacturing",
     quote:
-      "The integration story is what won us over. Nimbus syncs cleanly with our SAP environment and the team built us a custom connector for our legacy MRP in two weeks. Most vendors quoted six months.",
+      "The integration story is what won us over. Nautilus syncs cleanly with our SAP environment and the team built us a custom connector for our legacy MRP in two weeks. Most vendors quoted six months.",
     name: "Jessica Kim",
     role: "IT Director",
     company: "Pacific Materials",
@@ -43,7 +43,7 @@ const TESTIMONIALS = [
   {
     tag: "Building Materials",
     quote:
-      "Tracking 12 different unit types across hardwood, tile, and adhesive used to be a nightmare. Nimbus handles linear feet, pallets, and partial rolls without us having to think about it. Sales finally trusts the numbers.",
+      "Tracking 12 different unit types across hardwood, tile, and adhesive used to be a nightmare. Nautilus handles linear feet, pallets, and partial rolls without us having to think about it. Sales finally trusts the numbers.",
     name: "David Hernandez",
     role: "Warehouse Manager",
     company: "Continental Floors",
@@ -51,7 +51,7 @@ const TESTIMONIALS = [
   {
     tag: "Food & Beverage",
     quote:
-      "Lot tracking and FEFO are non-negotiable for us. Nimbus shipped both better than systems costing four times as much. Audit prep that used to take a week now takes an afternoon.",
+      "Lot tracking and FEFO are non-negotiable for us. Nautilus shipped both better than systems costing four times as much. Audit prep that used to take a week now takes an afternoon.",
     name: "Sarah Chen",
     role: "COO",
     company: "GreenField Foods",
@@ -67,7 +67,7 @@ const TESTIMONIALS = [
   {
     tag: "E-commerce & 3PL",
     quote:
-      "We onboarded 12 clients onto Nimbus in our first quarter. The multi-tenant isolation is rock solid, and the white-label dashboards have closed deals for us. Pricing per warehouse means margins improve as we scale.",
+      "We onboarded 12 clients onto Nautilus in our first quarter. The multi-tenant isolation is rock solid, and the white-label dashboards have closed deals for us. Pricing per warehouse means margins improve as we scale.",
     name: "Priya Patel",
     role: "Logistics Lead",
     company: "Cascade Distribution",
@@ -75,7 +75,7 @@ const TESTIMONIALS = [
   {
     tag: "Pharmaceuticals",
     quote:
-      "Audit trails, electronic signatures, lot genealogy — Nimbus has every box checked for FDA inspections. Our compliance reviews went from monthly fire drills to a thirty-minute review.",
+      "Audit trails, electronic signatures, lot genealogy — Nautilus has every box checked for FDA inspections. Our compliance reviews went from monthly fire drills to a thirty-minute review.",
     name: "Michael Torres",
     role: "Compliance Officer",
     company: "Apex Pharma",

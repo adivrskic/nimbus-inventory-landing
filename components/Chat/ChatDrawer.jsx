@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 // components/Chat/ChatDrawer.jsx
 // ──────────────────────────────────────────────────────────────────────────
-// Slide-in chat panel, styled to match the Nimbus visual vocabulary:
+// Slide-in chat panel, styled to match the Nautilus visual vocabulary:
 // sharp corners, mono font for everything except headlines, hairline rules.
 //
 // New in this version:
@@ -18,7 +18,7 @@ import { useChatStream } from "./useChatStream";
 import styles from "./ChatDrawer.module.css";
 
 const STARTERS = [
-  "What does Nimbus cost?",
+  "What does Nautilus cost?",
   "How does it compare to Fishbowl?",
   "Show me the AI features",
   "Talk to a human",
@@ -106,7 +106,7 @@ export default function ChatDrawer({ onClose, pathname, userEmail, userName }) {
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="Chat with Nimbus"
+        aria-label="Chat with Nautilus"
       >
         <Header
           streaming={streaming}
@@ -131,7 +131,9 @@ export default function ChatDrawer({ onClose, pathname, userEmail, userName }) {
             ref={inputRef}
             type="text"
             className={styles.input}
-            placeholder={streaming ? "Waiting…" : "Ask anything about Nimbus…"}
+            placeholder={
+              streaming ? "Waiting…" : "Ask anything about Nautilus…"
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={streaming}
@@ -164,7 +166,7 @@ function Header({ streaming, onClose, onReset, showReset }) {
         <MsgIcon />
       </div>
       <div className={styles.headerText}>
-        <div className={styles.headerTitle}>Ask Nimbus</div>
+        <div className={styles.headerTitle}>Ask Nautilus</div>
         <div className={styles.headerSub}>
           {streaming ? (
             <>
@@ -203,10 +205,10 @@ function Header({ streaming, onClose, onReset, showReset }) {
 function Welcome({ onPick }) {
   return (
     <div className={styles.welcome}>
-      <div className={styles.welcomeKicker}>ASK NIMBUS</div>
+      <div className={styles.welcomeKicker}>ASK Nautilus</div>
       <div className={styles.welcomeTitle}>What can I help with?</div>
       <p className={styles.welcomeDesc}>
-        I know everything about Nimbus — features, pricing, integrations,
+        I know everything about Nautilus — features, pricing, integrations,
         comparisons, and how things work in the app.
       </p>
       <div className={styles.suggestions}>
@@ -338,7 +340,7 @@ function EmailDraftBlock({ draft }) {
 
 const CTA_COPY = {
   demo: {
-    title: "Want to see Nimbus in action?",
+    title: "Want to see Nautilus in action?",
     sub: "30-minute walkthrough on your calendar.",
   },
   sales: {
@@ -347,7 +349,7 @@ const CTA_COPY = {
   },
   migration: {
     title: "Want to plan the migration?",
-    sub: "We'll map your current setup to Nimbus.",
+    sub: "We'll map your current setup to Nautilus.",
   },
   integration: {
     title: "Want to scope the integration?",

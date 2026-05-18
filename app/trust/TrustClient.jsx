@@ -223,10 +223,10 @@ export default function TrustClient() {
             Request our SOC 2 report
           </CornerButton>
           <a
-            href="mailto:security@nimbuswms.com"
+            href="mailto:security@Nautiluswms.com"
             className={styles.heroSecondary}
           >
-            security@nimbuswms.com →
+            security@Nautiluswms.com →
           </a>
         </div>
       </section>
@@ -339,15 +339,15 @@ export default function TrustClient() {
             <div className={styles.disclosureCol}>
               <div className={styles.disclosureLabel}>How to report</div>
               <p className={styles.disclosureText}>
-                Email security@nimbuswms.com. PGP key available on request.
+                Email security@Nautiluswms.com. PGP key available on request.
                 Include reproduction steps, affected endpoints, and your
                 proposed CVSS score if you have one.
               </p>
               <a
-                href="mailto:security@nimbuswms.com"
+                href="mailto:security@Nautiluswms.com"
                 className={styles.disclosureLink}
               >
-                security@nimbuswms.com →
+                security@Nautiluswms.com →
               </a>
             </div>
             <div className={styles.disclosureCol}>

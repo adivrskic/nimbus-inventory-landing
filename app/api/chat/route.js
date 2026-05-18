@@ -59,7 +59,7 @@ export async function POST(request) {
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "Chat is not configured. Try sales@nimbuswms.com." },
+      { error: "Chat is not configured. Try sales@Nautiluswms.com." },
       { status: 500 }
     );
   }

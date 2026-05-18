@@ -12,14 +12,14 @@ export async function generateMetadata({ params }) {
   if (!c) return { title: "Compare" };
 
   return {
-    title: `Nimbus vs ${c.name}`,
+    title: `Nautilus vs ${c.name}`,
     description: `Detailed comparison: ${c.heroDesc}`,
-    alternates: { canonical: `https://nimbuswms.com/compare/${slug}` },
+    alternates: { canonical: `https://Nautiluswms.com/compare/${slug}` },
     openGraph: {
       type: "website",
-      title: `Nimbus vs ${c.name} — Warehouse Management Compared`,
+      title: `Nautilus vs ${c.name} — Warehouse Management Compared`,
       description: c.heroDesc,
-      url: `https://nimbuswms.com/compare/${slug}`,
+      url: `https://Nautiluswms.com/compare/${slug}`,
     },
   };
 }

@@ -163,7 +163,7 @@ export default function LegalPage({ slug }) {
      otherwise we synthesize a generic line that fits any legal doc. */
   const recital =
     page.recital ||
-    `What follows is the ${page.title.toLowerCase()} governing your relationship with Nimbus WMS, Inc. Plain-English summaries appear in the right margin throughout — they're for reference; the body text on the left is what's legally binding.`;
+    `What follows is the ${page.title.toLowerCase()} governing your relationship with Nautilus WMS, Inc. Plain-English summaries appear in the right margin throughout — they're for reference; the body text on the left is what's legally binding.`;
 
   return (
     <div className={styles.page}>
@@ -231,7 +231,7 @@ export default function LegalPage({ slug }) {
           <div className={styles.signatureGrid}>
             <div className={styles.signatureBlock}>
               <div className={styles.signatureLabel}>Signed</div>
-              <div className={styles.signatureName}>Nimbus WMS, Inc.</div>
+              <div className={styles.signatureName}>Nautilus WMS, Inc.</div>
               <div className={styles.signatureLine} aria-hidden="true" />
               <div className={styles.signatureMeta}>
                 Effective {page.updated}
@@ -240,10 +240,10 @@ export default function LegalPage({ slug }) {
             <div className={styles.signatureContact}>
               <div className={styles.signatureLabel}>Questions</div>
               <a
-                href="mailto:legal@nimbuswms.com"
+                href="mailto:legal@Nautiluswms.com"
                 className={styles.signatureEmail}
               >
-                legal@nimbuswms.com
+                legal@Nautiluswms.com
               </a>
               <Link href="/" className={styles.signatureBack}>
                 ← Back to home

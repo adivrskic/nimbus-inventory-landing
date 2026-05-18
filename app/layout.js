@@ -15,13 +15,13 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://nimbuswms.com";
+const SITE_URL = "https://Nautiluswms.com";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Nimbus WMS — AI-Powered Warehouse Management",
-    template: "%s | Nimbus WMS",
+    default: "Nautilus WMS — AI-Powered Warehouse Management",
+    template: "%s | Nautilus WMS",
   },
   description:
     "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
@@ -37,16 +37,16 @@ export const metadata = {
     "3PL software",
     "warehouse automation",
   ],
-  authors: [{ name: "Nimbus" }],
-  creator: "Nimbus",
-  publisher: "Nimbus",
+  authors: [{ name: "Nautilus" }],
+  creator: "Nautilus",
+  publisher: "Nautilus",
   formatDetection: { email: false, telephone: false, address: false },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: SITE_URL,
-    siteName: "Nimbus WMS",
-    title: "Nimbus WMS — AI-Powered Warehouse Management",
+    siteName: "Nautilus WMS",
+    title: "Nautilus WMS — AI-Powered Warehouse Management",
     description:
       "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
     images: [
@@ -54,13 +54,13 @@ export const metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Nimbus WMS — AI-Powered Warehouse Management",
+        alt: "Nautilus WMS — AI-Powered Warehouse Management",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nimbus WMS — AI-Powered Warehouse Management",
+    title: "Nautilus WMS — AI-Powered Warehouse Management",
     description:
       "AI-powered warehouse intelligence for modern operations teams.",
     images: ["/og-image.png"],

@@ -58,7 +58,7 @@ const FEATURES = [
   {
     num: "05",
     title: "Smart cycle counting",
-    desc: "AI prioritizes which sections to count based on discrepancy risk. Scan at your pace — Nimbus handles reconciliation.",
+    desc: "AI prioritizes which sections to count based on discrepancy risk. Scan at your pace — Nautilus handles reconciliation.",
     stats: [
       { val: "70%", label: "Faster counts" },
       { val: "AI", label: "Prioritized" },

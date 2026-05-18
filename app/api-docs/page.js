@@ -3,14 +3,14 @@ import ApiDocsClient from "./ApiDocsClient";
 export const metadata = {
   title: "API Reference",
   description:
-    "REST API, webhooks, and SDKs for Nimbus WMS. Pull inventory, record scans, react to real-time events. v1 launches Q3 2026.",
-  alternates: { canonical: "https://nimbuswms.com/api-docs" },
+    "REST API, webhooks, and SDKs for Nautilus WMS. Pull inventory, record scans, react to real-time events. v1 launches Q3 2026.",
+  alternates: { canonical: "https://Nautiluswms.com/api-docs" },
   openGraph: {
     type: "website",
-    title: "API Reference — Nimbus WMS",
+    title: "API Reference — Nautilus WMS",
     description:
       "REST API, webhooks, and SDKs for warehouse operations. v1 launches Q3 2026.",
-    url: "https://nimbuswms.com/api-docs",
+    url: "https://Nautiluswms.com/api-docs",
   },
 };
 

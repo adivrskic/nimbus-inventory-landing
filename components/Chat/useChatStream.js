@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
-const STORAGE_KEY = "nimbus_chat_conv_id";
+const STORAGE_KEY = "Nautilus_chat_conv_id";
 
 function makeId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID)

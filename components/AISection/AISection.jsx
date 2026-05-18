@@ -222,6 +222,253 @@ function renderScramble(text, keyPrefix = "") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   DEBUG PANEL — depth + motion + parallax
+   Lives behind ?debug. Mutates shader uniforms and the motion ref
+   directly so changes are instant — no re-render, the next animate
+   frame just picks up the new values.
+   ═══════════════════════════════════════════════════════════════════════ */
+const DEPTH_DEFAULTS = {
+  near: 11,
+  far: 32,
+  alphaMin: 0.18,
+  perspective: 22,
+  blurExpand: 0.5,
+  blurSoftness: 0.45,
+};
+
+const MOTION_DEFAULTS = {
+  stiffness: 0.055,
+  damping: 0.78,
+  jitterAmp: 0.06,
+  jitterFreq: 0.4,
+  /* Parallax — small per-frame rotation applied to the scattered field
+     based on the active shape's animation progress. Yaw and pitch are
+     in radians, scaled by parallaxT ∈ [-1..1]. Defaults give ~3° max
+     yaw and ~2° max pitch at the extremes — subtle but visible. */
+  parallaxYaw: 0.05,
+  parallaxPitch: 0.035,
+};
+
+function DebugPanel({ uniformsRef, motionRef }) {
+  const [open, setOpen] = useState(true);
+  const [d, setD] = useState(DEPTH_DEFAULTS);
+  const [m, setM] = useState(MOTION_DEFAULTS);
+
+  const applyDepth = (key, val) => {
+    setD((prev) => ({ ...prev, [key]: val }));
+    const u = uniformsRef.current;
+    if (!u) return;
+    switch (key) {
+      case "near":
+        u.uDepthRange.value.x = val;
+        break;
+      case "far":
+        u.uDepthRange.value.y = val;
+        break;
+      case "alphaMin":
+        u.uDepthAlphaMin.value = val;
+        break;
+      case "perspective":
+        u.uPerspectiveScale.value = val;
+        break;
+      case "blurExpand":
+        u.uBlurExpand.value = val;
+        break;
+      case "blurSoftness":
+        u.uBlurSoftness.value = val;
+        break;
+    }
+  };
+
+  const applyMotion = (key, val) => {
+    setM((prev) => ({ ...prev, [key]: val }));
+    if (motionRef.current) motionRef.current[key] = val;
+  };
+
+  const reset = () => {
+    Object.entries(DEPTH_DEFAULTS).forEach(([k, v]) => applyDepth(k, v));
+    Object.entries(MOTION_DEFAULTS).forEach(([k, v]) => applyMotion(k, v));
+  };
+
+  const copyConfig = async () => {
+    const cfg =
+      `// ── Shader uniforms ──\n` +
+      `uDepthRange:       { value: new THREE.Vector2(${d.near.toFixed(
+        2
+      )}, ${d.far.toFixed(2)}) },\n` +
+      `uDepthAlphaMin:    { value: ${d.alphaMin.toFixed(3)} },\n` +
+      `uPerspectiveScale: { value: ${d.perspective.toFixed(2)} },\n` +
+      `uBlurExpand:       { value: ${d.blurExpand.toFixed(3)} },\n` +
+      `uBlurSoftness:     { value: ${d.blurSoftness.toFixed(3)} },\n\n` +
+      `// ── Motion defaults (motionRef) ──\n` +
+      `stiffness:     ${m.stiffness.toFixed(4)},\n` +
+      `damping:       ${m.damping.toFixed(3)},\n` +
+      `jitterAmp:     ${m.jitterAmp.toFixed(4)},\n` +
+      `jitterFreq:    ${m.jitterFreq.toFixed(3)},\n` +
+      `parallaxYaw:   ${m.parallaxYaw.toFixed(4)},\n` +
+      `parallaxPitch: ${m.parallaxPitch.toFixed(4)},`;
+    try {
+      await navigator.clipboard.writeText(cfg);
+    } catch {
+      console.log(cfg);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={styles.dbgToggle}
+      >
+        DEBUG
+      </button>
+    );
+  }
+
+  /* Each row: [label, key, min, max, step, formatter] */
+  const depthSliders = [
+    ["Focus near", "near", 0, 30, 0.5, (n) => n.toFixed(1)],
+    ["Focus far", "far", 5, 60, 0.5, (n) => n.toFixed(1)],
+    ["Alpha floor", "alphaMin", 0, 1, 0.01, (n) => n.toFixed(2)],
+    ["Perspective", "perspective", 5, 40, 0.5, (n) => n.toFixed(1)],
+    ["Bokeh expand", "blurExpand", 0, 2, 0.01, (n) => n.toFixed(2)],
+    ["Edge softness", "blurSoftness", 0, 0.5, 0.01, (n) => n.toFixed(2)],
+  ];
+
+  const motionSliders = [
+    ["Stiffness", "stiffness", 0.01, 0.2, 0.001, (n) => n.toFixed(3)],
+    ["Damping", "damping", 0, 0.95, 0.01, (n) => n.toFixed(2)],
+    ["Jitter amp", "jitterAmp", 0, 0.2, 0.001, (n) => n.toFixed(3)],
+    ["Jitter freq", "jitterFreq", 0.05, 1.5, 0.01, (n) => n.toFixed(2)],
+  ];
+
+  const parallaxSliders = [
+    ["Parallax yaw", "parallaxYaw", 0, 0.15, 0.001, (n) => n.toFixed(3)],
+    ["Parallax pitch", "parallaxPitch", 0, 0.1, 0.001, (n) => n.toFixed(3)],
+  ];
+
+  return (
+    <div className={styles.dbgPanel}>
+      <div className={styles.dbgHead}>
+        <span className={styles.dbgTitle}>DEBUG</span>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className={styles.dbgClose}
+          aria-label="Close debug panel"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className={styles.dbgSectionHead}>Depth — focus band</div>
+      {depthSliders.slice(0, 2).map(([label, key, min, max, step, fmt]) => (
+        <Slider
+          key={key}
+          label={label}
+          value={d[key]}
+          onChange={(v) => applyDepth(key, v)}
+          min={min}
+          max={max}
+          step={step}
+          format={fmt}
+        />
+      ))}
+
+      <div className={styles.dbgSectionHead}>Atmosphere</div>
+      {depthSliders.slice(2, 3).map(([label, key, min, max, step, fmt]) => (
+        <Slider
+          key={key}
+          label={label}
+          value={d[key]}
+          onChange={(v) => applyDepth(key, v)}
+          min={min}
+          max={max}
+          step={step}
+          format={fmt}
+        />
+      ))}
+
+      <div className={styles.dbgSectionHead}>Perspective & blur</div>
+      {depthSliders.slice(3).map(([label, key, min, max, step, fmt]) => (
+        <Slider
+          key={key}
+          label={label}
+          value={d[key]}
+          onChange={(v) => applyDepth(key, v)}
+          min={min}
+          max={max}
+          step={step}
+          format={fmt}
+        />
+      ))}
+
+      <div className={styles.dbgSectionHead}>Motion</div>
+      {motionSliders.map(([label, key, min, max, step, fmt]) => (
+        <Slider
+          key={key}
+          label={label}
+          value={m[key]}
+          onChange={(v) => applyMotion(key, v)}
+          min={min}
+          max={max}
+          step={step}
+          format={fmt}
+        />
+      ))}
+
+      <div className={styles.dbgSectionHead}>Parallax</div>
+      {parallaxSliders.map(([label, key, min, max, step, fmt]) => (
+        <Slider
+          key={key}
+          label={label}
+          value={m[key]}
+          onChange={(v) => applyMotion(key, v)}
+          min={min}
+          max={max}
+          step={step}
+          format={fmt}
+        />
+      ))}
+
+      <div className={styles.dbgActions}>
+        <button type="button" onClick={reset} className={styles.dbgBtn}>
+          Reset
+        </button>
+        <button
+          type="button"
+          onClick={copyConfig}
+          className={`${styles.dbgBtn} ${styles.dbgBtnPrimary}`}
+        >
+          Copy config
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Slider({ label, value, onChange, min, max, step, format }) {
+  return (
+    <div className={styles.dbgSlider}>
+      <div className={styles.dbgSliderHead}>
+        <span className={styles.dbgSliderLabel}>{label}</span>
+        <span className={styles.dbgSliderValue}>{format(value)}</span>
+      </div>
+      <input
+        type="range"
+        className={styles.dbgRange}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════ */
 export default function AISection() {
@@ -246,6 +493,17 @@ export default function AISection() {
      the viewport crosses the desktop/mobile breakpoint on resize. */
   const rebuildShapesRef = useRef(null);
 
+  /* Live-tunable refs exposed to the debug panel. Both are mutated
+     directly so the next animate() frame picks up changes — no
+     re-creating the THREE scene. */
+  const uniformsRef = useRef(null);
+  const motionRef = useRef({ ...MOTION_DEFAULTS });
+
+  const [debug, setDebug] = useState(false);
+  useEffect(() => {
+    setDebug(new URLSearchParams(window.location.search).has("debug"));
+  }, []);
+
   /* Section visibility observer */
   useEffect(() => {
     const section = sectionRef.current;
@@ -269,9 +527,6 @@ export default function AISection() {
 
   const CFG = {
     smoothFormation: 0.18,
-    smoothPosition: 0.085,
-    jitterBase: 0.045,
-    jitterFreqBase: 0.55,
     camZ: 16,
     camZMobile: 22,
   };
@@ -510,6 +765,11 @@ export default function AISection() {
       for (let i = 0; i < PARTICLE_COUNT * 3; i++) physicsPos[i] = scattered[i];
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
 
+      /* Per-particle velocity buffer. The spring-damper integrator
+         needs persistent velocity so particles carry momentum frame
+         to frame — that's what gives them weight on settle. */
+      const physicsVel = new Float32Array(PARTICLE_COUNT * 3);
+
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
         "position",
@@ -534,10 +794,20 @@ export default function AISection() {
         depthWrite: false,
         uniforms: {
           uColorMix: { value: 0 },
-          uAccentColor: { value: new THREE.Color(0xd4a853) },
+          /* Footer-matched gold — #e7c074, same warm tone as the helix
+             particles in the footer. Was #d4a853 (slightly more amber). */
+          uAccentColor: { value: new THREE.Color(0xe7c074) },
           uGlobalAlpha: { value: 0 },
 
-          // Depth / DoF / atmospheric perspective
+          /* Depth / DoF / atmospheric perspective.
+             uDepthRange — view-space distances [near, far]. Inside this
+               band, particles are sharp and bright; outside, they fade
+               and soften. Camera sits at z=16 desktop / z=22 mobile, so
+               11..32 covers shape body → atmospheric falloff.
+             uDepthAlphaMin — alpha floor for far particles.
+             uPerspectiveScale — base 1/d size attenuation strength.
+             uBlurExpand — how much far particles grow to fake bokeh.
+             uBlurSoftness — width of the soft-edge falloff at far end. */
           uDepthRange: { value: new THREE.Vector2(11.0, 32.0) },
           uDepthAlphaMin: { value: 0.18 },
           uPerspectiveScale: { value: 22.0 },
@@ -545,6 +815,9 @@ export default function AISection() {
           uBlurSoftness: { value: 0.45 },
         },
       });
+
+      /* Expose uniforms to the debug panel for live tweaking. */
+      uniformsRef.current = material.uniforms;
 
       const points = new THREE.Points(geometry, material);
       scene.add(points);
@@ -577,8 +850,7 @@ export default function AISection() {
         const activeShape = shapes[s.activeShape];
         if (!activeShape) return;
 
-        /* ── Compute interpolated pose for the active shape ──
-           Always scroll-driven now — debug preview scrubber removed. */
+        /* ── Compute interpolated pose for the active shape ── */
         const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
         const animP = animProgress(scrollP);
 
@@ -613,9 +885,23 @@ export default function AISection() {
           params.offsetY +
           (params.offsetYEnd - params.offsetY) * animP;
 
-        const k = CFG.smoothPosition;
-        const jb = CFG.jitterBase;
-        const jf = CFG.jitterFreqBase;
+        /* Motion params live in a ref so the debug panel can tune them
+           live without re-creating the THREE scene. */
+        const mot = motionRef.current;
+        const k = mot.stiffness;
+        const damp = mot.damping;
+        const jb = mot.jitterAmp;
+        const jf = mot.jitterFreq;
+
+        /* ── Parallax: small-angle rotation of the scattered field ──
+           As you scroll through a shape's window, the scattered cloud
+           subtly counter-rotates — closer particles shift more than
+           far ones, which is the classic camera-pan parallax cue. The
+           formed shape is unaffected (it has its own rotation), so the
+           effect only shows where particles aren't fully formed. */
+        const parallaxT = (animP - 0.5) * 2; // [-1..1]
+        const pYaw = parallaxT * mot.parallaxYaw;
+        const pPitch = parallaxT * mot.parallaxPitch;
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
@@ -647,34 +933,67 @@ export default function AISection() {
           const formedY = py + offY;
           const formedZ = pz;
 
-          const targetX =
-            scattered[i3] * (1 - sFormation) + formedX * sFormation;
-          const targetY =
-            scattered[i3 + 1] * (1 - sFormation) + formedY * sFormation;
-          const targetZ =
-            scattered[i3 + 2] * (1 - sFormation) + formedZ * sFormation;
+          /* ── Apply parallax to the scattered position ──
+             Standard small-angle camera rotation: a point at depth z
+             appears shifted by -z*yaw horizontally and +z*pitch
+             vertically. We also fix up z by the corresponding amount
+             so the rotation stays a proper rotation rather than a
+             pure shear. */
+          const sxRaw = scattered[i3];
+          const syRaw = scattered[i3 + 1];
+          const szRaw = scattered[i3 + 2];
+          const sx = sxRaw - szRaw * pYaw;
+          const sy = syRaw + szRaw * pPitch;
+          const sz = szRaw + sxRaw * pYaw - syRaw * pPitch;
 
-          physicsPos[i3] += (targetX - physicsPos[i3]) * k;
-          physicsPos[i3 + 1] += (targetY - physicsPos[i3 + 1]) * k;
-          physicsPos[i3 + 2] += (targetZ - physicsPos[i3 + 2]) * k;
+          const targetX = sx * (1 - sFormation) + formedX * sFormation;
+          const targetY = sy * (1 - sFormation) + formedY * sFormation;
+          const targetZ = sz * (1 - sFormation) + formedZ * sFormation;
 
-          /* Ambient jitter */
-          const s1 = seeds[i3],
-            s2 = seeds[i3 + 1],
-            s3 = seeds[i3 + 2];
-          const f1 = jf + s1 * 0.3;
-          const f2 = jf * 2.4 + s2 * 0.4;
-          const ph1 = t * f1 + s1 * TAU;
-          const ph2 = t * f2 + s2 * TAU;
-          const sinA = Math.sin(ph1);
-          const cosA = Math.cos(ph1);
-          const sinB = Math.sin(ph2);
-          const amp = jb * (0.55 + s3 * 0.9);
+          /* ── Spring-damper convergence ──
+             Velocity persists frame-to-frame (scaled by `damp`) and
+             accelerates toward the target (scaled by `k`). Slightly
+             underdamped — particles arrive with a barely-perceptible
+             settle, giving them weight rather than asymptotic ease. */
+          const dx = targetX - physicsPos[i3];
+          const dy = targetY - physicsPos[i3 + 1];
+          const dz = targetZ - physicsPos[i3 + 2];
 
-          currentPos[i3] = physicsPos[i3] + (sinA * 0.65 + sinB * 0.35) * amp;
-          currentPos[i3 + 1] =
-            physicsPos[i3 + 1] + (cosA * 0.55 + Math.cos(ph2) * 0.45) * amp;
-          currentPos[i3 + 2] = physicsPos[i3 + 2] + sinB * amp * 0.45;
+          physicsVel[i3] = physicsVel[i3] * damp + dx * k;
+          physicsVel[i3 + 1] = physicsVel[i3 + 1] * damp + dy * k;
+          physicsVel[i3 + 2] = physicsVel[i3 + 2] * damp + dz * k;
+
+          physicsPos[i3] += physicsVel[i3];
+          physicsPos[i3 + 1] += physicsVel[i3 + 1];
+          physicsPos[i3 + 2] += physicsVel[i3 + 2];
+
+          /* ── Pseudo-curl ambient drift ──
+             Each axis is driven by sin of a *different* phase, with
+             golden-ratio frequency offsets. This decorrelates X/Y/Z
+             so particles trace small wandering loops rather than
+             synchronized oscillations. Per-particle frequency
+             variation (via seed s3) further breaks up group rhythm. */
+          const s1 = seeds[i3];
+          const s2 = seeds[i3 + 1];
+          const s3 = seeds[i3 + 2];
+
+          const fScale = jf * (0.7 + s3 * 0.6);
+          const tA = t * fScale + s1 * TAU;
+          const tB = t * fScale * 1.618 + s2 * TAU + 1.7;
+          const tC = t * fScale * 0.611 + s3 * TAU + 3.1;
+
+          /* Amplitude breathes harder while particles are unformed.
+             The 0.55 floor keeps formed shapes alive — not frozen. */
+          const ampScale = 0.55 + (1 - sFormation) * 0.75;
+          const amp = jb * (0.5 + s3 * 0.9) * ampScale;
+
+          const jx = Math.sin(tB) - Math.cos(tC) * 0.6;
+          const jy = Math.sin(tC) - Math.cos(tA) * 0.6;
+          const jz = Math.sin(tA) - Math.cos(tB) * 0.4;
+
+          currentPos[i3] = physicsPos[i3] + jx * amp;
+          currentPos[i3 + 1] = physicsPos[i3 + 1] + jy * amp;
+          currentPos[i3 + 2] = physicsPos[i3 + 2] + jz * amp * 0.7;
         }
 
         geometry.attributes.position.needsUpdate = true;
@@ -689,6 +1008,7 @@ export default function AISection() {
       cleanup = () => {
         window.removeEventListener("resize", resize);
         rebuildShapesRef.current = null;
+        uniformsRef.current = null;
         geometry.dispose();
         material.dispose();
         renderer.dispose();
@@ -765,6 +1085,8 @@ export default function AISection() {
 
         <div className={styles.trailingSpacer} />
       </div>
+
+      {debug && <DebugPanel uniformsRef={uniformsRef} motionRef={motionRef} />}
     </section>
   );
 }

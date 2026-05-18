@@ -1,15 +1,15 @@
 import IndustriesIndexClient from "./IndustriesIndexClient";
 
 export const metadata = {
-  title: "Industries — Nimbus",
+  title: "Industries — Nautilus",
   description:
-    "Nimbus is built for the operational quirks of every warehouse type — flooring and building materials, manufacturing, food and beverage, automotive, pharmaceuticals, e-commerce 3PL, electrical, and agriculture.",
-  alternates: { canonical: "https://nimbuswms.com/industries" },
+    "Nautilus is built for the operational quirks of every warehouse type — flooring and building materials, manufacturing, food and beverage, automotive, pharmaceuticals, e-commerce 3PL, electrical, and agriculture.",
+  alternates: { canonical: "https://Nautiluswms.com/industries" },
   openGraph: {
     type: "website",
-    title: "Industries Nimbus serves",
+    title: "Industries Nautilus serves",
     description: "Built for the operational quirks of every warehouse type.",
-    url: "https://nimbuswms.com/industries",
+    url: "https://Nautiluswms.com/industries",
   },
 };
 

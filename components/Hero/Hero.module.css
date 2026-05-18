@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
    HERO — Deep Underwater Theme
    ───────────────────────────────────────────────────────────────────────
-   Changes from the original Nimbus Hero.module.css:
+   Changes from the original Nautilus Hero.module.css:
    1. .hero — `background: var(--black)` is now `background: transparent`
       so the html gradient shows through.
    2. .overlay — was a hardcoded `linear-gradient(rgba(0,0,0,X)...)`

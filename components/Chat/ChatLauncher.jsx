@@ -2,7 +2,7 @@
 // components/Chat/ChatLauncher.jsx
 // ──────────────────────────────────────────────────────────────────────────
 // Floating chat launcher that sits in the bottom-right corner of every
-// marketing page. Renders a shared CornerButton labeled "Ask Nimbus" so it
+// marketing page. Renders a shared CornerButton labeled "Ask Nautilus" so it
 // matches the rest of the site's CTA vocabulary.
 //
 // Mounted via ChatProvider in app/layout.js — do NOT import or render this
@@ -23,7 +23,7 @@ export default function ChatLauncher({ onOpen, hidden }) {
       <CornerButton
         variant="primary"
         onClick={onOpen}
-        ariaLabel="Open chat with Nimbus"
+        ariaLabel="Open chat with Nautilus"
         className={styles.launcher}
       >
         <ChatIcon />

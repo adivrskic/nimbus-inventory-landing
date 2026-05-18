@@ -427,7 +427,7 @@ export default function StatusClient() {
             />
           </h1>
           <p className={styles.sub}>
-            Service health, uptime, and incident history across the Nimbus
+            Service health, uptime, and incident history across the Nautilus
             platform.
           </p>
         </header>

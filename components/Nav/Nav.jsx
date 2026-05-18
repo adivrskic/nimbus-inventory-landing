@@ -109,14 +109,14 @@ const MORE_GROUPS = [
         desc: "Estimate your annual savings",
         href: "/calculator",
       },
-      { title: "Compare", desc: "Nimbus vs alternatives", href: "/compare" },
+      { title: "Compare", desc: "Nautilus vs alternatives", href: "/compare" },
     ],
   },
   {
     label: "Resources",
     items: [
       {
-        title: "Ask Nimbus",
+        title: "Ask Nautilus",
         desc: "Chat with our AI assistant",
         href: "/ask",
       },
@@ -155,7 +155,7 @@ const MORE_GROUPS = [
 /* Surface every secondary page in the mobile "Resources" section —
    mirrors the desktop More mega menu since mobile can't fan out the same way. */
 const EXTRA_LINKS = [
-  { text: "Ask Nimbus", href: "/ask" },
+  { text: "Ask Nautilus", href: "/ask" },
   { text: "Pricing", href: "/pricing" },
   { text: "ROI Calculator", href: "/calculator" },
   { text: "Compare", href: "/compare" },
@@ -484,7 +484,7 @@ export default function Nav({ onDemo, dark }) {
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nautilus</span>
-            <span className={styles.logoSub}>Inventory Management Systems</span>
+            <span className={styles.logoSub}>Inventory</span>
           </div>
         </TransitionLink>
 
@@ -737,7 +737,7 @@ export default function Nav({ onDemo, dark }) {
                 className={styles.megaFeatured}
                 onClick={() => setOpenMenu(null)}
               >
-                <div className={styles.megaFeaturedTitle}>Ask Nimbus</div>
+                <div className={styles.megaFeaturedTitle}>Ask Nautilus</div>
                 <div className={styles.megaFeaturedDesc}>
                   Chat with our AI for pricing, comparisons, and instant
                   answers.

@@ -23,7 +23,7 @@ import styles from "./ask-client.module.css";
 
 const STARTERS = [
   "Pricing for 3 warehouses",
-  "How does Nimbus compare to Fishbowl?",
+  "How does Nautilus compare to Fishbowl?",
   "Will it work for cold storage?",
   "Show me the AI features",
   "What's the migration look like?",
@@ -98,9 +98,9 @@ export default function AskClient({ userEmail, userName } = {}) {
           <div ref={scrollRef} className={styles.scrollRegion}>
             {isEmpty ? (
               <header className={styles.intro}>
-                <div className={styles.kicker}>ASK NIMBUS</div>
+                <div className={styles.kicker}>ASK Nautilus</div>
                 <h1 className={styles.h1}>
-                  Instant answers about Nimbus.
+                  Instant answers about Nautilus.
                   <span className={styles.h1Dim}> Sources cited.</span>
                 </h1>
                 <p className={styles.lead}>
@@ -151,7 +151,7 @@ export default function AskClient({ userEmail, userName } = {}) {
               type="text"
               className={styles.input}
               placeholder={
-                streaming ? "Waiting…" : "Ask anything about Nimbus…"
+                streaming ? "Waiting…" : "Ask anything about Nautilus…"
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -287,7 +287,7 @@ function AskEmail({ draft }) {
 function AskCTA({ cta, onDismiss }) {
   const COPY = {
     demo: {
-      title: "Want to see Nimbus in action?",
+      title: "Want to see Nautilus in action?",
       sub: "30-minute walkthrough on your calendar.",
     },
     sales: {
@@ -296,7 +296,7 @@ function AskCTA({ cta, onDismiss }) {
     },
     migration: {
       title: "Want to plan the migration?",
-      sub: "We'll map your current setup to Nimbus.",
+      sub: "We'll map your current setup to Nautilus.",
     },
     integration: {
       title: "Want to scope the integration?",

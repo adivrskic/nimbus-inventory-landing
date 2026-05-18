@@ -44,7 +44,7 @@ const HEADLINE_LINES = [
 ];
 
 const DESC_LINES = [
-  "Nimbus unifies scanning, spatial mapping,",
+  "Nautilus unifies scanning, spatial mapping,",
   "and predictive AI into a single platform that",
   "learns your operation and optimizes it in real time.",
 ];

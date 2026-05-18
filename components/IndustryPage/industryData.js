@@ -5,7 +5,7 @@ export const INDUSTRIES = [
     headline: ["Built for the", "building trade."],
     accentWord: "building",
     heroDesc:
-      "Track hardwood, tile, carpet rolls, and adhesive across sprawling warehouses. Nimbus handles lot numbers, linear footage, and partial-pallet inventory.",
+      "Track hardwood, tile, carpet rolls, and adhesive across sprawling warehouses. Nautilus handles lot numbers, linear footage, and partial-pallet inventory.",
     challenges: [
       {
         title: "Varied unit types",
@@ -23,7 +23,7 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "Multi-unit inventory",
-        desc: "Track the same product in square feet, cases, and pallets simultaneously. Nimbus converts between units automatically.",
+        desc: "Track the same product in square feet, cases, and pallets simultaneously. Nautilus converts between units automatically.",
         stat: "12+",
         statLabel: "Unit types",
       },
@@ -45,7 +45,7 @@ export const INDUSTRIES = [
       { val: "3x", label: "Faster receiving" },
       { val: "99.5%", label: "Order accuracy" },
     ],
-    cta: "See how Nimbus handles building materials",
+    cta: "See how Nautilus handles building materials",
   },
   {
     slug: "manufacturing-assembly",
@@ -71,7 +71,7 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "BOM management",
-        desc: "Link raw materials to finished goods. Nimbus automatically decrements component stock when assemblies are completed.",
+        desc: "Link raw materials to finished goods. Nautilus automatically decrements component stock when assemblies are completed.",
         stat: "Auto",
         statLabel: "BOM deductions",
       },
@@ -93,7 +93,7 @@ export const INDUSTRIES = [
       { val: "2x", label: "Throughput" },
       { val: "98%", label: "On-time delivery" },
     ],
-    cta: "See how Nimbus supports manufacturing",
+    cta: "See how Nautilus supports manufacturing",
   },
   {
     slug: "food-beverage",
@@ -101,7 +101,7 @@ export const INDUSTRIES = [
     headline: ["Freshness is", "non-negotiable."],
     accentWord: "non-negotiable.",
     heroDesc:
-      "FIFO enforcement, expiration tracking, and temperature zone mapping. Nimbus ensures compliance while cutting spoilage and waste.",
+      "FIFO enforcement, expiration tracking, and temperature zone mapping. Nautilus ensures compliance while cutting spoilage and waste.",
     challenges: [
       {
         title: "Expiration management",
@@ -119,7 +119,7 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "Expiration alerts",
-        desc: "Nimbus tracks best-by, sell-by, and use-by dates for every item. Alerts fire days before anything expires.",
+        desc: "Nautilus tracks best-by, sell-by, and use-by dates for every item. Alerts fire days before anything expires.",
         stat: "5 days",
         statLabel: "Advance notice",
       },
@@ -131,7 +131,7 @@ export const INDUSTRIES = [
       },
       {
         title: "Zone mapping",
-        desc: "Assign temperature zones to warehouse sections. Nimbus prevents items from being stored in wrong conditions.",
+        desc: "Assign temperature zones to warehouse sections. Nautilus prevents items from being stored in wrong conditions.",
         stat: "4",
         statLabel: "Zone types",
       },
@@ -141,7 +141,7 @@ export const INDUSTRIES = [
       { val: "100%", label: "FIFO compliance" },
       { val: "0", label: "Recall incidents" },
     ],
-    cta: "See how Nimbus handles food safety",
+    cta: "See how Nautilus handles food safety",
   },
   {
     slug: "automotive-parts",
@@ -167,7 +167,7 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "AI part matching",
-        desc: "Describe what you need in plain language. Nimbus finds the right SKU across all numbering systems instantly.",
+        desc: "Describe what you need in plain language. Nautilus finds the right SKU across all numbering systems instantly.",
         stat: "<200ms",
         statLabel: "Search speed",
       },
@@ -189,7 +189,7 @@ export const INDUSTRIES = [
       { val: "70%", label: "Faster lookups" },
       { val: "50%", label: "Less dead stock" },
     ],
-    cta: "See how Nimbus handles auto parts",
+    cta: "See how Nautilus handles auto parts",
   },
   {
     slug: "pharmaceuticals-medical",
@@ -215,13 +215,13 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "Serial number tracking",
-        desc: "Scan and verify individual serial numbers. Nimbus maintains the complete chain of custody for every unit.",
+        desc: "Scan and verify individual serial numbers. Nautilus maintains the complete chain of custody for every unit.",
         stat: "100%",
         statLabel: "Serialized",
       },
       {
         title: "Cold chain logging",
-        desc: "Integrate with temperature monitors. Nimbus logs conditions and alerts immediately on excursions.",
+        desc: "Integrate with temperature monitors. Nautilus logs conditions and alerts immediately on excursions.",
         stat: "Continuous",
         statLabel: "Monitoring",
       },
@@ -237,7 +237,7 @@ export const INDUSTRIES = [
       { val: "0", label: "Excursion losses" },
       { val: "99.99%", label: "Tracking accuracy" },
     ],
-    cta: "See how Nimbus handles pharma compliance",
+    cta: "See how Nautilus handles pharma compliance",
   },
   {
     slug: "ecommerce-3pl",
@@ -285,7 +285,7 @@ export const INDUSTRIES = [
       { val: "3x", label: "Peak capacity" },
       { val: "0", label: "Oversells" },
     ],
-    cta: "See how Nimbus handles e-commerce fulfillment",
+    cta: "See how Nautilus handles e-commerce fulfillment",
   },
   {
     slug: "electrical-plumbing",
@@ -311,13 +311,13 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "Dual-unit tracking",
-        desc: "Track bulk and unit quantities simultaneously. Nimbus knows a spool has 347 feet remaining without manual counting.",
+        desc: "Track bulk and unit quantities simultaneously. Nautilus knows a spool has 347 feet remaining without manual counting.",
         stat: "Dual",
         statLabel: "Unit tracking",
       },
       {
         title: "Bin location mapping",
-        desc: "Every bin, drawer, and shelf position is mapped. Scan a part number and Nimbus tells you exactly where to look.",
+        desc: "Every bin, drawer, and shelf position is mapped. Scan a part number and Nautilus tells you exactly where to look.",
         stat: "<3s",
         statLabel: "Location time",
       },
@@ -333,7 +333,7 @@ export const INDUSTRIES = [
       { val: "45%", label: "Less overstock" },
       { val: "99%", label: "Bin accuracy" },
     ],
-    cta: "See how Nimbus handles supply distribution",
+    cta: "See how Nautilus handles supply distribution",
   },
   {
     slug: "agriculture-seed",
@@ -365,7 +365,7 @@ export const INDUSTRIES = [
       },
       {
         title: "Bulk inventory",
-        desc: "Integrate with scales and flow meters. Nimbus updates inventory as product moves in and out of storage.",
+        desc: "Integrate with scales and flow meters. Nautilus updates inventory as product moves in and out of storage.",
         stat: "Auto",
         statLabel: "Scale integration",
       },
@@ -381,6 +381,6 @@ export const INDUSTRIES = [
       { val: "50%", label: "Faster audits" },
       { val: "0", label: "Compliance gaps" },
     ],
-    cta: "See how Nimbus handles agriculture",
+    cta: "See how Nautilus handles agriculture",
   },
 ];
