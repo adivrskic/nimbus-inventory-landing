@@ -84,7 +84,7 @@ for (let i = 0; i <= COLS; i++) {
 /* ─── COLORS ────────────────────────────────────────────────────────── */
 const C_BG = 0x050d1c; // bg — lighter "sky" the warehouse floats in
 const C_FOG = 0x050d1c; // matches bg so distant objects fade cleanly
-const C_FLOOR = 0x030812; // floor — darker than bg, reads as a deep pool
+const C_FLOOR = 0x040812; // floor — darker than bg, reads as a deep pool
 const C_RACK = 0x122842; // mid-navy racks, slightly darker than before
 const C_RACK_EDGE = 0x426b91; // a touch brighter cool edge for silhouette pop
 const C_GOLD = 0xd4a853;

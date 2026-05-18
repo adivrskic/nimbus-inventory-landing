@@ -150,17 +150,21 @@ export default function Hero({ onDemo }) {
     /* ── FAST CONTENT FADE ─────────────────────────────────────────────
        Content + stats are gone by 30% scroll into the hero (was 70%).
        Tighter scrub (1 instead of 1.5) for snappier response. */
-    gsap.to([contentRef.current, sideRef.current], {
-      y: -80,
-      opacity: 0,
-      ease: "none",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "30% top",
-        scrub: 1,
-      },
-    });
+    gsap.fromTo(
+      [contentRef.current, sideRef.current],
+      { opacity: 1, y: 0 },
+      {
+        y: -80,
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "40% top",
+          scrub: 1,
+        },
+      }
+    );
 
     /* Video bg resolves */
     gsap.to(videoBgRef.current, {
@@ -174,17 +178,13 @@ export default function Hero({ onDemo }) {
       },
     });
 
-    /* ── FAST WHOLE-SECTION FADE ───────────────────────────────────────
-       Entire hero dissolves into the gradient by 50% scroll (was 90%).
-       Even tighter scrub (0.5) so the dissolve tracks scroll directly
-       without lagging behind. */
     gsap.to(sectionRef.current, {
       opacity: 0,
       ease: "power2.in",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "15% top",
-        end: "50% top",
+        end: "60% top",
         scrub: 0.5,
       },
     });

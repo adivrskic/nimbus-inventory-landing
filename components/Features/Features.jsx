@@ -463,12 +463,9 @@ export default function Features() {
     <section id="features" ref={sectionRef} className={styles.section}>
       <div ref={headerRef} className={styles.header}>
         <h2 className="heading-lg gsap-hidden">
-          Engineered for the <em className="accent-italic">warehouse floor</em>
+          Engineered for the <br />
+          <em className="accent-italic">warehouse floor</em>
         </h2>
-        <p className="body-text--display gsap-hidden-sm">
-          Every feature powered by AI, built for operations teams, tested in
-          real facilities.
-        </p>
       </div>
 
       <div ref={rowsRef} className={styles.rows}>
