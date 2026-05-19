@@ -1,10 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   NAV — Deep Underwater Theme
-   ───────────────────────────────────────────────────────────────────────
-   Frosted glass on scroll, with the full set of mega menu styles that
-   the previous drop accidentally trimmed: .megaRichItem (title+desc
-   menu links), .megaRichTitle, .megaRichDesc, and the .megaFeatured*
-   block (the ROI Calculator promo card in the More menu).
+   NAV — Deep Underwater Theme · Frosted Glass
+
+   Two changes from the previous version:
+
+   1. The frosted glass effect is now PRESENT FROM THE FIRST PAINT,
+      not just after scroll. The previous transparent default looked
+      disconnected from the dark scene below — the nav appeared to
+      float in the void. Now there's always a thin frost; .scrolled
+      just deepens it.
+
+   2. All semi-transparent base colors moved from rgba(2, 10, 22, …)
+      to rgba(4, 9, 28, …). That second value is the EXACT rgb
+      decomposition of #04091c — the section bg color the warehouse
+      floor and the page beneath it both resolve to. Now the nav,
+      mega menu, mobile sheet, and scrim all tint toward the same
+      navy as everything else.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .nav {
@@ -15,29 +25,38 @@
   z-index: 100;
   height: 72px;
   /* Matches the floating chat launcher's `right: 24px` offset so the
-       rightmost nav element and the chat button share a vertical
-       gutter line. */
+         rightmost nav element and the chat button share a vertical
+         gutter line. */
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: transparent;
+
+  /* Frosted glass present at all times. Light enough to see through
+       to the hero/scene below, dark enough to keep nav text legible. */
+  background: rgba(4, 9, 28, 0.42);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-bottom: 1px solid rgba(160, 200, 235, 0.05);
+
   transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
-  border-bottom: 1px solid transparent;
 }
+
 .scrolled {
-  background: rgba(2, 10, 22, 0.55);
+  /* On scroll: same color, more opacity + slightly stronger blur for
+       the "the surface settled in" feel. */
+  background: rgba(4, 9, 28, 0.68);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border-bottom-color: rgba(160, 200, 235, 0.08);
+  border-bottom-color: rgba(160, 200, 235, 0.09);
 }
 
 .dark,
 .dark.scrolled {
-  background: rgba(2, 10, 22, 0.55);
+  background: rgba(4, 9, 28, 0.68);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border-bottom-color: rgba(160, 200, 235, 0.08);
+  border-bottom-color: rgba(160, 200, 235, 0.09);
 }
 
 .logo {
@@ -157,8 +176,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     MEGA MENU SHELL — frosted glass
-     ═══════════════════════════════════════════════════════════════════════ */
+       MEGA MENU SHELL — frosted glass
+       ═══════════════════════════════════════════════════════════════════════ */
 
 .megaWrap {
   position: fixed;
@@ -169,13 +188,22 @@
   height: 0;
   opacity: 0;
   overflow: hidden;
-  background: rgba(2, 10, 22, 0.78);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+
+  /* Mega menu is denser (more content, needs readability) so we push
+       opacity higher than the nav. Same base color → no perceived shift
+       between the two surfaces. */
+  background: rgba(4, 9, 28, 0.82);
+  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
   border-bottom: 1px solid rgba(160, 200, 235, 0.08);
+
+  /* Subtle inner highlight on the top edge — sells the "glass" feel,
+       reads as a hairline reflection where the panel meets the nav. */
+  box-shadow: inset 0 1px 0 0 rgba(212, 168, 83, 0.06),
+    0 20px 40px -12px rgba(0, 0, 0, 0.4);
 }
 .megaWrapDark {
-  background: rgba(2, 10, 22, 0.85);
+  background: rgba(4, 9, 28, 0.88);
 }
 .megaPanel {
   position: absolute;
@@ -236,14 +264,14 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     MEGA MENU GRIDS
-     ───────────────────────────────────────────────────────────────────────
-     All three mega menus share .megaRichItem (title + desc, brighter
-     title, gold hover) but lay out differently:
-       - Integrations:  3-col category grid (.megaCols + .megaMoreCol)
-       - Industries:    4-col flat grid (.megaIndustriesGrid)
-       - More:          4-col category grid (.megaMoreGrid + .megaMoreCol)
-     ═══════════════════════════════════════════════════════════════════════ */
+       MEGA MENU GRIDS
+       ───────────────────────────────────────────────────────────────────────
+       All three mega menus share .megaRichItem (title + desc, brighter
+       title, gold hover) but lay out differently:
+         - Integrations:  3-col category grid (.megaCols + .megaMoreCol)
+         - Industries:    4-col flat grid (.megaIndustriesGrid)
+         - More:          4-col category grid (.megaMoreGrid + .megaMoreCol)
+       ═══════════════════════════════════════════════════════════════════════ */
 
 .megaCols {
   display: grid;
@@ -276,12 +304,12 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     MEGA RICH ITEM — title + descriptor link
-     ───────────────────────────────────────────────────────────────────────
-     Used by all three mega menus. Negative horizontal margin lets the
-     hover background extend slightly past the column's natural item
-     width so it feels generous, not boxy.
-     ═══════════════════════════════════════════════════════════════════════ */
+       MEGA RICH ITEM — title + descriptor link
+       ───────────────────────────────────────────────────────────────────────
+       Used by all three mega menus. Negative horizontal margin lets the
+       hover background extend slightly past the column's natural item
+       width so it feels generous, not boxy.
+       ═══════════════════════════════════════════════════════════════════════ */
 .megaRichItem {
   display: flex;
   flex-direction: column;
@@ -314,11 +342,11 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     MEGA FEATURED CALLOUT — used in the More mega menu (ROI Calculator)
-     ───────────────────────────────────────────────────────────────────────
-     Gold-tinted promo card with arrow lower-right. Sits on the LEFT side
-     of the More mega menu below the .megaDesc.
-     ═══════════════════════════════════════════════════════════════════════ */
+       MEGA FEATURED CALLOUT — used in the More mega menu (ROI Calculator)
+       ───────────────────────────────────────────────────────────────────────
+       Gold-tinted promo card with arrow lower-right. Sits on the LEFT side
+       of the More mega menu below the .megaDesc.
+       ═══════════════════════════════════════════════════════════════════════ */
 .megaFeatured {
   position: relative;
   display: block;
@@ -373,17 +401,19 @@
   position: fixed;
   inset: 0;
   z-index: 98;
-  background: rgba(2, 6, 15, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  /* Same navy family — when the mega opens, the entire stack reads as
+       one continuous frosted surface tinted toward #04091c. */
+  background: rgba(4, 9, 28, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     RESPONSIVE — mega menu
-     ═══════════════════════════════════════════════════════════════════════ */
+       RESPONSIVE — mega menu
+       ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .nav {
     padding: 0 24px;
@@ -441,8 +471,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-     HAMBURGER + MOBILE MENU
-     ═══════════════════════════════════════════════════════════════════════ */
+       HAMBURGER + MOBILE MENU
+       ═══════════════════════════════════════════════════════════════════════ */
 
 .hamburger {
   display: none;
@@ -482,9 +512,11 @@
   inset: 0;
   top: 60px;
   z-index: 9998;
-  background: rgba(2, 10, 22, 0.85);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  /* Mobile sheet runs near opaque so text always reads on small
+       screens, but still tints to the same navy family. */
+  background: rgba(4, 9, 28, 0.92);
+  backdrop-filter: blur(32px) saturate(165%);
+  -webkit-backdrop-filter: blur(32px) saturate(165%);
   flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

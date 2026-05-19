@@ -9,6 +9,7 @@ import Integrations from "@/components/Integrations/Integrations";
 import Industries from "@/components/Industries/Industries";
 import Footer from "@/components/Footer/Footer";
 import FinalCTA from "@/components/FinalCTA/FinalCTA";
+import HashScroller from "@/components/HashScroller/HashScroller";
 import { useDemo } from "@/lib/DemoContext";
 
 /* Nav + DemoModal removed — both live in app/layout.js now. We still need
@@ -20,6 +21,7 @@ export default function HomeClient() {
 
   return (
     <>
+      <HashScroller />
       <Hero onDemo={openDemo} />
       <AISection />
       <Features />

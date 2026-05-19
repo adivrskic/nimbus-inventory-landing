@@ -29,9 +29,16 @@ const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
 
 /* ─────────────────────────────────────────────────────────────────────
    SECTIONS
-   Each section has START and END poses. The shape interpolates from
-   its start rotation+offset to its end rotation+offset as you scroll
-   through that shape's display window.
+
+   Shape rotation is now FIXED — uses params.rotX/Y/Z as a static
+   presentation pose. The rotXEnd/rotYEnd/rotZEnd fields are kept for
+   backward compatibility but are no longer applied. The scroll-driven
+   "rotation feel" now comes from the scattered field orbiting around
+   the shape's center (see animate loop).
+
+   offsetX/Y → offsetXEnd/Y is still interpolated — that drives the
+   shape's horizontal/vertical glide across the screen as you scroll
+   through its block, which is a separate cinematic effect.
    ───────────────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
@@ -150,10 +157,6 @@ const SECTIONS = [
       rotZ: 6,
       offsetX: 0.25,
       offsetY: 0,
-      /* Bumped 0.55 → 0.7 to give the bar chart proper visual mass.
-         Combined with the larger bar geometry in shapes.js, the chart
-         now occupies meaningful canvas instead of getting lost in the
-         scattered cloud. */
       scale: 0.7,
       rotXEnd: -8,
       rotYEnd: 44,
@@ -219,7 +222,7 @@ function renderScramble(text, keyPrefix = "") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   DEBUG PANEL — depth + motion + parallax
+   DEBUG PANEL — depth + motion + orbit
    ═══════════════════════════════════════════════════════════════════════ */
 const DEPTH_DEFAULTS = {
   near: 11,
@@ -235,8 +238,13 @@ const MOTION_DEFAULTS = {
   damping: 0.78,
   jitterAmp: 0.06,
   jitterFreq: 0.4,
-  parallaxYaw: 0.05,
-  parallaxPitch: 0.035,
+  /* Orbit: scroll-driven rotation of the scattered field around the
+     active shape's center. Values are in radians, applied through a
+     full rotation matrix (not the small-angle approximation we used
+     for the old subtle parallax). 0.35 rad ≈ 20° yaw, 0.12 rad ≈ 7°
+     pitch — gives a strong "field orbits the static shape" feel. */
+  orbitYaw: 0.35,
+  orbitPitch: 0.12,
 };
 
 function DebugPanel({ uniformsRef, motionRef }) {
@@ -291,12 +299,12 @@ function DebugPanel({ uniformsRef, motionRef }) {
       `uBlurExpand:       { value: ${d.blurExpand.toFixed(3)} },\n` +
       `uBlurSoftness:     { value: ${d.blurSoftness.toFixed(3)} },\n\n` +
       `// ── Motion defaults (motionRef) ──\n` +
-      `stiffness:     ${m.stiffness.toFixed(4)},\n` +
-      `damping:       ${m.damping.toFixed(3)},\n` +
-      `jitterAmp:     ${m.jitterAmp.toFixed(4)},\n` +
-      `jitterFreq:    ${m.jitterFreq.toFixed(3)},\n` +
-      `parallaxYaw:   ${m.parallaxYaw.toFixed(4)},\n` +
-      `parallaxPitch: ${m.parallaxPitch.toFixed(4)},`;
+      `stiffness:  ${m.stiffness.toFixed(4)},\n` +
+      `damping:    ${m.damping.toFixed(3)},\n` +
+      `jitterAmp:  ${m.jitterAmp.toFixed(4)},\n` +
+      `jitterFreq: ${m.jitterFreq.toFixed(3)},\n` +
+      `orbitYaw:   ${m.orbitYaw.toFixed(4)},\n` +
+      `orbitPitch: ${m.orbitPitch.toFixed(4)},`;
     try {
       await navigator.clipboard.writeText(cfg);
     } catch {
@@ -332,9 +340,11 @@ function DebugPanel({ uniformsRef, motionRef }) {
     ["Jitter freq", "jitterFreq", 0.05, 1.5, 0.01, (n) => n.toFixed(2)],
   ];
 
-  const parallaxSliders = [
-    ["Parallax yaw", "parallaxYaw", 0, 0.15, 0.001, (n) => n.toFixed(3)],
-    ["Parallax pitch", "parallaxPitch", 0, 0.1, 0.001, (n) => n.toFixed(3)],
+  /* Field orbit sliders go up to ~57° (1.0 rad) and ~34° (0.6 rad).
+     Most of the visual punch happens in the 0.2–0.5 range. */
+  const orbitSliders = [
+    ["Orbit yaw (rad)", "orbitYaw", 0, 1.0, 0.005, (n) => n.toFixed(3)],
+    ["Orbit pitch (rad)", "orbitPitch", 0, 0.6, 0.005, (n) => n.toFixed(3)],
   ];
 
   return (
@@ -407,8 +417,8 @@ function DebugPanel({ uniformsRef, motionRef }) {
         />
       ))}
 
-      <div className={styles.dbgSectionHead}>Parallax</div>
-      {parallaxSliders.map(([label, key, min, max, step, fmt]) => (
+      <div className={styles.dbgSectionHead}>Field orbit</div>
+      {orbitSliders.map(([label, key, min, max, step, fmt]) => (
         <Slider
           key={key}
           label={label}
@@ -752,10 +762,6 @@ export default function AISection() {
         depthWrite: false,
         uniforms: {
           uColorMix: { value: 0 },
-          /* Footer-matched warm gold — #e7c074, same tone as the helix
-             particles in the footer. The fragment shader uses 50% of
-             this for the scattered/unformed base so every particle reads
-             as gold, not just the formed shape. */
           uAccentColor: { value: new THREE.Color(0xe7c074) },
           uGlobalAlpha: { value: 0 },
 
@@ -805,9 +811,13 @@ export default function AISection() {
         const sec = SECTIONS[s.activeShape];
         const params = sec[mode];
 
-        const rotXDeg = params.rotX + (params.rotXEnd - params.rotX) * animP;
-        const rotYDeg = params.rotY + (params.rotYEnd - params.rotY) * animP;
-        const rotZDeg = params.rotZ + (params.rotZEnd - params.rotZ) * animP;
+        /* Shape rotation: FIXED at the start pose. The old start→end
+           interpolation is gone — the scroll-driven rotation effect now
+           comes from the scattered field orbit (below). rotXEnd/Y/Z in
+           SECTIONS are no longer used but remain for reference. */
+        const rotXDeg = params.rotX;
+        const rotYDeg = params.rotY;
+        const rotZDeg = params.rotZ;
         const rotX = rotXDeg * TO_RAD;
         const rotY = rotYDeg * TO_RAD;
         const rotZ = rotZDeg * TO_RAD;
@@ -822,6 +832,9 @@ export default function AISection() {
         const mobile = mode === "mobile";
         const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
         const defaultY = mobile ? -3.5 : 0;
+        /* Offset still interpolates start→end — that's a separate
+           cinematic glide effect (shape drifts across the screen as
+           you scroll through its block). */
         const offX =
           defaultX +
           params.offsetX +
@@ -837,9 +850,21 @@ export default function AISection() {
         const jb = mot.jitterAmp;
         const jf = mot.jitterFreq;
 
-        const parallaxT = (animP - 0.5) * 2;
-        const pYaw = parallaxT * mot.parallaxYaw;
-        const pPitch = parallaxT * mot.parallaxPitch;
+        /* ── Field orbit ──
+           Scattered particles rotate around the shape's current world
+           position (offX, offY, 0) by an angle driven by scroll. animP
+           goes 0→1 across the visible block; orbitT swings [-1..+1] so
+           the field starts rotated one way, passes through neutral as
+           the shape is fully formed (animP≈0.5), and ends rotated the
+           other way. Full rotation matrix, not the small-angle approx —
+           magnitudes here can reach 20–30°+ comfortably. */
+        const orbitT = (animP - 0.5) * 2;
+        const yaw = orbitT * mot.orbitYaw;
+        const pitch = orbitT * mot.orbitPitch;
+        const cosY = Math.cos(yaw);
+        const sinY = Math.sin(yaw);
+        const cosP = Math.cos(pitch);
+        const sinP = Math.sin(pitch);
 
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
@@ -848,6 +873,7 @@ export default function AISection() {
           let py = activeShape[i3 + 1];
           let pz = activeShape[i3 + 2];
 
+          /* Rotate shape — fixed pose every frame */
           const py1 = py * cX - pz * sX;
           const pz1 = py * sX + pz * cX;
           py = py1;
@@ -867,12 +893,24 @@ export default function AISection() {
           const formedY = py + offY;
           const formedZ = pz;
 
-          const sxRaw = scattered[i3];
-          const syRaw = scattered[i3 + 1];
-          const szRaw = scattered[i3 + 2];
-          const sx = sxRaw - szRaw * pYaw;
-          const sy = syRaw + szRaw * pPitch;
-          const sz = szRaw + sxRaw * pYaw - syRaw * pPitch;
+          /* ── Apply orbit to the scattered position ──
+             1. Translate so the shape's world position is the origin
+             2. Rotate (yaw around Y axis, then pitch around X axis)
+             3. Translate back */
+          const xRel = scattered[i3] - offX;
+          const yRel = scattered[i3 + 1] - offY;
+          const zRel = scattered[i3 + 2];
+
+          /* Yaw (around Y) */
+          const xY = xRel * cosY + zRel * sinY;
+          const zY = -xRel * sinY + zRel * cosY;
+          /* Pitch (around X) */
+          const yP = yRel * cosP - zY * sinP;
+          const zP = yRel * sinP + zY * cosP;
+
+          const sx = xY + offX;
+          const sy = yP + offY;
+          const sz = zP;
 
           const targetX = sx * (1 - sFormation) + formedX * sFormation;
           const targetY = sy * (1 - sFormation) + formedY * sFormation;

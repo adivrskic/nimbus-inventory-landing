@@ -69,26 +69,27 @@
   touch-action: none;
 }
 
-/* ─── CINEMATIC VIGNETTE ─────────────────────────────────────────
-     Pure CSS edge darkening — gives the live 3D scene the feel of a
-     film frame without costing GPU cycles. Two layered radial
-     gradients: a tight edge fade + a broader corner-darken. */
+/* ─── BOTTOM SEAM ERASER ───────────────────────────────────────────
+     Previously this was a cinematic vignette that darkened the canvas
+     edges to near-black. That created the opposite of what we want:
+     the warehouse bottom became darker than the navy section beneath.
+  
+     Now this is a bottom-only gradient that resolves precisely to the
+     section bg color. Any tiny residual luminance from particles or
+     item halos at the bottom of the canvas dissolves into the page —
+     the seam is mathematically guaranteed to vanish. */
 .vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(
-      ellipse 85% 75% at center,
-      transparent 55%,
-      rgba(0, 0, 0, 0.32) 90%,
-      rgba(0, 0, 0, 0.55) 100%
-    ),
-    radial-gradient(
-      ellipse 110% 90% at center,
-      transparent 65%,
-      rgba(4, 9, 28, 0.4) 100%
-    );
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 78%,
+    rgba(4, 9, 28, 0.55) 92%,
+    var(--section-bg) 100%
+  );
 }
 
 /* ─── CORNER EDITORIAL KEYS ──────────────────────────────────────── */

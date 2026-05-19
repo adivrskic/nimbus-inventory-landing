@@ -84,7 +84,11 @@ const SECTION_BG_HEX = "#04091c";
 const C_BG = 0x04091c; // matches the section below the canvas
 const C_FOG = 0x04091c; // fog fades to the exact same value
 const C_FLOOR_OUTER = 0x04091c; // floor edges == section bg → no seam
-const C_FLOOR_INNER = 0x0c1730; // subtle navy lift in the middle
+// Inner == outer. The previous navy lift was creating a brighter
+// "stage" area that didn't match the section below. Atmospheric
+// interest now comes from mode-driven focus heat only, so the empty
+// floor reads as exactly the same navy as the page beneath.
+const C_FLOOR_INNER = 0x04091c;
 const C_RACK = 0x0f1d36; // racks barely brighter than the floor
 const C_RACK_CAP = 0x1f3a62; // top caps read as "lit"
 const C_RACK_EDGE = 0x5278a8; // brighter cool edge for silhouette
@@ -733,40 +737,22 @@ export default function WarehouseShowcase() {
     fill.position.set(0, -8, 0);
     scene.add(fill);
 
-    /* ─── ATMOSPHERIC HAZE PLANES ───────────────────────────────────
-       Two large additive-blended quads at different heights create
-       cinematic depth without expensive volumetrics. Subtle, but
-       transforms distant racks from "flat boxes" to "objects in
-       space." */
-    function makeHazePlane(y, opacity, scale) {
-      const c = document.createElement("canvas");
-      c.width = c.height = 256;
-      const g = c.getContext("2d");
-      const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-      grad.addColorStop(0, "rgba(80, 120, 180, 0.55)");
-      grad.addColorStop(0.4, "rgba(60, 90, 150, 0.22)");
-      grad.addColorStop(1, "rgba(20, 40, 80, 0)");
-      g.fillStyle = grad;
-      g.fillRect(0, 0, 256, 256);
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(220 * scale, 220 * scale),
-        new THREE.MeshBasicMaterial({
-          map: tex,
-          transparent: true,
-          opacity,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        })
-      );
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.position.y = y;
-      scene.add(mesh);
-      return mesh;
-    }
-    const haze1 = makeHazePlane(2, 0.5, 1);
-    const haze2 = makeHazePlane(7, 0.35, 1.4);
+    /* ─── ATMOSPHERIC DEPTH (removed) ───────────────────────────────
+       Earlier this section created two additive haze planes for
+       cinematic depth. Even at low opacity, additive blending
+       *necessarily* brightens every pixel they cover — which made
+       the warehouse area read as a lighter blue-grey than the
+       navy section beneath the canvas.
+
+       Cinematic depth now comes only from:
+         - 3-point lighting on the racks (key/rim/fill)
+         - rack edge silhouettes
+         - mode-driven focus heat under the active action
+         - active-mode particle swarms
+         - very low-opacity ambient dust (below)
+
+       The empty air now reads as pure section bg, so the warehouse
+       flows seamlessly into the page beneath. */
 
     /* ─── ITEMS — sphere + halo billboard + beam + ground ring ─── */
     const haloTex = makeHaloTexture();
@@ -1246,10 +1232,13 @@ export default function WarehouseShowcase() {
       new THREE.BufferAttribute(dustPos, 3).setUsage(THREE.DynamicDrawUsage)
     );
     const dustMat = new THREE.PointsMaterial({
-      color: 0x88a8c8,
-      size: 0.06,
+      // Warmer neutral — the cool blue of the prior version was
+      // additively tinting the scene toward blue-grey when combined
+      // with the (now removed) haze planes.
+      color: 0xa8b8d0,
+      size: 0.05,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.22,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       sizeAttenuation: true,
@@ -1863,9 +1852,7 @@ export default function WarehouseShowcase() {
       }
       dustGeo.attributes.position.needsUpdate = true;
 
-      /* Haze gentle motion */
-      haze1.rotation.z = time * 0.015;
-      haze2.rotation.z = -time * 0.012;
+      /* (haze planes removed — see note above) */
 
       renderer.render(scene, camera);
 

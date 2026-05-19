@@ -585,16 +585,6 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
         className={styles.panel}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Decorative gold corner brackets */}
-        <div
-          className={`${styles.cornerBracket} ${styles.cornerTL}`}
-          aria-hidden="true"
-        />
-        <div
-          className={`${styles.cornerBracket} ${styles.cornerBR}`}
-          aria-hidden="true"
-        />
-
         {/* Close button */}
         <button
           className={styles.closeBtn}
