@@ -12,13 +12,23 @@
 // outer .scrollRegion now — that's the element with overflow-y: auto,
 // so the auto-scroll-to-bottom effect needs to target it (not the
 // .transcript div, which no longer scrolls).
+//
+// Visual vocabulary: the intro state's eyebrow + per-letter title +
+// subtitle now match the Contact / Trust / Calculator heroes — same
+// SplitText brand signature, same gold italic accent treatment, same
+// display-font subtitle. The send button uses the shared CornerButton
+// so it picks up the corner-bracket hover decoration the rest of the
+// site uses for primary actions.
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import gsap from "gsap";
 import { useChatStream } from "@/components/Chat/useChatStream";
 import Footer from "@/components/Footer/Footer";
+import CornerButton from "@/components/shared/CornerButton";
+import SplitText from "@/components/shared/SplitText";
 import styles from "./ask-client.module.css";
 
 const STARTERS = [
@@ -55,6 +65,7 @@ export default function AskClient({ userEmail, userName } = {}) {
   });
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const introRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -70,6 +81,49 @@ export default function AskClient({ userEmail, userName } = {}) {
       el.scrollTop = el.scrollHeight;
     });
   }, [messages, cta]);
+
+  /* Intro mount animation — eyebrow fades up, then per-letter title
+     rotates in, then subtitle + starters fade up. Same cadence as the
+     Contact / Trust hero so /ask reads as part of the same family.
+     Only fires while the empty intro is mounted; when the user sends
+     their first message the conditional unmounts the header. On reset
+     (transcript → intro) the header re-mounts and the timeline fires
+     again because messages.length flips back to 0. */
+  useEffect(() => {
+    if (messages.length > 0 || !introRef.current) return;
+
+    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+    tl.fromTo(
+      `.${styles.kicker}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.45 },
+      0.1
+    );
+
+    const letters = introRef.current.querySelectorAll(`.${styles.heroLetter}`);
+    tl.to(
+      letters,
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.025 },
+      0.2
+    );
+
+    tl.fromTo(
+      `.${styles.lead}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.55 },
+      0.6
+    );
+
+    tl.fromTo(
+      `.${styles.starters}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.5 },
+      0.75
+    );
+
+    return () => tl.kill();
+  }, [messages.length]);
 
   const submit = (e) => {
     e?.preventDefault();
@@ -97,11 +151,22 @@ export default function AskClient({ userEmail, userName } = {}) {
             bottom of the flex column. */}
           <div ref={scrollRef} className={styles.scrollRegion}>
             {isEmpty ? (
-              <header className={styles.intro}>
+              <header ref={introRef} className={styles.intro}>
                 <div className={styles.kicker}>ASK Nautilus</div>
                 <h1 className={styles.h1}>
-                  Instant answers about Nautilus.
-                  <span className={styles.h1Dim}> Sources cited.</span>
+                  <SplitText
+                    lines={[
+                      "Instant answers about Nautilus.",
+                      "Sources cited.",
+                    ]}
+                    accentLines={[1]}
+                    classNames={{
+                      line: styles.heroLine,
+                      letter: styles.heroLetter,
+                      accent: styles.heroLetterAccent,
+                      space: styles.heroSpace,
+                    }}
+                  />
                 </h1>
                 <p className={styles.lead}>
                   Pricing, features, integrations, comparisons, migration
@@ -159,28 +224,13 @@ export default function AskClient({ userEmail, userName } = {}) {
               autoComplete="off"
               spellCheck="false"
             />
-            <button
+            <CornerButton
               type="submit"
-              className={styles.sendBtn}
               disabled={streaming || !input.trim()}
-              aria-label="Send"
+              ariaLabel="Send"
             >
-              <svg
-                width="12"
-                height="10"
-                viewBox="0 0 12 10"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M1 5H11M8 1L11 5L8 9"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+              Send
+            </CornerButton>
           </form>
           <div className={styles.disclaimer}>
             AI-generated — verify pricing details with your rep

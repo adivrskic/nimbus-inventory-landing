@@ -266,11 +266,18 @@ export async function POST(request) {
                 type: "cta_shown",
                 payload: result,
               });
-              await supabase
-                .rpc("increment_cta_count", { conv_id: conversationId })
-                .catch((err) =>
-                  console.error("[chat] increment_cta_count failed:", err)
+              /* PostgrestBuilder is awaitable but not a real Promise — no .catch
+   method. Await it and check the result's error field instead. */
+              const { error: ctaCountErr } = await supabase.rpc(
+                "increment_cta_count",
+                { conv_id: conversationId }
+              );
+              if (ctaCountErr) {
+                console.error(
+                  "[chat] increment_cta_count failed:",
+                  ctaCountErr
                 );
+              }
             }
 
             const { data: savedTool } = await supabase

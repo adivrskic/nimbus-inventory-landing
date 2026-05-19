@@ -1,23 +1,28 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   app/ask/ask.module.css
+   app/ask/ask-client.module.css
    ──────────────────────────────────────────────────────────────────────────
    /ask is a focused chat tool. The page is locked to one viewport so the
    body never scrolls — the .scrollRegion inside scrolls internally, the
    input bar pins to the bottom of the flex column naturally, and the
    global ocean gradient (set on html) shows through behind everything.
-   No Nav, no Footer — same deliberate "tool, not a page" intent as
-   before, just no longer scrolling into empty void.
+   No Nav — same deliberate "tool, not a page" intent as before.
+
+   Intro state vocabulary: the eyebrow + per-letter title + display-font
+   subtitle here match the Contact / Trust / Calculator heroes. The font
+   sizes are scaled a touch smaller than those full editorial heroes
+   (max ~84px instead of 96px) because /ask is locked to 100vh and still
+   has to fit the starters list + input bar in the same viewport.
    ────────────────────────────────────────────────────────────────────────── */
 
 .main {
   /* Locked viewport — no body scroll. The flex column inside owns the
-       vertical real estate; .scrollRegion handles internal scroll. */
-  height: 100vh;
+         vertical real estate; .scrollRegion handles internal scroll. */
+  /* height: 100vh; */
   /* No background — the global ocean gradient on <html> shows through.
-       On a 100vh page with no body scroll, the full surface→abyss range
-       of the gradient compresses into one viewport, which gives the
-       chat surface real depth without us having to paint anything. */
-  padding: 80px 24px 24px;
+         On a 100vh page with no body scroll, the full surface→abyss range
+         of the gradient compresses into one viewport, which gives the
+         chat surface real depth without us having to paint anything. */
+  padding: 140px 24px 24px;
   display: flex;
   justify-content: center;
   color: var(--white);
@@ -32,10 +37,10 @@
   display: flex;
   flex-direction: column;
   /* Without min-height: 0, the .scrollRegion child would refuse to
-       shrink below its content height (flex items default to
-       min-height: auto), which would push the input bar off-screen
-       once the transcript got long. Classic flex gotcha — this line
-       fixes it. */
+         shrink below its content height (flex items default to
+         min-height: auto), which would push the input bar off-screen
+         once the transcript got long. Classic flex gotcha — this line
+         fixes it. */
   min-height: 0;
 }
 
@@ -46,7 +51,7 @@
   min-height: 0;
   overflow-y: auto;
   /* Thin gold-tinted scrollbar to match the rest of the visual
-       vocabulary instead of defaulting to grey. */
+         vocabulary instead of defaulting to grey. */
   scrollbar-width: thin;
   scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
 }
@@ -74,36 +79,55 @@
 .kicker {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 4px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 18px;
+  margin-bottom: 28px;
+  opacity: 0;
 }
 
 .h1 {
   font-family: var(--display);
-  font-size: clamp(36px, 5.5vw, 52px);
+  font-size: clamp(44px, 6vw, 84px);
   font-weight: 700;
-  letter-spacing: -1.4px;
-  line-height: 1.05;
+  letter-spacing: -2.5px;
+  line-height: 1;
   margin: 0;
-  max-width: 620px;
+  max-width: 900px;
   color: var(--white);
 }
 
-.h1Dim {
-  color: var(--gray-3);
+/* Per-letter rotateX rise — site-wide hero signature (Contact, Trust,
+     Calculator all use this same primitive via SplitText). */
+.heroLine {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.heroLetter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(35deg);
+  transform-origin: bottom center;
+}
+.heroLetterAccent {
+  color: var(--accent);
   font-style: italic;
   font-weight: 500;
 }
+.heroSpace {
+  display: inline-block;
+  width: 0.28em;
+}
 
 .lead {
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.85;
-  color: var(--gray-3);
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
   margin: 22px 0 0;
-  max-width: 560px;
+  max-width: 640px;
+  opacity: 0;
 }
 
 .starters {
@@ -112,6 +136,7 @@
   gap: 0;
   margin-top: 38px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: 0;
 }
 
 .starter {
@@ -190,8 +215,8 @@
   gap: 26px;
   padding: 28px 0;
   /* No min-height. The parent .scrollRegion owns sizing now — letting
-       this stretch with min-height: 50vh would create an unnecessary
-       scroll surface even when only one message exists. */
+         this stretch with min-height: 50vh would create an unnecessary
+         scroll surface even when only one message exists. */
 }
 
 .userMsg {
@@ -486,29 +511,10 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
-.sendBtn {
-  /* Icon-only — same padding/height as the Nav CTA so the two buttons
-     read as the same family. Width grows to fit the icon + padding,
-     ending up a touch wider than a square button. */
-  color: var(--ink);
-  background: var(--white);
-  cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0);
-  padding: 8px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s, border-color 0.3s, color 0.3s;
-}
 
-.sendBtn:not(:disabled):hover {
-  background: var(--accent);
-}
-
-.sendBtn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
+/* (Removed: .sendBtn — the send button now uses the shared
+     <CornerButton> component, which brings its own padding, font, and
+     bracket-hover decoration. No local override needed. */
 
 .disclaimer {
   font-family: var(--mono);
@@ -527,11 +533,11 @@
     padding: 40px 18px 16px;
   }
   .h1 {
-    font-size: 30px;
-    letter-spacing: -0.8px;
+    font-size: 38px;
+    letter-spacing: -1.2px;
   }
   .lead {
-    font-size: 12.5px;
+    font-size: 15px;
   }
   .userMsg,
   .assistantText {

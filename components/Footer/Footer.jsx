@@ -205,9 +205,7 @@ export default function Footer() {
               <Logo size={22} />
               <div>
                 <div className={styles.brandName}>Nautilus</div>
-                <div className={styles.brandSub}>
-                  Inventory Management Systems
-                </div>
+                <div className={styles.brandSub}>Inventory</div>
               </div>
             </div>
             <p className={styles.brandDesc}>
