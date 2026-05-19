@@ -17,14 +17,8 @@
 /* Extra polish on top of CornerButton's base style: a soft drop shadow so it
      reads as floating off the page, plus a subtle lift on hover. */
 .launcher {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s,
     transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
-}
-
-.launcher:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 .launcher:active {

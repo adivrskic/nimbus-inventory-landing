@@ -12,7 +12,7 @@
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
 //   VOYAGE_API_KEY
-//   NEXT_PUBLIC_SITE_URL (optional, defaults to https://Nautiluswms.com)
+//   NEXT_PUBLIC_SITE_URL (optional, defaults to https://nautilusinventory.com)
 //
 // If you swap Voyage for OpenAI, change embedBatch() and the vector dim
 // in chat-schema.sql to match (1024 → 1536 for text-embedding-3-small).
@@ -29,7 +29,8 @@ import { HELP_CATEGORIES } from "../lib/helpData.js";
 import { INTEGRATIONS } from "../components/IntegrationPage/integrationData.js";
 import { INDUSTRIES } from "../components/IndustryPage/industryData.js";
 import { COMPETITORS } from "../app/compare/[slug]/compareData.js";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://Nautiluswms.com";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://nautilusinventory.com";
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
 const VOYAGE_MODEL = "voyage-3";
 const VOYAGE_DIM = 1024;

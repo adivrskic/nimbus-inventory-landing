@@ -12,12 +12,12 @@ export async function generateMetadata({ params }) {
   return {
     title: post.title,
     description: post.desc,
-    alternates: { canonical: `https://Nautiluswms.com/blog/${slug}` },
+    alternates: { canonical: `https://nautilusinventory.com/blog/${slug}` },
     openGraph: {
       type: "article",
       title: post.title,
       description: post.desc,
-      url: `https://Nautiluswms.com/blog/${slug}`,
+      url: `https://nautilusinventory.com/blog/${slug}`,
       publishedTime: post.date,
     },
   };
@@ -31,9 +31,12 @@ export default async function BlogPostPage({ params }) {
   const { slug } = await params;
   const post = BLOG_POSTS.find((p) => p.slug === slug);
   const crumbs = [
-    { name: "Home", url: "https://Nautiluswms.com" },
-    { name: "Blog", url: "https://Nautiluswms.com/blog" },
-    { name: post?.title || slug, url: `https://Nautiluswms.com/blog/${slug}` },
+    { name: "Home", url: "https://nautilusinventory.com" },
+    { name: "Blog", url: "https://nautilusinventory.com/blog" },
+    {
+      name: post?.title || slug,
+      url: `https://nautilusinventory.com/blog/${slug}`,
+    },
   ];
   return (
     <>

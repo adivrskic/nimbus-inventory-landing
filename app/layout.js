@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://Nautiluswms.com";
+const SITE_URL = "https://nautilusinventory.com";
 
 /* GA4 measurement id — gated env var. Missing in dev / preview = no
    tracking script loads, no events fire, no errors. Production env

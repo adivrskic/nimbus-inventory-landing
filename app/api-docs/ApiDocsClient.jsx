@@ -28,7 +28,7 @@ const SECTIONS = [
 
 const METADATA = [
   { label: "Status", value: "v1 Preview" },
-  { label: "Base URL", value: "api.Nautiluswms.com" },
+  { label: "Base URL", value: "api.nautilusinventory.com" },
   { label: "Format", value: "JSON" },
   { label: "Auth", value: "Bearer token" },
 ];
@@ -42,7 +42,7 @@ const CODE_AUTH = [
 const CODE_PRODUCTS = {
   request: [
     { t: "GET ", c: "method" },
-    { t: "https://api.Nautiluswms.com/v1/products?limit=50\n" },
+    { t: "https://api.nautilusinventory.com/v1/products?limit=50\n" },
     { t: "Authorization", c: "key" },
     { t: ": Bearer " },
     { t: "sk_live_4Kf2x9aQ8nL...", c: "str" },
@@ -85,7 +85,7 @@ const CODE_PRODUCTS = {
 const CODE_SCANS = {
   request: [
     { t: "POST ", c: "method" },
-    { t: "https://api.Nautiluswms.com/v1/scans\n" },
+    { t: "https://api.nautilusinventory.com/v1/scans\n" },
     { t: "Authorization", c: "key" },
     { t: ": Bearer " },
     { t: "sk_live_4Kf2x9aQ8nL...\n", c: "str" },
@@ -176,10 +176,10 @@ const CODE_WEBHOOK = {
 const CODE_SDKS = [
   { t: "// Node.js\n", c: "comment" },
   { t: "npm install ", c: "muted" },
-  { t: "@Nautiluswms/sdk\n\n", c: "str" },
+  { t: "@nautilusinventory/sdk\n\n", c: "str" },
   { t: "// Python\n", c: "comment" },
   { t: "pip install ", c: "muted" },
-  { t: "Nautiluswms", c: "str" },
+  { t: "nautilusinventory", c: "str" },
 ];
 
 const CAPABILITIES = [
@@ -572,10 +572,10 @@ export default function ApiDocsClient() {
                 Early-access customers get direct access to the engineering
                 team. Email{" "}
                 <a
-                  href="mailto:developers@Nautiluswms.com"
+                  href="mailto:developers@nautilusinventory.com"
                   className={shellStyles.link}
                 >
-                  developers@Nautiluswms.com
+                  developers@nautilusinventory.com
                 </a>
                 , join our developer Slack at launch, or reach out via the{" "}
                 <a href="/contact" className={shellStyles.link}>

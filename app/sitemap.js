@@ -1,4 +1,4 @@
-const SITE_URL = "https://Nautiluswms.com";
+const SITE_URL = "https://nautilusinventory.com";
 
 const INTEGRATION_SLUGS = [
   "quickbooks",

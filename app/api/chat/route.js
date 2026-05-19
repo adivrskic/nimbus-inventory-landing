@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 // app/api/chat/route.js  (no-embeddings, rate-limited)
 // ──────────────────────────────────────────────────────────────────────────
-// Streaming chat endpoint with rate limiting.
+// Streaming chat endpoint with rate limiting + origin verification.
 //
 // SSE event types sent to client:
 //   ready       { conversation_id }
@@ -26,6 +26,7 @@ import {
   CLAUDE_MODEL,
   MAX_TOKENS,
   buildMessagesArray,
+  trimHistory,
 } from "@/lib/chat/claude-config";
 import { handleTool } from "@/lib/chat/tool-handlers";
 import { getOrCreateVisitor, getIp, hashIp } from "@/lib/chat/visitor";
@@ -39,7 +40,43 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MAX_LOOPS = 5;
 const MESSAGE_MAX_LEN = 4000;
 
+/* Origin allowlist for production. Requests from any other origin get a
+   403 before we touch Claude. Dev (NODE_ENV !== "production") skips this
+   check so localhost development just works.
+
+   Add your real production domain(s) here. *.netlify.app is allowed
+   unconditionally so Netlify preview deploys (deploy-preview-XX--…) work.
+   Same-origin POSTs from a server (no Origin header) are also allowed —
+   browsers always send Origin for cross-origin POSTs, so a missing
+   header generally means same-origin or a non-browser caller. */
+const ALLOWED_HOSTS = new Set([
+  "nautilusinventory.com",
+  "www.nautilusinventory.com",
+  /* Add staging / preview custom domains here if you use any. */
+]);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true; /* no header → same-origin or server caller */
+  try {
+    const host = new URL(origin).hostname;
+    if (ALLOWED_HOSTS.has(host)) return true;
+    if (host.endsWith(".netlify.app")) return true;
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request) {
+  // ── Origin check (production only) ───────────────────────────────────
+  if (process.env.NODE_ENV === "production") {
+    const origin = request.headers.get("origin");
+    if (!isAllowedOrigin(origin)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   let body;
   try {
     body = await request.json();
@@ -59,7 +96,7 @@ export async function POST(request) {
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "Chat is not configured. Try sales@Nautiluswms.com." },
+      { error: "Chat is not configured. Try sales@nautilusinventory.com." },
       { status: 500 }
     );
   }
@@ -159,7 +196,12 @@ export async function POST(request) {
         send("ready", { conversation_id: conversationId });
 
         for (let loop = 0; loop < MAX_LOOPS; loop++) {
-          const messages = buildMessagesArray(workingHistory);
+          /* Cap history to the last MAX_HISTORY_MESSAGES (default 60).
+             trimHistory also enforces the user-message-first invariant
+             so we never send Claude a messages array starting with an
+             orphaned assistant or tool turn. */
+          const trimmed = trimHistory(workingHistory);
+          const messages = buildMessagesArray(trimmed);
 
           const claudeStream = anthropic.messages.stream({
             model: CLAUDE_MODEL,
@@ -231,6 +273,24 @@ export async function POST(request) {
             }
           }
 
+          /* If Claude hit the per-response token cap, append a clear
+             marker so:
+               1. The user sees that the response was cut off (not a
+                  silent mid-sentence drop like before)
+               2. Claude on the NEXT user turn sees the marker in
+                  history and knows to either continue or wrap up
+                  instead of getting confused by an abrupt cutoff.
+
+             Streamed via send("text", …) so the client renders it as
+             part of the assistant message it's currently showing — no
+             client code changes required. */
+          if (stopReason === "max_tokens") {
+            const marker =
+              "\n\n*(response was cut off — ask me to continue if you want the rest)*";
+            send("text", { text: marker });
+            assistantText += marker;
+          }
+
           const { data: savedAssistant } = await supabase
             .from("chat_messages")
             .insert({
@@ -247,6 +307,15 @@ export async function POST(request) {
             .single();
           if (savedAssistant) workingHistory.push(savedAssistant);
 
+          /* Loop continues only if Claude wants to use a tool. Anything
+             else (end_turn, max_tokens, stop_sequence) ends this user
+             turn — max_tokens is intentionally NOT auto-continued
+             because the messages-array protocol requires user/assistant
+             alternation; chaining two adjacent assistant turns on the
+             server would produce an API validation error. The user can
+             trigger a continuation by sending "continue" or similar,
+             which Claude will pick up on (per the system prompt's
+             "Handling continuations" section). */
           if (stopReason !== "tool_use" || toolCalls.length === 0) break;
 
           for (const call of toolCalls) {
@@ -266,8 +335,6 @@ export async function POST(request) {
                 type: "cta_shown",
                 payload: result,
               });
-              /* PostgrestBuilder is awaitable but not a real Promise — no .catch
-   method. Await it and check the result's error field instead. */
               const { error: ctaCountErr } = await supabase.rpc(
                 "increment_cta_count",
                 { conv_id: conversationId }

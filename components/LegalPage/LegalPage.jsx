@@ -240,10 +240,10 @@ export default function LegalPage({ slug }) {
             <div className={styles.signatureContact}>
               <div className={styles.signatureLabel}>Questions</div>
               <a
-                href="mailto:legal@Nautiluswms.com"
+                href="mailto:legal@nautilusinventory.com"
                 className={styles.signatureEmail}
               >
-                legal@Nautiluswms.com
+                legal@nautilusinventory.com
               </a>
               <Link href="/" className={styles.signatureBack}>
                 ← Back to home

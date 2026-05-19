@@ -11,11 +11,11 @@ export async function generateMetadata({ params }) {
     description: `Nautilus WMS for ${industry.title.toLowerCase()} operations. ${
       industry.heroDesc
     }`,
-    alternates: { canonical: `https://Nautiluswms.com/industry/${slug}` },
+    alternates: { canonical: `https://nautilusinventory.com/industry/${slug}` },
     openGraph: {
       title: `${industry.title} Warehouse Management | Nautilus WMS`,
       description: industry.heroDesc,
-      url: `https://Nautiluswms.com/industry/${slug}`,
+      url: `https://nautilusinventory.com/industry/${slug}`,
     },
   };
 }
@@ -28,11 +28,11 @@ export default async function IndustryPage({ params }) {
   const { slug } = await params;
   const industry = INDUSTRIES.find((i) => i.slug === slug);
   const crumbs = [
-    { name: "Home", url: "https://Nautiluswms.com" },
-    { name: "Industries", url: "https://Nautiluswms.com/#industries" },
+    { name: "Home", url: "https://nautilusinventory.com" },
+    { name: "Industries", url: "https://nautilusinventory.com/#industries" },
     {
       name: industry?.title || slug,
-      url: `https://Nautiluswms.com/industry/${slug}`,
+      url: `https://nautilusinventory.com/industry/${slug}`,
     },
   ];
   return (

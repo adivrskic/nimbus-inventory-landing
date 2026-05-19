@@ -34,9 +34,9 @@ export const LEGAL_PAGES = {
       {
         heading: "Your rights and choices",
         summary:
-          "Access, correct, or delete your data anytime. Export in CSV or JSON whenever you want. EU and California residents have additional rights — email privacy@Nautiluswms.com.",
+          "Access, correct, or delete your data anytime. Export in CSV or JSON whenever you want. EU and California residents have additional rights — email privacy@nautilusinventory.com.",
         content:
-          "You may access, correct, or delete your personal information at any time through your account settings or by contacting support. You can export all your warehouse data in standard formats (CSV, JSON) at any time. If you close your account, we will delete your data within 30 days, except where retention is required by law. You may opt out of non-essential communications at any time. California residents have additional rights under the CCPA, and EU residents have rights under GDPR — contact privacy@Nautiluswms.com for details.",
+          "You may access, correct, or delete your personal information at any time through your account settings or by contacting support. You can export all your warehouse data in standard formats (CSV, JSON) at any time. If you close your account, we will delete your data within 30 days, except where retention is required by law. You may opt out of non-essential communications at any time. California residents have additional rights under the CCPA, and EU residents have rights under GDPR — contact privacy@nautilusinventory.com for details.",
       },
       {
         heading: "Cookies and tracking",
@@ -220,9 +220,9 @@ export const LEGAL_PAGES = {
       {
         heading: "Monitoring and alerts",
         summary:
-          "Synthetic checks every 30 seconds from global locations. On-call engineers alerted within 60 seconds of anomalies. Subscribe via status@Nautiluswms.com.",
+          "Synthetic checks every 30 seconds from global locations. On-call engineers alerted within 60 seconds of anomalies. Subscribe via status@nautilusinventory.com.",
         content:
-          "Nautilus uses multi-layer monitoring including synthetic checks every 30 seconds from global locations, real-time error rate tracking, latency percentile monitoring (p50, p95, p99), and infrastructure health metrics. Our on-call engineering team is alerted within 60 seconds of any anomaly detection. Customers can subscribe to status updates via email at status@Nautiluswms.com.",
+          "Nautilus uses multi-layer monitoring including synthetic checks every 30 seconds from global locations, real-time error rate tracking, latency percentile monitoring (p50, p95, p99), and infrastructure health metrics. Our on-call engineering team is alerted within 60 seconds of any anomaly detection. Customers can subscribe to status updates via email at status@nautilusinventory.com.",
       },
       {
         heading: "Scheduled maintenance",

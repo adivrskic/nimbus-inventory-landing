@@ -9,11 +9,13 @@ export async function generateMetadata({ params }) {
   return {
     title: `${integration.title} Integration`,
     description: `Connect ${integration.title} to Nautilus WMS. ${integration.tagline}`,
-    alternates: { canonical: `https://Nautiluswms.com/integration/${slug}` },
+    alternates: {
+      canonical: `https://nautilusinventory.com/integration/${slug}`,
+    },
     openGraph: {
       title: `${integration.title} Integration | Nautilus WMS`,
       description: integration.tagline,
-      url: `https://Nautiluswms.com/integration/${slug}`,
+      url: `https://nautilusinventory.com/integration/${slug}`,
     },
   };
 }
@@ -26,11 +28,14 @@ export default async function IntegrationPage({ params }) {
   const { slug } = await params;
   const integration = INTEGRATIONS[slug];
   const crumbs = [
-    { name: "Home", url: "https://Nautiluswms.com" },
-    { name: "Integrations", url: "https://Nautiluswms.com/#integrations" },
+    { name: "Home", url: "https://nautilusinventory.com" },
+    {
+      name: "Integrations",
+      url: "https://nautilusinventory.com/#integrations",
+    },
     {
       name: integration?.title || slug,
-      url: `https://Nautiluswms.com/integration/${slug}`,
+      url: `https://nautilusinventory.com/integration/${slug}`,
     },
   ];
   return (

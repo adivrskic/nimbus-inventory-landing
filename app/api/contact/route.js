@@ -114,7 +114,7 @@ export async function POST(request) {
         return NextResponse.json(
           {
             error:
-              "Couldn't send your message. Please try again or email sales@Nautiluswms.com.",
+              "Couldn't send your message. Please try again or email sales@nautilusinventory.com.",
           },
           { status: 502 }
         );
@@ -137,7 +137,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           error: isConfig
-            ? "Email service isn't configured. Try sales@Nautiluswms.com."
+            ? "Email service isn't configured. Try sales@nautilusinventory.com."
             : "Couldn't send your message. Please try again.",
         },
         { status: isConfig ? 500 : 502 }

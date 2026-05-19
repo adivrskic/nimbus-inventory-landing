@@ -5,7 +5,7 @@ export const metadata = {
   title: "Nautilus WMS — AI-Powered Warehouse Management",
   description:
     "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
-  alternates: { canonical: "https://Nautiluswms.com" },
+  alternates: { canonical: "https://nautilusinventory.com" },
 };
 
 export default function HomePage() {

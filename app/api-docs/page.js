@@ -4,13 +4,13 @@ export const metadata = {
   title: "API Reference",
   description:
     "REST API, webhooks, and SDKs for Nautilus WMS. Pull inventory, record scans, react to real-time events. v1 launches Q3 2026.",
-  alternates: { canonical: "https://Nautiluswms.com/api-docs" },
+  alternates: { canonical: "https://nautilusinventory.com/api-docs" },
   openGraph: {
     type: "website",
     title: "API Reference — Nautilus WMS",
     description:
       "REST API, webhooks, and SDKs for warehouse operations. v1 launches Q3 2026.",
-    url: "https://Nautiluswms.com/api-docs",
+    url: "https://nautilusinventory.com/api-docs",
   },
 };
 

@@ -12,14 +12,14 @@ export function orgSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Nautilus WMS",
-    url: "https://Nautiluswms.com",
-    logo: "https://Nautiluswms.com/logo.png",
+    url: "https://nautilusinventory.com",
+    logo: "https://nautilusinventory.com/logo.png",
     description:
       "AI-powered warehouse management system for modern operations teams.",
     sameAs: [],
     contactPoint: {
       "@type": "ContactPoint",
-      email: "sales@Nautiluswms.com",
+      email: "sales@nautilusinventory.com",
       contactType: "sales",
     },
   };
@@ -73,14 +73,17 @@ export function articleSchema({
     "@type": "Article",
     headline: title,
     description,
-    url: `https://Nautiluswms.com/blog/${slug}`,
+    url: `https://nautilusinventory.com/blog/${slug}`,
     datePublished: date,
     dateModified: date,
     author: { "@type": "Person", name: author },
     publisher: {
       "@type": "Organization",
       name: "Nautilus WMS",
-      logo: { "@type": "ImageObject", url: "https://Nautiluswms.com/logo.png" },
+      logo: {
+        "@type": "ImageObject",
+        url: "https://nautilusinventory.com/logo.png",
+      },
     },
   };
 }

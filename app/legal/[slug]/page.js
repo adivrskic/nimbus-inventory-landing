@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description: `${title} for Nautilus WMS warehouse management platform.`,
-    alternates: { canonical: `https://Nautiluswms.com/legal/${slug}` },
+    alternates: { canonical: `https://nautilusinventory.com/legal/${slug}` },
     robots: { index: slug !== "status", follow: true },
   };
 }

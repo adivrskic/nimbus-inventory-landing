@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
   return {
     title: found.article.title,
     description: `${found.article.title} — Nautilus WMS help guide in the ${found.category.title} category.`,
-    alternates: { canonical: `https://Nautiluswms.com/help/${slug}` },
+    alternates: { canonical: `https://nautilusinventory.com/help/${slug}` },
   };
 }
 
@@ -33,11 +33,11 @@ export default async function HelpArticlePage({ params }) {
   const { slug } = await params;
   const found = findArticle(slug);
   const crumbs = [
-    { name: "Home", url: "https://Nautiluswms.com" },
-    { name: "Help", url: "https://Nautiluswms.com/help" },
+    { name: "Home", url: "https://nautilusinventory.com" },
+    { name: "Help", url: "https://nautilusinventory.com/help" },
     {
       name: found?.article?.title || slug,
-      url: `https://Nautiluswms.com/help/${slug}`,
+      url: `https://nautilusinventory.com/help/${slug}`,
     },
   ];
   return (

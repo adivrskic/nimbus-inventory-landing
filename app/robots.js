@@ -7,6 +7,6 @@ export default function robots() {
         disallow: ["/api/", "/_next/"],
       },
     ],
-    sitemap: "https://Nautiluswms.com/sitemap.xml",
+    sitemap: "https://nautilusinventory.com/sitemap.xml",
   };
 }

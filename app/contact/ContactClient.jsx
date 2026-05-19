@@ -426,7 +426,7 @@ export default function ContactClient() {
               <p className={styles.successText}>
                 Thanks — we&apos;ve got it. You&apos;ll hear back within 4
                 business hours. Check spam if you don&apos;t see us — we send
-                from <strong>hello@Nautiluswms.com</strong>.
+                from <strong>hello@nautilusinventory.com</strong>.
               </p>
               <button
                 type="button"

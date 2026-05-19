@@ -360,7 +360,6 @@
 .megaFeatured:hover {
   background: rgba(212, 168, 83, 0.11);
   border-color: rgba(212, 168, 83, 0.35);
-  transform: translateY(-2px);
 }
 .megaFeaturedTag {
   font-family: var(--mono);
