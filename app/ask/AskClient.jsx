@@ -66,9 +66,24 @@ export default function AskClient({ userEmail, userName } = {}) {
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const introRef = useRef(null);
+  /* On mount: if the URL carries ?q=... (e.g. from a SearchAction
+   submission via Google's sitelinks search box, or from any other
+   pre-filled link to /ask), auto-send the query as the first
+   message. Otherwise focus the input so the user can type.
 
+   Using window.location.search directly (rather than useSearchParams)
+   avoids opting this whole page into the CSR-only rendering path —
+   useSearchParams requires a Suspense boundary, and this is a one-shot
+   read on mount that doesn't need reactivity. */
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (q && messages.length === 0) {
+      send(q, { sourceUrl: "/ask" });
+      return;
+    }
     inputRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* Auto-scroll-to-bottom when new content arrives. scrollRef is on

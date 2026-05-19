@@ -1,21 +1,22 @@
-"use client";
-import Nav from "@/components/Nav/Nav";
-import Footer from "@/components/Footer/Footer";
-import Integrations from "@/components/Integrations/Integrations";
+import IntegrationsIndexClient from "./IntegrationsIndexClient";
 
-/* Reuses the existing home Integrations component verbatim — same styled
-   list pattern that links to /integration/[slug]. Demo modal lives in
-   app/layout.js (DemoHost) so Nav pulls openDemo from context directly;
-   nothing to wire up here. */
+/* Canonical / OG URL fixed to match the actual route (/integration, not
+   /integrations). Same canonical-mismatch bug as the industry index. */
 
-export default function IntegrationsIndexClient() {
-  return (
-    <>
-      <Nav />
-      <main>
-        <Integrations />
-      </main>
-      <Footer />
-    </>
-  );
+export const metadata = {
+  title: "Integrations — Nautilus",
+  description:
+    "Nautilus connects to your accounting, ERP, e-commerce, POS, and shipping platforms. Bidirectional sync, modern APIs, zero manual entry.",
+  alternates: { canonical: "https://nautilusinventory.com/integration" },
+  openGraph: {
+    type: "website",
+    title: "Integrations Nautilus supports",
+    description:
+      "Bidirectional sync with the accounting, ERP, e-commerce, and shipping platforms you already use.",
+    url: "https://nautilusinventory.com/integration",
+  },
+};
+
+export default function IntegrationsIndexPage() {
+  return <IntegrationsIndexClient />;
 }
