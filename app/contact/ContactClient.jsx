@@ -43,7 +43,7 @@ const USAGE_OPTIONS = [
    button retains focus; aria-activedescendant tells screen readers which
    option is "active" via the keyboard. Outside-click closes; Esc closes
    and returns focus to the button.
-   
+
    Keyboard:
      Closed:  Enter / Space / ArrowDown / ArrowUp  → open
      Open:    ArrowDown / ArrowUp                  → navigate options
@@ -237,6 +237,17 @@ export default function ContactClient() {
     });
   }, []);
 
+  /* Full reset for the "Send another" path. Wipes form fields AND
+     errors AND submitError AND status — previously this was just
+     `setStatus("idle")`, which left stale validation errors and any
+     last submitError lingering when the form came back into view. */
+  const handleReset = useCallback(() => {
+    setForm(INITIAL_FORM);
+    setErrors({});
+    setSubmitError("");
+    setStatus("idle");
+  }, []);
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -255,7 +266,13 @@ export default function ContactClient() {
         const res = await fetch("/api/contact", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            ...form,
+            source_url:
+              typeof window !== "undefined"
+                ? window.location.pathname
+                : "/contact",
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -266,8 +283,13 @@ export default function ContactClient() {
           setStatus("error");
           return;
         }
-        setStatus("success");
+        /* Success path also wipes form data + errors so if the user
+           clicks "Send another" the form starts clean. handleReset
+           handles all that — we just don't reset status here because
+           we want to land on the success card. */
         setForm(INITIAL_FORM);
+        setErrors({});
+        setStatus("success");
       } catch (err) {
         console.error(err);
         setSubmitError(
@@ -384,13 +406,7 @@ export default function ContactClient() {
         </p>
       </section>
 
-      {/* ── SEND US A NOTE ──
-          Section numeral removed; this is the only section on the page
-          now, so the editorial "01" + "02" framing isn't earning its
-          keep. Heading swapped from "One form. A real reply, fast." —
-          which had a giveaway AI tricolon cadence — to a single
-          conversational question that picks up where the hero's "Let's
-          talk." left off. */}
+      {/* ── SEND US A NOTE ── */}
       <section className={styles.section}>
         <div className={styles.sectionContent}>
           <div className={styles.sectionLabel}>Send us a note</div>
@@ -414,7 +430,7 @@ export default function ContactClient() {
               </p>
               <button
                 type="button"
-                onClick={() => setStatus("idle")}
+                onClick={handleReset}
                 className={styles.successReset}
               >
                 Send another →
@@ -588,11 +604,6 @@ export default function ContactClient() {
           )}
         </div>
       </section>
-
-      {/* (Section 02 "Or pick a channel" + the CHANNELS constant were
-          intentionally removed — the form above is the canonical way to
-          reach the team, and the email-card grid duplicated the same
-          call to action.) */}
 
       <Footer />
     </div>

@@ -1,339 +1,183 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   components/ProblemSolution/ProblemSolution.module.css
+   ──────────────────────────────────────────────────────────────────────────
+   Three-column informational layout with glow-card treatment.
+
+   Outer shell (.col) does shape + entrance opacity only — globals' .glow-card
+   owns cursor + the radial mouse-follow gradient (::before) + the border-glow
+   slot. Background, border, and padding all live on the inner (.colInner +
+   .glow-card-content). NEVER set height on the inner; globals provides
+   `height: calc(100% - 2px); margin: 1px` which is what creates the visible
+   1px gap where the gold border-glow shines through.
+
+   Sizing notes:
+   - Section padding 120/96 vertical so it breathes around the cards.
+   - Inner padding 44/36 for desktop; tightens on mobile.
+   - Stats use `margin-top: auto` inside the flex column so they align to
+     the bottom of each card regardless of body length — important because
+     glow-cards in a grid all stretch to equal height (CSS grid default),
+     which means cards with short bodies would have a huge gap before
+     their stats unless we push them down.
+   ────────────────────────────────────────────────────────────────────────── */
+
 .section {
   position: relative;
   z-index: 10;
-}
-.pinned {
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.bgLayer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.glassLayer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.dotGrid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(255, 255, 255, 0.03) 1px,
-    transparent 0
-  );
-  background-size: 40px 40px;
+  padding: 120px 24px;
+  background: transparent;
 }
 
-/* Phase content */
-.phase {
-  position: absolute;
-  width: 100%;
-  max-width: 1100px;
-  padding: 0 48px;
-  text-align: center;
-  opacity: 0;
-  visibility: hidden;
-  z-index: 1;
-}
-
-/* ─────────────────────────────────────────────────────
-   LARGE DECORATIVE PHASE LABEL
-   
-   Massive low-opacity word ("Overview" / "Problem" /
-   "Solution") sitting behind the phase content. One per
-   phase — only the active phase's is rendered visibly
-   because each phase has visibility: hidden until shown.
-   
-   Positioned absolute within the phase, centered, with
-   z-index:-1 inside the phase's stacking context so it
-   paints behind all sibling content (headline, body,
-   stats, CTA) but above .pinned's bgLayer (because
-   .phase's z-index:1 is what creates the local stacking
-   context — z-index:-1 children stay within it).
-───────────────────────────────────────────────────── */
-.bigLabel {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  font-family: var(--display);
-  font-size: clamp(160px, 25vw, 280px);
-  font-weight: 700;
-  letter-spacing: -8px;
-  line-height: 0.85;
-  color: var(--accent);
-  opacity: 0; /* GSAP animates in to ~0.08 */
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-
-/* Per-phase color override — accent gold reads on the white intro phase
-   and the black solution phase, but on the gold problem phase we swap to
-   a low-opacity dark color so the label is still readable. */
-.phaseProblem .bigLabel {
-  color: var(--accent);
-}
-
-/* Per-letter headline */
-.phaseLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 4px;
-}
-.phaseLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(100%) rotateX(35deg);
-  transform-origin: bottom center;
-}
-.phaseSpace {
-  display: inline-block;
-  width: 0.28em;
-}
-
-/* Per-letter body */
-.phaseBodyLine {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 2px;
-}
-.phaseBodyLetter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(110%);
-}
-.phaseBodySpace {
-  display: inline-block;
-  width: 0.28em;
-}
-
-/* Headline */
-.headline {
-  font-family: var(--display);
-  font-size: clamp(32px, 4.5vw, 60px);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -1.5px;
-}
-.headlineAccent {
-  font-style: italic;
-  font-weight: 500;
-}
-
-/* Body */
-.body {
-  font-family: var(--display);
-  font-size: 17px;
-  line-height: 1.8;
-  font-weight: 400;
-  max-width: 660px;
-  margin: 24px auto 0;
-}
-
-.accentLine {
-  height: 1px;
-  width: 60px;
-  margin: 40px auto 0;
-}
-
-/* Stats */
-.stats {
-  display: flex;
-  justify-content: center;
-  gap: 56px;
-  margin-top: 48px;
-  flex-wrap: wrap;
-  opacity: 0;
-  transform: translateY(16px);
-}
-.stat {
-  text-align: center;
-}
-.statVal {
-  font-family: var(--display);
-  font-size: clamp(32px, 4vw, 56px);
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 10px;
-}
-.statLabel {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  max-width: 160px;
-  line-height: 1.5;
+.inner {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.ctaWrap {
-  margin-top: 48px;
+/* ── Eyebrow ───────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 48px;
   opacity: 0;
-  transform: translateY(16px);
 }
 
-/* Phase color themes */
-.phaseIntro .headline {
-  color: var(--white);
-}
-.phaseIntro .headlineAccent {
-  color: var(--accent);
-}
-.phaseIntro .body {
-  color: rgba(255, 255, 255, 0.4);
-}
-.phaseIntro .accentLine {
-  background: var(--accent);
-}
-.phaseIntro .statVal {
-  color: var(--accent);
-}
-.phaseIntro .statLabel {
-  color: rgba(255, 255, 255, 0.3);
+/* ── 3-column grid ─────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 64px;
 }
 
-.phaseProblem .headline {
-  color: var(--white);
-}
-.phaseProblem .headlineAccent {
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--accent);
-  paint-order: stroke fill;
-  background: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-.phaseProblem .body {
-  color: var(--text-secondary);
-}
-.phaseProblem .accentLine {
-  background: var(--accent);
-}
-.phaseProblem .statVal {
-  color: var(--accent-bright);
-}
-.phaseProblem .statLabel {
-  color: var(--text-muted);
+/* Outer shell — shape + entrance only. Globals adds the radial mouse-
+     follow gradient (::before), the border-glow slot, and cursor:pointer.
+     No background, no border, no padding here. */
+.col {
+  position: relative;
+  opacity: 0;
+  min-height: 420px;
 }
 
-.phaseSolution .headline {
-  color: var(--white);
-}
-.phaseSolution .headlineAccent {
-  color: var(--accent);
-}
-.phaseSolution .body {
-  color: var(--text-secondary);
-}
-.phaseSolution .accentLine {
-  background: var(--accent);
-}
-.phaseSolution .statVal {
-  color: var(--accent);
-}
-.phaseSolution .statLabel {
-  color: var(--text-muted);
-}
-
-/* Progress bar */
-.progressWrap {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+/* Inner content — pairs with `glow-card-content` from globals (which
+     provides the dark background + 1px inset margin). We supply padding +
+     flex layout only. NEVER set height — globals owns it. */
+.colInner {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  max-width: 400px;
-  padding: 0 48px;
-  z-index: 2;
-}
-.progressLabels {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-.progressLabel {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: color 0.5s;
-  cursor: pointer;
-}
-.progressDark .progressLabel {
-  color: rgba(255, 255, 255, 0.15);
-}
-.progressDark .active {
-  color: var(--accent);
-}
-.progressDark .progressTrack {
-  background: rgba(255, 255, 255, 0.08);
-}
-.progressDark .progressFill {
-  background: var(--accent);
-}
-.progressOnAccent .progressLabel {
-  color: rgba(255, 255, 255, 0.25);
-}
-.progressOnAccent .active {
-  color: var(--accent);
-}
-.progressOnAccent .progressTrack {
-  background: rgba(255, 255, 255, 0.08);
-}
-.progressOnAccent .progressFill {
-  background: var(--accent);
-}
-.progressOnLight .progressLabel {
-  color: rgba(255, 255, 255, 0.25);
-}
-.progressOnLight .active {
-  color: var(--accent);
-}
-.progressOnLight .progressTrack {
-  background: rgba(255, 255, 255, 0.08);
-}
-.progressOnLight .progressFill {
-  background: var(--accent);
-}
-.progressTrack {
-  width: 100%;
-  height: 1px;
-  position: relative;
-  transition: background 0.5s;
-}
-.progressFill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s;
+  padding: 44px 36px;
 }
 
-@media (max-width: 768px) {
-  .phase {
-    padding: 0 24px;
+.colLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+
+.colHeadline {
+  font-family: var(--display);
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  color: var(--white);
+  margin: 0 0 18px;
+}
+
+.colBody {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.6);
+  margin: 0 0 36px;
+}
+
+/* ── Stats inside each card ────────────────────────────────────────────── */
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  /* Push stats to the bottom of the card so all three columns visually
+       align their stat blocks regardless of body-paragraph length. */
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statVal {
+  font-family: var(--display);
+  font-size: clamp(28px, 2.6vw, 36px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.8px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.45);
+}
+
+/* ── CTA row ───────────────────────────────────────────────────────────── */
+
+.ctaRow {
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
-  .stats {
-    gap: 32px;
+  .col {
+    min-height: 0;
   }
-  .progressWrap {
-    max-width: 300px;
-    padding: 0 24px;
+  .colInner {
+    padding: 36px 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 80px 18px;
+  }
+  .eyebrow {
+    margin-bottom: 32px;
+  }
+  .grid {
+    margin-bottom: 48px;
+  }
+  .colInner {
+    padding: 32px 24px;
+  }
+  .colHeadline {
+    font-size: 22px;
+  }
+  .colBody {
+    font-size: 14.5px;
+  }
+  .statVal {
+    font-size: 28px;
   }
 }

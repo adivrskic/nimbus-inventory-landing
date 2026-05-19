@@ -5,6 +5,8 @@ import { AnimationProvider } from "@/lib/AnimationContext";
 import DemoHost from "@/lib/DemoContext";
 import Nav from "@/components/Nav/Nav";
 import ChatProvider from "@/components/Chat/ChatProvider";
+import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
+import PageviewTracker from "@/components/Analytics/PageviewTracker";
 import "./globals.css";
 import "./globals.ocean-theme.css";
 
@@ -16,6 +18,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = "https://Nautiluswms.com";
+
+/* GA4 measurement id — gated env var. Missing in dev / preview = no
+   tracking script loads, no events fire, no errors. Production env
+   var on Netlify should be set to G-XXXXXXXXXX. Must use NEXT_PUBLIC_
+   prefix so it's available client-side. */
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -87,6 +95,13 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>
+        {/* Analytics — script loader + SPA pageview tracker. Both no-op
+            when NEXT_PUBLIC_GA_MEASUREMENT_ID isn't set. Mounted outside
+            the providers because they don't depend on any of them and
+            shouldn't be affected by transition/animation state. */}
+        <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} />
+        {GA_MEASUREMENT_ID ? <PageviewTracker /> : null}
+
         <AnimationProvider>
           <LenisProvider>
             <TransitionProvider>
