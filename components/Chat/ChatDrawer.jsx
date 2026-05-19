@@ -4,17 +4,21 @@
 // Slide-in chat panel, styled to match the Nautilus visual vocabulary:
 // sharp corners, mono font for everything except headlines, hairline rules.
 //
-// New in this version:
+// State ownership: this component does NOT call useChatStream anymore.
+// Chat state is owned by ChatProvider (always-mounted) and passed in as
+// the `chat` prop. That way, closing the drawer (which unmounts it) does
+// not wipe the transcript. See ChatProvider.jsx for the rationale.
+//
+// Features:
 //   - "New chat" button in the header (only renders when there are messages)
-//   - Inline URL linkification in assistant text (assistant prose can reference
-//     /pricing or https://... and those become clickable without markdown)
+//   - Inline URL linkification in assistant text (assistant prose can
+//     reference /pricing or https://... and those become clickable)
 //   - Rate-limit error state with a clean limit-reached card
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useChatStream } from "./useChatStream";
 import styles from "./ChatDrawer.module.css";
 
 const STARTERS = [
@@ -44,12 +48,14 @@ function linkify(text) {
   return out;
 }
 
-export default function ChatDrawer({ onClose, pathname, userEmail, userName }) {
+export default function ChatDrawer({ onClose, pathname, chat }) {
   const [input, setInput] = useState("");
-  const { messages, streaming, send, cta, setCta, reset } = useChatStream({
-    userEmail,
-    userName,
-  });
+
+  /* Chat state lives in ChatProvider now and is passed in via `chat`.
+     Pulling the same fields off the prop keeps the rest of this file
+     identical to the pre-hoist version. */
+  const { messages, streaming, send, cta, setCta, reset } = chat;
+
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
