@@ -81,14 +81,6 @@ export default function FinalCTA({ onDemo }) {
   return (
     <section ref={sectionRef} className={styles.section}>
       <div className="dot-grid" />
-      <div
-        ref={bracketTLRef}
-        className={`${styles.bracket} ${styles.bracketTL}`}
-      />
-      <div
-        ref={bracketBRRef}
-        className={`${styles.bracket} ${styles.bracketBR}`}
-      />
       <div className={styles.inner}>
         <h2 className="heading-lg">
           <SplitText
