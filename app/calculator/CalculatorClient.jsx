@@ -4,11 +4,10 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
-import CornerButton from "@/components/shared/CornerButton";
-import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
+import { track } from "@/lib/analytics";
 import styles from "./Calculator.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -235,6 +234,42 @@ export default function CalculatorClient() {
     setAccuracy(RANGES.accuracy.default);
     setWage(RANGES.wage.default);
   };
+
+  /* ── Analytics: engagement + compute events ──
+     Fires `calculator_engaged` once per mount on the first non-default
+     state, then fires `calculator_compute` 1s after the last input
+     change so we capture the user's "settled" numbers without
+     per-keystroke noise. Skipping when all values are at defaults
+     means a user who lands on the page and bounces doesn't fire either
+     event. resetDefaults() doesn't reset engagedRef — once engaged,
+     always engaged for this session. */
+  const engagedRef = useRef(false);
+  useEffect(() => {
+    const isDefault =
+      size === RANGES.size.default &&
+      pickers === RANGES.pickers.default &&
+      accuracy === RANGES.accuracy.default &&
+      wage === RANGES.wage.default;
+
+    if (isDefault) return;
+
+    if (!engagedRef.current) {
+      engagedRef.current = true;
+      track("calculator_engaged");
+    }
+
+    const t = setTimeout(() => {
+      track("calculator_compute", {
+        warehouse_size: size,
+        pickers,
+        accuracy,
+        wage,
+        total_savings: Math.round(computed.total),
+      });
+    }, 1000);
+
+    return () => clearTimeout(t);
+  }, [size, pickers, accuracy, wage, computed.total]);
 
   /* Animations */
   useEffect(() => {
@@ -545,7 +580,13 @@ export default function CalculatorClient() {
         title="Get a number based on your data."
         desc="30 minutes with a Nautilus engineer. We use your real operational data to build a more detailed estimate for your specific operation."
         primaryAction={{
-          onClick: () => openDemo("sales"),
+          onClick: () => {
+            track("calculator_demo_click", {
+              warehouse_size: size,
+              total_savings: Math.round(computed.total),
+            });
+            openDemo("sales", { source: "final_cta_calculator" });
+          },
           label: "Book the modeling call",
         }}
         secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}

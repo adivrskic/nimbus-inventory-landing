@@ -1,6 +1,13 @@
 "use client";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import DemoModal from "@/components/DemoModal/DemoModal";
+import { track } from "@/lib/analytics";
 
 /* ═══════════════════════════════════════════════════════════════════════
    DemoContext
@@ -9,13 +16,26 @@ import DemoModal from "@/components/DemoModal/DemoModal";
    currently-selected meeting topic. Lives at layout level so the modal
    survives page navigations.
 
-   Any component, anywhere in the tree, can call useDemo().openDemo()
+   Any component, anywhere in the tree, can call:
+
+     useDemo().openDemo(topic, { source })
+
    to pop the modal. Pass an optional topic string to pre-select what
-   the meeting is about — e.g. openDemo("sales") on a "Talk to Sales"
-   CTA. The user can still change the topic from inside the modal.
+   the meeting is about — e.g. openDemo("sales", { source: "pricing_tier_enterprise" })
+   on a "Talk to Sales" CTA. The `source` value flows into the GA4
+   `demo_modal_open` event so we can attribute demo opens to specific
+   CTAs. See analytics-audit.md for the canonical source vocabulary.
 
    Valid topic keys (see DemoModal TOPICS): "demo" | "sales" |
    "migration" | "integration". Unknown keys fall back to "demo".
+
+   Analytics events fired:
+     - demo_modal_open  { topic, source } — when openDemo() is called
+     - demo_modal_close { topic, outcome } — when closeDemo() is called
+                                              outcome defaults to 'abandoned';
+                                              DemoModal overrides it on
+                                              submit ('submitted') and on
+                                              Calendly click ('calendly').
    ═══════════════════════════════════════════════════════════════════════ */
 
 const DemoCtx = createContext(null);
@@ -39,15 +59,42 @@ export default function DemoHost({ children }) {
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState("demo");
 
-  const openDemo = useCallback((nextTopic) => {
-    if (typeof nextTopic === "string" && nextTopic.length > 0) {
-      setTopic(nextTopic);
-    } else {
-      setTopic("demo");
-    }
+  /* Tracks the last-open's source + topic for the close event. Used so
+     demo_modal_close carries the same topic that demo_modal_open did,
+     even if the user changed the chip mid-modal. */
+  const lastOpenRef = useRef({ topic: "demo", source: "unknown" });
+
+  const openDemo = useCallback((nextTopic, options = {}) => {
+    const resolvedTopic =
+      typeof nextTopic === "string" && nextTopic.length > 0
+        ? nextTopic
+        : "demo";
+    const resolvedSource =
+      typeof options?.source === "string" && options.source.length > 0
+        ? options.source
+        : "unknown";
+
+    setTopic(resolvedTopic);
     setOpen(true);
+
+    lastOpenRef.current = { topic: resolvedTopic, source: resolvedSource };
+
+    track("demo_modal_open", {
+      topic: resolvedTopic,
+      source: resolvedSource,
+    });
   }, []);
-  const closeDemo = useCallback(() => setOpen(false), []);
+
+  /* closeDemo accepts an optional outcome so DemoModal can mark the
+     close as a successful submit or a Calendly redirect. Default
+     ("abandoned") covers backdrop/Escape/X-button closes. */
+  const closeDemo = useCallback((outcome = "abandoned") => {
+    setOpen(false);
+    track("demo_modal_close", {
+      topic: lastOpenRef.current.topic,
+      outcome,
+    });
+  }, []);
 
   return (
     <DemoCtx.Provider value={{ open, topic, openDemo, closeDemo }}>

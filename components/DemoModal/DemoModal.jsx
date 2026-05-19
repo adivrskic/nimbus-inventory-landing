@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { trackLead, trackLeadError, track } from "@/lib/analytics";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import { validateDemo } from "@/lib/validation";
@@ -410,6 +411,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       const validationErrors = validateDemo(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
+        trackLeadError({ leadType: "demo", reason: "validation" });
         const firstErr = Object.keys(validationErrors)[0];
         const el = document.getElementById(`demo-${firstErr}`);
         if (el) el.focus();
@@ -435,15 +437,25 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
             data.error || "Could not send your request. Please try again."
           );
           setStatus("error");
+          trackLeadError({
+            leadType: "demo",
+            reason: res.status === 429 ? "rate_limited" : "server",
+          });
           return;
         }
         setStatus("success");
+        trackLead({
+          leadType: "demo",
+          topic: form.topic || topicKey || "demo",
+          submissionId: data?.submissionId,
+        });
       } catch (err) {
         console.error(err);
         setSubmitError(
           "Network error. Please check your connection and try again."
         );
         setStatus("error");
+        trackLeadError({ leadType: "demo", reason: "network" });
       }
     },
     [form, status, topicKey, topic.emailLabel]
@@ -525,7 +537,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onClose("submitted");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -574,7 +586,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       ref={backdropRef}
       className={styles.backdrop}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) onClose("submitted");
       }}
       role="dialog"
       aria-modal="true"
@@ -739,6 +751,13 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                   href={calendlyHref}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    track("demo_modal_calendly_click", { topic: topicKey });
+                    // Don't preventDefault — let the link navigate. The
+                    // demo_modal_close that fires when the modal closes after
+                    // this click should get outcome='calendly'.
+                    onClose("calendly");
+                  }}
                   className={`${styles.calendlyCard} ${styles.topicSwap}`}
                   key={`cal-${topicKey}`}
                 >

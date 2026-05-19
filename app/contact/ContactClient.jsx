@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { trackLead, trackLeadError } from "@/lib/analytics";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
@@ -256,6 +257,7 @@ export default function ContactClient() {
       const validationErrors = validateContact(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
+        trackLeadError({ leadType: "contact", reason: "validation" });
         return;
       }
 
@@ -281,6 +283,10 @@ export default function ContactClient() {
             data.error || "Could not send your message. Please try again."
           );
           setStatus("error");
+          trackLeadError({
+            leadType: "contact",
+            reason: res.status === 429 ? "rate_limited" : "server",
+          });
           return;
         }
         /* Success path also wipes form data + errors so if the user
@@ -290,12 +296,14 @@ export default function ContactClient() {
         setForm(INITIAL_FORM);
         setErrors({});
         setStatus("success");
+        trackLead({ leadType: "contact", submissionId: data?.submissionId });
       } catch (err) {
         console.error(err);
         setSubmitError(
           "Network error. Please check your connection and try again."
         );
         setStatus("error");
+        trackLeadError({ leadType: "contact", reason: "network" });
       }
     },
     [form, status]

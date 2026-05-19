@@ -4,14 +4,27 @@
 // Client-side streaming hook. Imports nothing from the server side — only
 // React. If you ever see `next/headers` in this file, something is wrong.
 //
-// New in this version: `hydrate(messages)` lets a parent component populate
-// the messages array from outside (used by ChatProvider to restore prior
-// conversations after a tab reload — see /api/chat/history).
+// Analytics: fires the chat events that have natural hooks inside the
+// stream lifecycle. The consumer-side events (open, close, starter
+// clicks, CTA clicks, email-draft button clicks) fire from the
+// components that own those UIs — see ChatProvider.jsx, ChatDrawer.jsx,
+// AskClient.jsx.
+//
+// Events fired from this file:
+//   - chat_message_sent      at the top of send()
+//   - chat_cta_shown         in handleEvent when a `cta` event arrives
+//   - chat_rate_limit_hit    on 429 response
+//   - chat_reset             in reset()
+//
+// `surface` ('drawer'|'ask_page') is passed in via the optional `surface`
+// option on send() / reset() so the hook itself stays surface-agnostic
+// and the events carry the right attribution.
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { track } from "@/lib/analytics";
 
 const STORAGE_KEY = "Nautilus_chat_conv_id";
 
@@ -28,6 +41,10 @@ export function useChatStream({ userEmail, userName } = {}) {
   const [cta, setCta] = useState(null);
   const abortRef = useRef(null);
 
+  /* Tracks how many messages have been sent in the current session so
+     chat_message_sent can carry an is_first flag. Reset by reset(). */
+  const sendCountRef = useRef(0);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35,10 +52,20 @@ export function useChatStream({ userEmail, userName } = {}) {
   }, []);
 
   const send = useCallback(
-    async (text, { sourceUrl, sourceTopic } = {}) => {
+    async (text, { sourceUrl, sourceTopic, surface = "drawer" } = {}) => {
       if (streaming) return;
       const trimmed = text?.trim();
       if (!trimmed) return;
+
+      /* Fire chat_message_sent before the network call so analytics
+         captures intent even if the request fails. No message content
+         — just length + surface + is_first signal. */
+      sendCountRef.current += 1;
+      track("chat_message_sent", {
+        surface,
+        is_first: sendCountRef.current === 1,
+        message_length: trimmed.length,
+      });
 
       const userMsg = { id: makeId(), role: "user", content: trimmed };
       const assistantMsg = {
@@ -79,6 +106,7 @@ export function useChatStream({ userEmail, userName } = {}) {
         // ── 429 rate limit (JSON, not SSE) ───────────────────────────
         if (res.status === 429) {
           const err = await res.json().catch(() => ({}));
+          track("chat_rate_limit_hit", { surface });
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsg.id
@@ -184,6 +212,12 @@ export function useChatStream({ userEmail, userName } = {}) {
         )
       );
     } else if (type === "cta") {
+      /* The bot proposed a CTA — fire chat_cta_shown so we can pair
+         with chat_cta_click for funnel analysis. */
+      track("chat_cta_shown", {
+        cta_type: payload?.type || "unknown",
+        topic: payload?.topic || "unknown",
+      });
       setCta(payload);
     } else if (type === "calendly") {
       if (payload.url && typeof window !== "undefined") {
@@ -204,20 +238,34 @@ export function useChatStream({ userEmail, userName } = {}) {
     abortRef.current?.abort();
   }, []);
 
-  const reset = useCallback(() => {
-    setMessages([]);
-    setCta(null);
-    setConversationId(null);
-    if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
-  }, []);
+  const reset = useCallback(
+    (options = {}) => {
+      const { surface = "drawer" } = options;
+      track("chat_reset", {
+        surface,
+        messages_count: messages.length,
+      });
+      sendCountRef.current = 0;
+      setMessages([]);
+      setCta(null);
+      setConversationId(null);
+      if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+    },
+    [messages.length]
+  );
 
   /* hydrate — replace the messages array wholesale. Used by ChatProvider
      on mount to restore a prior conversation from the server. Caller is
      responsible for passing shapes that match what the stream produces
-     (id, role, content, plus the assistant-only fields). */
+     (id, role, content, plus the assistant-only fields).
+
+     When we hydrate from server history, prime sendCountRef so the
+     NEXT message isn't mislabeled as is_first. */
   const hydrate = useCallback((nextMessages) => {
     if (!Array.isArray(nextMessages)) return;
     setMessages(nextMessages);
+    const userMsgCount = nextMessages.filter((m) => m.role === "user").length;
+    sendCountRef.current = userMsgCount;
   }, []);
 
   return {

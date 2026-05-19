@@ -290,7 +290,11 @@ function MobileMenu({ open, links, onClose, onDemo }) {
           ))}
         </div>
 
-        <button data-cta="" className={styles.mobileCta} onClick={onDemo}>
+        <button
+          data-cta=""
+          className={styles.mobileCta}
+          onClick={() => onDemo(undefined, { source: "nav" })}
+        >
           Request a Demo
         </button>
 

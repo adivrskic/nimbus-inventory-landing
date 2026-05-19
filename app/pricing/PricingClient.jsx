@@ -7,7 +7,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
-import { PRICING_FAQS as FAQS } from "./pricingFaqs";
+import { track } from "@/lib/analytics";
 import styles from "./Pricing.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -85,6 +85,33 @@ const MATRIX_ROWS = [
   { label: "SSO / SAML", pro: false, enterprise: true },
 ];
 
+const FAQS = [
+  {
+    q: "What counts as a warehouse?",
+    a: "A warehouse is any physical facility with its own inventory, location codes, and team. Multiple buildings on the same site managed as one logical operation count as one warehouse. Separate facilities with separate stock count as separate warehouses.",
+  },
+  {
+    q: "Can I switch between plans?",
+    a: "Yes. Upgrade from Pro to Enterprise at any time — the change takes effect immediately and you'll only be billed for the difference for the remainder of your current cycle. Downgrades take effect at the start of your next billing period.",
+  },
+  {
+    q: "Is there a free trial?",
+    a: "Pro includes a 14-day free trial — no credit card required. Enterprise customers get a tailored proof-of-concept period, typically 30 days, with hands-on support from our team.",
+  },
+  {
+    q: "What happens if I exceed plan limits?",
+    a: "Nothing breaks. We'll reach out as you approach limits and discuss options — usually that's a conversation about whether Enterprise fits your growth. We never suddenly cut off scanning or operations.",
+  },
+  {
+    q: "Do you offer non-profit or educational discounts?",
+    a: "Yes. 501(c)(3) non-profits and accredited educational institutions get 30% off Pro and Enterprise. Contact sales with documentation to apply the discount.",
+  },
+  {
+    q: "Can I pay by invoice?",
+    a: "Annual Pro plans and all Enterprise contracts can be paid by invoice with net-30 terms. Monthly Pro is credit card only.",
+  },
+];
+
 /* Headline content */
 const H_LINES = [
   [
@@ -148,11 +175,34 @@ export default function PricingClient() {
   /* Demo modal — global, mounted in app/layout.js. openDemo accepts an
      optional topic key ("demo" | "sales" | "migration" | "integration")
      that preselects the chip and rides through into Calendly + the
-     sales email. */
+     sales email, plus an options object whose `source` value flows
+     into the demo_modal_open analytics event. */
   const { openDemo } = useDemo();
 
   const [billing, setBilling] = useState("monthly");
   const [openFaq, setOpenFaq] = useState(null);
+
+  /* Billing toggle handler — fires pricing_billing_toggle analytics
+     event only when the mode actually changes (clicking the active pill
+     should be a no-op for the data, not a duplicate event). */
+  const onBillingChange = (next) => {
+    if (next === billing) return;
+    track("pricing_billing_toggle", { mode: next });
+    setBilling(next);
+  };
+
+  /* FAQ click handler — fires pricing_faq_expand only on OPEN (not on
+     close), and caps the question at 80 chars for GA4 dimension
+     cardinality. */
+  const onFaqClick = (fi) => {
+    const isOpen = openFaq === fi;
+    if (!isOpen) {
+      track("pricing_faq_expand", {
+        question: (FAQS[fi].q || "").slice(0, 80),
+      });
+    }
+    setOpenFaq(isOpen ? null : fi);
+  };
 
   /* Intro + scroll animations */
   useEffect(() => {
@@ -292,7 +342,6 @@ export default function PricingClient() {
 
   const proPrice =
     billing === "annual" ? PRICING.pro.annual : PRICING.pro.monthly;
-  const proAnnualTotal = PRICING.pro.annual * 12;
   /* Yearly savings — the gap between paying monthly all year vs paying
      the discounted annual rate. Shown prominently when Annual is active. */
   const annualSavings = (PRICING.pro.monthly - PRICING.pro.annual) * 12;
@@ -348,7 +397,7 @@ export default function PricingClient() {
               className={`${styles.pillBtn} ${
                 billing === "monthly" ? styles.pillBtnActive : ""
               }`}
-              onClick={() => setBilling("monthly")}
+              onClick={() => onBillingChange("monthly")}
             >
               Monthly
             </button>
@@ -358,7 +407,7 @@ export default function PricingClient() {
               className={`${styles.pillBtn} ${
                 billing === "annual" ? styles.pillBtnActive : ""
               }`}
-              onClick={() => setBilling("annual")}
+              onClick={() => onBillingChange("annual")}
             >
               Annual
               <span className={styles.pillBadge}>−20%</span>
@@ -443,7 +492,9 @@ export default function PricingClient() {
             <div className={styles.ctaRow}>
               <CornerButton
                 variant={tier.ctaVariant}
-                onClick={() => openDemo(tier.topic)}
+                onClick={() =>
+                  openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
+                }
               >
                 {tier.cta}
               </CornerButton>
@@ -535,7 +586,7 @@ export default function PricingClient() {
                 <button
                   type="button"
                   className={styles.faqHeader}
-                  onClick={() => setOpenFaq(isOpen ? null : fi)}
+                  onClick={() => onFaqClick(fi)}
                   aria-expanded={isOpen}
                 >
                   <span className={styles.faqQuestion}>{faq.q}</span>
@@ -583,10 +634,16 @@ export default function PricingClient() {
             integration needs — and we&apos;ll put together a tailored proposal.
           </p>
           <div className={styles.finalCtas}>
-            <CornerButton variant="primary" onClick={() => openDemo("demo")}>
+            <CornerButton
+              variant="primary"
+              onClick={() => openDemo("demo", { source: "final_cta_pricing" })}
+            >
               Request a Demo
             </CornerButton>
-            <CornerButton variant="ghost" onClick={() => openDemo("sales")}>
+            <CornerButton
+              variant="ghost"
+              onClick={() => openDemo("sales", { source: "final_cta_pricing" })}
+            >
               Talk to Sales
             </CornerButton>
           </div>

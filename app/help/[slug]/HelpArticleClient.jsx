@@ -7,6 +7,7 @@ import {
 } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useDemo } from "@/lib/DemoContext";
+import { track } from "@/lib/analytics";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./HelpArticle.module.css";
 import { HELP_CATEGORIES } from "@/lib/helpData";
@@ -70,7 +71,11 @@ export default function HelpArticleClient({ slug }) {
   /* ResourceShell still receives `onDemo` so any Nav-style or in-shell
      CTA can wire to the modal. The modal itself is mounted globally in
      app/layout.js; we just hand the context-provided opener through. */
-  const { openDemo } = useDemo();
+  const { openDemo: openDemoCtx } = useDemo();
+  const openDemo = useCallback(
+    () => openDemoCtx(undefined, { source: "help_article" }),
+    [openDemoCtx]
+  );
 
   /* Feedback state machine:
        null      → show Yes/No buttons (no vote yet)
@@ -115,8 +120,9 @@ export default function HelpArticleClient({ slug }) {
 
   /* ── Vote submission ──
      Single path: POST to /api/feedback with vote + optional reason. On
-     success, persist to localStorage and transition to the final state.
-     On failure, show inline error and let the user retry. */
+     success, persist to localStorage, fire help_feedback_vote analytics
+     event, and transition to the final state. On failure, show inline
+     error and let the user retry. */
   const submitVote = useCallback(
     async (vote, reasonText = "") => {
       if (!post || submitting) return;
@@ -151,6 +157,17 @@ export default function HelpArticleClient({ slug }) {
         } catch {
           /* ignore */
         }
+
+        /* Fire analytics AFTER successful persist but BEFORE state
+           change — guarantees we don't double-fire on a failed retry
+           and that the event is recorded against the article the
+           user actually voted on. */
+        track("help_feedback_vote", {
+          vote,
+          article_slug: post.slug,
+          had_reason: Boolean(reasonText),
+        });
+
         setFeedback(vote);
         setReason("");
       } catch (err) {
@@ -325,6 +342,9 @@ export default function HelpArticleClient({ slug }) {
             </div>
             <TransitionLink
               href="/contact"
+              onClick={() =>
+                track("help_contact_click", { from_slug: post.slug })
+              }
               className={pageStyles.feedbackContactLink}
             >
               Talk to support →
@@ -343,6 +363,12 @@ export default function HelpArticleClient({ slug }) {
               <TransitionLink
                 key={r.slug}
                 href={`/help/${r.slug}`}
+                onClick={() =>
+                  track("help_related_click", {
+                    from_slug: post.slug,
+                    to_slug: r.slug,
+                  })
+                }
                 className={pageStyles.relatedItem}
               >
                 <span className={pageStyles.relatedItemTitle}>{r.title}</span>

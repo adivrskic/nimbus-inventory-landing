@@ -6,9 +6,9 @@ import {
   useResourceSectionAnimations,
 } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import DemoModal from "@/components/DemoModal/DemoModal";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Blog.module.css";
+import { useDemo } from "@/lib/DemoContext";
 import { BLOG_POSTS } from "@/lib/blogData";
 
 const slugify = (s) =>
@@ -21,8 +21,11 @@ export default function BlogClient({ slug }) {
   const contentRef = useRef(null);
   useResourceSectionAnimations(contentRef);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
+  const { openDemo: openDemoCtx } = useDemo();
+  const openDemo = useCallback(
+    () => openDemoCtx(undefined, { source: "blog_post" }),
+    [openDemoCtx]
+  );
 
   const post = BLOG_POSTS.find((p) => p.slug === slug);
 

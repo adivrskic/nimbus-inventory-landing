@@ -28,6 +28,10 @@
 // "New chat" is the only thing that clears state: ChatDrawer's Header
 // calls chat.reset() which clears messages, conversation_id, localStorage,
 // and starts fresh.
+//
+// Analytics events fired here:
+//   - chat_open   { source_page }
+//   - chat_close  { surface: 'drawer', messages_count, had_response }
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -37,6 +41,7 @@ import { usePathname } from "next/navigation";
 import ChatLauncher from "./ChatLauncher";
 import ChatDrawer from "./ChatDrawer";
 import { useChatStream } from "./useChatStream";
+import { track } from "@/lib/analytics";
 
 const STORAGE_KEY = "Nautilus_chat_conv_id";
 
@@ -46,7 +51,7 @@ export default function ChatProvider({ userEmail, userName }) {
 
   /* Chat state is owned by the provider so it survives drawer close. */
   const chat = useChatStream({ userEmail, userName });
-  const { hydrate } = chat;
+  const { hydrate, messages } = chat;
 
   /* Rehydrate from server on first mount.
 
@@ -78,6 +83,25 @@ export default function ChatProvider({ userEmail, userName }) {
       });
   }, [hydrate]);
 
+  /* Analytics wrappers — fire open/close events while delegating the
+     actual state change. Close also reports messages_count and a
+     had_response flag so we can compute "useful chat" engagement. */
+  const handleOpen = () => {
+    track("chat_open", { source_page: pathname || "/" });
+    setOpen(true);
+  };
+  const handleClose = () => {
+    const hadResponse = messages.some(
+      (m) => m.role === "assistant" && m.content && !m.error
+    );
+    track("chat_close", {
+      surface: "drawer",
+      messages_count: messages.length,
+      had_response: hadResponse,
+    });
+    setOpen(false);
+  };
+
   /* /ask is the full-page chat — no launcher needed there.
      /help/* has its own inline doc search. */
   const suppressed =
@@ -87,17 +111,9 @@ export default function ChatProvider({ userEmail, userName }) {
 
   return (
     <>
-      <ChatLauncher
-        onOpen={() => setOpen(true)}
-        pathname={pathname}
-        hidden={open}
-      />
+      <ChatLauncher onOpen={handleOpen} pathname={pathname} hidden={open} />
       {open && (
-        <ChatDrawer
-          onClose={() => setOpen(false)}
-          pathname={pathname}
-          chat={chat}
-        />
+        <ChatDrawer onClose={handleClose} pathname={pathname} chat={chat} />
       )}
     </>
   );

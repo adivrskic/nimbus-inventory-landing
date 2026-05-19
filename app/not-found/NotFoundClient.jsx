@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { track } from "@/lib/analytics";
 
 export default function NotFoundClient() {
+  useEffect(() => {
+    track("404_view", {
+      attempted_path:
+        typeof window !== "undefined" ? window.location.pathname : "unknown",
+    });
+  }, []);
   return (
     <div
       style={{

@@ -236,7 +236,10 @@ export default function Hero({ onDemo }) {
         </p>
 
         <div ref={ctasRef} className={styles.ctas}>
-          <CornerButton variant="primary" onClick={onDemo}>
+          <CornerButton
+            variant="primary"
+            onClick={() => onDemo(undefined, { source: "hero" })}
+          >
             Request a Demo
           </CornerButton>
           <CornerButton

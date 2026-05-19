@@ -19,6 +19,20 @@
 // display-font subtitle. The send button uses the shared CornerButton
 // so it picks up the corner-bracket hover decoration the rest of the
 // site uses for primary actions.
+//
+// SearchAction support: the WebSite schema declares a SearchAction
+// pointing at /ask?q={search_term_string}. When a user submits a
+// query through Google's sitelinks search box, they land here with
+// ?q=... in the URL. The mount effect below reads that param and
+// immediately fires the query through the chat stream — no extra
+// click required. Empty/whitespace-only q values are ignored.
+//
+// Analytics events fired here:
+//   - chat_starter_click       { starter, surface: 'ask_page' }
+//   - chat_cta_click           { cta_type, topic, surface: 'ask_page' }
+//   - chat_email_draft_action  { action: 'copy' | 'open_mail', surface: 'ask_page' }
+// Plus: send() and reset() both get { surface: 'ask_page' } so useChatStream
+// fires chat_message_sent / chat_reset with the right attribution.
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -29,6 +43,7 @@ import { useChatStream } from "@/components/Chat/useChatStream";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
+import { track } from "@/lib/analytics";
 import styles from "./ask-client.module.css";
 
 const STARTERS = [
@@ -66,28 +81,35 @@ export default function AskClient({ userEmail, userName } = {}) {
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const introRef = useRef(null);
-  /* On mount: if the URL carries ?q=... (e.g. from a SearchAction
-   submission via Google's sitelinks search box, or from any other
-   pre-filled link to /ask), auto-send the query as the first
-   message. Otherwise focus the input so the user can type.
 
-   Using window.location.search directly (rather than useSearchParams)
-   avoids opting this whole page into the CSR-only rendering path —
-   useSearchParams requires a Suspense boundary, and this is a one-shot
-   read on mount that doesn't need reactivity. */
+  /* On mount: check for ?q= in the URL. If present, submit it as the
+     first chat message — this is how Google's sitelinks SearchAction
+     hands users off to /ask. If no q, focus the input as before.
+     Skipped when there are already messages (e.g. a returning visitor
+     whose transcript was hydrated from /api/chat/history) so we never
+     re-fire the same query on a refresh.
+
+     Reading window.location.search directly (not useSearchParams) keeps
+     this effect server-render-safe and avoids opting the whole page
+     into client-side rendering. */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const q = new URLSearchParams(window.location.search).get("q")?.trim();
-    if (q && messages.length === 0) {
-      send(q, { sourceUrl: "/ask" });
+    if (messages.length > 0) {
+      inputRef.current?.focus();
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q")?.trim();
+    if (q) {
+      send(q, { sourceUrl: "/ask", surface: "ask_page" });
       return;
     }
     inputRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
-  /* Auto-scroll-to-bottom when new content arrives. scrollRef is on
-     the outer .scrollRegion wrapper — that's where overflow-y: auto
+  /* Auto-scroll-to-bottom when new content arrives. scrollRef is on the
+     outer .scrollRegion wrapper — that's where overflow-y: auto
      lives now that the page itself doesn't scroll. */
   useEffect(() => {
     const el = scrollRef.current;
@@ -145,12 +167,18 @@ export default function AskClient({ userEmail, userName } = {}) {
     const text = input.trim();
     if (!text || streaming) return;
     setInput("");
-    send(text, { sourceUrl: "/ask" });
+    send(text, { sourceUrl: "/ask", surface: "ask_page" });
+  };
+
+  const handleStarter = (s) => {
+    if (streaming) return;
+    track("chat_starter_click", { starter: s, surface: "ask_page" });
+    send(s, { sourceUrl: "/ask", surface: "ask_page" });
   };
 
   const handleReset = () => {
     if (streaming) return;
-    reset();
+    reset({ surface: "ask_page" });
     inputRef.current?.focus();
   };
 
@@ -194,7 +222,7 @@ export default function AskClient({ userEmail, userName } = {}) {
                       key={s}
                       type="button"
                       className={styles.starter}
-                      onClick={() => send(s, { sourceUrl: "/ask" })}
+                      onClick={() => handleStarter(s)}
                     >
                       <span className={styles.starterArrow}>→</span>
                       {s}
@@ -322,6 +350,7 @@ function AskEmail({ draft }) {
       await navigator.clipboard.writeText(
         `Subject: ${draft.subject}\n\n${draft.body}`
       );
+      track("chat_email_draft_action", { action: "copy", surface: "ask_page" });
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -339,7 +368,16 @@ function AskEmail({ draft }) {
         <button type="button" onClick={copy} className={styles.actionBtn}>
           {copied ? "Copied" : "Copy"}
         </button>
-        <a href={mailto} className={styles.actionBtn}>
+        <a
+          href={mailto}
+          onClick={() =>
+            track("chat_email_draft_action", {
+              action: "open_mail",
+              surface: "ask_page",
+            })
+          }
+          className={styles.actionBtn}
+        >
           Open in mail
         </a>
       </div>
@@ -376,7 +414,17 @@ function AskCTA({ cta, onDismiss }) {
         <div className={styles.ctaTitle}>Want to talk to a human?</div>
         <div className={styles.ctaSub}>Our team gets back within 24 hours.</div>
         <div className={styles.ctaButtons}>
-          <a href="/contact" className={styles.ctaPrimary}>
+          <a
+            href="/contact"
+            onClick={() =>
+              track("chat_cta_click", {
+                cta_type: "talk_human",
+                topic: cta.topic || "unknown",
+                surface: "ask_page",
+              })
+            }
+            className={styles.ctaPrimary}
+          >
             Contact us →
           </a>
           <button
@@ -401,10 +449,16 @@ function AskCTA({ cta, onDismiss }) {
         <div className={styles.ctaButtons}>
           <button
             type="button"
-            onClick={() =>
-              cta.calendly_url &&
-              window.open(cta.calendly_url, "_blank", "noopener")
-            }
+            onClick={() => {
+              track("chat_cta_click", {
+                cta_type: "book_call",
+                topic: cta.topic || "unknown",
+                surface: "ask_page",
+              });
+              if (cta.calendly_url) {
+                window.open(cta.calendly_url, "_blank", "noopener");
+              }
+            }}
             className={styles.ctaPrimary}
           >
             Book a call →

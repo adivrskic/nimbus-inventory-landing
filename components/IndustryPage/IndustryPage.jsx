@@ -158,7 +158,7 @@ export default function IndustryPage({ slug }) {
   if (!industry) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={openDemo} />
+        <Nav onDemo={openDemo(undefined, { source: "industry_page" })} />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Industry not found.</h1>
@@ -179,7 +179,7 @@ export default function IndustryPage({ slug }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav onDemo={openDemo(undefined, { source: "industry_page" })} />
 
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>

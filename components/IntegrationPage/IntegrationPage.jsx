@@ -241,7 +241,7 @@ export default function IntegrationPage({ slug }) {
   if (!integration) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={openDemo} />
+        <Nav onDemo={openDemo(undefined, { source: "integration_page" })} />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Integration not found.</h1>
@@ -256,7 +256,7 @@ export default function IntegrationPage({ slug }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={openDemo} />
+      <Nav onDemo={openDemo(undefined, { source: "integration_page" })} />
 
       {/* ── HERO with CONNECTION MARK ── */}
       <section ref={heroRef} className={styles.hero}>
