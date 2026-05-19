@@ -161,10 +161,10 @@ const EXTRA_LINKS = [
   { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
-  { text: "API Docs", href: "/api-docs" },
-  { text: "Trust", href: "/trust" },
+  // { text: "API Docs", href: "/api-docs" },
+  // { text: "Trust", href: "/trust" },
   { text: "Contact", href: "/contact" },
-  { text: "Status", href: "/status" },
+  // { text: "Status", href: "/status" },
 ];
 
 function MobileMenu({ open, links, onClose, onDemo }) {
