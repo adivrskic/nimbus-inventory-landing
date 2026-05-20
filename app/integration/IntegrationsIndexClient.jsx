@@ -1,22 +1,29 @@
-import IntegrationsIndexClient from "./IntegrationsIndexClient";
+"use client";
+import Nav from "@/components/Nav/Nav";
+import Footer from "@/components/Footer/Footer";
+import Integrations from "@/components/Integrations/Integrations";
 
-/* Canonical / OG URL fixed to match the actual route (/integration, not
-   /integrations). Same canonical-mismatch bug as the industry index. */
+/* Trivial client wrapper. The actual server-side metadata + canonical
+   URL generation lives in app/integration/page.js — DO NOT paste
+   page.js content into this file. If you see an `export const metadata`
+   here, a `import IntegrationsIndexClient from "./IntegrationsIndexClient"`
+   self-import, or a non-async page-style component, you've got the
+   wrong content — restore from this version.
 
-export const metadata = {
-  title: "Integrations — Nautilus",
-  description:
-    "Nautilus connects to your accounting, ERP, e-commerce, POS, and shipping platforms. Bidirectional sync, modern APIs, zero manual entry.",
-  alternates: { canonical: "https://nautilusinventory.com/integration" },
-  openGraph: {
-    type: "website",
-    title: "Integrations Nautilus supports",
-    description:
-      "Bidirectional sync with the accounting, ERP, e-commerce, and shipping platforms you already use.",
-    url: "https://nautilusinventory.com/integration",
-  },
-};
+   The page is intentionally thin: reuses the existing home
+   <Integrations /> component verbatim so the listing index stays in
+   sync with the home page's integration grid. Demo modal lives in
+   app/layout.js (DemoHost); Nav pulls openDemo from context directly,
+   nothing to wire up here. */
 
-export default function IntegrationsIndexPage() {
-  return <IntegrationsIndexClient />;
+export default function IntegrationsIndexClient() {
+  return (
+    <>
+      <Nav />
+      <main>
+        <Integrations />
+      </main>
+      <Footer />
+    </>
+  );
 }
