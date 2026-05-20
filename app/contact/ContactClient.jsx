@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { trackLead, trackLeadError } from "@/lib/analytics";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
@@ -257,7 +256,6 @@ export default function ContactClient() {
       const validationErrors = validateContact(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
-        trackLeadError({ leadType: "contact", reason: "validation" });
         return;
       }
 
@@ -283,10 +281,6 @@ export default function ContactClient() {
             data.error || "Could not send your message. Please try again."
           );
           setStatus("error");
-          trackLeadError({
-            leadType: "contact",
-            reason: res.status === 429 ? "rate_limited" : "server",
-          });
           return;
         }
         /* Success path also wipes form data + errors so if the user
@@ -296,14 +290,12 @@ export default function ContactClient() {
         setForm(INITIAL_FORM);
         setErrors({});
         setStatus("success");
-        trackLead({ leadType: "contact", submissionId: data?.submissionId });
       } catch (err) {
         console.error(err);
         setSubmitError(
           "Network error. Please check your connection and try again."
         );
         setStatus("error");
-        trackLeadError({ leadType: "contact", reason: "network" });
       }
     },
     [form, status]
@@ -470,6 +462,11 @@ export default function ContactClient() {
                   <label htmlFor="c-name" className={styles.fieldLabel}>
                     Name <span className={styles.fieldRequired}>*</span>
                   </label>
+                  {/* aria-describedby points to the error div's id when
+                      present, so screen readers announce "Name, required,
+                      invalid entry, [error message]" on focus. The error
+                      div carries role="alert" so the message announces
+                      immediately when it appears. WCAG 3.3.1 + 1.3.1. */}
                   <input
                     id="c-name"
                     name="name"
@@ -480,12 +477,19 @@ export default function ContactClient() {
                     onChange={(e) => updateField("name", e.target.value)}
                     disabled={isSubmitting}
                     aria-invalid={errors.name ? "true" : "false"}
+                    aria-describedby={errors.name ? "c-name-error" : undefined}
                     className={`${styles.fieldInput} ${
                       errors.name ? styles.fieldInputError : ""
                     }`}
                   />
                   {errors.name && (
-                    <div className={styles.fieldErr}>{errors.name}</div>
+                    <div
+                      id="c-name-error"
+                      role="alert"
+                      className={styles.fieldErr}
+                    >
+                      {errors.name}
+                    </div>
                   )}
                 </div>
 
@@ -503,12 +507,21 @@ export default function ContactClient() {
                     onChange={(e) => updateField("email", e.target.value)}
                     disabled={isSubmitting}
                     aria-invalid={errors.email ? "true" : "false"}
+                    aria-describedby={
+                      errors.email ? "c-email-error" : undefined
+                    }
                     className={`${styles.fieldInput} ${
                       errors.email ? styles.fieldInputError : ""
                     }`}
                   />
                   {errors.email && (
-                    <div className={styles.fieldErr}>{errors.email}</div>
+                    <div
+                      id="c-email-error"
+                      role="alert"
+                      className={styles.fieldErr}
+                    >
+                      {errors.email}
+                    </div>
                   )}
                 </div>
               </div>
@@ -581,12 +594,21 @@ export default function ContactClient() {
                   onChange={(e) => updateField("message", e.target.value)}
                   disabled={isSubmitting}
                   aria-invalid={errors.message ? "true" : "false"}
+                  aria-describedby={
+                    errors.message ? "c-message-error" : undefined
+                  }
                   className={`${styles.fieldTextarea} ${
                     errors.message ? styles.fieldInputError : ""
                   }`}
                 />
                 {errors.message && (
-                  <div className={styles.fieldErr}>{errors.message}</div>
+                  <div
+                    id="c-message-error"
+                    role="alert"
+                    className={styles.fieldErr}
+                  >
+                    {errors.message}
+                  </div>
                 )}
               </div>
 

@@ -1,598 +1,624 @@
+// ──────────────────────────────────────────────────────────────────────────
+// components/Chat/ChatDrawer.jsx
+// ──────────────────────────────────────────────────────────────────────────
+// Slide-in chat panel, styled to match the Nautilus visual vocabulary:
+// sharp corners, mono font for everything except headlines, hairline rules.
+//
+// State ownership: this component does NOT call useChatStream anymore.
+// Chat state is owned by ChatProvider (always-mounted) and passed in as
+// the `chat` prop. That way, closing the drawer (which unmounts it) does
+// not wipe the transcript. See ChatProvider.jsx for the rationale.
+//
+// Features:
+//   - "New chat" button in the header (only renders when there are messages)
+//   - Inline URL linkification in assistant text (assistant prose can
+//     reference /pricing or https://... and those become clickable)
+//   - Rate-limit error state with a clean limit-reached card
+//
+// Accessibility:
+//   - role="dialog" + aria-modal="true" — the drawer is a modal dialog.
+//   - Focus trap on Tab — focus wraps within the drawer so keyboard
+//     users can't accidentally Tab back into the page behind. WCAG
+//     2.4.3 (Focus Order).
+//   - Focus is moved to the input on mount; focus restore to the
+//     launcher button on close is handled by ChatProvider.
+//   - Escape closes (existing behavior).
+//   - Completed assistant responses are announced via an aria-live
+//     polite region (see "Announcement region" comment below). Rate-
+//     limit errors use role="alert" for immediate announcement.
+//   - Headings: Welcome title is h2, CTA card titles are h3 — so
+//     keyboard users on screen readers can navigate by heading.
+//
+// Analytics events fired here:
+//   - chat_starter_click       { starter, surface: 'drawer' }
+//   - chat_cta_click           { cta_type, topic, surface: 'drawer' }
+//   - chat_email_draft_action  { action: 'copy' | 'open_mail', surface: 'drawer' }
+// Plus: send() and reset() both get { surface: 'drawer' } so useChatStream
+// fires chat_message_sent / chat_reset with the right attribution.
+// ──────────────────────────────────────────────────────────────────────────
+
 "use client";
-import { useEffect, useRef, useState, useMemo } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
-import Footer from "@/components/Footer/Footer";
-import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import SplitText from "@/components/shared/SplitText";
-import { useDemo } from "@/lib/DemoContext";
+
+import { useState, useEffect, useRef } from "react";
 import { track } from "@/lib/analytics";
-import styles from "./Calculator.module.css";
+import styles from "./ChatDrawer.module.css";
 
-gsap.registerPlugin(ScrollTrigger);
+const STARTERS = [
+  "What does Nautilus cost?",
+  "How does it compare to Fishbowl?",
+  "Show me the AI features",
+  "Talk to a human",
+];
 
-/* ─────────────────────────────────────────────────────
-   FORMATTING + INPUT HELPERS
-───────────────────────────────────────────────────── */
-const formatNumber = (n) => Math.round(n).toLocaleString("en-US");
-const formatDollars = (n) => "$" + Math.round(n).toLocaleString("en-US");
-const parseInput = (str) => {
-  const digits = str.replace(/[^0-9]/g, "");
-  return digits === "" ? 0 : parseInt(digits, 10);
+// Match http(s) URLs and absolute site paths starting with a known top-level
+// section. The negative lookbehind keeps "$1,497/mo" or similar from
+// matching as a path.
+const LINK_RE =
+  /(https?:\/\/[^\s<>"']+|(?<![a-z0-9])\/(?:blog|help|compare|integration|industry|ask|contact|pricing|features|api-docs|status|legal|signup|login)(?:\/[a-z0-9\-]+)*\/?)/gi;
+
+function linkify(text) {
+  if (!text) return [];
+  const out = [];
+  let last = 0;
+  for (const match of text.matchAll(LINK_RE)) {
+    if (match.index > last)
+      out.push({ type: "t", v: text.slice(last, match.index) });
+    out.push({ type: "l", v: match[0] });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) out.push({ type: "t", v: text.slice(last) });
+  return out;
+}
+
+/* Focusable-element selector used by the Tab trap. Excludes disabled
+   inputs, hidden inputs, and tabindex="-1" elements. */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/* Visually-hidden style for the aria-live announcement region. Inline
+   so this file doesn't depend on an .sr-only utility class. */
+const SR_ONLY_STYLE = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  padding: 0,
+  margin: "-1px",
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
 };
 
-/* Smoothly animate a number from old to new value with requestAnimationFrame.
-   Used for the big computed savings numbers — gives a real-time-meter feel. */
-function useAnimatedNumber(target, duration = 500) {
-  const [display, setDisplay] = useState(target);
-  const startRef = useRef(target);
-  const targetRef = useRef(target);
-  const startTimeRef = useRef(null);
-  const rafRef = useRef(null);
+export default function ChatDrawer({ onClose, pathname, chat }) {
+  const [input, setInput] = useState("");
+
+  /* Chat state lives in ChatProvider now and is passed in via `chat`.
+     Pulling the same fields off the prop keeps the rest of this file
+     identical to the pre-hoist version. */
+  const { messages, streaming, send, cta, setCta, reset } = chat;
+
+  const drawerRef = useRef(null);
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+
+  /* ── Announcement region ──
+     Aria-live on every assistant message div would re-fire on every
+     token during streaming — noisy and unreliable across screen
+     readers. Instead, we maintain ONE polite live region that updates
+     with the full text of the latest assistant response when streaming
+     completes. SR users hear the response read once, fully formed.
+
+     Rate-limit errors are NOT announced through this region — they
+     use role="alert" on the RateLimitCard for immediate, assertive
+     announcement. lastAnnouncedRef ensures each message is announced
+     exactly once even if the messages array re-renders for other
+     reasons. */
+  const [announceText, setAnnounceText] = useState("");
+  const lastAnnouncedRef = useRef(null);
 
   useEffect(() => {
-    if (target === targetRef.current) return;
-    startRef.current = display;
-    targetRef.current = target;
-    startTimeRef.current = performance.now();
+    if (streaming) return;
+    const latest = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant" && m.content && !m.error);
+    if (latest && latest.id !== lastAnnouncedRef.current) {
+      lastAnnouncedRef.current = latest.id;
+      setAnnounceText(latest.content);
+    }
+  }, [streaming, messages]);
 
-    const animate = (now) => {
-      const elapsed = now - startTimeRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const value =
-        startRef.current + (targetRef.current - startRef.current) * eased;
-      setDisplay(value);
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(animate);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [messages, cta]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  /* Focus trap — wrap Tab/Shift+Tab navigation within the drawer.
+     Without this, keyboard users tabbing past the last focusable
+     element in the drawer land on whatever is behind it (page
+     content, Nav, etc.). WCAG 2.4.3 (Focus Order). */
+  useEffect(() => {
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const handleTab = (e) => {
+      if (e.key !== "Tab") return;
+      const focusables = drawer.querySelectorAll(FOCUSABLE_SELECTOR);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
 
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [target, duration]);
-
-  return display;
-}
-
-/* ─────────────────────────────────────────────────────
-   INPUT RANGES + DEFAULTS
-───────────────────────────────────────────────────── */
-const RANGES = {
-  size: { min: 1000, max: 500000, default: 35000 },
-  pickers: { min: 1, max: 250, default: 20 },
-  accuracy: { min: 70, max: 99, default: 92 },
-  wage: { min: 12, max: 60, default: 22 },
-};
-
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-/* ─────────────────────────────────────────────────────
-   ROI MATH
-───────────────────────────────────────────────────── */
-function calculate({ size, pickers, accuracy, wage }) {
-  /* Picking time saved — assume 600hrs/yr of pick activity per picker,
-     optimized routes cut that by 20%. */
-  const pickingSavings = pickers * 600 * 0.2 * wage;
-
-  /* Error reduction — at lower accuracy, more errors. Each error costs
-     ~6% of order value. Assume ~2 orders/sqft/year at ~$180 avg. */
-  const errorRate = (100 - accuracy) / 100;
-  const annualOrders = size * 2;
-  const errorSavings = annualOrders * 180 * 0.06 * (errorRate * 0.7);
-
-  /* Shrinkage / inventory accuracy — baseline ~$1.50/sqft/year,
-     Nautilus cuts 60%. */
-  const shrinkageSavings = size * 1.5 * 0.6;
-
-  /* Cycle counting — saves ~40hrs/yr per picker through continuous
-     counting. */
-  const cycleCountSavings = pickers * 40 * wage;
-
-  const total =
-    pickingSavings + errorSavings + shrinkageSavings + cycleCountSavings;
-
-  /* "Current loss" framing — assume some inefficiency persists, so the
-     current annual cost is ~1.4x what Nautilus recovers. Used in the
-     headline "you're losing" line. */
-  const currentLoss = total * 1.4;
-
-  return {
-    pickingSavings,
-    errorSavings,
-    shrinkageSavings,
-    cycleCountSavings,
-    total,
-    currentLoss,
-  };
-}
-
-/* ─────────────────────────────────────────────────────
-   INLINE EDITABLE NUMBER COMPONENT
-───────────────────────────────────────────────────── */
-function InlineNumber({
-  value,
-  onChange,
-  range,
-  prefix = "",
-  suffix = "",
-  formatFn = formatNumber,
-}) {
-  const [focused, setFocused] = useState(false);
-  const [rawInput, setRawInput] = useState("");
-  const inputRef = useRef(null);
-
-  /* When focused, show raw editable digits. When not, show formatted. */
-  const displayed = focused ? rawInput : formatFn(value);
-
-  const handleFocus = () => {
-    setRawInput(String(Math.round(value)));
-    setFocused(true);
-    /* Select all on focus for quick replacement */
-    requestAnimationFrame(() => inputRef.current?.select());
-  };
-
-  const handleBlur = () => {
-    const parsed = parseInput(rawInput);
-    const clamped = clamp(parsed, range.min, range.max);
-    onChange(clamped);
-    setFocused(false);
-  };
-
-  const handleChange = (e) => {
-    setRawInput(e.target.value.replace(/[^0-9]/g, ""));
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      inputRef.current?.blur();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      setRawInput(String(Math.round(value)));
-      inputRef.current?.blur();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      const next = clamp(value + step, range.min, range.max);
-      onChange(next);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      const next = clamp(value - step, range.min, range.max);
-      onChange(next);
-    }
-  };
-
-  return (
-    <span className={styles.editable}>
-      {prefix && <span className={styles.editablePrefix}>{prefix}</span>}
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        value={displayed}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        aria-label={`Edit value (range ${range.min} to ${range.max})`}
-        className={`${styles.editableInput} ${
-          focused ? styles.editableInputFocused : ""
-        }`}
-      />
-      {suffix && <span className={styles.editableSuffix}>{suffix}</span>}
-    </span>
-  );
-}
-
-/* ─────────────────────────────────────────────────────
-   PAGE
-───────────────────────────────────────────────────── */
-export default function CalculatorClient() {
-  const pageRef = useRef(null);
-  const heroRef = useRef(null);
-
-  /* Single demo opener — used to be a separate openCalendly that bypassed
-     the modal, but the modal now hosts Calendly natively with topic
-     context. "sales" makes the most sense here: visitors who reach this
-     CTA have just modeled their own ROI and want a pricing conversation. */
-  const { openDemo } = useDemo();
-
-  const [size, setSize] = useState(RANGES.size.default);
-  const [pickers, setPickers] = useState(RANGES.pickers.default);
-  const [accuracy, setAccuracy] = useState(RANGES.accuracy.default);
-  const [wage, setWage] = useState(RANGES.wage.default);
-
-  const computed = useMemo(
-    () => calculate({ size, pickers, accuracy, wage }),
-    [size, pickers, accuracy, wage]
-  );
-
-  /* Smooth display values (count-up effect on every change) */
-  const animLoss = useAnimatedNumber(computed.currentLoss);
-  const animTotal = useAnimatedNumber(computed.total);
-  const animPicking = useAnimatedNumber(computed.pickingSavings);
-  const animError = useAnimatedNumber(computed.errorSavings);
-  const animShrinkage = useAnimatedNumber(computed.shrinkageSavings);
-  const animCycle = useAnimatedNumber(computed.cycleCountSavings);
-
-  /* For the bar chart — compute max of the four for bar scaling */
-  const maxLineItem = Math.max(
-    computed.pickingSavings,
-    computed.errorSavings,
-    computed.shrinkageSavings,
-    computed.cycleCountSavings,
-    1
-  );
-
-  const resetDefaults = () => {
-    setSize(RANGES.size.default);
-    setPickers(RANGES.pickers.default);
-    setAccuracy(RANGES.accuracy.default);
-    setWage(RANGES.wage.default);
-  };
-
-  /* ── Analytics: engagement + compute events ──
-     Fires `calculator_engaged` once per mount on the first non-default
-     state, then fires `calculator_compute` 1s after the last input
-     change so we capture the user's "settled" numbers without
-     per-keystroke noise. Skipping when all values are at defaults
-     means a user who lands on the page and bounces doesn't fire either
-     event. resetDefaults() doesn't reset engagedRef — once engaged,
-     always engaged for this session. */
-  const engagedRef = useRef(false);
-  useEffect(() => {
-    const isDefault =
-      size === RANGES.size.default &&
-      pickers === RANGES.pickers.default &&
-      accuracy === RANGES.accuracy.default &&
-      wage === RANGES.wage.default;
-
-    if (isDefault) return;
-
-    if (!engagedRef.current) {
-      engagedRef.current = true;
-      track("calculator_engaged");
-    }
-
-    const t = setTimeout(() => {
-      track("calculator_compute", {
-        warehouse_size: size,
-        pickers,
-        accuracy,
-        wage,
-        total_savings: Math.round(computed.total),
-      });
-    }, 1000);
-
-    return () => clearTimeout(t);
-  }, [size, pickers, accuracy, wage, computed.total]);
-
-  /* Animations */
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (!heroRef.current) return;
-
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    tl.fromTo(
-      `.${styles.heroEyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
-      0
-    );
-
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.022 },
-      0.1
-    );
-
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      0.5
-    );
-
-    tl.fromTo(
-      `.${styles.story}`,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.7 },
-      0.65
-    );
-
-    if (!pageRef.current) return;
-
-    /* Section reveals */
-    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
-    sections.forEach((sec) => {
-      const num = sec.querySelector(`.${styles.sectionNum}`);
-      const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
-      );
-      if (num) {
-        gsap.fromTo(
-          num,
-          { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
-          }
-        );
-      }
-      if (content.length > 0) {
-        gsap.fromTo(
-          content,
-          { opacity: 0, y: 14 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.55,
-            stagger: 0.06,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
-          }
-        );
-      }
-    });
-
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    drawer.addEventListener("keydown", handleTab);
+    return () => drawer.removeEventListener("keydown", handleTab);
   }, []);
 
-  const breakdown = [
-    {
-      num: "01",
-      label: "Picking time saved",
-      desc: "Optimized pick routes run about 20% shorter than manual paths",
-      value: computed.pickingSavings,
-      animValue: animPicking,
-    },
-    {
-      num: "02",
-      label: "Error reduction",
-      desc: "70% fewer pick and ship errors",
-      value: computed.errorSavings,
-      animValue: animError,
-    },
-    {
-      num: "03",
-      label: "Inventory accuracy",
-      desc: "60% less shrinkage and fewer stockouts",
-      value: computed.shrinkageSavings,
-      animValue: animShrinkage,
-    },
-    {
-      num: "04",
-      label: "Cycle counting",
-      desc: "Continuous counts replace the annual freeze",
-      value: computed.cycleCountSavings,
-      animValue: animCycle,
-    },
-  ];
+  const submit = (e) => {
+    e?.preventDefault();
+    const text = input.trim();
+    if (!text || streaming) return;
+    setInput("");
+    send(text, { sourceUrl: pathname, surface: "drawer" });
+  };
+
+  const sendStarter = (t) => {
+    if (streaming) return;
+    track("chat_starter_click", { starter: t, surface: "drawer" });
+    send(t, { sourceUrl: pathname, surface: "drawer" });
+  };
+
+  const handleReset = () => {
+    if (streaming) return;
+    reset({ surface: "drawer" });
+    inputRef.current?.focus();
+  };
 
   return (
-    <div ref={pageRef} className={styles.page}>
-      <Nav />
+    <>
+      <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
+      <aside
+        ref={drawerRef}
+        className={styles.drawer}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chat with Nautilus"
+      >
+        <Header
+          streaming={streaming}
+          onClose={onClose}
+          onReset={handleReset}
+          showReset={messages.length > 0}
+        />
 
-      {/* ── HERO ── */}
-      <section ref={heroRef} className={styles.hero}>
-        <div className={styles.heroEyebrow}>ROI Calculator</div>
-        <h1 className={styles.heroTitle}>
-          <SplitText
-            text="See what Nautilus is worth to you."
-            accentWord="you"
-            classNames={{
-              line: styles.heroLine,
-              letter: styles.heroLetter,
-              accent: styles.heroLetterAccent,
-              space: styles.heroSpace,
-            }}
-          />
-        </h1>
-        <p className={styles.heroSub}>
-          Every number in the paragraph below is editable. Click one, type a new
-          value, and the estimate recalculates as you type. No signup, no email.
-        </p>
-      </section>
-
-      {/* ── THE STORY (editable paragraph) ── */}
-      <section className={styles.story}>
-        <div className={styles.storyLabel}>
-          <span className={styles.storyLabelDot} />
-          <span>Editable estimate · click any number</span>
+        <div ref={scrollRef} className={styles.scroll}>
+          {messages.length === 0 ? (
+            <Welcome onPick={sendStarter} />
+          ) : (
+            messages.map((m) => (
+              <Message key={m.id} message={m} streaming={streaming} />
+            ))
+          )}
+          {cta && <CTACard cta={cta} onDismiss={() => setCta(null)} />}
         </div>
 
-        <p className={styles.storyText}>
-          You run a{" "}
-          <InlineNumber
-            value={size}
-            onChange={setSize}
-            range={RANGES.size}
-            suffix=" sq ft"
-          />{" "}
-          warehouse with{" "}
-          <InlineNumber
-            value={pickers}
-            onChange={setPickers}
-            range={RANGES.pickers}
-          />{" "}
-          pickers,{" "}
-          <InlineNumber
-            value={accuracy}
-            onChange={setAccuracy}
-            range={RANGES.accuracy}
-            suffix="%"
-          />{" "}
-          inventory accuracy, and{" "}
-          <InlineNumber
-            value={wage}
-            onChange={setWage}
-            range={RANGES.wage}
-            prefix="$"
-            suffix="/hr"
-          />{" "}
-          average labor. That setup costs about{" "}
-          <span className={styles.storyLoss}>{formatDollars(animLoss)}</span> a
-          year in errors, rework, and slow picking.
-        </p>
+        <form className={styles.inputBar} onSubmit={submit}>
+          <input
+            ref={inputRef}
+            type="text"
+            className={styles.input}
+            placeholder={
+              streaming ? "Waiting…" : "Ask anything about Nautilus…"
+            }
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={streaming}
+            autoComplete="off"
+            spellCheck="false"
+          />
+          <button
+            type="submit"
+            className={styles.sendBtn}
+            disabled={streaming || !input.trim()}
+            aria-label="Send"
+          >
+            <ArrowIcon />
+          </button>
+        </form>
+        <div className={styles.disclaimer}>
+          AI-generated — verify pricing details with your rep
+        </div>
 
-        <p className={styles.storyTextSecondary}>
-          Nautilus typically recovers about{" "}
-          <span className={styles.storySavings}>
-            {formatDollars(animTotal)}
-          </span>{" "}
-          of that in year one. Similar amounts every year after.
-        </p>
+        {/* Polite live region — see "Announcement region" comment above
+            useEffect. Visually hidden; fires when streaming completes
+            for a new assistant message. */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={SR_ONLY_STYLE}
+        >
+          {announceText}
+        </div>
+      </aside>
+    </>
+  );
+}
 
-        <div className={styles.storyControls}>
+// ── Header ────────────────────────────────────────────────────────────────
+
+function Header({ streaming, onClose, onReset, showReset }) {
+  return (
+    <header className={styles.header}>
+      <div className={styles.headerIcon}>
+        <MsgIcon />
+      </div>
+      <div className={styles.headerText}>
+        <div className={styles.headerTitle}>Ask Nautilus</div>
+        <div className={styles.headerSub}>
+          {streaming ? (
+            <>
+              <span className={styles.statusDot} aria-hidden="true" />
+              Thinking
+            </>
+          ) : (
+            <>Help, pricing, demos — instant answers</>
+          )}
+        </div>
+      </div>
+      {showReset && (
+        <button
+          type="button"
+          className={styles.resetBtn}
+          onClick={onReset}
+          disabled={streaming}
+        >
+          New chat
+        </button>
+      )}
+      <button
+        type="button"
+        className={styles.closeBtn}
+        onClick={onClose}
+        aria-label="Close chat"
+      >
+        <CloseIcon />
+      </button>
+    </header>
+  );
+}
+
+// ── Welcome ───────────────────────────────────────────────────────────────
+
+function Welcome({ onPick }) {
+  /* Welcome title is rendered as a real h2 so screen-reader users can
+     navigate to it with H/2 keys. Visual styling unchanged — the
+     existing `.welcomeTitle` class already targets generic typography. */
+  return (
+    <div className={styles.welcome}>
+      <div className={styles.welcomeKicker}>ASK Nautilus</div>
+      <h2 className={styles.welcomeTitle}>What can I help with?</h2>
+      <p className={styles.welcomeDesc}>
+        I know everything about Nautilus — features, pricing, integrations,
+        comparisons, and how things work in the app.
+      </p>
+      <div className={styles.suggestions}>
+        {STARTERS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            className={styles.suggestion}
+            onClick={() => onPick(s)}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Message ───────────────────────────────────────────────────────────────
+
+function Message({ message, streaming }) {
+  if (message.role === "user") {
+    return <div className={styles.userMsg}>{message.content}</div>;
+  }
+
+  // Rate-limit state — render a dedicated card instead of the normal message
+  if (message.error && message.errorCode) {
+    return <RateLimitCard message={message} />;
+  }
+
+  const showCursor =
+    streaming && message.content && !message.emailDraft && !message.error;
+
+  return (
+    <div className={styles.assistantMsg}>
+      {message.toolInFlight && !message.content && (
+        <ToolStatus name={message.toolInFlight} />
+      )}
+
+      {message.content && (
+        <div
+          className={
+            message.error ? styles.assistantTextError : styles.assistantText
+          }
+        >
+          {linkify(message.content).map((seg, i) =>
+            seg.type === "l" ? (
+              <a
+                key={i}
+                href={seg.v}
+                target={seg.v.startsWith("http") ? "_blank" : undefined}
+                rel="noreferrer"
+                className={styles.inlineLink}
+              >
+                {seg.v}
+              </a>
+            ) : (
+              <span key={i}>{seg.v}</span>
+            )
+          )}
+          {showCursor && <span className={styles.cursor} />}
+        </div>
+      )}
+
+      {message.emailDraft && <EmailDraftBlock draft={message.emailDraft} />}
+    </div>
+  );
+}
+
+function ToolStatus({ name }) {
+  const label =
+    name === "draft_email"
+      ? "DRAFTING"
+      : name === "get_calendly_link"
+      ? "PULLING CALENDLY"
+      : "WORKING";
+  return (
+    <div className={styles.toolStatus}>
+      <span className={styles.statusDot} aria-hidden="true" />
+      {label}
+    </div>
+  );
+}
+
+/* RateLimitCard uses role="alert" so screen readers announce the error
+   immediately (assertive politeness). This is the WCAG 4.1.3 (Status
+   Messages) treatment for blocking errors that need user attention. */
+function RateLimitCard({ message }) {
+  return (
+    <div className={styles.limitCard} role="alert">
+      <div className={styles.limitKicker}>LIMIT REACHED</div>
+      <div className={styles.limitText}>{message.content}</div>
+    </div>
+  );
+}
+
+// ── Email draft block ─────────────────────────────────────────────────────
+
+function EmailDraftBlock({ draft }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `Subject: ${draft.subject}\n\n${draft.body}`
+      );
+      track("chat_email_draft_action", { action: "copy", surface: "drawer" });
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
+  const mailto = `mailto:?subject=${encodeURIComponent(
+    draft.subject || ""
+  )}&body=${encodeURIComponent(draft.body || "")}`;
+  return (
+    <div className={styles.emailDraft}>
+      <div className={styles.emailDraftSubject}>SUBJECT — {draft.subject}</div>
+      <div className={styles.emailDraftBody}>{draft.body}</div>
+      <div className={styles.emailDraftActions}>
+        <button type="button" onClick={handleCopy} className={styles.actionBtn}>
+          {copied ? "Copied" : "Copy"}
+        </button>
+        <a
+          href={mailto}
+          onClick={() =>
+            track("chat_email_draft_action", {
+              action: "open_mail",
+              surface: "drawer",
+            })
+          }
+          className={styles.actionBtn}
+        >
+          Open in mail
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ── CTA card ──────────────────────────────────────────────────────────────
+
+const CTA_COPY = {
+  demo: {
+    title: "Want to see Nautilus in action?",
+    sub: "30-minute walkthrough on your calendar.",
+  },
+  sales: {
+    title: "Want a tailored quote?",
+    sub: "Multi-warehouse rollouts often come with custom terms.",
+  },
+  migration: {
+    title: "Want to plan the migration?",
+    sub: "We'll map your current setup to Nautilus.",
+  },
+  integration: {
+    title: "Want to scope the integration?",
+    sub: "Talk to an engineer about what you need to connect.",
+  },
+};
+
+function CTACard({ cta, onDismiss }) {
+  /* CTA card titles are h3 — semantic level under the Welcome h2, and
+     give SR users a heading-navigable landmark for the call to action. */
+  if (cta.type === "talk_human") {
+    return (
+      <div className={styles.ctaCard}>
+        <div className={styles.ctaKicker}>TALK TO US</div>
+        <h3 className={styles.ctaTitle}>Want to talk to a human?</h3>
+        <div className={styles.ctaSub}>Our team gets back within 24 hours.</div>
+        <div className={styles.ctaButtons}>
+          <a
+            href="/contact"
+            onClick={() =>
+              track("chat_cta_click", {
+                cta_type: "talk_human",
+                topic: cta.topic || "unknown",
+                surface: "drawer",
+              })
+            }
+            className={styles.ctaPrimary}
+          >
+            Contact us
+            <ArrowIcon size={10} />
+          </a>
           <button
             type="button"
-            onClick={resetDefaults}
-            className={styles.storyReset}
+            onClick={onDismiss}
+            className={styles.ctaDismiss}
           >
-            ↺ Reset to defaults
+            Not now
           </button>
-          <div className={styles.storyHint}>
-            <span className={styles.storyHintKbd}>↑ ↓</span> to nudge ·{" "}
-            <span className={styles.storyHintKbd}>Shift</span> + arrows to step
-            by 10
-          </div>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* ── §01 BREAKDOWN ── */}
-      <section className={styles.section}>
-        <div className={styles.sectionNum} aria-hidden="true">
-          01
+  if (cta.type === "book_call") {
+    const copy = CTA_COPY[cta.topic] || CTA_COPY.demo;
+    const open = () => {
+      track("chat_cta_click", {
+        cta_type: "book_call",
+        topic: cta.topic || "unknown",
+        surface: "drawer",
+      });
+      if (cta.calendly_url) {
+        window.open(cta.calendly_url, "_blank", "noopener");
+      }
+    };
+    return (
+      <div className={styles.ctaCard}>
+        <div className={styles.ctaKicker}>BOOK A CALL</div>
+        <h3 className={styles.ctaTitle}>{copy.title}</h3>
+        <div className={styles.ctaSub}>{copy.sub}</div>
+        <div className={styles.ctaButtons}>
+          <button type="button" onClick={open} className={styles.ctaPrimary}>
+            Book a call
+            <ArrowIcon size={10} />
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className={styles.ctaDismiss}
+          >
+            Not now
+          </button>
         </div>
-        <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>Where the savings come from</div>
-          <h2 className={styles.sectionTitle}>Four lines of savings.</h2>
-          <p className={styles.sectionDesc}>
-            Bars scale relative to the largest source. They update when you
-            change the inputs above.
-          </p>
+      </div>
+    );
+  }
 
-          <div className={styles.breakdown}>
-            {breakdown.map((item) => {
-              const widthPct = (item.value / maxLineItem) * 100;
-              return (
-                <div key={item.num} className={styles.breakdownRow}>
-                  <div className={styles.breakdownTop}>
-                    <span className={styles.breakdownNum}>{item.num}</span>
-                    <span className={styles.breakdownLabel}>{item.label}</span>
-                    <span className={styles.breakdownValue}>
-                      {formatDollars(item.animValue)}
-                    </span>
-                  </div>
-                  <div className={styles.breakdownBar}>
-                    <div
-                      className={styles.breakdownBarFill}
-                      style={{ width: `${widthPct}%` }}
-                    />
-                  </div>
-                  <div className={styles.breakdownDesc}>{item.desc}</div>
-                </div>
-              );
-            })}
-          </div>
+  return null;
+}
 
-          <div className={styles.totalBar}>
-            <div className={styles.totalLabel}>Total year-one savings</div>
-            <div className={styles.totalValue}>{formatDollars(animTotal)}</div>
-          </div>
-        </div>
-      </section>
+// ── Icons (matching DemoModal style) ──────────────────────────────────────
 
-      {/* ── §02 ASSUMPTIONS ── */}
-      <section className={styles.section}>
-        <div className={styles.sectionNum} aria-hidden="true">
-          02
-        </div>
-        <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>How the math works</div>
-          <h2 className={styles.sectionTitle}>The assumptions.</h2>
-          <p className={styles.sectionDesc}>
-            Conservative averages from customer data and published WMS
-            benchmarks. Your numbers will vary. For a precise estimate, book a
-            call and we run the model on your real data.
-          </p>
-
-          <dl className={styles.assumptions}>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Picker hours on picking</dt>
-              <dd className={styles.assumptionDef}>
-                600 hours per picker per year (≈30% of paid hours)
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Route optimization</dt>
-              <dd className={styles.assumptionDef}>
-                20% reduction in pick travel time vs. manual route planning
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Error cost</dt>
-              <dd className={styles.assumptionDef}>
-                6% of order value (rework, returns, expedited reships)
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Error reduction</dt>
-              <dd className={styles.assumptionDef}>
-                70% fewer errors than current accuracy rate
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Baseline shrinkage</dt>
-              <dd className={styles.assumptionDef}>
-                $1.50 per sq ft per year of recoverable shrinkage
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Order density</dt>
-              <dd className={styles.assumptionDef}>
-                2 orders per sq ft per year, $180 average order value
-              </dd>
-            </div>
-            <div className={styles.assumption}>
-              <dt className={styles.assumptionTerm}>Cycle count efficiency</dt>
-              <dd className={styles.assumptionDef}>
-                40 hours per picker per year recovered through continuous
-                counting
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ── */}
-      <FinalCTACard
-        label="Want a precise estimate?"
-        title="Get a number based on your data."
-        desc="30 minutes with a Nautilus engineer. We use your real operational data to build a more detailed estimate for your specific operation."
-        primaryAction={{
-          onClick: () => {
-            track("calculator_demo_click", {
-              warehouse_size: size,
-              total_savings: Math.round(computed.total),
-            });
-            openDemo("sales", { source: "final_cta_calculator" });
-          },
-          label: "Book the modeling call",
-        }}
-        secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}
+function MsgIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V10C14 11.1046 13.1046 12 12 12H6L3 14.5V12H4C2.89543 12 2 11.1046 2 10V4Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
       />
+    </svg>
+  );
+}
 
-      <Footer />
-    </div>
+function CloseIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 3L13 13M3 13L13 3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ArrowIcon({ size = 12 }) {
+  return (
+    <svg
+      width={size}
+      height={size * (10 / 12)}
+      viewBox="0 0 12 10"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M1 5H11M8 1L11 5L8 9"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

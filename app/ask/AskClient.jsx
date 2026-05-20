@@ -27,6 +27,21 @@
 // immediately fires the query through the chat stream — no extra
 // click required. Empty/whitespace-only q values are ignored.
 //
+// Accessibility (Wave 2):
+//   - Completed assistant responses are announced via an aria-live
+//     polite region (see "Announcement region" comment below). Rate-
+//     limit errors use role="alert" for immediate announcement.
+//   - CTA card titles use <h3> so SR users can navigate by heading.
+//   - The intro's h1 is owned by SplitText's legacy mode (sr-only flat
+//     text + aria-hidden letters from the Wave 1 SplitText fix).
+//
+// Auto-scroll behavior:
+//   The scroll-to-bottom effect skips its first run after mount, so
+//   navigating into /ask with a hydrated transcript doesn't yank the
+//   user to the bottom. After the first turn, subsequent token/cta
+//   updates do auto-scroll — that's the right behavior for an
+//   ongoing conversation.
+//
 // Analytics events fired here:
 //   - chat_starter_click       { starter, surface: 'ask_page' }
 //   - chat_cta_click           { cta_type, topic, surface: 'ask_page' }
@@ -72,6 +87,19 @@ function linkify(text) {
   return out;
 }
 
+/* Visually-hidden style for the announcement region. */
+const SR_ONLY_STYLE = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  padding: 0,
+  margin: "-1px",
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 export default function AskClient({ userEmail, userName } = {}) {
   const [input, setInput] = useState("");
   const { messages, streaming, send, cta, setCta, reset } = useChatStream({
@@ -81,6 +109,26 @@ export default function AskClient({ userEmail, userName } = {}) {
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const introRef = useRef(null);
+
+  /* ── Announcement region ──
+     Same pattern as ChatDrawer: a single polite live region that fires
+     when streaming completes for a new assistant message. SR users
+     hear each response read once, fully formed, instead of token-by-
+     token chaos. Rate-limit errors are routed through role="alert"
+     on the limit card (skipped here). */
+  const [announceText, setAnnounceText] = useState("");
+  const lastAnnouncedRef = useRef(null);
+
+  useEffect(() => {
+    if (streaming) return;
+    const latest = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant" && m.content && !m.error);
+    if (latest && latest.id !== lastAnnouncedRef.current) {
+      lastAnnouncedRef.current = latest.id;
+      setAnnounceText(latest.content);
+    }
+  }, [streaming, messages]);
 
   /* On mount: check for ?q= in the URL. If present, submit it as the
      first chat message — this is how Google's sitelinks SearchAction
@@ -108,12 +156,29 @@ export default function AskClient({ userEmail, userName } = {}) {
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
-  /* Auto-scroll-to-bottom when new content arrives. scrollRef is on the
-     outer .scrollRegion wrapper — that's where overflow-y: auto
-     lives now that the page itself doesn't scroll. */
+  /* Auto-scroll-to-bottom when new content arrives.
+
+     The hasScrolledOnceRef gate skips the first run after mount so
+     navigating into /ask with a hydrated transcript (returning visitor
+     whose conversation was restored from /api/chat/history) doesn't
+     yank the user to the bottom of the message list before they've
+     even read the page. After the first turn in this tab session,
+     subsequent token streams and CTA updates do auto-scroll — which
+     is the right behavior for an active conversation where the user
+     is watching the assistant type.
+
+     scrollRef is on the outer .scrollRegion wrapper — that's where
+     overflow-y: auto lives now that the page itself doesn't scroll. */
+  const hasScrolledOnceRef = useRef(false);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+
+    if (!hasScrolledOnceRef.current) {
+      hasScrolledOnceRef.current = true;
+      return;
+    }
+
     requestAnimationFrame(() => {
       el.scrollTop = el.scrollHeight;
     });
@@ -234,10 +299,16 @@ export default function AskClient({ userEmail, userName } = {}) {
               <>
                 <div className={styles.transcriptHeader}>
                   <div className={styles.kicker}>CONVERSATION</div>
+                  {/* className is .resetBtn — the CSS module defines this
+                      class with the mono-uppercase + bracket-hover look
+                      that matches the rest of the site's secondary CTAs.
+                      An earlier version used styles.newChatBtn which
+                      didn't exist in the stylesheet, leaving the button
+                      visually unstyled. */}
                   <button
                     type="button"
-                    className={styles.resetBtn}
                     onClick={handleReset}
+                    className={styles.resetBtn}
                     disabled={streaming}
                   >
                     New chat
@@ -278,6 +349,17 @@ export default function AskClient({ userEmail, userName } = {}) {
           <div className={styles.disclaimer}>
             AI-generated — verify pricing details with your rep
           </div>
+
+          {/* Polite live region for streaming-complete announcements.
+              See "Announcement region" comment above. */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            style={SR_ONLY_STYLE}
+          >
+            {announceText}
+          </div>
         </div>
       </main>
       <Footer />
@@ -293,8 +375,10 @@ function AskMessage({ message, streaming }) {
   }
 
   if (message.error && message.errorCode) {
+    /* role="alert" announces the rate-limit error immediately rather
+       than queuing through the polite announcement region above. */
     return (
-      <div className={styles.limitCard}>
+      <div className={styles.limitCard} role="alert">
         <div className={styles.limitKicker}>LIMIT REACHED</div>
         <div className={styles.limitText}>{message.content}</div>
       </div>
@@ -407,11 +491,14 @@ function AskCTA({ cta, onDismiss }) {
     },
   };
 
+  /* CTA card titles are h3 — semantic level under the page's h1,
+     and give SR users a heading-navigable landmark for the call to
+     action. */
   if (cta.type === "talk_human") {
     return (
       <div className={styles.ctaCard}>
         <div className={styles.ctaKicker}>TALK TO US</div>
-        <div className={styles.ctaTitle}>Want to talk to a human?</div>
+        <h3 className={styles.ctaTitle}>Want to talk to a human?</h3>
         <div className={styles.ctaSub}>Our team gets back within 24 hours.</div>
         <div className={styles.ctaButtons}>
           <a
@@ -444,7 +531,7 @@ function AskCTA({ cta, onDismiss }) {
     return (
       <div className={styles.ctaCard}>
         <div className={styles.ctaKicker}>BOOK A CALL</div>
-        <div className={styles.ctaTitle}>{c.title}</div>
+        <h3 className={styles.ctaTitle}>{c.title}</h3>
         <div className={styles.ctaSub}>{c.sub}</div>
         <div className={styles.ctaButtons}>
           <button

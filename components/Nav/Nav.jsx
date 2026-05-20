@@ -236,8 +236,11 @@ function MobileMenu({ open, links, onClose, onDemo }) {
   }, [open]);
 
   return (
+    /* id is referenced by the hamburger's aria-controls so screen
+       readers can resolve what the hamburger toggles. */
     <div
       ref={menuRef}
+      id="mobile-menu"
       className={styles.mobileMenu}
       style={{ display: "none" }}
     >
@@ -576,11 +579,18 @@ export default function Nav({ onDemo, dark }) {
             Request a Demo
           </button>
 
-          {/* Hamburger */}
+          {/* Hamburger
+              ────────
+              aria-label swaps to mirror state ("Open menu" vs "Close menu"),
+              aria-expanded reflects whether the mobile menu is open, and
+              aria-controls resolves to the mobile menu's id so AT can
+              announce the relationship. WCAG 4.1.2 (Name, Role, Value). */}
           <button
             className={styles.hamburger}
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
           >
             <span
               className={`${styles.hamburgerLine} ${

@@ -29,6 +29,16 @@
 // calls chat.reset() which clears messages, conversation_id, localStorage,
 // and starts fresh.
 //
+// Accessibility:
+// We capture document.activeElement when the drawer opens (typically the
+// floating chat launcher button) and restore focus to it on close. This
+// is the WCAG 2.4.3 (Focus Order) requirement for dialogs — keyboard
+// users who tab away from the drawer should land back where they were,
+// not at the top of the page. The capture happens in handleOpen and the
+// restore happens after the drawer's setOpen(false) in handleClose,
+// deferred one animation frame so React has time to unmount the drawer
+// before we move focus.
+//
 // Analytics events fired here:
 //   - chat_open   { source_page }
 //   - chat_close  { surface: 'drawer', messages_count, had_response }
@@ -52,6 +62,11 @@ export default function ChatProvider({ userEmail, userName }) {
   /* Chat state is owned by the provider so it survives drawer close. */
   const chat = useChatStream({ userEmail, userName });
   const { hydrate, messages } = chat;
+
+  /* Track the element that had focus when the drawer opened, so we
+     can restore focus to it on close (WCAG 2.4.3). Typically the
+     floating chat launcher button. */
+  const previousFocusRef = useRef(null);
 
   /* Rehydrate from server on first mount.
 
@@ -83,13 +98,17 @@ export default function ChatProvider({ userEmail, userName }) {
       });
   }, [hydrate]);
 
-  /* Analytics wrappers — fire open/close events while delegating the
-     actual state change. Close also reports messages_count and a
-     had_response flag so we can compute "useful chat" engagement. */
+  /* Analytics + focus-management wrappers — fire open/close events,
+     handle focus capture/restore, while delegating the actual state
+     change. */
   const handleOpen = () => {
+    if (typeof document !== "undefined") {
+      previousFocusRef.current = document.activeElement;
+    }
     track("chat_open", { source_page: pathname || "/" });
     setOpen(true);
   };
+
   const handleClose = () => {
     const hadResponse = messages.some(
       (m) => m.role === "assistant" && m.content && !m.error
@@ -100,6 +119,16 @@ export default function ChatProvider({ userEmail, userName }) {
       had_response: hadResponse,
     });
     setOpen(false);
+
+    /* Restore focus after the drawer unmounts. requestAnimationFrame
+       defers one frame so React has time to remove the drawer's DOM
+       nodes before we move focus — otherwise the focus call would
+       target an element that's about to be removed. */
+    const toRestore = previousFocusRef.current;
+    previousFocusRef.current = null;
+    if (toRestore && typeof toRestore.focus === "function") {
+      requestAnimationFrame(() => toRestore.focus());
+    }
   };
 
   /* /ask is the full-page chat — no launcher needed there.

@@ -106,7 +106,7 @@ export default function FinalCTA({ onDemo }) {
         <div ref={ctasRef} className={styles.ctas}>
           <CornerButton
             variant="primary"
-            onClick={onDemo(undefined, { source: "final_cta_home" })}
+            onClick={() => onDemo(undefined, { source: "final_cta_home" })}
           >
             Request a Demo
           </CornerButton>

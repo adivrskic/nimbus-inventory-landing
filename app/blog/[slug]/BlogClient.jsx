@@ -179,8 +179,6 @@ export default function BlogClient({ slug }) {
           content
         )}
       </ResourceShell>
-
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </>
   );
 }

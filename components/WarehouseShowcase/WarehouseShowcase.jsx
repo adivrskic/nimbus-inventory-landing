@@ -1902,7 +1902,7 @@ export default function WarehouseShowcase() {
       style={{ "--section-bg": SECTION_BG_HEX }}
     >
       <div ref={stickyRef} className={styles.sticky}>
-        <canvas ref={canvasRef} className={styles.canvas} />
+        <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
 
         {/* Vignette overlay — pure CSS, layered above canvas, gives the
             scene cinematic edges without costing GPU cycles */}

@@ -978,7 +978,7 @@ export default function AISection() {
   return (
     <section ref={sectionRef} id="ai-engine" className={styles.section}>
       <div className={styles.canvasWrap}>
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} aria-hidden="true" />
       </div>
 
       <div className={styles.textWrap}>

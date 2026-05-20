@@ -6,6 +6,11 @@ import Logo from "@/components/shared/Logo";
 import { validateDemo } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
 
+/* Focusable-element selector used by the Tab trap below. Excludes
+   disabled inputs, hidden inputs, and tabindex="-1" elements. */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /* ═══════════════════════════════════════════════════════════════════════
    DemoModal — two-column, clean
    ───────────────────────────────────────────────────────────────────────
@@ -356,6 +361,10 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   const formRef = useRef(null);
   const successRef = useRef(null);
 
+  /* Tracks the element that had focus when the modal opened, so we
+       can restore focus to it on close (WCAG 2.4.3). */
+  const previousFocusRef = useRef(null);
+
   const [mounted, setMounted] = useState(false);
   const [animatingOut, setAnimatingOut] = useState(false);
 
@@ -542,6 +551,82 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
+
+  /* ── Focus capture + restore ──
+     When the modal opens, remember which element had focus (typically
+     the CTA button that triggered the open) so we can return focus
+     to it on close. The capture happens on the isOpen=true transition.
+     On close (isOpen=false), restore focus deferred one animation frame
+     so the modal's exit animation has time to start before we move
+     focus — otherwise the focus ring briefly appears on the closing
+     modal. */
+  useEffect(() => {
+    if (isOpen) {
+      if (typeof document !== "undefined" && !previousFocusRef.current) {
+        previousFocusRef.current = document.activeElement;
+      }
+    } else if (previousFocusRef.current) {
+      const toRestore = previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (typeof toRestore.focus === "function") {
+        requestAnimationFrame(() => toRestore.focus());
+      }
+    }
+  }, [isOpen]);
+
+  /* ── Auto-focus first input on open ──
+       Move focus to the Name field once the modal is mounted + open.
+       Skipped when the modal opens directly into the success state
+       (won't happen via openDemo, but defensive). */
+  useEffect(() => {
+    if (!isOpen || !mounted || status === "success") return;
+    /* Defer one frame so the panel has rendered. Using rAF instead of
+         setTimeout keeps the focus call tied to the next paint cycle. */
+    const id = requestAnimationFrame(() => {
+      const firstField = document.getElementById("demo-name");
+      firstField?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, mounted, status]);
+
+  /* ── Focus trap on Tab ──
+       Wrap Tab/Shift+Tab navigation within the modal so keyboard users
+       can't accidentally Tab to elements behind the backdrop. WCAG
+       2.4.3 (Focus Order). */
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const handleTab = (e) => {
+      if (e.key !== "Tab") return;
+      const focusables = panel.querySelectorAll(FOCUSABLE_SELECTOR);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    panel.addEventListener("keydown", handleTab);
+    return () => panel.removeEventListener("keydown", handleTab);
+  }, [isOpen, mounted]);
+
+  /* ── Inert while animating out ──
+       During the 400ms exit animation, the panel is still in the DOM
+       and tabbable. Apply `inert` so the closing modal can't receive
+       focus. Removed when the modal fully unmounts. */
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.inert = animatingOut;
+    }
+  }, [animatingOut]);
 
   /* Success view intro animation */
   useEffect(() => {

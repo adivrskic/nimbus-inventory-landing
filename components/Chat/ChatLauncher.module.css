@@ -19,6 +19,7 @@
 .launcher {
   transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s,
     transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
+  padding: 8px 24px;
 }
 
 .launcher:active {

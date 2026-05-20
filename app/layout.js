@@ -7,6 +7,8 @@ import Nav from "@/components/Nav/Nav";
 import ChatProvider from "@/components/Chat/ChatProvider";
 import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import PageviewTracker from "@/components/Analytics/PageviewTracker";
+import SkipLink from "@/components/SkipLink/SkipLink";
+import RouteAnnouncer from "@/components/RouteAnnouncer/RouteAnnouncer";
 import "./globals.css";
 import "./globals.ocean-theme.css";
 
@@ -95,6 +97,11 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>
+        {/* Skip link — first interactive element in the tab order on
+            every page. Visually hidden until focused; lets keyboard
+            users jump past the Nav. WCAG 2.4.1 (Bypass Blocks). */}
+        <SkipLink />
+
         {/* Analytics — script loader + SPA pageview tracker. Both no-op
             when NEXT_PUBLIC_GA_MEASUREMENT_ID isn't set. Mounted outside
             the providers because they don't depend on any of them and
@@ -109,12 +116,36 @@ export default function RootLayout({ children }) {
                   Wraps everything below so any descendant can pop the modal. */}
               <DemoHost>
                 <Nav />
-                <main data-page-content>{children}</main>
+                {/* id + tabIndex make this the skip-link target and let
+                    RouteAnnouncer move focus here on client-side
+                    navigation (WCAG 2.4.3 Focus Order). data-page-content
+                    is the existing attribute TransitionProvider uses to
+                    find the fade target — keep it.
+
+                    style={{ outline: "none" }} suppresses the default
+                    browser focus ring on the giant container when
+                    RouteAnnouncer programmatically focuses it; the
+                    page change is announced via aria-live, the visual
+                    ring on a full-width element is unhelpful. */}
+                <main
+                  id="main-content"
+                  tabIndex={-1}
+                  data-page-content
+                  style={{ outline: "none" }}
+                >
+                  {children}
+                </main>
                 <ChatProvider />
               </DemoHost>
             </TransitionProvider>
           </LenisProvider>
         </AnimationProvider>
+
+        {/* RouteAnnouncer — announces page changes to screen readers
+            and moves focus to #main-content on SPA navigation. Renders
+            nothing visible. Mounted at the end of body to keep it out
+            of the tab order. */}
+        <RouteAnnouncer />
       </body>
     </html>
   );

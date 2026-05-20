@@ -359,6 +359,8 @@ export default function ApiDocsClient() {
                       </label>
                     </div>
                     <div className={pageStyles.waitlistRow}>
+                      {/* aria-describedby points to the error div's id only
+                          while the error is rendered. WCAG 3.3.1 + 1.3.1. */}
                       <input
                         id="api-waitlist-email"
                         name="email"
@@ -369,6 +371,9 @@ export default function ApiDocsClient() {
                         onChange={(e) => updateField("email", e.target.value)}
                         disabled={isSubmitting}
                         aria-invalid={errors.email ? "true" : "false"}
+                        aria-describedby={
+                          errors.email ? "api-waitlist-email-error" : undefined
+                        }
                         className={`${pageStyles.waitlistInput} ${
                           errors.email ? pageStyles.waitlistInputError : ""
                         }`}
@@ -383,7 +388,11 @@ export default function ApiDocsClient() {
                       </button>
                     </div>
                     {errors.email ? (
-                      <div className={pageStyles.waitlistErr}>
+                      <div
+                        id="api-waitlist-email-error"
+                        role="alert"
+                        className={pageStyles.waitlistErr}
+                      >
                         {errors.email}
                       </div>
                     ) : submitError ? (

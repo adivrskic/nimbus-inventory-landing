@@ -13,6 +13,33 @@ import { useMemo } from "react";
    different class names. Callsites supply only what's different:
    the data and the CSS classes from their own module.
 
+   ─── ACCESSIBILITY ──────────────────────────────────────────────────
+
+   Per-letter spans break screen reader announcements — VoiceOver/NVDA
+   read "L. E. T. apostrophe S. talk." instead of "Let's talk." This
+   component handles that two ways:
+
+   1) PREFERRED (new code) — pass `as` to have SplitText render the
+      heading element itself with `aria-label={flatText}` and the
+      per-letter spans marked `aria-hidden`:
+
+        <SplitText
+          as="h1"
+          className={styles.heroTitle}
+          text="See what Nautilus is worth to you."
+          accentWord="you"
+          classNames={{ ... }}
+        />
+
+   2) LEGACY (existing code, no migration needed) — when `as` is NOT
+      provided, SplitText emits an sr-only flat-text span before the
+      visible letters, and marks each line span `aria-hidden="true"`.
+      The consumer's wrapping element (e.g. <h1>) gets its accessible
+      name from the sr-only span. Screen reader hears the full phrase;
+      sighted users see the animated letters as before.
+
+      Existing call sites work correctly without changes.
+
    ─── INPUT MODES (pick one) ─────────────────────────────────────────
 
    1) text + accentWord — single line, optional one word italic/accent
@@ -67,13 +94,31 @@ import { useMemo } from "react";
                                              automatically
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Visually-hidden style. Inline so SplitText doesn't depend on a
+   global utility class existing in any consumer's CSS. Matches the
+   widely-used `.sr-only` recipe. */
+const SR_ONLY_STYLE = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  padding: 0,
+  margin: "-1px",
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 export default function SplitText({
+  as: As,
+  className,
   text,
   lines,
   tokens,
   accentWord,
   accentLines,
   classNames = {},
+  ...rest
 }) {
   const normalized = useMemo(() => {
     /* Helper: case-insensitive word match, ignoring trailing punctuation.
@@ -111,6 +156,15 @@ export default function SplitText({
     return [];
   }, [text, lines, tokens, accentWord, accentLines]);
 
+  /* Flat accessible text — what a screen reader should announce
+     instead of the per-letter spans. Joining tokens with spaces matches
+     what a sighted reader sees. */
+  const flatText = useMemo(
+    () =>
+      normalized.map((line) => line.map((tok) => tok.t).join(" ")).join(" "),
+    [normalized]
+  );
+
   const {
     line: lineCls = "",
     lineInner: lineInnerCls,
@@ -136,17 +190,38 @@ export default function SplitText({
       </span>
     ));
 
+  /* Per-letter spans inherit aria-hidden from their parent line span,
+     so we only need aria-hidden on the line level. */
+  const renderedLines = normalized.map((lineTokens, li) => (
+    <span key={li} className={lineCls} aria-hidden="true">
+      {lineInnerCls ? (
+        <span className={lineInnerCls}>{renderWords(lineTokens)}</span>
+      ) : (
+        renderWords(lineTokens)
+      )}
+    </span>
+  ));
+
+  /* Explicit-render path — recommended. SplitText owns the heading
+     element. The flat text is exposed via aria-label so screen readers
+     announce the actual text on H-key navigation, focus, etc. */
+  if (As) {
+    return (
+      <As className={className} aria-label={flatText} {...rest}>
+        {renderedLines}
+      </As>
+    );
+  }
+
+  /* Legacy path — existing call sites that wrap SplitText in their
+     own <h1>/<h2>/etc. The visually-hidden flat-text span gives the
+     wrapping element its accessible name; the visible animated letters
+     are aria-hidden so they don't get announced character-by-character.
+     No consumer migration needed for screen reader correctness. */
   return (
     <>
-      {normalized.map((lineTokens, li) => (
-        <span key={li} className={lineCls}>
-          {lineInnerCls ? (
-            <span className={lineInnerCls}>{renderWords(lineTokens)}</span>
-          ) : (
-            renderWords(lineTokens)
-          )}
-        </span>
-      ))}
+      <span style={SR_ONLY_STYLE}>{flatText}</span>
+      {renderedLines}
     </>
   );
 }

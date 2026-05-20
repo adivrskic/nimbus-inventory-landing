@@ -178,7 +178,7 @@ export default function ProblemSolution({ onDemo }) {
         <div className={styles.ctaRow}>
           <CornerButton
             variant="primary"
-            onClick={onDemo(undefined, { source: "problem_solution" })}
+            onClick={() => onDemo(undefined, { source: "problem_solution" })}
           >
             Start your transformation
           </CornerButton>

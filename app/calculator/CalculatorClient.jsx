@@ -8,7 +8,7 @@ import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
-import styles from "./Calculator.module.css";
+import styles from "./calculator-client.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
