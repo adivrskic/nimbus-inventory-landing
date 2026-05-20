@@ -2,9 +2,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
-import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
@@ -80,8 +78,6 @@ export default function CompareIndexClient() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav />
-
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>Compare</div>

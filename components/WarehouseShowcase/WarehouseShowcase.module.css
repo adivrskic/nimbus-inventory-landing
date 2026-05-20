@@ -30,7 +30,12 @@
 
 .section {
   --nav-height: 72px;
-  --section-bg: #04091c;
+  /* Was #04091c (navy) — but the section below renders var(--dark) =
+     #000000 (pure black), so a navy bottom created a visible horizon
+     line. Match the page's canonical dark and the 3D scene's fog +
+     floor colors (updated in WarehouseShowcase.jsx) so the canvas
+     dissolves seamlessly into the section beneath. */
+  --section-bg: #000000;
   --accent: #d4a853;
   --accent-hot: #f3cd84;
   --accent-soft: rgba(212, 168, 83, 0.5);

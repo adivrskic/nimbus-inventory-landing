@@ -74,21 +74,19 @@ for (let i = 0; i <= COLS; i++) {
   else AISLES_Z.push((i - 0.5 - (COLS - 1) / 2) * COL_SPACING);
 }
 
-/* ─── COLORS — UNIFIED OCEAN PALETTE ────────────────────────────────
-   The single biggest visual change is here: C_BG, C_FOG, C_FLOOR
-   share the exact same navy as the page section beneath this one.
-   The warehouse no longer sits in its own dark stage — it floats
-   in a continuous dark sea. The floor shader fades cleanly to that
-   exact value at the edges, so the canvas boundary is invisible. */
-const SECTION_BG_HEX = "#04091c";
-const C_BG = 0x04091c; // matches the section below the canvas
-const C_FOG = 0x04091c; // fog fades to the exact same value
-const C_FLOOR_OUTER = 0x04091c; // floor edges == section bg → no seam
-// Inner == outer. The previous navy lift was creating a brighter
-// "stage" area that didn't match the section below. Atmospheric
-// interest now comes from mode-driven focus heat only, so the empty
-// floor reads as exactly the same navy as the page beneath.
-const C_FLOOR_INNER = 0x04091c;
+/* Was #04091c (navy). Switched to pure black to match var(--dark) =
+   #000000 used by the section below (Integrations), and the page-level
+   --bg token. The 3D fog, floor outer, and floor inner all collapse to
+   the same value so the canvas edges dissolve into the section
+   underneath with no visible horizon line. Atmospheric interest still
+   comes from the mode-driven focus heat lighting on the rendered
+   racks — the empty floor + far fog just read as the same black as
+   the page. */
+const SECTION_BG_HEX = "#000000";
+const C_BG = 0x000000;
+const C_FOG = 0x000000;
+const C_FLOOR_OUTER = 0x000000;
+const C_FLOOR_INNER = 0x000000;
 const C_RACK = 0x0f1d36; // racks barely brighter than the floor
 const C_RACK_CAP = 0x1f3a62; // top caps read as "lit"
 const C_RACK_EDGE = 0x5278a8; // brighter cool edge for silhouette
@@ -1288,13 +1286,34 @@ export default function WarehouseShowcase() {
       const dz = a.z - camera.position.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       const distScale = clamp(60 / dist, 0.6, 1.25) * (a.scale ?? 1);
-
       const lift = (a.lift ?? 0) * distScale;
       const slide = (a.slide ?? 0) * distScale;
       const cardX = sx + slide;
-      const cardY = sy - lift;
+      let cardY = sy - lift;
 
       const yAnchorPct = lift > 4 ? -100 : -50;
+
+      /* ── Top-edge clamp ──
+         The card is anchored via CSS translate(-50%, yAnchorPct%). For
+         -100%, the card extends UPWARD from cardY by its full scaled
+         height; for -50%, half above and half below. Without a clamp,
+         a 3D anchor that projects high in the scene + a large lift can
+         push the card's top edge above the .sticky overflow boundary,
+         where it gets clipped into the Nav region (.sticky starts at
+         top: var(--nav-height), so its interior coordinate origin is
+         already below the Nav, but a card with negative top edge in
+         that coordinate space disappears into the bottom of the Nav).
+
+         Compute the card's scaled height in screen pixels and require
+         its top edge to be at least SAFE_TOP px below the sticky's
+         coordinate origin. SAFE_TOP = 24 keeps cards out of the corner
+         editorial keys' band as well. */
+      const SAFE_TOP = 24;
+      const scaledH = (el.offsetHeight || 0) * distScale;
+      const topAnchorOffset = yAnchorPct === -100 ? scaledH : scaledH * 0.5;
+      const minCardY = topAnchorOffset + SAFE_TOP;
+      if (cardY < minCardY) cardY = minCardY;
+
       el.style.transform =
         `translate3d(${cardX}px, ${cardY}px, 0) ` +
         `translate(-50%, ${yAnchorPct}%) scale(${distScale})`;

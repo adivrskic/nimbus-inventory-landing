@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
@@ -348,8 +347,6 @@ export default function PricingClient() {
 
   return (
     <div className={styles.page}>
-      <Nav />
-
       {/* ── Hero ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>Pricing</div>

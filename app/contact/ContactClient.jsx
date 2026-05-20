@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
@@ -382,8 +381,6 @@ export default function ContactClient() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav />
-
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>Contact</div>

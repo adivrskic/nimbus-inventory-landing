@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import SplitText from "@/components/shared/SplitText";
@@ -380,8 +379,6 @@ export default function CalculatorClient() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav />
-
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroEyebrow}>ROI Calculator</div>

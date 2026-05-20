@@ -4,10 +4,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnimationPaused } from "@/lib/AnimationContext";
 import {
   generateScattered,
-  generateSoundRings,
-  generateCube,
-  generateMagnifier,
-  generateStockArrow,
+  generateVoiceScene,
+  generateSpatialScene,
+  generateSearchScene,
+  generateChartScene,
   offsetShape,
   offsetShapeY,
 } from "@/lib/shapes";
@@ -19,10 +19,10 @@ const OFFSET = 5.5;
 const TO_RAD = Math.PI / 180;
 
 const SHAPE_GENERATORS = {
-  rings: generateSoundRings,
-  cube: generateCube,
-  magnifier: generateMagnifier,
-  arrow: generateStockArrow,
+  voice: generateVoiceScene,
+  spatial: generateSpatialScene,
+  search: generateSearchScene,
+  chart: generateChartScene,
 };
 
 const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
@@ -45,7 +45,7 @@ const SECTIONS = [
     key: "voice",
     shortName: "Voice",
     side: "left",
-    gen: "rings",
+    gen: "voice",
     desktop: {
       rotX: -51,
       rotY: -36,
@@ -80,7 +80,7 @@ const SECTIONS = [
     key: "spatial",
     shortName: "Spatial",
     side: "right",
-    gen: "cube",
+    gen: "spatial",
     desktop: {
       rotX: 67,
       rotY: 40,
@@ -115,7 +115,7 @@ const SECTIONS = [
     key: "search",
     shortName: "Search",
     side: "left",
-    gen: "magnifier",
+    gen: "search",
     desktop: {
       rotX: -12,
       rotY: -34,
@@ -150,7 +150,7 @@ const SECTIONS = [
     key: "analytics",
     shortName: "Analytics",
     side: "right",
-    gen: "arrow",
+    gen: "chart",
     desktop: {
       rotX: -2,
       rotY: 25,
@@ -525,6 +525,12 @@ export default function AISection() {
 
   const stateRef = useRef({
     activeShape: 0,
+    /* The shape we're morphing TOWARD during a transition. Equal to
+       activeShape when not transitioning. */
+    nextShape: 0,
+    /* 0..1 blend factor from activeShape to nextShape. 0 = fully on
+       active shape, 1 = fully on next shape. */
+    shapeBlend: 0,
     formation: 0,
     globalAlpha: 0,
     shapeProgresses: [0, 0, 0, 0],
@@ -557,18 +563,75 @@ export default function AISection() {
         formations.push(formationCurve(p));
         shapeProgresses.push(p);
       }
-
-      let maxF = 0;
-      let dom = 0;
+      /* Find the two blocks with highest formationCurve values.
+         The dominant becomes activeShape; the runner-up becomes
+         nextShape if it's significantly engaged (so the particles
+         morph TOWARD it instead of scattering through scattered). */
+      let max1 = 0,
+        max1Idx = 0,
+        max2 = 0,
+        max2Idx = 0;
       for (let i = 0; i < formations.length; i++) {
-        if (formations[i] > maxF) {
-          maxF = formations[i];
-          dom = i;
+        if (formations[i] > max1) {
+          max2 = max1;
+          max2Idx = max1Idx;
+          max1 = formations[i];
+          max1Idx = i;
+        } else if (formations[i] > max2) {
+          max2 = formations[i];
+          max2Idx = i;
         }
       }
 
-      stateRef.current.formation = maxF;
-      stateRef.current.activeShape = dom;
+      let activeShape = max1Idx;
+      let nextShape = max2Idx;
+      let shapeBlend = 0;
+      let formation = max1;
+
+      if (max1 > 0.1 && max2 > 0.1) {
+        /* Two blocks both have meaningful formation — we're mid-
+            transition. Blend between them by relative weight. Cap
+            the combined formation at 1 so particles stay fully
+            formed (no scatter dip) while morphing. */
+        const total = max1 + max2;
+        shapeBlend = max2 / total;
+        formation = Math.min(1, total);
+      } else if (max1 < 0.05) {
+        /* Both formations are near-zero — we're in the dead zone
+            BETWEEN two adjacent blocks (one just exited above 0.85,
+            the next hasn't reached 0.15 yet). Detect which two blocks
+            we're between by finding the rightmost passed block and
+            the next upcoming block, and morph between them on a
+            progress curve. Keep formation HIGH so particles stay
+            formed through the transition. */
+        let beforeIdx = -1,
+          afterIdx = -1;
+        for (let i = 0; i < shapeProgresses.length; i++) {
+          if (shapeProgresses[i] >= 0.85) beforeIdx = i;
+        }
+        for (let i = 0; i < shapeProgresses.length; i++) {
+          if (shapeProgresses[i] > 0 && shapeProgresses[i] <= 0.15) {
+            afterIdx = i;
+            break;
+          }
+        }
+        if (beforeIdx >= 0 && afterIdx > beforeIdx) {
+          activeShape = beforeIdx;
+          nextShape = afterIdx;
+          /* afterIdx's progress goes 0 → 0.15 during this window.
+              Map that to a 0..1 blend. */
+          shapeBlend = Math.min(1, shapeProgresses[afterIdx] / 0.15);
+          formation = 0.9;
+        }
+        /* If we couldn't find a between-blocks pair (we're above the
+            section or below it), leave formation at max1 (≈0) so
+            particles scatter naturally. */
+      }
+
+      stateRef.current.formation = formation;
+      stateRef.current.activeShape = activeShape;
+      stateRef.current.nextShape = nextShape;
+      stateRef.current.shapeBlend = shapeBlend;
       stateRef.current.shapeProgresses = shapeProgresses;
       formationsRef.current = formations;
 
@@ -585,7 +648,7 @@ export default function AISection() {
         }
       }
 
-      if (maxF > 0.5) setActiveIdx(dom);
+      if (max1 > 0.5) setActiveIdx(activeShape);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -801,23 +864,28 @@ export default function AISection() {
           (baseAlpha + (1 - baseAlpha) * sFormation) * (1 - fadeOut);
         sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
 
-        const activeShape = shapes[s.activeShape];
-        if (!activeShape) return;
+        const shapeA = shapes[s.activeShape];
+        const shapeB = shapes[s.nextShape];
+        if (!shapeA) return;
+        /* shapeBlend = 0 when not transitioning, in which case
+           shapeB === shapeA and the blend math no-ops cleanly. */
+        const blend = s.shapeBlend;
+        const blendInv = 1 - blend;
 
         const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
         const animP = animProgress(scrollP);
 
         const mode = window.innerWidth < 768 ? "mobile" : "desktop";
-        const sec = SECTIONS[s.activeShape];
-        const params = sec[mode];
+        const secA = SECTIONS[s.activeShape];
+        const secB = SECTIONS[s.nextShape] || secA;
+        const paramsA = secA[mode];
+        const paramsB = secB[mode];
 
-        /* Shape rotation: FIXED at the start pose. The old start→end
-           interpolation is gone — the scroll-driven rotation effect now
-           comes from the scattered field orbit (below). rotXEnd/Y/Z in
-           SECTIONS are no longer used but remain for reference. */
-        const rotXDeg = params.rotX;
-        const rotYDeg = params.rotY;
-        const rotZDeg = params.rotZ;
+        /* Shape rotation: blend the A and B section's rot params so
+           the orientation morphs smoothly as the shape morphs. */
+        const rotXDeg = paramsA.rotX * blendInv + paramsB.rotX * blend;
+        const rotYDeg = paramsA.rotY * blendInv + paramsB.rotY * blend;
+        const rotZDeg = paramsA.rotZ * blendInv + paramsB.rotZ * blend;
         const rotX = rotXDeg * TO_RAD;
         const rotY = rotYDeg * TO_RAD;
         const rotZ = rotZDeg * TO_RAD;
@@ -830,19 +898,35 @@ export default function AISection() {
           sZ = Math.sin(rotZ);
 
         const mobile = mode === "mobile";
-        const defaultX = mobile ? 0 : sec.side === "left" ? OFFSET : -OFFSET;
+        /* Blend the LEFT/RIGHT offset between active and next sections
+             so the shape glides across the centerline during transitions
+             instead of teleporting. */
+        const defaultXA = mobile ? 0 : secA.side === "left" ? OFFSET : -OFFSET;
+        const defaultXB = mobile ? 0 : secB.side === "left" ? OFFSET : -OFFSET;
+        const defaultX = defaultXA * blendInv + defaultXB * blend;
         const defaultY = mobile ? -3.5 : 0;
-        /* Offset still interpolates start→end — that's a separate
-           cinematic glide effect (shape drifts across the screen as
-           you scroll through its block). */
-        const offX =
+
+        /* Offset still interpolates start→end within each block — but
+             we also blend between the active and next section's offset
+             curves so transitions read continuously. */
+        const offXA =
           defaultX +
-          params.offsetX +
-          (params.offsetXEnd - params.offsetX) * animP;
-        const offY =
+          paramsA.offsetX +
+          (paramsA.offsetXEnd - paramsA.offsetX) * animP;
+        const offYA =
           defaultY +
-          params.offsetY +
-          (params.offsetYEnd - params.offsetY) * animP;
+          paramsA.offsetY +
+          (paramsA.offsetYEnd - paramsA.offsetY) * animP;
+        const offXB =
+          defaultX +
+          paramsB.offsetX +
+          (paramsB.offsetXEnd - paramsB.offsetX) * animP;
+        const offYB =
+          defaultY +
+          paramsB.offsetY +
+          (paramsB.offsetYEnd - paramsB.offsetY) * animP;
+        const offX = offXA * blendInv + offXB * blend;
+        const offY = offYA * blendInv + offYB * blend;
 
         const mot = motionRef.current;
         const k = mot.stiffness;
@@ -869,9 +953,15 @@ export default function AISection() {
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           const i3 = i * 3;
 
-          let px = activeShape[i3];
-          let py = activeShape[i3 + 1];
-          let pz = activeShape[i3 + 2];
+          /* Blend the particle's target position between shape A and
+             shape B. When blend = 0 this is just shapeA[i3] etc.
+             (no-op for the typical mid-block case). When blend > 0
+             the particle interpolates linearly between its A-position
+             and its B-position. Spring physics below smooths the
+             actual movement so it doesn't snap. */
+          let px = shapeA[i3] * blendInv + shapeB[i3] * blend;
+          let py = shapeA[i3 + 1] * blendInv + shapeB[i3 + 1] * blend;
+          let pz = shapeA[i3 + 2] * blendInv + shapeB[i3 + 2] * blend;
 
           /* Rotate shape — fixed pose every frame */
           const py1 = py * cX - pz * sX;

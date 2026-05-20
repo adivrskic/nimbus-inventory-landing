@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
@@ -158,7 +157,6 @@ export default function IndustryPage({ slug }) {
   if (!industry) {
     return (
       <div className={styles.page}>
-        <Nav onDemo={() => openDemo(undefined, { source: "industry_page" })} />
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Industry not found.</h1>
@@ -179,8 +177,6 @@ export default function IndustryPage({ slug }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav onDemo={() => openDemo(undefined, { source: "industry_page" })} />
-
       {/* ── HERO ── */}
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.heroIndex}>
