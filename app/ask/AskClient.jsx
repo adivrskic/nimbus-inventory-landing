@@ -35,12 +35,24 @@
 //   - The intro's h1 is owned by SplitText's legacy mode (sr-only flat
 //     text + aria-hidden letters from the Wave 1 SplitText fix).
 //
-// Auto-scroll behavior:
-//   The scroll-to-bottom effect skips its first run after mount, so
-//   navigating into /ask with a hydrated transcript doesn't yank the
-//   user to the bottom. After the first turn, subsequent token/cta
-//   updates do auto-scroll — that's the right behavior for an
-//   ongoing conversation.
+// Scroll behavior (notes for future maintainers):
+//   This page is meant to fit one viewport with no body scroll. The
+//   .main CSS has overflow: hidden but its height: 100vh rule is
+//   currently commented out, so the body CAN scroll if you push it.
+//   That used to manifest as "page scrolls to the bottom on load"
+//   because focusing the input bar — which sits at the bottom of
+//   the flex column — caused the browser to scroll to bring it into
+//   view. Two guards prevent that here:
+//     1) window.scrollTo(0, 0) at the start of mount, so we land at
+//        the top regardless of what the previous page left behind.
+//     2) focus({ preventScroll: true }) on every focus() call. This
+//        is the focus-move-without-scroll option supported in all
+//        modern browsers. Cheap and safe to use everywhere.
+//   The inner .scrollRegion still auto-scrolls to bottom on new
+//   token / cta updates — that's the scroll behavior people want
+//   during an active conversation. The hasScrolledOnceRef gate
+//   below skips the first run after mount so hydrated transcripts
+//   don't yank the user to the bottom.
 //
 // Analytics events fired here:
 //   - chat_starter_click       { starter, surface: 'ask_page' }
@@ -100,6 +112,11 @@ const SR_ONLY_STYLE = {
   border: 0,
 };
 
+/* Small helper so we don't repeat the option object at every call site. */
+function focusNoScroll(el) {
+  el?.focus({ preventScroll: true });
+}
+
 export default function AskClient({ userEmail, userName } = {}) {
   const [input, setInput] = useState("");
   const { messages, streaming, send, cta, setCta, reset } = useChatStream({
@@ -130,29 +147,40 @@ export default function AskClient({ userEmail, userName } = {}) {
     }
   }, [streaming, messages]);
 
-  /* On mount: check for ?q= in the URL. If present, submit it as the
-     first chat message — this is how Google's sitelinks SearchAction
-     hands users off to /ask. If no q, focus the input as before.
-     Skipped when there are already messages (e.g. a returning visitor
-     whose transcript was hydrated from /api/chat/history) so we never
-     re-fire the same query on a refresh.
+  /* On mount:
+       1. Reset the page scroll to 0. Some other page may have left the
+          body scrolled, and the RouteAnnouncer focus-on-main-content
+          can land us partway down a tall layout. Cheap to always do.
+       2. Check for ?q= in the URL. If present, submit it as the first
+          chat message — this is how Google's sitelinks SearchAction
+          hands users off to /ask. If no q, focus the input as before.
+       3. Skipped when there are already messages (e.g. a returning
+          visitor whose transcript was hydrated from elsewhere) so we
+          never re-fire the same query on a refresh.
 
-     Reading window.location.search directly (not useSearchParams) keeps
-     this effect server-render-safe and avoids opting the whole page
-     into client-side rendering. */
+     focus() everywhere uses preventScroll: true so moving keyboard
+     focus to the input bar (which lives at the bottom of the flex
+     column) doesn't yank the page down. Reading window.location.search
+     directly (not useSearchParams) keeps this effect server-render-safe
+     and avoids opting the whole page into client-side rendering. */
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    window.scrollTo(0, 0);
+
     if (messages.length > 0) {
-      inputRef.current?.focus();
+      focusNoScroll(inputRef.current);
       return;
     }
+
     const params = new URLSearchParams(window.location.search);
     const q = params.get("q")?.trim();
     if (q) {
       send(q, { sourceUrl: "/ask", surface: "ask_page" });
       return;
     }
-    inputRef.current?.focus();
+
+    focusNoScroll(inputRef.current);
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
@@ -168,7 +196,10 @@ export default function AskClient({ userEmail, userName } = {}) {
      is watching the assistant type.
 
      scrollRef is on the outer .scrollRegion wrapper — that's where
-     overflow-y: auto lives now that the page itself doesn't scroll. */
+     overflow-y: auto lives now that the page itself doesn't scroll.
+     We mutate scrollTop directly on that internal element; the page
+     body is untouched, so this is independent of the page-scroll
+     guards in the mount effect above. */
   const hasScrolledOnceRef = useRef(false);
   useEffect(() => {
     const el = scrollRef.current;
@@ -244,7 +275,7 @@ export default function AskClient({ userEmail, userName } = {}) {
   const handleReset = () => {
     if (streaming) return;
     reset({ surface: "ask_page" });
-    inputRef.current?.focus();
+    focusNoScroll(inputRef.current);
   };
 
   const isEmpty = messages.length === 0;

@@ -1,5 +1,6 @@
 // ──────────────────────────────────────────────────────────────────────────
-// app/api/chat/route.js  (no-embeddings, rate-limited)
+// app/api/chat/route.js  (no-embeddings, rate-limited, with canned-answer
+// intercept)
 // ──────────────────────────────────────────────────────────────────────────
 // Streaming chat endpoint with rate limiting + origin verification.
 //
@@ -15,6 +16,25 @@
 //
 // 429 responses are returned as regular JSON (not SSE) — the client checks
 // res.status before opening the stream.
+//
+// ── Canned-answer intercept ──
+// Before opening the Anthropic stream, the user's message is checked
+// against matchCanned() in lib/chat/canned-answers.js. On a hit:
+//   1. The canned text is streamed in small chunks via the same `text`
+//      SSE events used by the AI path (~250 chars/sec, indistinguishable
+//      from a real streaming response on the client side).
+//   2. If the canned answer carries a `cta` field, a `cta` event is
+//      emitted and the increment_cta_count rpc is called — same as
+//      what the propose_cta tool does in the AI path.
+//   3. The assistant message is persisted to chat_messages so it
+//      survives tab reloads (via /api/chat/history) and counts in
+//      conversation length for rate-limit purposes.
+//   4. `done` is sent and the Anthropic loop is skipped entirely.
+//
+// Rate limiting still applies. The conversation is still created /
+// resolved the same way. The user message is still inserted before the
+// match check, so abuse-pattern detection (high-volume same-input
+// probes) sees these calls too.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
@@ -31,6 +51,7 @@ import {
 import { handleTool } from "@/lib/chat/tool-handlers";
 import { getOrCreateVisitor, getIp, hashIp } from "@/lib/chat/visitor";
 import { checkRateLimit } from "@/lib/chat/rate-limit";
+import { matchCanned } from "@/lib/chat/canned-answers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +60,16 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const MAX_LOOPS = 5;
 const MESSAGE_MAX_LEN = 4000;
+
+/* Canned-answer streaming parameters.
+   3-char chunks at 12ms delay = ~250 chars/sec. That's roughly the
+   sustained streaming rate Anthropic delivers for Sonnet 4.6 in
+   practice, so canned responses feel indistinguishable from AI
+   responses on the client side. Bump CHUNK_SIZE up or DELAY_MS down
+   if responses feel too slow; the goal is "natural typing pace,"
+   not "clearly fake." */
+const CANNED_CHUNK_SIZE = 3;
+const CANNED_DELAY_MS = 12;
 
 /* Origin allowlist for production. Requests from any other origin get a
    403 before we touch Claude. Dev (NODE_ENV !== "production") skips this
@@ -65,6 +96,20 @@ function isAllowedOrigin(origin) {
     return false;
   } catch {
     return false;
+  }
+}
+
+/* Stream a canned text string back through the SSE pipe. Splits into
+   CANNED_CHUNK_SIZE chunks with CANNED_DELAY_MS between sends, so the
+   client renders the same incremental typing effect it would for an
+   AI response. Returns when streaming completes. */
+async function streamCannedText(text, send) {
+  for (let i = 0; i < text.length; i += CANNED_CHUNK_SIZE) {
+    const chunk = text.slice(i, i + CANNED_CHUNK_SIZE);
+    send("text", { text: chunk });
+    if (i + CANNED_CHUNK_SIZE < text.length) {
+      await new Promise((r) => setTimeout(r, CANNED_DELAY_MS));
+    }
   }
 }
 
@@ -170,13 +215,22 @@ export async function POST(request) {
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", conversationId);
 
-  const { data: history } = await supabase
-    .from("chat_messages")
-    .select("*")
-    .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true });
+  // ── Canned-answer check ────────────────────────────────────────────────
+  // Done BEFORE fetching history because canned answers don't need it —
+  // they're keyed on the user's current message alone. If matched, the
+  // entire Anthropic path is skipped. If not matched, fall through to
+  // the normal flow which fetches history and runs the loop.
+  const canned = matchCanned(message);
 
-  const workingHistory = [...(history || [])];
+  const { data: history } = canned
+    ? { data: null }
+    : await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+  const workingHistory = canned ? null : [...(history || [])];
 
   const encoder = new TextEncoder();
 
@@ -195,6 +249,51 @@ export async function POST(request) {
       try {
         send("ready", { conversation_id: conversationId });
 
+        // ── Canned-answer fast path ───────────────────────────────────
+        if (canned) {
+          /* Stream the canned text in small chunks so the client
+             renders the same typing-effect it does for AI responses.
+             Awaits a small delay between chunks — total elapsed time
+             is roughly text.length / 250 seconds. */
+          await streamCannedText(canned.text, send);
+
+          /* If this canned answer carries a CTA, fire the same SSE
+             event + cta_count tracking that the propose_cta tool
+             would have. Keeps human-handoff behavior identical
+             across canned and AI paths. */
+          if (canned.cta) {
+            send("cta", canned.cta);
+            await supabase.from("chat_events").insert({
+              conversation_id: conversationId,
+              type: "cta_shown",
+              payload: canned.cta,
+            });
+            const { error: ctaCountErr } = await supabase.rpc(
+              "increment_cta_count",
+              { conv_id: conversationId }
+            );
+            if (ctaCountErr) {
+              console.error(
+                "[chat] increment_cta_count failed (canned path):",
+                ctaCountErr
+              );
+            }
+          }
+
+          /* Persist the assistant message so transcript hydration
+             picks it up after a tab reload. tool_calls is null and
+             token counts are 0/null — there was no Anthropic call. */
+          await supabase.from("chat_messages").insert({
+            conversation_id: conversationId,
+            role: "assistant",
+            content: canned.text,
+          });
+
+          send("done", { conversation_id: conversationId });
+          return; /* Skip Anthropic loop entirely. */
+        }
+
+        // ── Standard AI path ──────────────────────────────────────────
         for (let loop = 0; loop < MAX_LOOPS; loop++) {
           /* Cap history to the last MAX_HISTORY_MESSAGES (default 60).
              trimHistory also enforces the user-message-first invariant

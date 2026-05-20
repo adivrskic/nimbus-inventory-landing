@@ -1,4 +1,5 @@
 import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import LenisProvider from "@/components/LenisProvider";
 import TransitionProvider from "@/components/TransitionProvider/TransitionProvider";
 import { AnimationProvider } from "@/lib/AnimationContext";
@@ -12,10 +13,39 @@ import RouteAnnouncer from "@/components/RouteAnnouncer/RouteAnnouncer";
 import "./globals.css";
 import "./globals.ocean-theme.css";
 
+/* JetBrains Mono — served by Next.js's Google Fonts pipeline (self-hosted,
+   stripped, fingerprinted, preloaded). The .variable exposes it as a CSS
+   custom property on <html>; globals.css references it via
+   var(--font-jetbrains) on the --mono token. */
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["300", "400", "500"],
   variable: "--font-jetbrains",
+  display: "swap",
+});
+
+/* Satoshi — self-hosted via next/font/local. Replaces the old @font-face
+   declaration in globals.css that fetched from cdn.jsdelivr.net.
+
+   Wins:
+   - Same-origin, fingerprinted, served from the Next.js asset pipeline
+   - <link rel="preload"> tag generated automatically — font fetch starts
+     in parallel with the HTML parse, not after CSSOM construction
+   - size-adjust fallback font generated automatically — no CLS when
+     the variable font swaps in (the old @font-face had font-display:
+     swap but no metric override, so the swap-in caused layout shift
+     across every heading on the page)
+
+   The WOFF2 file must exist at app/fonts/Satoshi-Variable.woff2.
+   Download once from:
+     https://cdn.jsdelivr.net/gh/nicholasgillespie/fonts@main/satoshi/Satoshi-Variable.woff2
+
+   weight: "300 900" matches the original @font-face declaration —
+   Satoshi-Variable is a variable font with the full 300-900 axis. */
+const satoshi = localFont({
+  src: "./fonts/Satoshi-Variable.woff2",
+  variable: "--font-satoshi",
+  weight: "300 900",
   display: "swap",
 });
 
@@ -91,10 +121,45 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={jetbrainsMono.variable}>
+    <html lang="en" className={`${jetbrainsMono.variable} ${satoshi.variable}`}>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        {/* Preconnect to GA's third-party origins so the TLS handshake
+            and DNS resolution complete in parallel with the HTML parse
+            rather than blocking the first GA script eval. Saves
+            ~150-300ms on cold connections.
+
+            Conditional on GA being configured — otherwise the preconnect
+            triggers a useless round-trip on every page load. The
+            crossorigin attribute is required for googletagmanager.com
+            because gtag.js is fetched as a cross-origin script; without
+            it, the preconnect's HTTP connection is silently discarded
+            and reopened for the actual script fetch.
+
+            Not in the list:
+              - api.anthropic.com: client never connects directly.
+                /api/chat is same-origin; the server proxies to Anthropic.
+              - calendly.com: opened in window.open() new tabs, which
+                get their own browsing contexts — preconnect on parent
+                doesn't transfer.
+              - cdn.jsdelivr.net: previously needed for the Satoshi font,
+                obsoleted by the next/font/local setup above. */}
+        {GA_MEASUREMENT_ID ? (
+          <>
+            <link
+              rel="preconnect"
+              href="https://www.googletagmanager.com"
+              crossOrigin=""
+            />
+            <link
+              rel="preconnect"
+              href="https://www.google-analytics.com"
+              crossOrigin=""
+            />
+          </>
+        ) : null}
       </head>
       <body>
         {/* Skip link — first interactive element in the tab order on
@@ -113,7 +178,10 @@ export default function RootLayout({ children }) {
           <LenisProvider>
             <TransitionProvider>
               {/* DemoHost owns the modal + provides openDemo via context.
-                  Wraps everything below so any descendant can pop the modal. */}
+                  Wraps everything below so any descendant can pop the modal.
+                  DemoModal is dynamically imported inside DemoContext now
+                  (Wave 1 perf), so the ~700 lines of modal JSX + GSAP
+                  setup don't ship in the main bundle. */}
               <DemoHost>
                 <Nav />
                 {/* id + tabIndex make this the skip-link target and let

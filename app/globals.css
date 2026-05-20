@@ -93,41 +93,38 @@ body::after {
 }
 
 /* ═══ SKIP LINK ═══
- * Visually hidden until focused. On Tab from the address bar, the
- * link slides into view at the top-left. Activating it (Enter)
- * scrolls + focuses #main-content (see SkipLink.jsx for the handler).
- *
- * Positioned absolute with z-index 10000 so it always layers above
- * the Nav and the mega menu. Uses var(--accent) for high contrast
- * against the dark theme.
- */
+   Visually hidden until focused. First interactive element in the tab
+   order on every page — lets keyboard users jump past the Nav directly
+   to #main-content. WCAG 2.4.1 (Bypass Blocks).
+
+   transform: translateY(-100%) hides above the viewport instead of
+   left: -9999px so the focused state can animate it back into view
+   smoothly. z-index sits above everything (Nav is z-index: 100 in
+   Nav.module.css; this needs to outrank that). */
 .skip-link {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   z-index: 10000;
   padding: 12px 20px;
   background: var(--accent);
-  color: var(--ink, #02060f);
+  color: var(--black);
   font-family: var(--mono);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  letter-spacing: 1px;
   text-transform: uppercase;
   text-decoration: none;
+  border: 2px solid var(--accent);
   transform: translateY(-100%);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s var(--ease-out);
 }
-
 .skip-link:focus,
 .skip-link:focus-visible {
   transform: translateY(0);
-  outline: 2px solid var(--white, #ffffff);
-  outline-offset: -2px;
+  outline: none;
 }
 
-/* Reduced-motion users get the same slide-in but without the
-   transition. Functionality preserved, animation removed. */
 @media (prefers-reduced-motion: reduce) {
   .skip-link {
     transition: none;

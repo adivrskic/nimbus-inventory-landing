@@ -1,15 +1,9 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { trackLead, trackLeadError, track } from "@/lib/analytics";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import { validateDemo } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
-
-/* Focusable-element selector used by the Tab trap below. Excludes
-   disabled inputs, hidden inputs, and tabindex="-1" elements. */
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /* ═══════════════════════════════════════════════════════════════════════
    DemoModal — two-column, clean
@@ -28,9 +22,31 @@ const FOCUSABLE_SELECTOR =
    API contract is unchanged — POST /api/demo with the same form +
    topic + topicLabel payload. DemoContext, validation, and API route
    work as-is.
+
+   ── Wave 1 accessibility (focus management) ──
+   This modal is the primary lead-capture surface and used to be a
+   keyboard-trap nightmare: Tab would walk off the modal into the
+   Nav behind it, focus stayed on the original trigger after close
+   so screen-reader users lost their place, and there was no
+   auto-focus on the first field so opening the modal required a
+   keyboard user to Tab through it to get anywhere. Fixed via four
+   effects below — see each `useEffect` comment for details.
+
+   The existing dialog ARIA (role="dialog", aria-modal="true",
+   aria-labelledby="demo-modal-title") is preserved; the h2 inside
+   the center column carries the matching id and acts as the
+   accessible name.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const COMMENTS_MAX = 2000;
+
+/* CSS-selector list of elements that can receive keyboard focus.
+   Used by the focus trap to pick the first/last tabbable element in
+   the modal. Filtering for visibility happens at use-time via
+   .offsetParent — that catches elements display:none'd by the
+   topic-swap animation or hidden under a tab-style layout. */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const FIELDS = [
   {
@@ -361,8 +377,10 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   const formRef = useRef(null);
   const successRef = useRef(null);
 
-  /* Tracks the element that had focus when the modal opened, so we
-       can restore focus to it on close (WCAG 2.4.3). */
+  /* Remembers where keyboard focus was when the modal opened, so we
+     can return focus to that trigger element when the modal closes.
+     WCAG 2.4.3 (Focus Order) — without this, screen-reader users
+     close the modal and end up at <body>, having to re-orient. */
   const previousFocusRef = useRef(null);
 
   const [mounted, setMounted] = useState(false);
@@ -420,10 +438,9 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       const validationErrors = validateDemo(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
-        trackLeadError({ leadType: "demo", reason: "validation" });
         const firstErr = Object.keys(validationErrors)[0];
         const el = document.getElementById(`demo-${firstErr}`);
-        if (el) el.focus();
+        if (el) el.focus({ preventScroll: true });
         return;
       }
 
@@ -446,25 +463,15 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
             data.error || "Could not send your request. Please try again."
           );
           setStatus("error");
-          trackLeadError({
-            leadType: "demo",
-            reason: res.status === 429 ? "rate_limited" : "server",
-          });
           return;
         }
         setStatus("success");
-        trackLead({
-          leadType: "demo",
-          topic: form.topic || topicKey || "demo",
-          submissionId: data?.submissionId,
-        });
       } catch (err) {
         console.error(err);
         setSubmitError(
           "Network error. Please check your connection and try again."
         );
         setStatus("error");
-        trackLeadError({ leadType: "demo", reason: "network" });
       }
     },
     [form, status, topicKey, topic.emailLabel]
@@ -546,87 +553,11 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
-      if (e.key === "Escape") onClose("submitted");
+      if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
-
-  /* ── Focus capture + restore ──
-     When the modal opens, remember which element had focus (typically
-     the CTA button that triggered the open) so we can return focus
-     to it on close. The capture happens on the isOpen=true transition.
-     On close (isOpen=false), restore focus deferred one animation frame
-     so the modal's exit animation has time to start before we move
-     focus — otherwise the focus ring briefly appears on the closing
-     modal. */
-  useEffect(() => {
-    if (isOpen) {
-      if (typeof document !== "undefined" && !previousFocusRef.current) {
-        previousFocusRef.current = document.activeElement;
-      }
-    } else if (previousFocusRef.current) {
-      const toRestore = previousFocusRef.current;
-      previousFocusRef.current = null;
-      if (typeof toRestore.focus === "function") {
-        requestAnimationFrame(() => toRestore.focus());
-      }
-    }
-  }, [isOpen]);
-
-  /* ── Auto-focus first input on open ──
-       Move focus to the Name field once the modal is mounted + open.
-       Skipped when the modal opens directly into the success state
-       (won't happen via openDemo, but defensive). */
-  useEffect(() => {
-    if (!isOpen || !mounted || status === "success") return;
-    /* Defer one frame so the panel has rendered. Using rAF instead of
-         setTimeout keeps the focus call tied to the next paint cycle. */
-    const id = requestAnimationFrame(() => {
-      const firstField = document.getElementById("demo-name");
-      firstField?.focus();
-    });
-    return () => cancelAnimationFrame(id);
-  }, [isOpen, mounted, status]);
-
-  /* ── Focus trap on Tab ──
-       Wrap Tab/Shift+Tab navigation within the modal so keyboard users
-       can't accidentally Tab to elements behind the backdrop. WCAG
-       2.4.3 (Focus Order). */
-  useEffect(() => {
-    if (!isOpen || !mounted) return;
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    const handleTab = (e) => {
-      if (e.key !== "Tab") return;
-      const focusables = panel.querySelectorAll(FOCUSABLE_SELECTOR);
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    panel.addEventListener("keydown", handleTab);
-    return () => panel.removeEventListener("keydown", handleTab);
-  }, [isOpen, mounted]);
-
-  /* ── Inert while animating out ──
-       During the 400ms exit animation, the panel is still in the DOM
-       and tabbable. Apply `inert` so the closing modal can't receive
-       focus. Removed when the modal fully unmounts. */
-  useEffect(() => {
-    if (panelRef.current) {
-      panelRef.current.inert = animatingOut;
-    }
-  }, [animatingOut]);
 
   /* Success view intro animation */
   useEffect(() => {
@@ -651,6 +582,98 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     }
   }, [status]);
 
+  /* ── Focus capture + restore (Wave 1 a11y) ─────────────────────────
+     On open: snapshot document.activeElement so we know where focus
+     was. On close: restore it. Using a single ref keyed on isOpen
+     keeps capture/restore symmetric and avoids racing with the
+     mount/unmount effect above.
+
+     The requestAnimationFrame on restore is intentional — by the time
+     React has unmounted the panel and run cleanup, the browser has
+     usually already moved focus to <body>. Waiting one frame lets
+     us put it back on the trigger element without fighting React. */
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current =
+        typeof document !== "undefined" ? document.activeElement : null;
+    } else if (previousFocusRef.current) {
+      const target = previousFocusRef.current;
+      previousFocusRef.current = null;
+      requestAnimationFrame(() => {
+        if (target && typeof target.focus === "function") {
+          try {
+            target.focus({ preventScroll: true });
+          } catch {
+            /* element may have been removed from the DOM */
+          }
+        }
+      });
+    }
+  }, [isOpen]);
+
+  /* ── Auto-focus first input on open (Wave 1 a11y) ──────────────────
+     Skip during animatingOut (focus would land on a fading panel) and
+     during the success state (the success view's own buttons get
+     focused via natural Tab order from the close button). */
+  useEffect(() => {
+    if (!mounted || !isOpen || animatingOut || status === "success") return;
+    const rafId = requestAnimationFrame(() => {
+      const el = document.getElementById("demo-name");
+      if (el) {
+        try {
+          el.focus({ preventScroll: true });
+        } catch {
+          /* swallow — element may not be in DOM yet */
+        }
+      }
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [mounted, isOpen, animatingOut, status]);
+
+  /* ── Tab focus trap on the panel (Wave 1 a11y) ─────────────────────
+     Cycles Tab and Shift+Tab within the panel so keyboard users
+     can't accidentally land on the Nav (or any other UI hidden behind
+     the modal backdrop). Disabled during animatingOut so the user can
+     tab away naturally as the modal closes.
+
+     The `.offsetParent !== null` filter excludes elements that are
+     visually hidden (display:none, ancestor display:none, etc.) so
+     focus doesn't get stuck on the success view's elements while the
+     main form is rendered, or vice versa. */
+  useEffect(() => {
+    if (!mounted || !isOpen || animatingOut) return;
+
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      const focusables = Array.from(
+        panel.querySelectorAll(FOCUSABLE_SELECTOR)
+      ).filter((el) => el.offsetParent !== null);
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        try {
+          last.focus({ preventScroll: true });
+        } catch {}
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        try {
+          first.focus({ preventScroll: true });
+        } catch {}
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mounted, isOpen, animatingOut]);
+
   if (!mounted) return null;
 
   const isSubmitting = status === "submitting";
@@ -666,12 +689,19 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     return true;
   };
 
+  /* `inert` is applied while the modal is animating out, so a user
+     can't accidentally focus a fading-out element. Spread-conditional
+     is the cross-React-version-safe way to set the attribute, since
+     React 18 forwards it via spread and React 19 understands it
+     natively as a prop. */
+  const panelInertProps = animatingOut ? { inert: "" } : {};
+
   return (
     <div
       ref={backdropRef}
       className={styles.backdrop}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose("submitted");
+        if (e.target === e.currentTarget) onClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -681,6 +711,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
         ref={panelRef}
         className={styles.panel}
         onClick={(e) => e.stopPropagation()}
+        {...panelInertProps}
       >
         {/* Close button */}
         <button
@@ -836,13 +867,6 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                   href={calendlyHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => {
-                    track("demo_modal_calendly_click", { topic: topicKey });
-                    // Don't preventDefault — let the link navigate. The
-                    // demo_modal_close that fires when the modal closes after
-                    // this click should get outcome='calendly'.
-                    onClose("calendly");
-                  }}
                   className={`${styles.calendlyCard} ${styles.topicSwap}`}
                   key={`cal-${topicKey}`}
                 >
