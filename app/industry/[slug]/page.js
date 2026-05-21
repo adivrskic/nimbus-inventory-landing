@@ -1,6 +1,17 @@
 import IndustryClient from "./IndustryClient";
-import { INDUSTRIES } from "@/components/IndustryPage/industryData";
-import JsonLd, { breadcrumbSchema } from "@/components/SEO/JsonLd";
+import {
+  INDUSTRIES,
+  DEFAULT_INDUSTRY_FAQS,
+} from "@/components/IndustryPage/industryData";
+import JsonLd, { breadcrumbSchema, faqSchema } from "@/components/SEO/JsonLd";
+
+/* Per-industry FAQs live on each industry in industryData.js as `faqs`.
+   DEFAULT_INDUSTRY_FAQS is the fallback for any industry that omits its
+   own. The visible FAQ rendering happens in
+   components/IndustryPage/IndustryPage.jsx (section 04), which uses the
+   same fallback pattern so the FAQ JSON-LD payload below stays in sync
+   with what visitors actually see on the page — a requirement for FAQ
+   rich-result eligibility in Google. */
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -8,12 +19,12 @@ export async function generateMetadata({ params }) {
   if (!industry) return { title: "Industry Not Found" };
   return {
     title: `${industry.title} Warehouse Management`,
-    description: `Nautilus WMS for ${industry.title.toLowerCase()} operations. ${
+    description: `Nautilus for ${industry.title.toLowerCase()} operations. ${
       industry.heroDesc
     }`,
     alternates: { canonical: `https://nautilusinventory.com/industry/${slug}` },
     openGraph: {
-      title: `${industry.title} Warehouse Management | Nautilus WMS`,
+      title: `${industry.title} Warehouse Management | Nautilus`,
       description: industry.heroDesc,
       url: `https://nautilusinventory.com/industry/${slug}`,
     },
@@ -39,9 +50,17 @@ export default async function IndustryPage({ params }) {
       url: `https://nautilusinventory.com/industry/${slug}`,
     },
   ];
+
+  /* Per-industry FAQs drive the JSON-LD schema. Each /industry/[slug]
+     page now emits a unique FAQPage payload, which makes the FAQ rich
+     result eligible in Google's SERP. Previously industry pages had
+     breadcrumb schema only — adding FAQ schema is net-new SEO surface. */
+  const faqs = industry?.faqs ?? DEFAULT_INDUSTRY_FAQS;
+
   return (
     <>
       <JsonLd data={breadcrumbSchema(crumbs)} />
+      <JsonLd data={faqSchema(faqs)} />
       <IndustryClient slug={slug} />
     </>
   );

@@ -9,11 +9,16 @@ import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
-import { INDUSTRIES } from "./industryData";
+import { INDUSTRIES, DEFAULT_INDUSTRY_FAQS } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* Generic fallback workflow. Used when an industry in industryData.js
+   doesn't supply its own per-industry `workflow`. All 8 current
+   industries ship with their own; this fallback exists for new
+   industries added in the future before someone has written
+   industry-specific steps. */
 const WORKFLOW = [
   {
     label: "Receive",
@@ -32,6 +37,40 @@ const WORKFLOW = [
     desc: "Verify items by scan, print labels, push tracking to sales channels.",
   },
 ];
+
+/* Inline styles for the FAQ section (section 04). Lives here rather
+   than in IndustryPage.module.css to keep this change file-isolated;
+   matches the visual treatment of the FAQ section on the integration
+   pages. If you ever move this into the CSS module, the equivalent
+   classes are .faqList / .faq / .faqQ / .faqA on the integration
+   stylesheet. */
+const FAQ_STYLES = {
+  list: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  item: {
+    padding: "28px 0",
+    borderTop: "1px solid rgba(242, 240, 239, 0.06)",
+  },
+  question: {
+    fontFamily: "var(--display)",
+    fontSize: "18px",
+    fontWeight: 600,
+    letterSpacing: "-0.3px",
+    color: "var(--white)",
+    lineHeight: 1.3,
+    margin: "0 0 10px",
+  },
+  answer: {
+    fontFamily: "var(--display)",
+    fontSize: "15px",
+    lineHeight: 1.7,
+    color: "rgba(242, 240, 239, 0.65)",
+    margin: 0,
+    textWrap: "pretty",
+  },
+};
 
 export default function IndustryPage({ slug }) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
@@ -175,6 +214,17 @@ export default function IndustryPage({ slug }) {
     solution: industry.solutions[i],
   }));
 
+  /* Workflow content. Prefer the per-industry `workflow` field for
+     industry-specific verbs; fall back to the generic 4-step WORKFLOW
+     above only if the industry didn't ship its own. */
+  const workflow = industry.workflow ?? WORKFLOW;
+
+  /* FAQ content. Same fallback pattern as workflow — per-industry FAQs
+     when present (which is the case for all 8 current industries),
+     DEFAULT_INDUSTRY_FAQS otherwise. The fallback also drives the FAQ
+     JSON-LD schema in app/industry/[slug]/page.js. */
+  const faqs = industry.faqs ?? DEFAULT_INDUSTRY_FAQS;
+
   return (
     <div ref={pageRef} className={styles.page}>
       {/* ── HERO ── */}
@@ -282,13 +332,15 @@ export default function IndustryPage({ slug }) {
             scanners.
           </p>
 
-          {/* Workflow grid is now a glow-cards container.
-              Each step gets the glow-card outer/inner pattern. */}
+          {/* Workflow grid is a glow-cards container. Each step gets the
+              glow-card outer/inner pattern. Uses the per-industry workflow
+              from industryData.js, falling back to the generic WORKFLOW
+              const above only if the industry didn't ship its own. */}
           <div
             ref={workflowGlowRef}
             className={`${styles.workflow} glow-cards`}
           >
-            {WORKFLOW.map((w, i) => (
+            {workflow.map((w, i) => (
               <div key={i} className={`${styles.workflowStep} glow-card`}>
                 <div className="glow-card-border" />
                 <div
@@ -323,6 +375,45 @@ export default function IndustryPage({ slug }) {
               <div key={i} className={styles.stat}>
                 <div className={styles.statVal}>{s.val}</div>
                 <div className={styles.statLabel}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 04 · FAQ (per-industry, with fallback to DEFAULT_INDUSTRY_FAQS) ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionNum} aria-hidden="true">
+          04
+        </div>
+        <div className={styles.sectionContent}>
+          <div className={styles.sectionLabel}>FAQ</div>
+          <h2 className={styles.sectionTitle}>
+            {industry.title} questions, answered.
+          </h2>
+          <p className={styles.sectionDesc}>
+            The questions buyers in {industry.title.toLowerCase()} ask before
+            they sign. If yours isn&apos;t here, the team can answer it on a
+            discovery call.
+          </p>
+
+          {/* FAQ list. Styling is inline rather than in IndustryPage.module.css
+              to keep this addition file-isolated — see FAQ_STYLES at the top of
+              this file. The same visual treatment lives in classed form in
+              IntegrationPage.module.css if you ever want to consolidate. */}
+          <div style={FAQ_STYLES.list}>
+            {faqs.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  ...FAQ_STYLES.item,
+                  /* Hide top border on the first item so the list opens
+                     cleanly under the sectionDesc paragraph above. */
+                  ...(i === 0 ? { borderTop: "none", paddingTop: "12px" } : {}),
+                }}
+              >
+                <h3 style={FAQ_STYLES.question}>{item.q}</h3>
+                <p style={FAQ_STYLES.answer}>{item.a}</p>
               </div>
             ))}
           </div>

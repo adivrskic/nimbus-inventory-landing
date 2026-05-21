@@ -9,11 +9,14 @@ import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
-import { INTEGRATIONS } from "./integrationData";
+import { INTEGRATIONS, DEFAULT_INTEGRATION_FAQS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* Setup steps are shared across every integration — the actual flow
+   doesn't differ by platform, since OAuth + field-mapping + sync + verify
+   is the same shape whether you're connecting QuickBooks or DHL. */
 const SETUP_STEPS = [
   {
     num: "01",
@@ -37,27 +40,11 @@ const SETUP_STEPS = [
   },
 ];
 
-const FAQ = [
-  {
-    q: "How long does setup take?",
-    a: "Most customers are syncing in under 10 minutes. Enterprise environments with custom field mappings can take 30 minutes to an hour.",
-  },
-  {
-    q: "What if a sync fails?",
-    a: "Nautilus retries with exponential backoff for 24 hours. After that, the record is flagged in your dashboard for manual review. Sync failures never block your warehouse operations.",
-  },
-  {
-    q: "Can I limit what syncs?",
-    a: "Yes. Granular controls let you sync specific products, locations, or even specific fields. Most customers start with everything on and tighten over time.",
-  },
-  {
-    q: "Is the integration included in all plans?",
-    a: "This integration is included in Pro and Enterprise. Free plans can install but with limits on sync frequency.",
-  },
-];
-
-/* Generic data-flow descriptors for each category. These could move to
-   integrationData.js per-integration if more specificity is needed. */
+/* Category-level fallback data-flow descriptors. Used only when an
+   integration in integrationData.js doesn't supply its own per-integration
+   `flow`. All 18 current integrations ship with their own; this fallback
+   exists so new integrations don't render an empty diagram before someone
+   has written platform-specific items. */
 const FLOW_DATA = {
   "Accounting & ERP": {
     fromNautilus: [
@@ -124,7 +111,20 @@ export default function IntegrationPage({ slug }) {
         .map(([s, i]) => ({ slug: s, ...i }))
     : [];
 
-  const flow = integration ? FLOW_DATA[integration.category] : null;
+  /* Data-flow content. Prefer the per-integration `flow` field for
+     specificity; fall back to the category-level FLOW_DATA only if the
+     integration didn't ship its own. */
+  const flow = integration
+    ? integration.flow ?? FLOW_DATA[integration.category]
+    : null;
+
+  /* FAQ content. Same fallback pattern as flow — per-integration FAQs
+     when present (which is the case for all 18 current integrations),
+     DEFAULT_INTEGRATION_FAQS otherwise. The fallback also drives the
+     JSON-LD FAQ schema in app/integration/[slug]/page.js. */
+  const faqs = integration
+    ? integration.faqs ?? DEFAULT_INTEGRATION_FAQS
+    : DEFAULT_INTEGRATION_FAQS;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -291,7 +291,7 @@ export default function IntegrationPage({ slug }) {
         </div>
       </section>
 
-      {/* ── 01 · FEATURES (list-style, unchanged) ── */}
+      {/* ── 01 · FEATURES ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           01
@@ -302,8 +302,8 @@ export default function IntegrationPage({ slug }) {
             Inventory data, where you need it.
           </h2>
           <p className={styles.sectionDesc}>
-            Three things the {integration.title} integration does well — and
-            that you&apos;d otherwise be doing manually.
+            Three things the {integration.title} integration does well, that
+            you&apos;d otherwise be doing by hand.
           </p>
 
           <div className={styles.features}>
@@ -440,17 +440,19 @@ export default function IntegrationPage({ slug }) {
         </div>
       </section>
 
-      {/* ── 05 · FAQ (list-style, unchanged) ── */}
+      {/* ── 05 · FAQ (per-integration with fallback to DEFAULT_INTEGRATION_FAQS) ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           05
         </div>
         <div className={styles.sectionContent}>
           <div className={styles.sectionLabel}>FAQ</div>
-          <h2 className={styles.sectionTitle}>Quick answers.</h2>
+          <h2 className={styles.sectionTitle}>
+            {integration.title} questions, answered.
+          </h2>
 
           <div className={styles.faqList}>
-            {FAQ.map((item, i) => (
+            {faqs.map((item, i) => (
               <div key={i} className={styles.faq}>
                 <h3 className={styles.faqQ}>{item.q}</h3>
                 <p className={styles.faqA}>{item.a}</p>
@@ -493,8 +495,7 @@ export default function IntegrationPage({ slug }) {
       <FinalCTACard
         label="Ready to connect?"
         title={`See Nautilus + ${integration.title} running on real data.`}
-        desc={`30-minute walkthrough with a Nautilus engineer. We&apos;ll connect a
-        sandbox of your ${integration.title} account and show the sync live.`}
+        desc={`30-minute walkthrough with a Nautilus engineer. We'll connect a sandbox of your ${integration.title} account and show the sync live.`}
         primaryAction={{ onClick: openDemo, label: "Request a demo" }}
         secondaryAction={{ href: "/contact", label: "Or just reach out" }}
       />

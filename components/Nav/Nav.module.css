@@ -77,7 +77,7 @@
 .logoText {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: 1px;
   color: var(--white);
   display: block;
@@ -97,7 +97,7 @@
   justify-content: space-between;
   width: 100%;
   line-height: 1;
-  margin-top: 5px;
+  margin-top: 3px;
 }
 
 .links {

@@ -32,13 +32,13 @@ export async function generateMetadata({ params }) {
   const found = findArticle(slug);
   if (!found) return { title: "Article Not Found" };
 
-  /* Description now sourced from the article's first paragraph instead
-     of the formulaic "{Title} — Nautilus WMS help guide in the {Category}
-     category." Each article gets a unique, click-worthy SERP snippet
-     pulled from its actual content. */
+  /* Description sources from the article's first paragraph — each article
+     ships with a substantive opening line that doubles as the SERP
+     snippet. The fallback below only fires for articles with no prose
+     content at all (effectively never in practice). */
   const description =
     firstParagraph(found.article.content) ||
-    `${found.article.title} — Nautilus WMS help guide.`;
+    `${found.article.title} — Nautilus help guide.`;
 
   return {
     title: found.article.title,
@@ -71,7 +71,7 @@ export default async function HelpArticlePage({ params }) {
 
   const description = article
     ? firstParagraph(article.content) ||
-      `${article.title} — Nautilus WMS help guide.`
+      `${article.title} — Nautilus help guide.`
     : null;
 
   return (
