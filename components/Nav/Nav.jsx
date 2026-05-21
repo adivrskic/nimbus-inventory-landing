@@ -491,7 +491,13 @@ export default function Nav({ onDemo, dark }) {
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nautilus</span>
-            <span className={styles.logoSub}>Inventory</span>
+            <span className={styles.logoSub} aria-label="Inventory">
+              {Array.from("INVENTORY").map((letter, i) => (
+                <span key={i} aria-hidden="true">
+                  {letter}
+                </span>
+              ))}
+            </span>
           </div>
         </TransitionLink>
 

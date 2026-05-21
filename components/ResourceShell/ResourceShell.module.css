@@ -162,12 +162,19 @@
 
 /* ─────────────────────────────────────────────────────
    2-COLUMN BODY (used by Read pages)
+   ─────────────────────────────────────────────────────
+   NOTE: do NOT add `align-items: start` here. The TOC sidebar uses
+   position: sticky internally, and sticky only works when its
+   containing element extends past it vertically. With align-items:
+   start, the .sidebar grid track collapses to the height of the TOC
+   itself, leaving the sticky element with no room to actually stick.
+   The default (stretch) makes .sidebar match the .content height,
+   which is what gives the sticky TOC its scroll range.
 ───────────────────────────────────────────────────── */
 .body {
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: 80px;
-  align-items: start;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -177,9 +184,11 @@
   position: relative;
   opacity: 0;
 }
+/* Nav is 72px tall; 92px gives a 20px gap below it once stuck.
+   If you change the nav height, change this to match. */
 .sidebarSticky {
   position: sticky;
-  top: 100px;
+  top: 92px;
 }
 .sidebarLabel {
   font-family: var(--mono);
