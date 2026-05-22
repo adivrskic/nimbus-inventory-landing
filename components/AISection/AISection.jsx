@@ -57,7 +57,7 @@ const SECTIONS = [
       rotYEnd: -15,
       rotZEnd: 0,
       offsetXEnd: 0,
-      offsetYEnd: 0 /* was 2.75 — killed the slide */,
+      offsetYEnd: 0,
     },
     mobile: {
       rotX: -32,
@@ -82,27 +82,29 @@ const SECTIONS = [
     side: "right",
     gen: "spatial",
     desktop: {
-      rotX: 67,
-      rotY: 40,
+      /* Classic 3/4 isometric — shows three faces clearly, reads as
+         3D cube without dramatic top-down compression. */
+      rotX: 35,
+      rotY: 45,
       rotZ: 0,
       offsetX: 0,
       offsetY: 0,
       scale: 0.8,
-      rotXEnd: 2,
-      rotYEnd: 88,
+      rotXEnd: 35,
+      rotYEnd: 45,
       rotZEnd: 0,
       offsetXEnd: 0,
       offsetYEnd: 0,
     },
     mobile: {
-      rotX: -57,
-      rotY: -19,
+      rotX: 25,
+      rotY: 35,
       rotZ: 0,
       offsetX: 0,
       offsetY: 0,
       scale: 0.65,
-      rotXEnd: -57,
-      rotYEnd: 11,
+      rotXEnd: 25,
+      rotYEnd: 35,
       rotZEnd: 0,
       offsetXEnd: 0,
       offsetYEnd: 0,
@@ -117,28 +119,31 @@ const SECTIONS = [
     side: "left",
     gen: "search",
     desktop: {
+      /* Eased from rotY -34 / rotZ -9 so the lens reads as a rounder
+         circle rather than a stretched ellipse — still angled enough
+         for depth. */
       rotX: -12,
-      rotY: -34,
-      rotZ: -9,
+      rotY: -24,
+      rotZ: -6,
       offsetX: -1.25,
       offsetY: 1,
       scale: 0.6,
       rotXEnd: -12,
-      rotYEnd: -4,
-      rotZEnd: -9,
+      rotYEnd: -24,
+      rotZEnd: -6,
       offsetXEnd: -1.25,
       offsetYEnd: 1,
     },
     mobile: {
       rotX: -12,
-      rotY: -34,
-      rotZ: -9,
+      rotY: -24,
+      rotZ: -6,
       offsetX: 0,
       offsetY: 0,
       scale: 0.55,
       rotXEnd: -12,
-      rotYEnd: -4,
-      rotZEnd: -9,
+      rotYEnd: -24,
+      rotZEnd: -6,
       offsetXEnd: 0,
       offsetYEnd: 0,
     },
@@ -152,16 +157,18 @@ const SECTIONS = [
     side: "right",
     gen: "chart",
     desktop: {
+      /* Leveled (rotZ 6 → 0) and eased (rotY 25 → 22) so the chart
+         sits flat and reads clean; slide killed (offsetXEnd 1 → 0.25). */
       rotX: -2,
-      rotY: 25,
-      rotZ: 6,
+      rotY: 22,
+      rotZ: 0,
       offsetX: 0.25,
       offsetY: 0,
       scale: 0.7,
-      rotXEnd: -8,
-      rotYEnd: 44,
+      rotXEnd: -2,
+      rotYEnd: 22,
       rotZEnd: 0,
-      offsetXEnd: 1,
+      offsetXEnd: 0.25,
       offsetYEnd: 0,
     },
     mobile: {
@@ -172,16 +179,29 @@ const SECTIONS = [
       offsetY: 0,
       scale: 0.65,
       rotXEnd: -8,
-      rotYEnd: 44,
+      rotYEnd: 14,
       rotZEnd: 0,
       offsetXEnd: 0,
       offsetYEnd: 0,
     },
     badge: "Forecasting",
     title: "Predictive analytics",
-    desc: "Nimbus doesn't just report what happened — it forecasts what's next.",
+    desc: "Nautilus doesn't just report what happened — it forecasts what's next.",
   },
 ];
+
+/* Pulse-attribute registry. Maps a scene's `gen` key to the per-particle
+   phase buffer that scene's phase data is copied into during buildShape.
+   A scene with an entry here gets its pulse driven; scenes without one
+   render statically. Adding a new pulsing scene means: one entry here,
+   a matching buffer + geometry attribute + uniform below, and the
+   generator returning { positions, phases }. */
+const PULSE_BUFFER_NAMES = {
+  voice: "voice",
+  spatial: "spatial",
+  search: "search",
+  chart: "chart",
+};
 
 function smoothstep(x) {
   const c = Math.max(0, Math.min(1, x));
@@ -768,12 +788,47 @@ export default function AISection() {
       const scattered = generateScattered(PARTICLE_COUNT);
       const shapes = [null, null, null, null];
 
+      /* Per-scene per-particle phase buffers, written by each scene's
+         generator during buildShape and read by the shader to drive
+         that scene's pulse effect. Each pulsing scene gets its own
+         buffer so they never overwrite each other. All initialized to
+         -1 (== "no pulse") so a generator that hasn't been updated to
+         return phases degrades to no-op rather than misfiring. */
+      const phaseBuffers = {
+        voice: new Float32Array(PARTICLE_COUNT),
+        spatial: new Float32Array(PARTICLE_COUNT),
+        search: new Float32Array(PARTICLE_COUNT),
+        chart: new Float32Array(PARTICLE_COUNT),
+      };
+      phaseBuffers.voice.fill(-1);
+      phaseBuffers.spatial.fill(-1);
+      phaseBuffers.search.fill(-1);
+      phaseBuffers.chart.fill(-1);
+
+      /* Hoisted so rebuildShapes can reference it on resize-driven
+         rebuilds — geometry is created later in this init flow. */
+      let geometry;
+
       const buildShape = (i, mode) => {
         const sec = SECTIONS[i];
         const params = sec[mode];
         const fn = SHAPE_GENERATORS[sec.gen];
 
-        let pts = fn(PARTICLE_COUNT, 0, 0, 0);
+        const result = fn(PARTICLE_COUNT, 0, 0, 0);
+
+        /* Scenes that drive a shader pulse return { positions, phases };
+           other generators return a plain Float32Array. Normalize and
+           capture phases into the appropriate per-scene buffer. */
+        let pts;
+        if (result instanceof Float32Array) {
+          pts = result;
+        } else {
+          pts = result.positions;
+          const bufName = PULSE_BUFFER_NAMES[sec.gen];
+          if (result.phases && bufName && phaseBuffers[bufName]) {
+            phaseBuffers[bufName].set(result.phases);
+          }
+        }
 
         const mobile = mode === "mobile";
         const mobileFactor = mobile ? 0.85 : 1;
@@ -792,6 +847,21 @@ export default function AISection() {
         const mode = window.innerWidth < 768 ? "mobile" : "desktop";
         for (let i = 0; i < SECTIONS.length; i++)
           shapes[i] = buildShape(i, mode);
+        /* On resize-driven rebuilds, mark every pulse attribute dirty
+           so freshly written phases reach the GPU on the next frame.
+           On the very first build (during init, before geometry is
+           created), this branch is a no-op and the attributes pick up
+           their respective buffers when they're set below. */
+        if (geometry) {
+          if (geometry.attributes.aPhase)
+            geometry.attributes.aPhase.needsUpdate = true;
+          if (geometry.attributes.aSpatialPhase)
+            geometry.attributes.aSpatialPhase.needsUpdate = true;
+          if (geometry.attributes.aSearchPhase)
+            geometry.attributes.aSearchPhase.needsUpdate = true;
+          if (geometry.attributes.aChartPhase)
+            geometry.attributes.aChartPhase.needsUpdate = true;
+        }
       };
       rebuildShapes();
       rebuildShapesRef.current = rebuildShapes;
@@ -801,7 +871,7 @@ export default function AISection() {
       const currentPos = new Float32Array(PARTICLE_COUNT * 3);
       const physicsVel = new Float32Array(PARTICLE_COUNT * 3);
 
-      const geometry = new THREE.BufferGeometry();
+      geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
         "position",
         new THREE.BufferAttribute(currentPos, 3)
@@ -814,6 +884,28 @@ export default function AISection() {
         baseSizes[i] = (0.7 + Math.random() * 1.2) * sizeScale;
       }
       geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
+
+      /* Per-scene pulse attributes. Each holds the relevant per-particle
+         phase for that scene's pulse effect, populated by buildShape
+         during rebuildShapes above. The shader reads all four and gates
+         each by its respective uniform so non-active scenes contribute
+         zero pulse. */
+      geometry.setAttribute(
+        "aPhase",
+        new THREE.BufferAttribute(phaseBuffers.voice, 1)
+      );
+      geometry.setAttribute(
+        "aSpatialPhase",
+        new THREE.BufferAttribute(phaseBuffers.spatial, 1)
+      );
+      geometry.setAttribute(
+        "aSearchPhase",
+        new THREE.BufferAttribute(phaseBuffers.search, 1)
+      );
+      geometry.setAttribute(
+        "aChartPhase",
+        new THREE.BufferAttribute(phaseBuffers.chart, 1)
+      );
 
       const seeds = new Float32Array(PARTICLE_COUNT * 3);
       for (let i = 0; i < PARTICLE_COUNT * 3; i++) seeds[i] = Math.random();
@@ -833,6 +925,16 @@ export default function AISection() {
           uPerspectiveScale: { value: 22.0 },
           uBlurExpand: { value: 0.5 },
           uBlurSoftness: { value: 0.45 },
+
+          /* uTime is a shared shader clock driving all per-scene pulses.
+             Each pulse uniform gates its scene's effect on/off based on
+             how much of the current render is that scene (0 = no pulse,
+             1 = full pulse, in-between during transitions). */
+          uTime: { value: 0 },
+          uVoicePulse: { value: 0 },
+          uSpatialPulse: { value: 0 },
+          uSearchPulse: { value: 0 },
+          uChartPulse: { value: 0 },
         },
       });
 
@@ -846,6 +948,23 @@ export default function AISection() {
       let sColorMix = 0;
 
       const TAU = Math.PI * 2;
+
+      /* Cached scene indices for the pulse-gate math in animate. Sourced
+         from SECTIONS rather than hardcoded so re-ordering sections
+         later won't silently break a pulse gate. */
+      const VOICE_IDX = SECTIONS.findIndex((s) => s.key === "voice");
+      const SPATIAL_IDX = SECTIONS.findIndex((s) => s.key === "spatial");
+      const SEARCH_IDX = SECTIONS.findIndex((s) => s.key === "search");
+      const CHART_IDX = SECTIONS.findIndex((s) => s.key === "analytics");
+
+      /* Returns how much of the current render comes from a given scene
+         index — 1 when it's the sole active shape, 0 when uninvolved,
+         blended during transitions. Used to gate each scene's pulse. */
+      const shareOf = (sceneIdx, s, blend, blendInv) => {
+        const a = s.activeShape === sceneIdx ? 1 : 0;
+        const b = s.nextShape === sceneIdx ? 1 : 0;
+        return a * blendInv + b * blend;
+      };
 
       const animate = () => {
         frameId = requestAnimationFrame(animate);
@@ -1042,6 +1161,20 @@ export default function AISection() {
         geometry.attributes.position.needsUpdate = true;
         material.uniforms.uColorMix.value = sColorMix;
         material.uniforms.uGlobalAlpha.value = sAlpha;
+
+        /* Drive per-scene pulses. uTime is a shared monotonic clock;
+           each pulse gate is its scene's share of the current render
+           × sFormation so pulses ramp up alongside the shape's
+           formation rather than appearing flatly at full strength. */
+        material.uniforms.uTime.value = t;
+        material.uniforms.uVoicePulse.value =
+          shareOf(VOICE_IDX, s, blend, blendInv) * sFormation;
+        material.uniforms.uSpatialPulse.value =
+          shareOf(SPATIAL_IDX, s, blend, blendInv) * sFormation;
+        material.uniforms.uSearchPulse.value =
+          shareOf(SEARCH_IDX, s, blend, blendInv) * sFormation;
+        material.uniforms.uChartPulse.value =
+          shareOf(CHART_IDX, s, blend, blendInv) * sFormation;
 
         renderer.render(scene, camera);
       };
