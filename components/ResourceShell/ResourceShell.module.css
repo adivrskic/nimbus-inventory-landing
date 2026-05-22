@@ -585,6 +585,55 @@
   color: rgba(242, 240, 239, 0.3);
 }
 
+.dd {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+   BULLET LIST
+   Short enumerations in Read content (formats, actions,
+   events). Gold square marker to match the accent vocabulary.
+   Starts hidden; revealed by useResourceSectionAnimations
+   like every other content block, so it must be in that hook's
+   selector (see ResourceShell.jsx).
+───────────────────────────────────────────────────── */
+.ul {
+  list-style: none;
+  margin: 4px 0 18px;
+  padding: 0;
+  opacity: 0;
+}
+.li {
+  position: relative;
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.7);
+  padding-left: 22px;
+  margin: 0 0 10px;
+  text-wrap: pretty;
+}
+.li:last-child {
+  margin-bottom: 0;
+}
+.li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+.li strong {
+  color: var(--white);
+  font-weight: 600;
+}
+
 /* ─────────────────────────────────────────────────────
    RESPONSIVE
 ───────────────────────────────────────────────────── */

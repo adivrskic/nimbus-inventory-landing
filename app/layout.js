@@ -119,6 +119,13 @@ export const metadata = {
   alternates: { canonical: SITE_URL },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#04091c",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${jetbrainsMono.variable} ${satoshi.variable}`}>

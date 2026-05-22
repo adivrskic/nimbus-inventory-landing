@@ -193,7 +193,7 @@ export function useResourceSectionAnimations(containerRef) {
 
     sections.forEach((section) => {
       const targets = section.querySelectorAll(
-        `.${styles.h2}, .${styles.h3}, .${styles.p}, .${styles.codeBlock}, .${styles.codeDuo}, .${styles.dl}, .${styles.inlineNote}`
+        `.${styles.h2}, .${styles.h3}, .${styles.p}, .${styles.ul}, .${styles.codeBlock}, .${styles.codeDuo}, .${styles.dl}, .${styles.inlineNote}`
       );
       if (!targets.length) return;
 

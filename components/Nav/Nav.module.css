@@ -23,11 +23,13 @@
   left: 0;
   right: 0;
   z-index: 100;
-  height: 72px;
-  /* Matches the floating chat launcher's `right: 24px` offset so the
-           rightmost nav element and the chat button share a vertical
-           gutter line. */
-  padding: 0 24px;
+  /* Height grows by the top inset; padding-top pushes the 72px bar below
+     the Dynamic Island so the logo/links never sit under it. With
+     box-sizing:border-box the visible bar stays exactly 72px. The L/R
+     insets keep content off the side notch in landscape. */
+  height: calc(72px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) calc(24px + env(safe-area-inset-right)) 0
+    calc(24px + env(safe-area-inset-left));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -453,8 +455,9 @@
 
 @media (max-width: 768px) {
   .nav {
-    padding: 0 20px;
-    height: 60px;
+    height: calc(60px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right)) 0
+      calc(20px + env(safe-area-inset-left));
   }
   .links {
     display: none;
@@ -518,7 +521,7 @@
 .mobileMenu {
   position: fixed;
   inset: 0;
-  top: 60px;
+  top: calc(60px + env(safe-area-inset-top));
   z-index: 9998;
   /* Mobile sheet runs near opaque so text always reads on small
          screens, but still tints to the same navy family. */
@@ -533,7 +536,9 @@
 .mobileInner {
   display: flex;
   flex-direction: column;
-  padding: 32px 28px 48px;
+  padding: 32px calc(28px + env(safe-area-inset-right))
+    calc(48px + env(safe-area-inset-bottom))
+    calc(28px + env(safe-area-inset-left));
   min-height: 100%;
 }
 

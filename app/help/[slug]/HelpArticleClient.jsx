@@ -240,6 +240,27 @@ export default function HelpArticleClient({ slug }) {
           {b.text}
         </h3>
       );
+    if (b.type === "ul")
+      return (
+        <ul key={i} className={shellStyles.ul}>
+          {(b.items || []).map((item, j) => (
+            <li key={j} className={shellStyles.li}>
+              {item}
+            </li>
+          ))}
+        </ul>
+      );
+    if (b.type === "code")
+      return (
+        <div key={i} className={shellStyles.codeBlock}>
+          {b.label && (
+            <div className={shellStyles.codeBar}>
+              <span className={shellStyles.codeBarLabel}>{b.label}</span>
+            </div>
+          )}
+          <pre className={shellStyles.codePre}>{b.text}</pre>
+        </div>
+      );
     return null;
   };
 

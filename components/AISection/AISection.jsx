@@ -208,6 +208,19 @@ function smoothstep(x) {
   return c * c * (3 - 2 * c);
 }
 
+/* Smootherstep — like smoothstep but with zero 1st AND 2nd derivatives
+   at both ends, for a gentler ease-in-out. Used to shape the
+   shape-to-shape morph blend so particles accelerate in and decelerate
+   out instead of crossing at a constant rate. The constant-rate linear
+   blend is what reads as a mechanical "wiggle" mid-transition — the
+   underdamped settle spring overshoots when the target arrives at full
+   speed. Easing the blend removes the speed at each end so particles
+   settle into a shape rather than slamming into it and bouncing. */
+function easeInOut(t) {
+  const c = Math.max(0, Math.min(1, t));
+  return c * c * c * (c * (c * 6 - 15) + 10);
+}
+
 function formationCurve(p) {
   if (p <= 0.15 || p >= 0.85) return 0;
   if (p < 0.4) return smoothstep((p - 0.15) / 0.25);
@@ -986,9 +999,18 @@ export default function AISection() {
         const shapeA = shapes[s.activeShape];
         const shapeB = shapes[s.nextShape];
         if (!shapeA) return;
-        /* shapeBlend = 0 when not transitioning, in which case
-           shapeB === shapeA and the blend math no-ops cleanly. */
-        const blend = s.shapeBlend;
+
+        /* Ease the raw scroll-driven blend with smootherstep so the
+           morph accelerates in and decelerates out rather than crossing
+           at a constant rate. The linear blend is what reads as a
+           mechanical "wiggle" mid-transition — the settle spring
+           overshoots when particles arrive at full speed. Easing removes
+           the speed at each end so they ease into a shape and ease out
+           of it. Applied once here so position, rotation, offset, and
+           the pulse gates all share the eased value. When not
+           transitioning shapeBlend = 0, easeInOut(0) = 0, and shapeB ===
+           shapeA, so the blend math no-ops cleanly. */
+        const blend = easeInOut(s.shapeBlend);
         const blendInv = 1 - blend;
 
         const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
@@ -1075,9 +1097,9 @@ export default function AISection() {
           /* Blend the particle's target position between shape A and
              shape B. When blend = 0 this is just shapeA[i3] etc.
              (no-op for the typical mid-block case). When blend > 0
-             the particle interpolates linearly between its A-position
-             and its B-position. Spring physics below smooths the
-             actual movement so it doesn't snap. */
+             the particle interpolates between its A-position and its
+             B-position along the eased blend. Spring physics below
+             smooths the actual movement so it doesn't snap. */
           let px = shapeA[i3] * blendInv + shapeB[i3] * blend;
           let py = shapeA[i3 + 1] * blendInv + shapeB[i3 + 1] * blend;
           let pz = shapeA[i3 + 2] * blendInv + shapeB[i3 + 2] * blend;
@@ -1165,7 +1187,9 @@ export default function AISection() {
         /* Drive per-scene pulses. uTime is a shared monotonic clock;
            each pulse gate is its scene's share of the current render
            × sFormation so pulses ramp up alongside the shape's
-           formation rather than appearing flatly at full strength. */
+           formation rather than appearing flatly at full strength.
+           Uses the eased blend so the glow cross-fade matches the
+           eased shape morph. */
         material.uniforms.uTime.value = t;
         material.uniforms.uVoicePulse.value =
           shareOf(VOICE_IDX, s, blend, blendInv) * sFormation;

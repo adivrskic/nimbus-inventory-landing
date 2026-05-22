@@ -5,17 +5,24 @@
    the shared <CornerButton>; this file only provides corner placement, the
    drop shadow that makes it read as a floating launcher, and a small gap
    between the icon and the label.
+
+   Safe-area note: once viewport-fit=cover is on (app/layout.js), bottom: 24px
+   would measure from the physical screen edge, dropping the launcher under
+   the home indicator on notched phones. The env(safe-area-inset-*) terms add
+   the inset back so the button keeps clear of the indicator (and the side
+   notch in landscape). Both resolve to 0 on non-notched devices, so this is a
+   no-op there.
    ────────────────────────────────────────────────────────────────────────── */
 
 .root {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  right: calc(24px + env(safe-area-inset-right));
   z-index: 100;
 }
 
 /* Extra polish on top of CornerButton's base style: a soft drop shadow so it
-     reads as floating off the page, plus a subtle lift on hover. */
+       reads as floating off the page, plus a subtle lift on hover. */
 .launcher {
   transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s,
     transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
@@ -27,15 +34,15 @@
 }
 
 /* Small gap between the chat icon and the label. CornerButton's internal
-     label span is inline-flex with no gap, so we add it here. */
+       label span is inline-flex with no gap, so we add it here. */
 .launcherText {
   margin-left: 8px;
 }
 
 @media (max-width: 640px) {
   .root {
-    bottom: 16px;
-    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    right: calc(16px + env(safe-area-inset-right));
   }
 }
 

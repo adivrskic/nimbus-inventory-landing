@@ -95,8 +95,8 @@ body::after {
    Nav.module.css; this needs to outrank that). */
 .skip-link {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: env(safe-area-inset-top, 0px);
+  left: env(safe-area-inset-left, 0px);
   z-index: 10000;
   padding: 12px 20px;
   background: var(--accent);
