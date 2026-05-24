@@ -1075,17 +1075,18 @@ export default function AISection() {
         const jb = mot.jitterAmp;
         const jf = mot.jitterFreq;
 
-        /* ── Field orbit ──
-           Scattered particles rotate around the shape's current world
-           position (offX, offY, 0) by an angle driven by scroll. animP
-           goes 0→1 across the visible block; orbitT swings [-1..+1] so
-           the field starts rotated one way, passes through neutral as
-           the shape is fully formed (animP≈0.5), and ends rotated the
-           other way. Full rotation matrix, not the small-angle approx —
-           magnitudes here can reach 20–30°+ comfortably. */
-        const orbitT = (animP - 0.5) * 2;
-        const yaw = orbitT * mot.orbitYaw;
-        const pitch = orbitT * mot.orbitPitch;
+        /* Orbit only expresses itself on a FORMED shape. Scaling the
+           angle by sFormation means that when particles are scattered
+           between blocks (sFormation → 0) there is zero orbit rotation —
+           the loose cloud just drifts via jitter instead of tumbling
+           around the shape's center point, which is what read as a jerky
+           "rotate around a point" during the scatter. As a shape forms
+           (sFormation → 1) the orbit eases back in at full strength, so
+           the intended "field orbits the static shape" effect is
+           preserved exactly where it belongs. */
+        const orbitT = (animP - 0.5) * 2 * sFormation;
+        const yaw = 0;
+        const pitch = 0;
         const cosY = Math.cos(yaw);
         const sinY = Math.sin(yaw);
         const cosP = Math.cos(pitch);

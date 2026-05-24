@@ -9,6 +9,7 @@ import Integrations from "@/components/Integrations/Integrations";
 import Industries from "@/components/Industries/Industries";
 import Footer from "@/components/Footer/Footer";
 import FinalCTA from "@/components/FinalCTA/FinalCTA";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import HashScroller from "@/components/HashScroller/HashScroller";
 import { useDemo } from "@/lib/DemoContext";
 
@@ -31,6 +32,20 @@ export default function HomeClient() {
       <Integrations />
       <Industries />
       <FinalCTA onDemo={openDemo} />
+      {/* Card-style final CTA — same accent-wipe-on-scroll treatment used
+          on the compare / industry / integration pages. Its primary action
+          opens the Nautilus Helper AI chat drawer by dispatching the
+          `open-chat` window event that ChatProvider listens for. */}
+      <FinalCTACard
+        label="Still have questions?"
+        title="Ask Nautilus anything, right now."
+        desc="Pricing, integrations, migration, whether it fits your operation — our AI assistant answers instantly with real specifics from the docs."
+        primaryAction={{
+          onClick: () => window.dispatchEvent(new Event("open-chat")),
+          label: "Ask Nautilus",
+        }}
+        secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}
+      />
       <Footer />
     </>
   );

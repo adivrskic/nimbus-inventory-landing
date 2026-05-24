@@ -29,6 +29,18 @@
 // calls chat.reset() which clears messages, conversation_id, localStorage,
 // and starts fresh.
 //
+// Opening from elsewhere on the page:
+// The drawer's open/close state is owned here and is NOT exposed through
+// context. Any component that wants to pop the chat (e.g. the home page's
+// FinalCTACard) dispatches a window event instead:
+//
+//   window.dispatchEvent(new Event("open-chat"));
+//
+// The effect below listens for that event and calls handleOpen, so the
+// analytics + focus-capture behavior is identical to clicking the floating
+// launcher. Suppressed routes (/ask, /help) unmount this component, so the
+// listener simply isn't present there.
+//
 // Accessibility:
 // We capture document.activeElement when the drawer opens (typically the
 // floating chat launcher button) and restore focus to it on close. This
@@ -130,6 +142,28 @@ export default function ChatProvider({ userEmail, userName }) {
       requestAnimationFrame(() => toRestore.focus());
     }
   };
+
+  /* Allow any component on the page to open the chat drawer by
+     dispatching a window event:
+
+       window.dispatchEvent(new Event("open-chat"))
+
+     The drawer's open/close state is owned here, so this is the seam we
+     expose rather than hoisting state into context. Routing through
+     handleOpen keeps the analytics (chat_open) and focus-capture behavior
+     identical to clicking the floating launcher. document.activeElement at
+     dispatch time is whatever triggered it (e.g. the CTA button), so focus
+     restores there on close. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onOpenChat = () => handleOpen();
+    window.addEventListener("open-chat", onOpenChat);
+    return () => window.removeEventListener("open-chat", onOpenChat);
+    // handleOpen is recreated each render but only closes over refs and
+    // stable setters, so an empty dep array is safe here and avoids
+    // rebinding the listener on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* /ask is the full-page chat — no launcher needed there.
      /help/* has its own inline doc search. */
