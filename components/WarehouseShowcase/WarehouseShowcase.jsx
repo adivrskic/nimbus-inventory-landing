@@ -15,23 +15,32 @@ gsap.registerPlugin(ScrollTrigger);
    Same five-act story (WAKE · HEAR · ANTICIPATE · ACT · LEARN),
    dramatically refined:
 
-   - Floor + fog now share the EXACT navy of the section below, so
-     the 3D scene appears to float in a continuous dark sea with no
-     visible horizon line where the canvas ends.
-   - Three-point cinematic lighting: warm key, cool blue rim, soft
-     amber fill from below. Racks read as illuminated objects, not
-     flat boxes.
+   - Scene colors now track the site's OCEAN GRADIENT instead of flat
+     black. The page's html gradient descends from a twilight navy at
+     top to near-black abyss at the bottom (with --bg transparent so it
+     shows through). The fog + far floor resolve to that twilight navy,
+     so the warehouse sits IN the water rather than punching an opaque
+     black slab into the gradient. (See color constants + the CSS, which
+     makes the section transparent so the gradient flows through.)
+   - Moderate ambient lift (no new lights): the existing Ambient +
+     Hemisphere lights are raised so racks read as solid lit objects
+     while staying moody/cinematic.
+   - Per-zone rack base tint: each of the four warehouse zones gets a
+     barely-different navy base so the zones read as distinct places
+     even at rest.
+   - Continuous camera parallax drift across the whole sequence layered
+     on top of the per-beat path, so the piece feels like one cinematic
+     move rather than five separate dioramas.
+   - Cross-fade of floor heat color + rack highlight between beats so
+     mode changes never pop.
+   - Floor reflections: each gold item halo gets a stretched, dimmed
+     mirror sprite on the floor, tying the floating orbs to the ground.
    - Racks gain capped tops (subtle emissive slab) + a shelf bar at
      mid-height. Edges are crisper.
    - Items get billboard halos with additive blending — proper glow
      without a postprocessing pass.
-   - Atmospheric haze planes layered through the scene for depth.
-   - Forecast curves use Catmull-Rom interpolation for smooth arcs
-     instead of jagged sin curves.
-   - AMR picker redesigned: lower, sleeker silhouette with a soft
-     forward-cast scan glow.
-   - Camera moves get subtle breathing motion during static beats
-     and slow pull-backs to add cinematic life.
+   - Forecast curves use Catmull-Rom interpolation for smooth arcs.
+   - AMR picker: lower, sleeker silhouette with a soft forward scan glow.
    ════════════════════════════════════════════════════════════════════ */
 
 /* ─── LAYOUT (unchanged) ────────────────────────────────────────── */
@@ -74,21 +83,30 @@ for (let i = 0; i <= COLS; i++) {
   else AISLES_Z.push((i - 0.5 - (COLS - 1) / 2) * COL_SPACING);
 }
 
-/* Was #04091c (navy). Switched to pure black to match var(--dark) =
-   #000000 used by the section below (Integrations), and the page-level
-   --bg token. The 3D fog, floor outer, and floor inner all collapse to
-   the same value so the canvas edges dissolve into the section
-   underneath with no visible horizon line. Atmospheric interest still
-   comes from the mode-driven focus heat lighting on the rendered
-   racks — the empty floor + far fog just read as the same black as
-   the page. */
-const SECTION_BG_HEX = "#000000";
-const C_BG = 0x000000;
-const C_FOG = 0x000000;
-const C_FLOOR_OUTER = 0x000000;
-const C_FLOOR_INNER = 0x000000;
-const C_RACK = 0x0f1d36; // racks barely brighter than the floor
-const C_RACK_CAP = 0x1f3a62; // top caps read as "lit"
+/* ─── SCENE COLORS — tracked to the site's ocean gradient ──────────
+   The site runs the ocean theme: html carries a scroll-attached
+   gradient descending from --ocean-surface (#0a2240) at the top of the
+   document to --ocean-abyss (#00020a) at the bottom, and --bg is
+   transparent so that gradient shows through every section. Previously
+   this showcase was hardcoded to pure black everywhere — section bg,
+   fog, floor — which punched an opaque black slab into that gradient
+   and read as "way too dark."
+
+   Now the scene's fog + far floor resolve to the twilight-navy band the
+   gradient is passing through here, so the warehouse sits IN the water:
+   - C_FOG / C_FLOOR_OUTER → ocean-twilight (#03122a): far floor + haze
+     melt into the gradient tone at this depth.
+   - C_FLOOR_INNER → #081a30: the active floor area is lifted a hair so
+     it reads as a surface catching light, not a void.
+   - C_RACK → #16294a: lifted well clear of the floor so lit faces
+     actually emerge under ambient. Biggest single "too dark" fix. */
+const SECTION_BG_HEX = "#03122a";
+const C_BG = 0x03122a;
+const C_FOG = 0x03122a;
+const C_FLOOR_OUTER = 0x03122a; // far floor melts into the gradient tone
+const C_FLOOR_INNER = 0x081a30; // active floor lifted to catch light
+const C_RACK = 0x16294a; // lifted clear of the floor so racks read as lit
+const C_RACK_CAP = 0x274a78; // top caps read as "lit" (lifted to match)
 const C_RACK_EDGE = 0x5278a8; // brighter cool edge for silhouette
 const C_GRID = 0x1a2a4a; // blueprint underlay
 const C_GOLD = 0xd4a853;
@@ -97,6 +115,17 @@ const C_RED = 0xc84a4a;
 const C_RED_HOT = 0xe26666;
 const C_GREEN = 0x6dac5a;
 const C_RIM = 0x4f8acc; // cool rim light tint
+
+/* Four warehouse zones across X. Each gets a barely-different navy base
+   so the zones read as distinct places even at rest — when a mode lights
+   up a rack the eye already understands it as "a place" rather than a
+   random box. Differences are intentionally tiny (a few values of blue)
+   so it reads as depth/variation, never as stripes. Index by
+   Math.floor(bay / BAYS_PER_ZONE). */
+const C_ZONE_TINTS = [0x16294a, 0x172c4f, 0x142747, 0x182e52];
+function zoneTintForBay(bay) {
+  return C_ZONE_TINTS[Math.floor(bay / BAYS_PER_ZONE)] ?? C_RACK;
+}
 
 /* ─── MATH ──────────────────────────────────────────────────────── */
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -323,7 +352,7 @@ function camAt(t) {
 
 /* ─── CUSTOM FLOOR SHADER ───────────────────────────────────────────
    Key changes vs original:
-   - Outer radius fades to EXACTLY C_FLOOR_OUTER (= section bg).
+   - Outer radius fades to EXACTLY C_FLOOR_OUTER (= section bg tone).
      The transition is wide and gentle, so the floor disappears
      into the page background long before the canvas edge.
    - Inner navy lift is subtle (one stop, not 2.5x).
@@ -656,7 +685,12 @@ export default function WarehouseShowcase() {
     const shelves = new THREE.InstancedMesh(shelfGeo, shelfMat, RACK_INSTANCES);
 
     const dummy = new THREE.Object3D();
-    const baseRackColor = new THREE.Color(C_RACK);
+    const tintColor = new THREE.Color();
+    /* Per-instance base color, keyed by instance id. Each rack's resting
+       color is its zone tint (not one shared navy), so resetRackColors
+       and the highlight cross-fade can restore the correct per-zone base
+       rather than flattening every rack to the same value. */
+    const rackBaseColors = new Array(RACK_INSTANCES);
     const rackPositions = [];
     const rackIdByKey = {};
     let idx = 0;
@@ -672,7 +706,10 @@ export default function WarehouseShowcase() {
           racks.setMatrixAt(idx, dummy.matrix);
           caps.setMatrixAt(idx, dummy.matrix);
           shelves.setMatrixAt(idx, dummy.matrix);
-          racks.setColorAt(idx, baseRackColor);
+          const tintHex = zoneTintForBay(b);
+          tintColor.setHex(tintHex);
+          racks.setColorAt(idx, tintColor);
+          rackBaseColors[idx] = tintHex;
           rackPositions.push({ x, z, bay: b, col, side: s });
           rackIdByKey[`${b}-${col}-${s}`] = idx;
           idx++;
@@ -689,7 +726,10 @@ export default function WarehouseShowcase() {
 
     /* Edge silhouettes — a single LineSegments containing the edges of
        every rack body. Adds the crisp outline that reads even at
-       distance. */
+       distance. Opacity lowered 0.65 → 0.5 now that the rack bodies are
+       lifted out of the dark — the racks read as solid volumes rather
+       than wireframes, so the edge only needs to define the silhouette,
+       not carry the whole shape. */
     const edgeGeo = new THREE.EdgesGeometry(rackGeo);
     const ep = edgeGeo.attributes.position.array;
     const allEdges = [];
@@ -706,19 +746,26 @@ export default function WarehouseShowcase() {
       new THREE.LineBasicMaterial({
         color: C_RACK_EDGE,
         transparent: true,
-        opacity: 0.65,
+        opacity: 0.5,
       })
     );
     racksEdges.scale.y = 0;
     scene.add(racksEdges);
 
-    /* ─── LIGHTING — 3-point cinematic ──────────────────────────── */
-    // Ambient: cool, low — provides base illumination without
-    // washing out shadows
-    scene.add(new THREE.AmbientLight(0x4a5878, 0.35));
+    /* ─── LIGHTING — 3-point cinematic (ambient lifted, no new lights) ──
+       The scene previously sat near pure black, so the ambient + hemi
+       fill were too low to pull the rack bodies out of the floor. With
+       the rack base color lifted (and the section now showing the ocean
+       gradient through it), we raise the two FILL lights — no new lights
+       added — for a moderate, still-moody lift. */
+    // Ambient: lifted 0.35 → 0.62 and warmed toward the scene's navy so
+    // base illumination matches the water tone rather than a cold grey.
+    scene.add(new THREE.AmbientLight(0x5a6a92, 0.62));
 
-    // Hemisphere: warm sky over cool ground — natural light feel
-    scene.add(new THREE.HemisphereLight(0xfff0d4, 0x0a1428, 0.45));
+    // Hemisphere sky→ground fill raised 0.45 → 0.7. Ground term is the
+    // ocean-twilight navy so undersides pick up the same color the floor
+    // and the page gradient carry, keeping everything in one palette.
+    scene.add(new THREE.HemisphereLight(0xfff0d4, 0x081a30, 0.7));
 
     // Key: warm directional from above & one side — defines form
     const key = new THREE.DirectionalLight(0xffe7c2, 0.7);
@@ -740,7 +787,7 @@ export default function WarehouseShowcase() {
        cinematic depth. Even at low opacity, additive blending
        *necessarily* brightens every pixel they cover — which made
        the warehouse area read as a lighter blue-grey than the
-       navy section beneath the canvas.
+       section beneath the canvas.
 
        Cinematic depth now comes only from:
          - 3-point lighting on the racks (key/rim/fill)
@@ -749,10 +796,10 @@ export default function WarehouseShowcase() {
          - active-mode particle swarms
          - very low-opacity ambient dust (below)
 
-       The empty air now reads as pure section bg, so the warehouse
-       flows seamlessly into the page beneath. */
+       The empty air now reads as the page's ocean gradient, so the
+       warehouse flows seamlessly into the page beneath. */
 
-    /* ─── ITEMS — sphere + halo billboard + beam + ground ring ─── */
+    /* ─── ITEMS — sphere + halo billboard + beam + ground ring + reflection ─── */
     const haloTex = makeHaloTexture();
 
     function makeItem(p, idxItem) {
@@ -779,6 +826,27 @@ export default function WarehouseShowcase() {
       halo.position.set(p.x, p.y, p.z);
       halo.scale.set(1.6, 1.6, 1);
       grp.add(halo);
+
+      /* Floor reflection — a flattened, dimmed mirror of the halo laid
+         on the floor directly under the orb. Sells the "polished concrete"
+         read and ties the floating orb to the ground plane. It's a
+         separate sprite (not depth-writing, additive) scaled wide and
+         short, sitting just above the floor. The render loop keeps its
+         x/z under the orb, its opacity a fraction of the halo's, and its
+         scale proportional — so picked/scaled items pull their reflection
+         with them. */
+      const reflMat = new THREE.SpriteMaterial({
+        map: haloTex,
+        color: C_GOLD,
+        transparent: true,
+        opacity: 0.0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const refl = new THREE.Sprite(reflMat);
+      refl.position.set(p.x, 0.04, p.z);
+      refl.scale.set(2.0, 0.55, 1); // wide + squashed = floor smear
+      grp.add(refl);
 
       // Vertical beam with gradient via 2-segment line
       const beamGeo = new THREE.BufferGeometry().setFromPoints([
@@ -829,6 +897,8 @@ export default function WarehouseShowcase() {
         sphere,
         halo,
         haloMat,
+        refl,
+        reflMat,
         beam,
         ring,
         sphereMat: sphere.material,
@@ -841,6 +911,26 @@ export default function WarehouseShowcase() {
       };
     }
     const itemObjs = ITEM_POS.map(makeItem);
+
+    /* Keep each item's floor reflection sitting under its orb, dimmer and
+       squashed. Called once per frame after the per-mode block has set
+       the orb's halo opacity/scale/position, so reflections inherit
+       whatever the active mode did to the orbs (picked, scaled, hidden).
+       Reflection tracks the halo color so red/green beats reflect too. */
+    function syncReflections() {
+      for (const it of itemObjs) {
+        const hOpacity = it.haloMat.opacity;
+        const hScaleX = it.halo.scale.x;
+        it.refl.position.set(it.sphere.position.x, 0.04, it.sphere.position.z);
+        it.refl.scale.set(
+          Math.max(0.001, hScaleX * 1.25),
+          Math.max(0.001, hScaleX * 0.34),
+          1
+        );
+        it.reflMat.color.copy(it.haloMat.color);
+        it.reflMat.opacity = hOpacity * 0.32;
+      }
+    }
 
     /* ─── FORECAST CURVES — Catmull-Rom for smoothness ─────────── */
     const forecastCurves = PREDICT_INDICES.map((itemIdx) => {
@@ -1393,18 +1483,28 @@ export default function WarehouseShowcase() {
       racksEdges.scale.y = scale;
     }
 
+    /* Highlight a rack toward `hex` by `intensity`, lerping FROM that
+       rack's own per-zone base color (not a shared navy) so unhighlighted
+       neighbors keep their zone tint and the highlight reads as a tint on
+       top of the existing place. */
+    const tmpHi = new THREE.Color();
+    const tmpBase = new THREE.Color();
     function highlightRack(instId, hex, intensity = 1) {
       if (instId === undefined) return;
-      const c = new THREE.Color().setHex(hex);
-      const base = new THREE.Color(C_RACK);
-      base.lerp(c, intensity);
-      racks.setColorAt(instId, base);
+      tmpHi.setHex(hex);
+      tmpBase.setHex(rackBaseColors[instId] ?? C_RACK);
+      tmpBase.lerp(tmpHi, intensity);
+      racks.setColorAt(instId, tmpBase);
       racks.instanceColor.needsUpdate = true;
     }
 
+    /* Reset every rack to its per-zone base color. */
+    const tmpReset = new THREE.Color();
     function resetRackColors() {
-      const c = new THREE.Color(C_RACK);
-      for (let i = 0; i < RACK_INSTANCES; i++) racks.setColorAt(i, c);
+      for (let i = 0; i < RACK_INSTANCES; i++) {
+        tmpReset.setHex(rackBaseColors[i] ?? C_RACK);
+        racks.setColorAt(i, tmpReset);
+      }
       racks.instanceColor.needsUpdate = true;
     }
 
@@ -1412,6 +1512,18 @@ export default function WarehouseShowcase() {
       const it = ITEMS[itemIdx];
       return rackIdByKey[`${it.bay}-${it.col}-${it.side}`];
     }
+
+    /* ─── MODE CROSS-FADE STATE ──────────────────────────────────
+       The floor heat color + the active highlight tint are smoothed
+       frame-to-frame toward the current mode's target rather than being
+       set instantly, so the moment the scroll crosses a mode boundary
+       the color shifts over a few frames instead of popping. Position
+       and intensity of the heat are still driven directly by each mode
+       (they're already continuous); only the COLOR is eased here, which
+       is where the visible pop was. */
+    const heatColorCur = new THREE.Color(C_GOLD);
+    const heatColorTgt = new THREE.Color(C_GOLD);
+    const COLOR_EASE = 0.18; // ~6-frame settle; raise for snappier
 
     /* ─── RENDER LOOP ──────────────────────────────────────────── */
     let uiTick = 0;
@@ -1426,20 +1538,30 @@ export default function WarehouseShowcase() {
 
       floorUniforms.uTime.value = time;
 
-      /* Camera — base position + subtle breathing for cinematic life */
+      /* Camera — base path + sub-beat breathing + a continuous parallax
+         drift across the WHOLE sequence so the five beats feel like one
+         cinematic move rather than separate dioramas. The global drift is
+         a slow lateral + height sway scaled down hard during the overhead
+         ACT/LEARN beats (where the path is pinned top-down). */
       const cs = camAt(p);
-      // Sub-beat breathing: tiny radial drift + ang sway during static
-      // holds, scaled DOWN aggressively during ACT (overhead) so the
-      // path remains pinned.
       const isOverhead = p > M_ACT[0] && p < M_LEARN[1];
       const breathScale = isOverhead ? 0.0 : 1.0;
       const breathRad = Math.sin(time * 0.32) * 0.6 * breathScale;
       const breathAng = Math.sin(time * 0.22) * 0.008 * breathScale;
+
+      /* Continuous parallax drift — a function of scroll progress (not
+         time), so it's deterministic and scrubs with the user. One slow
+         full-cycle sway across the whole section. Damped in the overhead
+         band so it doesn't fight the pinned top-down framing. */
+      const driftScale = isOverhead ? 0.15 : 1.0;
+      const driftX = Math.sin(p * Math.PI * 2.0) * 3.4 * driftScale;
+      const driftH = Math.cos(p * Math.PI * 1.0) * 2.2 * driftScale;
+
       const ang = cs.ang + breathAng;
       const rad = cs.rad + breathRad;
-      camera.position.x = Math.cos(ang) * rad + cs.tx * 0.2;
+      camera.position.x = Math.cos(ang) * rad + cs.tx * 0.2 + driftX;
       camera.position.z = Math.sin(ang) * rad + cs.tz * 0.2;
-      camera.position.y = cs.h;
+      camera.position.y = cs.h + driftH;
       camera.lookAt(cs.tx, cs.ty, cs.tz);
 
       /* Defaults */
@@ -1466,6 +1588,12 @@ export default function WarehouseShowcase() {
 
       let liveDist = 0,
         livePicks = 0;
+
+      /* Each mode sets heatColorTgt (the COLOR it wants the floor heat to
+         be); the actual uniform is eased toward it at the bottom of the
+         frame so boundary crossings cross-fade instead of pop. Default
+         target is gold; red/green beats override below. */
+      heatColorTgt.setHex(C_GOLD);
 
       // ─── MODE 0 · WAKE ─────────────────────────────────────────
       if (mode === 0) {
@@ -1581,7 +1709,7 @@ export default function WarehouseShowcase() {
 
         floorUniforms.uFocus.value.set(tgt.x, tgt.z);
         floorUniforms.uHeat.value = swarmAlpha;
-        floorUniforms.uHeatColor.value.setHex(C_GOLD);
+        heatColorTgt.setHex(C_GOLD);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
         floorUniforms.uGridStrength.value = 1;
@@ -1666,7 +1794,7 @@ export default function WarehouseShowcase() {
 
         floorUniforms.uFocus.value.set(cx, cz);
         floorUniforms.uHeat.value = swarmA * 0.75;
-        floorUniforms.uHeatColor.value.setHex(C_RED);
+        heatColorTgt.setHex(C_RED);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
         floorUniforms.uGridStrength.value = 1;
@@ -1761,7 +1889,7 @@ export default function WarehouseShowcase() {
 
         floorUniforms.uFocus.value.set(pos.x, pos.z);
         floorUniforms.uHeat.value = 0.8;
-        floorUniforms.uHeatColor.value.setHex(C_GOLD);
+        heatColorTgt.setHex(C_GOLD);
         floorUniforms.uGlobal.value = 0;
         floorUniforms.uHeatPointsLen.value = 0;
         floorUniforms.uGridStrength.value = 1;
@@ -1836,7 +1964,7 @@ export default function WarehouseShowcase() {
         hp[2].set(bayToX(14), heatPulse * 0.8, -4);
         hp[3].set(bayToX(18), heatPulse * 0.7, 2);
         floorUniforms.uHeatPointsLen.value = 4;
-        floorUniforms.uHeatColor.value.setHex(C_GOLD);
+        heatColorTgt.setHex(C_GOLD);
         floorUniforms.uGlobal.value = smoothstep(t * 2.4) * standing;
         floorUniforms.uHeat.value = 0;
         floorUniforms.uGridStrength.value = 1 * standing + 0.4 * collapseT;
@@ -1860,6 +1988,15 @@ export default function WarehouseShowcase() {
         A.learn.z = 0;
         A.learn.opacity = smoothstep(t * 2.6) * standing;
       }
+
+      /* Cross-fade the floor heat color toward this frame's target so
+         mode boundaries don't pop the color. */
+      heatColorCur.lerp(heatColorTgt, COLOR_EASE);
+      floorUniforms.uHeatColor.value.copy(heatColorCur);
+
+      /* Keep each orb's floor reflection in sync after the mode block
+         has finalized orb opacity/scale/position. */
+      syncReflections();
 
       /* Ambient dust — always animated, regardless of mode */
       for (let i = 0; i < N_DUST; i++) {

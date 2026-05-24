@@ -48,13 +48,16 @@ export default function ResourceShell({
     window.scrollTo(0, 0);
     if (!shellRef.current) return;
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+    // Gentle, floating entrance with soft easing
+    const tl = gsap.timeline({
+      defaults: { ease: "sine.inOut", duration: 0.8 },
+    });
 
     if (topStrip) {
       tl.fromTo(
         `.${styles.topStrip}`,
-        { opacity: 0, y: -8 },
-        { opacity: 1, y: 0, duration: 0.4 },
+        { opacity: 0, y: -4 },
+        { opacity: 1, y: 0 },
         0
       );
     }
@@ -62,13 +65,13 @@ export default function ResourceShell({
     if (eyebrow) {
       tl.fromTo(
         `.${styles.headerEyebrow}`,
-        { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.45 },
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0 },
         0.1
       );
     }
 
-    /* Per-letter title reveal — brand signature, kept across all types */
+    /* Per-letter title reveal — softer stagger, gentle rotation */
     const letters = shellRef.current.querySelectorAll(`.${styles.headLetter}`);
     if (letters.length > 0) {
       tl.to(
@@ -77,8 +80,9 @@ export default function ResourceShell({
           opacity: 1,
           y: "0%",
           rotateX: 0,
-          duration: 0.7,
-          stagger: 0.022,
+          duration: 0.9,
+          stagger: 0.03,
+          ease: "sine.inOut",
         },
         0.2
       );
@@ -87,30 +91,25 @@ export default function ResourceShell({
     if (subtitle) {
       tl.fromTo(
         `.${styles.headerSub}`,
-        { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5 },
-        0.5
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0 },
+        0.6
       );
     }
 
     if (metadata && metadata.length > 0) {
       tl.fromTo(
         `.${styles.specCell}`,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.45, stagger: 0.06 },
-        0.65
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, stagger: 0.08 },
+        0.8
       );
     }
 
-    /* If a sidebar is present in children, fade it in */
+    /* If a sidebar is present in children, fade it in smoothly */
     const sidebars = shellRef.current.querySelectorAll(`.${styles.sidebar}`);
     if (sidebars.length > 0) {
-      tl.fromTo(
-        sidebars,
-        { opacity: 0, x: -8 },
-        { opacity: 1, x: 0, duration: 0.5 },
-        0.8
-      );
+      tl.fromTo(sidebars, { opacity: 0, x: -6 }, { opacity: 1, x: 0 }, 0.9);
     }
   }, [topStrip, eyebrow, title, subtitle, metadata]);
 
@@ -175,8 +174,11 @@ export default function ResourceShell({
    useResourceSectionAnimations
    ───────────────────────────────────────────────────────────────────────
    Hook for Read pages. Scans the container for .section elements and
-   applies scroll-triggered fade-up animations to each section's content
-   children (h2, p, codeBlock, codeDuo, dl, inlineNote, h3).
+   applies scroll-triggered sequential fade-up animations to each section.
+   
+   Sections animate one after another — each section's content fades in
+   only after the previous section's last element has started animating.
+   This creates a flowing cascade down the page as the user scrolls.
    
    Usage:
      const contentRef = useRef(null);
@@ -189,41 +191,53 @@ export function useResourceSectionAnimations(containerRef) {
     const sections = containerRef.current.querySelectorAll(
       `.${styles.section}`
     );
-    const triggers = [];
+
+    if (!sections.length) return;
+
+    // Create a single master timeline for sequential section animations
+    const masterTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sections[0],
+        start: "top 82%",
+        end: "bottom bottom",
+        scrub: false,
+      },
+    });
 
     sections.forEach((section) => {
       const targets = section.querySelectorAll(
         `.${styles.h2}, .${styles.h3}, .${styles.p}, .${styles.ul}, .${styles.codeBlock}, .${styles.codeDuo}, .${styles.dl}, .${styles.inlineNote}`
       );
+
       if (!targets.length) return;
 
-      const tween = gsap.fromTo(
+      // Each section starts with a small delay after the previous section
+      // The stagger within each section creates internal flow
+      masterTl.fromTo(
         targets,
-        { opacity: 0, y: 14 },
+        { opacity: 0, y: 12 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.55,
-          stagger: 0.06,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: section,
-            start: "top 82%",
-          },
-        }
+          duration: 0.7,
+          stagger: 0.08,
+          ease: "sine.inOut",
+        },
+        "+=0.2" // Small gap between sections for breathing room
       );
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
     });
 
-    return () => triggers.forEach((t) => t.kill());
+    return () => {
+      if (masterTl.scrollTrigger) masterTl.scrollTrigger.kill();
+    };
   }, [containerRef]);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    useResourceBrowseAnimations
    ───────────────────────────────────────────────────────────────────────
-   Hook for Browse pages (Blog list, Help list). Scans the container for
-   .browseItem elements and staggers them up on scroll.
+   Hook for Browse pages (Blog list, Help list). Staggers items up
+   on scroll with sequential flow.
    ═══════════════════════════════════════════════════════════════════════ */
 export function useResourceBrowseAnimations(containerRef) {
   useEffect(() => {
@@ -235,13 +249,13 @@ export function useResourceBrowseAnimations(containerRef) {
 
     const tween = gsap.fromTo(
       items,
-      { opacity: 0, y: 14 },
+      { opacity: 0, y: 10 },
       {
         opacity: 1,
         y: 0,
-        duration: 0.5,
-        stagger: 0.06,
-        ease: "power3.out",
+        duration: 0.65,
+        stagger: 0.1, // Slightly wider stagger for list items to feel more sequential
+        ease: "sine.inOut",
         scrollTrigger: {
           trigger: items[0],
           start: "top 88%",
