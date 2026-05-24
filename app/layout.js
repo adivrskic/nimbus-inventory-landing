@@ -60,8 +60,8 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Nautilus WMS — AI-Powered Warehouse Management",
-    template: "%s | Nautilus WMS",
+    default: "Nautilus Inventory — AI-Powered Warehouse Management",
+    template: "%s | Nautilus Inventory",
   },
   description:
     "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
@@ -85,8 +85,8 @@ export const metadata = {
     type: "website",
     locale: "en_US",
     url: SITE_URL,
-    siteName: "Nautilus WMS",
-    title: "Nautilus WMS — AI-Powered Warehouse Management",
+    siteName: "Nautilus Inventory",
+    title: "Nautilus Inventory — AI-Powered Warehouse Management",
     description:
       "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
     images: [
@@ -94,13 +94,13 @@ export const metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Nautilus WMS — AI-Powered Warehouse Management",
+        alt: "Nautilus Inventory — AI-Powered Warehouse Management",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nautilus WMS — AI-Powered Warehouse Management",
+    title: "Nautilus Inventory — AI-Powered Warehouse Management",
     description:
       "AI-powered warehouse intelligence for modern operations teams.",
     images: ["/og-image.png"],
