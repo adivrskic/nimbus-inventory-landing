@@ -21,661 +21,659 @@
       card. Replaces the bare SKU/eta two-column layout with a real
       readout that visualizes urgency.
 
-   5. .vignette — full-bleed CSS-only edge darkening that hugs the
-      3D scene with cinematic edges, no GPU cost.
+   5. .vignette — REMOVED. It previously laid a bottom-up dark gradient
+      over the canvas to "erase" the seam to the section below. That
+      gradient sat directly behind the mode title at the bottom and
+      read as an unwanted band. With the scene colors matched to the
+      page background, there's nothing to erase, so the element now
+      renders nothing.
 
    6. .modeIndicator typography tightened — bigger headline, smaller
       label, tighter rhythm.
    ════════════════════════════════════════════════════════════════════ */
 
-.section {
-  --nav-height: 72px;
-  /* Was #04091c (navy) — but the section below renders var(--dark) =
-     #000000 (pure black), so a navy bottom created a visible horizon
-     line. Match the page's canonical dark and the 3D scene's fog +
-     floor colors (updated in WarehouseShowcase.jsx) so the canvas
-     dissolves seamlessly into the section beneath. */
-  --section-bg: #000000;
-  --accent: #d4a853;
-  --accent-hot: #f3cd84;
-  --accent-soft: rgba(212, 168, 83, 0.5);
-  --ink: rgba(240, 246, 252, 0.97);
-  --ink-mid: rgba(200, 220, 240, 0.72);
-  --ink-low: rgba(180, 205, 230, 0.5);
-  --ink-faint: rgba(160, 200, 235, 0.18);
-  --red: #c84a4a;
-  --red-hot: #e26666;
-  --green: #6dac5a;
-
-  position: relative;
-  /* THE FIX: explicit navy that matches the 3D floor and (we assume)
-       the section below. No more transparent → no more seam. */
-  background: var(--section-bg);
-  z-index: 5;
-}
-
-.scrollSpace {
-  height: 380vh;
-}
-.sticky {
-  position: sticky;
-  top: var(--nav-height);
-  height: calc(100vh - var(--nav-height));
-  width: 100%;
-  overflow: hidden;
-  background: var(--section-bg);
-}
-
-.canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  touch-action: none;
-}
-
-/* ─── BOTTOM SEAM ERASER ───────────────────────────────────────────
-     Previously this was a cinematic vignette that darkened the canvas
-     edges to near-black. That created the opposite of what we want:
-     the warehouse bottom became darker than the navy section beneath.
+   .section {
+    --nav-height: 72px;
+    /* Was #04091c (navy) — but the section below renders var(--dark) =
+       #000000 (pure black), so a navy bottom created a visible horizon
+       line. Match the page's canonical dark and the 3D scene's fog +
+       floor colors (updated in WarehouseShowcase.jsx) so the canvas
+       dissolves seamlessly into the section beneath. */
+    --section-bg: #000000;
+    --accent: #d4a853;
+    --accent-hot: #f3cd84;
+    --accent-soft: rgba(212, 168, 83, 0.5);
+    --ink: rgba(240, 246, 252, 0.97);
+    --ink-mid: rgba(200, 220, 240, 0.72);
+    --ink-low: rgba(180, 205, 230, 0.5);
+    --ink-faint: rgba(160, 200, 235, 0.18);
+    --red: #c84a4a;
+    --red-hot: #e26666;
+    --green: #6dac5a;
   
-     Now this is a bottom-only gradient that resolves precisely to the
-     section bg color. Any tiny residual luminance from particles or
-     item halos at the bottom of the canvas dissolves into the page —
-     the seam is mathematically guaranteed to vanish. */
-.vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 78%,
-    rgba(4, 9, 28, 0.55) 92%,
-    var(--section-bg) 100%
-  );
-}
-
-/* ─── CORNER EDITORIAL KEYS ──────────────────────────────────────── */
-.corner {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  pointer-events: none;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  z-index: 6;
-}
-.cornerTL {
-  top: 22px;
-  left: 24px;
-}
-.cornerTR {
-  top: 22px;
-  right: 24px;
-  align-items: flex-end;
-}
-.cornerBracket {
-  display: block;
-  width: 16px;
-  height: 16px;
-  color: var(--accent);
-  opacity: 0.85;
-  margin-bottom: 2px;
-}
-.cornerBracketTR {
-  align-self: flex-end;
-}
-.cornerKey {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1.8px;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-.cornerSub {
-  font-size: 9px;
-  letter-spacing: 1.4px;
-  color: var(--ink-low);
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.dot {
-  width: 5px;
-  height: 5px;
-  background: var(--accent);
-  border-radius: 50%;
-  animation: dotPulse 1.6s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(212, 168, 83, 0.7);
-}
-@keyframes dotPulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
+    position: relative;
+    /* THE FIX: explicit navy that matches the 3D floor and (we assume)
+         the section below. No more transparent → no more seam. */
+    background: var(--section-bg);
+    z-index: 5;
   }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.7);
+  
+  .scrollSpace {
+    height: 380vh;
   }
-}
-
-/* ─── SVG LEADER OVERLAY ─────────────────────────────────────────
-     Dashed leaders, with the dash array animating so the line reads as
-     data-in-motion. Very subtle (one full cycle every 8s) — never
-     distracting, always alive. */
-.leaderSvg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 3;
-  overflow: visible;
-}
-.leaderLine {
-  stroke: var(--accent);
-  stroke-width: 1;
-  stroke-dasharray: 1 4;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  shape-rendering: crispEdges;
-  animation: leaderFlow 8s linear infinite;
-}
-@keyframes leaderFlow {
-  to {
-    stroke-dashoffset: -25;
+  .sticky {
+    position: sticky;
+    top: var(--nav-height);
+    height: calc(100vh - var(--nav-height));
+    width: 100%;
+    overflow: hidden;
+    background: var(--section-bg);
   }
-}
-.leaderLineRed {
-  stroke: var(--red);
-}
-.leaderDot {
-  fill: var(--accent);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  filter: drop-shadow(0 0 4px rgba(212, 168, 83, 0.65));
-}
-.leaderDotRed {
-  fill: var(--red);
-  filter: drop-shadow(0 0 4px rgba(200, 74, 74, 0.65));
-}
-
-/* ─── MODE CARDS — glass treatment ──────────────────────────────────
-     Each card is a small inkwash panel with:
-       - backdrop blur (real glass)
-       - gradient navy fill with a subtle gold accent at the top edge
-       - 1px inner highlight at the top for "lit" feel
-       - a thin gradient border using padding + the inset shadow trick
-       - corner brackets in the gold accent */
-.modeCard {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate3d(-9999px, -9999px, 0);
-  transform-origin: center bottom;
-  transition: opacity 0.25s ease;
-  will-change: transform, opacity;
-  z-index: 4;
-
-  background: linear-gradient(
-    180deg,
-    rgba(8, 18, 38, 0.85) 0%,
-    rgba(4, 10, 24, 0.78) 100%
-  );
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-
-  padding: 14px 18px 14px;
-
-  /* Top accent line — replaces a generic border-top with a richer
-       gradient that fades to nothing at both edges */
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--accent) 18%,
-      var(--accent) 82%,
-      transparent 100%
-    )
-    1;
-
-  box-shadow: inset 0 1px 0 0 rgba(212, 168, 83, 0.18),
-    inset 0 0 0 1px rgba(120, 160, 220, 0.06),
-    0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.35);
-}
-
-/* Corner brackets — tiny gold L-shapes at the bottom corners of
-     every card, drawn with pseudo-elements. Pure decoration. */
-.modeCard::before,
-.modeCard::after {
-  content: "";
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  pointer-events: none;
-  border: 1px solid var(--accent);
-  opacity: 0.7;
-}
-.modeCard::before {
-  bottom: -1px;
-  left: -1px;
-  border-top: none;
-  border-right: none;
-}
-.modeCard::after {
-  bottom: -1px;
-  right: -1px;
-  border-top: none;
-  border-left: none;
-}
-
-/* ─── CARD CONTENT ───────────────────────────────────────────────── */
-.cardLabel {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  color: var(--accent);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-.cardLabelTick {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  box-shadow: 0 0 6px rgba(212, 168, 83, 0.65);
-}
-.cardLabelTickRed {
-  background: var(--red);
-  box-shadow: 0 0 6px rgba(200, 74, 74, 0.65);
-}
-.cardLabelRed {
-  color: var(--red-hot);
-}
-.cardLabelMeta {
-  margin-left: auto;
-  color: var(--ink-low);
-  font-size: 9px;
-  letter-spacing: 1.4px;
-}
-
-.cardHeadline {
-  font-family: var(--display, Georgia, serif);
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 0.98;
-  color: var(--ink);
-  letter-spacing: -2px;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 18px rgba(212, 168, 83, 0.15);
-}
-.cardHeadlineDenom {
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ink-low);
-  margin-left: 4px;
-  letter-spacing: -0.5px;
-}
-.cardSubhead {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 11px;
-  letter-spacing: 1.2px;
-  color: var(--ink-mid);
-  text-transform: uppercase;
-  margin-top: 6px;
-}
-
-.cardRule {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(212, 168, 83, 0.6) 0%,
-    rgba(212, 168, 83, 0.08) 70%,
-    transparent 100%
-  );
-  margin: 12px 0 10px;
-}
-
-.cardSupport {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 10.5px;
-  letter-spacing: 0.6px;
-  color: var(--ink-mid);
-  line-height: 1.55;
-}
-.cardSupportAccent {
-  color: var(--accent);
-}
-
-/* ─── INDIVIDUAL CARD SIZES ──────────────────────────────────────── */
-.wakeCard {
-  width: 280px;
-}
-.hearCard {
-  width: 360px;
-}
-.forecastCard {
-  width: 280px;
-}
-.actCard {
-  width: 320px;
-}
-.learnCard {
-  width: 320px;
-}
-
-/* ─── HEAR CARD ──────────────────────────────────────────────────── */
-.hearWave {
-  display: inline-flex;
-  align-items: center;
-  gap: 2.5px;
-  height: 12px;
-}
-.hearWave > span {
-  display: block;
-  width: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-  animation: waveBar 1s ease-in-out infinite;
-  box-shadow: 0 0 4px rgba(212, 168, 83, 0.6);
-}
-.hearWave > span:nth-child(1) {
-  height: 30%;
-}
-.hearWave > span:nth-child(2) {
-  height: 70%;
-}
-.hearWave > span:nth-child(3) {
-  height: 100%;
-}
-.hearWave > span:nth-child(4) {
-  height: 60%;
-}
-.hearWave > span:nth-child(5) {
-  height: 90%;
-}
-.hearWave > span:nth-child(6) {
-  height: 50%;
-}
-.hearWave > span:nth-child(7) {
-  height: 75%;
-}
-@keyframes waveBar {
-  0%,
-  100% {
-    transform: scaleY(0.55);
-    opacity: 0.6;
+  
+  .canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    touch-action: none;
   }
-  50% {
-    transform: scaleY(1.1);
-    opacity: 1;
+  
+  /* ─── BOTTOM SEAM ERASER — REMOVED ─────────────────────────────────
+       This element previously laid a bottom-up gradient over the canvas
+       that darkened toward the section bg, intended to hide the seam with
+       the section below. But that dark band sat directly behind the mode
+       title at the bottom of the scene and read as an unwanted gradient
+       stripe. The scene colors are now matched to the page background, so
+       there is no seam to erase — the element renders nothing. (Kept in
+       the DOM + stylesheet so the JSX reference and z-order stay valid;
+       just no background.) */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: none;
   }
-}
-.cardQuery {
-  font-family: var(--display, Georgia, serif);
-  font-size: 22px;
-  line-height: 1.3;
-  color: var(--ink);
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-.cardResolve {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-.cardResolveKey {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 14px;
-  letter-spacing: 0.5px;
-  color: var(--accent-hot);
-  font-weight: 500;
-}
-.cardResolveLoc {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: var(--ink-mid);
-  text-transform: uppercase;
-}
-
-/* ─── FORECAST CARD — depletion bars ─────────────────────────────── */
-.forecastRows {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 10px;
-}
-.forecastRow {
-  display: grid;
-  grid-template-columns: 56px 1fr 32px;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 11px;
-}
-.forecastSku {
-  color: var(--ink);
-  letter-spacing: 0.6px;
-  font-weight: 500;
-}
-.forecastBar {
-  display: block;
-  height: 3px;
-  background: rgba(200, 74, 74, 0.16);
-  position: relative;
-  overflow: hidden;
-}
-.forecastBar > span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--red) 0%, var(--red-hot) 100%);
-  box-shadow: 0 0 8px rgba(226, 102, 102, 0.5);
-  animation: forecastPulse 2.4s ease-in-out infinite;
-}
-@keyframes forecastPulse {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-.forecastEta {
-  color: var(--red-hot);
-  text-align: right;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-}
-
-/* ─── ACT CARD ───────────────────────────────────────────────────── */
-.actRow {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  margin-bottom: 8px;
-  font-size: 11px;
-}
-.actRowVal {
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-.actRowAccent {
-  color: var(--accent-hot);
-}
-.actRowKey {
-  color: var(--ink-low);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  font-size: 9.5px;
-}
-.actRowSep {
-  color: var(--ink-faint);
-  margin: 0 4px;
-}
-
-/* ─── LEARN CARD ─────────────────────────────────────────────────── */
-.learnFacts {
-  font-family: var(--mono, "JetBrains Mono", monospace);
-  font-size: 13px;
-  color: var(--ink-mid);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.learnFactsAccent {
-  color: var(--accent);
-  font-weight: 500;
-  margin-right: 3px;
-}
-.learnFactsGood {
-  color: var(--green);
-  font-weight: 500;
-  margin-right: 3px;
-}
-
-/* ─── MODE INDICATOR ─────────────────────────────────────────────── */
-.modeIndicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 36px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  pointer-events: none;
-  z-index: 5;
-}
-.modeRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--mono, "JetBrains Mono", monospace);
-}
-.modeTick {
-  display: block;
-  width: 28px;
-  height: 2px;
-  background: var(--ink-faint);
-  transition: background 0.5s ease, width 0.5s ease, box-shadow 0.5s ease;
-}
-.modeTickPast {
-  background: rgba(212, 168, 83, 0.42);
-}
-.modeTickActive {
-  background: var(--accent);
-  width: 48px;
-  box-shadow: 0 0 14px rgba(212, 168, 83, 0.55);
-}
-.modeNum {
-  margin-left: 14px;
-  font-size: 9.5px;
-  letter-spacing: 1.4px;
-  color: var(--ink-low);
-}
-.modeLabel {
-  font-size: 10px;
-  letter-spacing: 2.4px;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-weight: 500;
-}
-.modeTitle {
-  font-family: var(--display, Georgia, serif);
-  font-size: 23px;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.5px;
-  text-align: center;
-  max-width: 720px;
-  padding: 0 24px;
-  text-wrap: balance;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
-}
-
-/* ─── RESPONSIVE ─────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .wakeCard {
-    width: 240px;
-  }
-  .hearCard {
-    width: 320px;
-  }
-  .forecastCard {
-    width: 270px;
-  }
-  .actCard {
-    width: 290px;
-  }
-  .learnCard {
-    width: 280px;
-  }
-  .cardHeadline {
-    font-size: 48px;
-  }
-  .cardQuery {
-    font-size: 19px;
-  }
-  .modeTitle {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 720px) {
-  .modeCard {
-    padding: 12px 14px;
-  }
-  .cardHeadline {
-    font-size: 40px;
-    letter-spacing: -1.5px;
-  }
-  .cardQuery {
-    font-size: 17px;
-  }
+  
+  /* ─── CORNER EDITORIAL KEYS ──────────────────────────────────────── */
   .corner {
-    gap: 4px;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    z-index: 6;
+  }
+  .cornerTL {
+    top: 22px;
+    left: 24px;
+  }
+  .cornerTR {
+    top: 22px;
+    right: 24px;
+    align-items: flex-end;
+  }
+  .cornerBracket {
+    display: block;
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+    opacity: 0.85;
+    margin-bottom: 2px;
+  }
+  .cornerBracketTR {
+    align-self: flex-end;
   }
   .cornerKey {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.8px;
+    color: var(--accent);
+    text-transform: uppercase;
   }
   .cornerSub {
-    font-size: 8.5px;
+    font-size: 9px;
+    letter-spacing: 1.4px;
+    color: var(--ink-low);
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-  .modeTitle {
-    font-size: 17px;
-    padding: 0 16px;
+  .dot {
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: dotPulse 1.6s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(212, 168, 83, 0.7);
+  }
+  @keyframes dotPulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.7);
+    }
+  }
+  
+  /* ─── SVG LEADER OVERLAY ─────────────────────────────────────────
+       Dashed leaders, with the dash array animating so the line reads as
+       data-in-motion. Very subtle (one full cycle every 8s) — never
+       distracting, always alive. */
+  .leaderSvg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+    overflow: visible;
+  }
+  .leaderLine {
+    stroke: var(--accent);
+    stroke-width: 1;
+    stroke-dasharray: 1 4;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    shape-rendering: crispEdges;
+    animation: leaderFlow 8s linear infinite;
+  }
+  @keyframes leaderFlow {
+    to {
+      stroke-dashoffset: -25;
+    }
+  }
+  .leaderLineRed {
+    stroke: var(--red);
+  }
+  .leaderDot {
+    fill: var(--accent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    filter: drop-shadow(0 0 4px rgba(212, 168, 83, 0.65));
+  }
+  .leaderDotRed {
+    fill: var(--red);
+    filter: drop-shadow(0 0 4px rgba(200, 74, 74, 0.65));
+  }
+  
+  /* ─── MODE CARDS — glass treatment ──────────────────────────────────
+       Each card is a small inkwash panel with:
+         - backdrop blur (real glass)
+         - gradient navy fill with a subtle gold accent at the top edge
+         - 1px inner highlight at the top for "lit" feel
+         - a thin gradient border using padding + the inset shadow trick
+         - corner brackets in the gold accent */
+  .modeCard {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-9999px, -9999px, 0);
+    transform-origin: center bottom;
+    transition: opacity 0.25s ease;
+    will-change: transform, opacity;
+    z-index: 4;
+  
+    background: linear-gradient(
+      180deg,
+      rgba(8, 18, 38, 0.85) 0%,
+      rgba(4, 10, 24, 0.78) 100%
+    );
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  
+    padding: 14px 18px 14px;
+  
+    /* Top accent line — replaces a generic border-top with a richer
+         gradient that fades to nothing at both edges */
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--accent) 18%,
+        var(--accent) 82%,
+        transparent 100%
+      )
+      1;
+  
+    box-shadow: inset 0 1px 0 0 rgba(212, 168, 83, 0.18),
+      inset 0 0 0 1px rgba(120, 160, 220, 0.06),
+      0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.35);
+  }
+  
+  /* Corner brackets — tiny gold L-shapes at the bottom corners of
+       every card, drawn with pseudo-elements. Pure decoration. */
+  .modeCard::before,
+  .modeCard::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    pointer-events: none;
+    border: 1px solid var(--accent);
+    opacity: 0.7;
+  }
+  .modeCard::before {
+    bottom: -1px;
+    left: -1px;
+    border-top: none;
+    border-right: none;
+  }
+  .modeCard::after {
+    bottom: -1px;
+    right: -1px;
+    border-top: none;
+    border-left: none;
+  }
+  
+  /* ─── CARD CONTENT ───────────────────────────────────────────────── */
+  .cardLabel {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .cardLabelTick {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(212, 168, 83, 0.65);
+  }
+  .cardLabelTickRed {
+    background: var(--red);
+    box-shadow: 0 0 6px rgba(200, 74, 74, 0.65);
+  }
+  .cardLabelRed {
+    color: var(--red-hot);
+  }
+  .cardLabelMeta {
+    margin-left: auto;
+    color: var(--ink-low);
+    font-size: 9px;
+    letter-spacing: 1.4px;
+  }
+  
+  .cardHeadline {
+    font-family: var(--display, Georgia, serif);
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 0.98;
+    color: var(--ink);
+    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 18px rgba(212, 168, 83, 0.15);
+  }
+  .cardHeadlineDenom {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink-low);
+    margin-left: 4px;
+    letter-spacing: -0.5px;
+  }
+  .cardSubhead {
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    color: var(--ink-mid);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  
+  .cardRule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      rgba(212, 168, 83, 0.6) 0%,
+      rgba(212, 168, 83, 0.08) 70%,
+      transparent 100%
+    );
+    margin: 12px 0 10px;
+  }
+  
+  .cardSupport {
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 10.5px;
+    letter-spacing: 0.6px;
+    color: var(--ink-mid);
+    line-height: 1.55;
+  }
+  .cardSupportAccent {
+    color: var(--accent);
+  }
+  
+  /* ─── INDIVIDUAL CARD SIZES ──────────────────────────────────────── */
+  .wakeCard {
+    width: 280px;
+  }
+  .hearCard {
+    width: 360px;
+  }
+  .forecastCard {
+    width: 280px;
+  }
+  .actCard {
+    width: 320px;
+  }
+  .learnCard {
+    width: 320px;
+  }
+  
+  /* ─── HEAR CARD ──────────────────────────────────────────────────── */
+  .hearWave {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.5px;
+    height: 12px;
+  }
+  .hearWave > span {
+    display: block;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    animation: waveBar 1s ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(212, 168, 83, 0.6);
+  }
+  .hearWave > span:nth-child(1) {
+    height: 30%;
+  }
+  .hearWave > span:nth-child(2) {
+    height: 70%;
+  }
+  .hearWave > span:nth-child(3) {
+    height: 100%;
+  }
+  .hearWave > span:nth-child(4) {
+    height: 60%;
+  }
+  .hearWave > span:nth-child(5) {
+    height: 90%;
+  }
+  .hearWave > span:nth-child(6) {
+    height: 50%;
+  }
+  .hearWave > span:nth-child(7) {
+    height: 75%;
+  }
+  @keyframes waveBar {
+    0%,
+    100% {
+      transform: scaleY(0.55);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scaleY(1.1);
+      opacity: 1;
+    }
+  }
+  .cardQuery {
+    font-family: var(--display, Georgia, serif);
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .cardResolve {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .cardResolveKey {
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: var(--accent-hot);
+    font-weight: 500;
+  }
+  .cardResolveLoc {
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--ink-mid);
+    text-transform: uppercase;
+  }
+  
+  /* ─── FORECAST CARD — depletion bars ─────────────────────────────── */
+  .forecastRows {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+  .forecastRow {
+    display: grid;
+    grid-template-columns: 56px 1fr 32px;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 11px;
+  }
+  .forecastSku {
+    color: var(--ink);
+    letter-spacing: 0.6px;
+    font-weight: 500;
+  }
+  .forecastBar {
+    display: block;
+    height: 3px;
+    background: rgba(200, 74, 74, 0.16);
+    position: relative;
+    overflow: hidden;
+  }
+  .forecastBar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--red) 0%, var(--red-hot) 100%);
+    box-shadow: 0 0 8px rgba(226, 102, 102, 0.5);
+    animation: forecastPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes forecastPulse {
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .forecastEta {
+    color: var(--red-hot);
+    text-align: right;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+  
+  /* ─── ACT CARD ───────────────────────────────────────────────────── */
+  .actRow {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+  .actRowVal {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .actRowAccent {
+    color: var(--accent-hot);
+  }
+  .actRowKey {
+    color: var(--ink-low);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-size: 9.5px;
+  }
+  .actRowSep {
+    color: var(--ink-faint);
+    margin: 0 4px;
+  }
+  
+  /* ─── LEARN CARD ─────────────────────────────────────────────────── */
+  .learnFacts {
+    font-family: var(--mono, "JetBrains Mono", monospace);
+    font-size: 13px;
+    color: var(--ink-mid);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .learnFactsAccent {
+    color: var(--accent);
+    font-weight: 500;
+    margin-right: 3px;
+  }
+  .learnFactsGood {
+    color: var(--green);
+    font-weight: 500;
+    margin-right: 3px;
+  }
+  
+  /* ─── MODE INDICATOR ─────────────────────────────────────────────── */
+  .modeIndicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .modeRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono, "JetBrains Mono", monospace);
   }
   .modeTick {
-    width: 18px;
+    display: block;
+    width: 28px;
+    height: 2px;
+    background: var(--ink-faint);
+    transition: background 0.5s ease, width 0.5s ease, box-shadow 0.5s ease;
+  }
+  .modeTickPast {
+    background: rgba(212, 168, 83, 0.42);
   }
   .modeTickActive {
-    width: 30px;
+    background: var(--accent);
+    width: 48px;
+    box-shadow: 0 0 14px rgba(212, 168, 83, 0.55);
   }
-}
-
-/* Reduced motion: kill non-essential animations */
-@media (prefers-reduced-motion: reduce) {
-  .leaderLine,
-  .dot,
-  .hearWave > span,
-  .forecastBar > span {
-    animation: none !important;
+  .modeNum {
+    margin-left: 14px;
+    font-size: 9.5px;
+    letter-spacing: 1.4px;
+    color: var(--ink-low);
   }
-}
+  .modeLabel {
+    font-size: 10px;
+    letter-spacing: 2.4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .modeTitle {
+    font-family: var(--display, Georgia, serif);
+    font-size: 23px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+    text-align: center;
+    max-width: 720px;
+    padding: 0 24px;
+    text-wrap: balance;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* ─── RESPONSIVE ─────────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .wakeCard {
+      width: 240px;
+    }
+    .hearCard {
+      width: 320px;
+    }
+    .forecastCard {
+      width: 270px;
+    }
+    .actCard {
+      width: 290px;
+    }
+    .learnCard {
+      width: 280px;
+    }
+    .cardHeadline {
+      font-size: 48px;
+    }
+    .cardQuery {
+      font-size: 19px;
+    }
+    .modeTitle {
+      font-size: 20px;
+    }
+  }
+  
+  @media (max-width: 720px) {
+    .modeCard {
+      padding: 12px 14px;
+    }
+    .cardHeadline {
+      font-size: 40px;
+      letter-spacing: -1.5px;
+    }
+    .cardQuery {
+      font-size: 17px;
+    }
+    .corner {
+      gap: 4px;
+    }
+    .cornerKey {
+      font-size: 9px;
+    }
+    .cornerSub {
+      font-size: 8.5px;
+    }
+    .modeTitle {
+      font-size: 17px;
+      padding: 0 16px;
+    }
+    .modeTick {
+      width: 18px;
+    }
+    .modeTickActive {
+      width: 30px;
+    }
+  }
+  
+  /* Reduced motion: kill non-essential animations */
+  @media (prefers-reduced-motion: reduce) {
+    .leaderLine,
+    .dot,
+    .hearWave > span,
+    .forecastBar > span {
+      animation: none !important;
+    }
+  }
