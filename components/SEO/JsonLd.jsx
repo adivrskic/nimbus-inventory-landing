@@ -5,12 +5,20 @@
 // <JsonLd data={...} /> component serializes it into a <script type=
 // "application/ld+json"> tag. Multiple JsonLd blocks per page is fine —
 // Google merges them.
+//
+// Brand name + URLs + contact email are sourced from lib/site so there's a
+// single source of truth (no more "Nautilus WMS" here vs "Nautilus Inventory"
+// in the metadata, and no hardcoded https://nautilusinventory.com copies).
 // ──────────────────────────────────────────────────────────────────────────
+
+import { SITE_URL, SALES_EMAIL } from "@/lib/site";
+
+const BRAND = "Nautilus Inventory";
+const LOGO = `${SITE_URL}/logo.png`;
 
 export default function JsonLd({ data }) {
   // Escape "<" so a value can never close the <script> tag early
   // (e.g. a "</script>" substring in any current or future dynamic field).
-  // Cheap, standard hardening for dangerouslySetInnerHTML + JSON-LD.
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   return (
     <script
@@ -28,15 +36,17 @@ export function orgSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Nautilus WMS",
-    url: "https://nautilusinventory.com",
-    logo: "https://nautilusinventory.com/logo.png",
+    name: BRAND,
+    url: SITE_URL,
+    logo: LOGO,
     description:
       "AI-powered warehouse management system for modern operations teams.",
+    // Populate with real LinkedIn / X / etc. profile URLs when available —
+    // helps search engines disambiguate the entity.
     sameAs: [],
     contactPoint: {
       "@type": "ContactPoint",
-      email: "sales@nautilusinventory.com",
+      email: SALES_EMAIL,
       contactType: "sales",
     },
   };
@@ -44,52 +54,46 @@ export function orgSchema() {
 
 // ──────────────────────────────────────────────────────────────────────────
 // softwareSchema — SoftwareApplication identity. Accepts an optional
-// `offers` override so the pricing page can emit real price data while
-// other pages (home) can default to the generic "Contact for pricing".
+// `offers` override so the pricing page can emit real price data.
 // ──────────────────────────────────────────────────────────────────────────
 
 export function softwareSchema({ offers } = {}) {
-  return {
+  const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Nautilus WMS",
+    name: BRAND,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS, Android",
     description:
       "AI-powered warehouse management system with barcode scanning, spatial mapping, pick optimization, and predictive analytics.",
-    offers: offers || {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-      description: "Contact for pricing",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "127",
-      bestRating: "5",
-    },
   };
+  // Only attach an Offer when one is supplied (the pricing page passes real
+  // price data). We do NOT emit a default price: a "0" placeholder makes
+  // Google surface the product as Free, which is wrong.
+  if (offers) schema.offers = offers;
+  // NOTE: no aggregateRating. We're a new product with no genuine, on-page
+  // reviews to back one up — and Google's structured-data policy requires
+  // ratings to reflect real reviews shown to the user. Add this back only
+  // when there are real, displayed reviews to source it from.
+  return schema;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// websiteSchema — WebSite identity with SearchAction. Tells Google the
-// site has a query interface; the SearchAction template points at /ask
-// because that's the natural search surface (the in-app chat) and it
-// reads `?q=...` to pre-fill the input.
+// websiteSchema — WebSite identity with SearchAction (points at /ask, which
+// reads ?q=... to pre-fill the input).
 // ──────────────────────────────────────────────────────────────────────────
 
 export function websiteSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Nautilus WMS",
-    url: "https://nautilusinventory.com",
+    name: BRAND,
+    url: SITE_URL,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://nautilusinventory.com/ask?q={search_term_string}",
+        urlTemplate: `${SITE_URL}/ask?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -113,14 +117,12 @@ export function faqSchema(items) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// articleSchema — Blog post Article. Auto-converts loose date strings
-// like "Feb 18, 2026" to ISO 8601 for Google's parser. Accepts optional
-// `image` (URL string or array) and `author` overrides.
+// articleSchema — Blog post Article. Auto-converts loose date strings like
+// "Feb 18, 2026" to ISO 8601 for Google's parser.
 // ──────────────────────────────────────────────────────────────────────────
 
 function toISO(date) {
   if (!date) return undefined;
-  // Already ISO-ish? Leave it alone.
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) return date;
   try {
     const d = new Date(date);
@@ -128,7 +130,7 @@ function toISO(date) {
   } catch {
     /* fall through */
   }
-  return date; // Return raw — Google parses loose formats but ISO is preferred.
+  return date;
 }
 
 export function articleSchema({
@@ -145,29 +147,22 @@ export function articleSchema({
     "@type": "Article",
     headline: title,
     description,
-    url: `https://nautilusinventory.com/blog/${slug}`,
+    url: `${SITE_URL}/blog/${slug}`,
     datePublished: iso,
     dateModified: iso,
     author: { "@type": "Person", name: author },
     publisher: {
       "@type": "Organization",
-      name: "Nautilus WMS",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://nautilusinventory.com/logo.png",
-      },
+      name: BRAND,
+      logo: { "@type": "ImageObject", url: LOGO },
     },
   };
-  if (image) {
-    schema.image = image;
-  }
+  if (image) schema.image = image;
   return schema;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// helpArticleSchema — Article for help-center content. No date (help
-// articles don't carry one in lib/helpData.js), author is Organization
-// (not Person — guides are produced by the team, not individuals).
+// helpArticleSchema — Article for help-center content (no date in helpData).
 // ──────────────────────────────────────────────────────────────────────────
 
 export function helpArticleSchema({ title, description, slug }) {
@@ -176,15 +171,12 @@ export function helpArticleSchema({ title, description, slug }) {
     "@type": "Article",
     headline: title,
     description,
-    url: `https://nautilusinventory.com/help/${slug}`,
-    author: { "@type": "Organization", name: "Nautilus" },
+    url: `${SITE_URL}/help/${slug}`,
+    author: { "@type": "Organization", name: BRAND },
     publisher: {
       "@type": "Organization",
-      name: "Nautilus WMS",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://nautilusinventory.com/logo.png",
-      },
+      name: BRAND,
+      logo: { "@type": "ImageObject", url: LOGO },
     },
   };
 }

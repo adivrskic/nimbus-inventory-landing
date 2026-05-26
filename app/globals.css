@@ -254,6 +254,27 @@ body::after {
   display: inline;
 }
 
+/* ═══ SPLITTEXT LINE — DESCENDER ROOM ═══
+   Every SplitText line clips its rising letters via `overflow: hidden` on
+   the consumer's own line class (.headLine / .heroLine / .line / .descLine
+   …). With tight headline line-heights that clip shaves the bottom off glyph
+   descenders (g, y, p, j) — most visible at large hero sizes.
+
+   `overflow: clip` + `overflow-clip-margin` moves the clip boundary outward
+   by ~0.3em so descenders render in full, WITHOUT adding box height or
+   shifting any layout/spacing (unlike a padding-bottom bump). The rising
+   letters start ~1.1em below, well outside the 0.3em margin, so the reveal
+   mask still works.
+
+   Doubled class = enough specificity to override the module's
+   `overflow: hidden` without `!important`. Browsers without
+   overflow-clip-margin fall back to the module's clip (today's behavior) —
+   no regression. */
+.split-line.split-line {
+  overflow: clip;
+  overflow-clip-margin: 0.3em;
+}
+
 /* ═══ TYPOGRAPHY ═══ */
 .heading-xl {
   font-family: var(--display);

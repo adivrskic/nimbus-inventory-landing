@@ -4,3 +4,98 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Canonical host: force www → apex so there's one canonical origin.
+# (Matches the canonical/og:url, which use https://nautilusinventory.com.)
+# ─────────────────────────────────────────────────────────────────────────
+[[redirects]]
+  from = "https://www.nautilusinventory.com/*"
+  to = "https://nautilusinventory.com/:splat"
+  status = 301
+  force = true
+
+# ─────────────────────────────────────────────────────────────────────────
+# Blog slug migration (May 2026 rework). Preserve any link equity / shared
+# links from the old posts. Renamed posts 301 to their new slug; removed
+# posts (case studies + data-flex pieces) 301 to the blog index.
+# Safe to keep even if the old URLs were never indexed — they simply never
+# match. Remove once you're confident nothing references the old slugs.
+# ─────────────────────────────────────────────────────────────────────────
+
+# — Renamed (old → closest new) —
+[[redirects]]
+  from = "/blog/receiving-is-the-most-expensive-operation"
+  to = "/blog/receiving-is-your-most-important-station"
+  status = 301
+
+[[redirects]]
+  from = "/blog/notes-on-printing-barcode-labels"
+  to = "/blog/printing-barcode-labels-that-scan"
+  status = 301
+
+[[redirects]]
+  from = "/blog/anomaly-detection-first-month"
+  to = "/blog/anomaly-detection-for-operators"
+  status = 301
+
+[[redirects]]
+  from = "/blog/cycle-counting-is-broken"
+  to = "/blog/smarter-cycle-counting"
+  status = 301
+
+[[redirects]]
+  from = "/blog/ai-voice-commands"
+  to = "/blog/voice-commands-hands-free"
+  status = 301
+
+[[redirects]]
+  from = "/blog/sub-200ms-barcode-recognition"
+  to = "/blog/barcode-scanning-real-world-labels"
+  status = 301
+
+[[redirects]]
+  from = "/blog/spatial-intelligence-warehouse-map"
+  to = "/blog/spatial-intelligence-living-map"
+  status = 301
+
+[[redirects]]
+  from = "/blog/predictive-stock-depletion-math"
+  to = "/blog/predicting-stockouts-before-they-happen"
+  status = 301
+
+[[redirects]]
+  from = "/blog/18-integrations-one-warehouse"
+  to = "/blog/integrations-your-existing-stack"
+  status = 301
+
+[[redirects]]
+  from = "/blog/2026-warehouse-technology-trends"
+  to = "/blog/warehouse-technology-shifts-2026"
+  status = 301
+
+# — Removed (no equivalent → blog index) —
+[[redirects]]
+  from = "/blog/killing-the-realtime-activity-feed"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/blog/northwest-auto-erp-migration"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/blog/mercantile-coffee-near-miss"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/blog/300k-problem-manual-operations"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/blog/buildright-supply-case-study"
+  to = "/blog"
+  status = 301

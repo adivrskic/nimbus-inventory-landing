@@ -191,9 +191,16 @@ export default function SplitText({
     ));
 
   /* Per-letter spans inherit aria-hidden from their parent line span,
-     so we only need aria-hidden on the line level. */
+     so we only need aria-hidden on the line level. The global `split-line`
+     class (see globals.css) gives glyph descenders room past the line's
+     overflow clip so g/y/p/j aren't shaved off — same global-helper pattern
+     as `.word`. */
   const renderedLines = normalized.map((lineTokens, li) => (
-    <span key={li} className={lineCls} aria-hidden="true">
+    <span
+      key={li}
+      className={`split-line ${lineCls}`.trim()}
+      aria-hidden="true"
+    >
       {lineInnerCls ? (
         <span className={lineInnerCls}>{renderWords(lineTokens)}</span>
       ) : (

@@ -10,6 +10,7 @@ import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import PageviewTracker from "@/components/Analytics/PageviewTracker";
 import SkipLink from "@/components/SkipLink/SkipLink";
 import RouteAnnouncer from "@/components/RouteAnnouncer/RouteAnnouncer";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 import "./globals.ocean-theme.css";
 
@@ -49,7 +50,8 @@ const satoshi = localFont({
   display: "swap",
 });
 
-const SITE_URL = "https://nautilusinventory.com";
+/* Canonical origin comes from the shared site config (imported at top) so
+   there's a single source of truth across layout, sitemap, robots, JSON-LD. */
 
 /* GA4 measurement id — gated env var. Missing in dev / preview = no
    tracking script loads, no events fire, no errors. Production env

@@ -25,8 +25,7 @@ import { INDUSTRIES } from "@/components/IndustryPage/industryData";
 import { BLOG_POSTS } from "@/lib/blogData";
 import { HELP_CATEGORIES } from "@/lib/helpData";
 import { COMPARE_SLUGS } from "@/app/compare/[slug]/compareData";
-
-const SITE_URL = "https://nautilusinventory.com";
+import { SITE_URL } from "@/lib/site";
 
 /* Legal slugs are intentionally hardcoded — the legal-data module's
    shape isn't a slug list, and there are only three of them. If you
