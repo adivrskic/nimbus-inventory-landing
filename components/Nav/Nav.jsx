@@ -484,11 +484,19 @@ export default function Nav({ onDemo, dark }) {
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
       >
-        <TransitionLink href="/" className={styles.logo}>
+        <TransitionLink
+          href="/"
+          className={styles.logo}
+          aria-label="Nautilus Inventory"
+        >
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nautilus</span>
-            <span className={styles.logoSub}>Inventory</span>
+            <span className={styles.logoSub} aria-hidden="true">
+              {"INVENTORY".split("").map((c, i) => (
+                <span key={i}>{c}</span>
+              ))}
+            </span>
           </div>
         </TransitionLink>
 

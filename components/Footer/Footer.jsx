@@ -205,7 +205,11 @@ export default function Footer() {
               <Logo size={22} />
               <div>
                 <div className={styles.brandName}>Nautilus</div>
-                <div className={styles.brandSub}>Inventory</div>
+                <div className={styles.brandSub} aria-hidden="true">
+                  {"INVENTORY".split("").map((c, i) => (
+                    <span key={i}>{c}</span>
+                  ))}
+                </div>
               </div>
             </div>
             <p className={styles.brandDesc}>
