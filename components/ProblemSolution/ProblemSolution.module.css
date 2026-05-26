@@ -23,7 +23,7 @@
 .section {
   position: relative;
   z-index: 10;
-  padding: 120px 24px;
+  padding: var(--section-y) var(--page-gutter);
   background: transparent;
 }
 
@@ -54,8 +54,8 @@
 }
 
 /* Outer shell — shape + entrance only. Globals adds the radial mouse-
-     follow gradient (::before), the border-glow slot, and cursor:pointer.
-     No background, no border, no padding here. */
+       follow gradient (::before), the border-glow slot, and cursor:pointer.
+       No background, no border, no padding here. */
 .col {
   position: relative;
   opacity: 0;
@@ -63,8 +63,8 @@
 }
 
 /* Inner content — pairs with `glow-card-content` from globals (which
-     provides the dark background + 1px inset margin). We supply padding +
-     flex layout only. NEVER set height — globals owns it. */
+       provides the dark background + 1px inset margin). We supply padding +
+       flex layout only. NEVER set height — globals owns it. */
 .colInner {
   display: flex;
   flex-direction: column;
@@ -105,7 +105,7 @@
   flex-direction: column;
   gap: 22px;
   /* Push stats to the bottom of the card so all three columns visually
-       align their stat blocks regardless of body-paragraph length. */
+         align their stat blocks regardless of body-paragraph length. */
   margin-top: auto;
   padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -160,7 +160,7 @@
 
 @media (max-width: 640px) {
   .section {
-    padding: 80px 18px;
+    padding: var(--section-y) var(--page-gutter);
   }
   .eyebrow {
     margin-bottom: 32px;

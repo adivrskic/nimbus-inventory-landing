@@ -1,13 +1,10 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAnimationPaused } from "@/lib/AnimationContext";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
+import { gsap, useGsap, DURATION, EASE, STAGGER } from "@/lib/gsap";
 import styles from "./Hero.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ═══════════════════════════════════════════════════════════════════════
    HERO — faster fade-out
@@ -59,7 +56,6 @@ export default function Hero({ onDemo }) {
   const videoRef = useRef(null);
   const videoBgRef = useRef(null);
   const scrollDimRef = useRef(null);
-  const sectionRef = useRef(null);
   const contentRef = useRef(null);
   const ctasRef = useRef(null);
   const sideRef = useRef(null);
@@ -67,6 +63,8 @@ export default function Hero({ onDemo }) {
   const valRefs = useRef([]);
   const { paused } = useAnimationPaused();
 
+  /* Video play/pause follows the in-app animation toggle. Not a GSAP
+     animation — left as a plain effect. */
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -74,91 +72,118 @@ export default function Hero({ onDemo }) {
     else v.play().catch(() => {});
   }, [paused]);
 
-  useEffect(() => {
+  /* Intro timeline + count-ups + scroll parallax, scoped to the section.
+     Cleanup is ctx.revert() (was a global ScrollTrigger.getAll().kill()).
+
+     Reduced-motion: the intro and count-ups resolve to their final state at
+     once, the upward content parallax and the video zoom are dropped, and
+     only the opacity dissolves remain (a fade is not vestibular motion, and
+     the hero still needs to clear out so AISection can take over). */
+  const sectionRef = useGsap(({ reduced, q, scope }) => {
     if (videoRef.current) videoRef.current.play().catch(() => {});
 
-    const master = gsap.timeline({ defaults: { ease: "power4.out" } });
+    const hLetters = q(`.${styles.letter}`);
+    const dLetters = q(`.${styles.descLetter}`);
 
-    master.to(
-      videoRef.current,
-      { opacity: 0.3, duration: 1.5, ease: "power2.inOut" },
-      0
-    );
+    /* ── Intro ── */
+    if (reduced) {
+      gsap.set(videoRef.current, { opacity: 0.3 });
+      gsap.set([...hLetters, ...dLetters], { opacity: 1, y: "0%", rotateX: 0 });
+      gsap.set(ctasRef.current, { opacity: 1, y: 0 });
+      gsap.set(sideRef.current, { opacity: 1 });
+      STATS.forEach((stat, i) => {
+        gsap.set(statRefs.current[i], { opacity: 1, y: 0 });
+        const valEl = valRefs.current[i];
+        if (valEl) {
+          const v = stat.decimals
+            ? stat.end.toFixed(stat.decimals)
+            : Math.round(stat.end);
+          valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
+        }
+      });
+    } else {
+      const master = gsap.timeline({ defaults: { ease: EASE.out } });
 
-    const hLetters = document.querySelectorAll(`.${styles.letter}`);
-    master.to(
-      hLetters,
-      {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-        duration: 0.8,
-        stagger: 0.018,
-        ease: "power4.out",
-      },
-      0.3
-    );
-
-    const dLetters = document.querySelectorAll(`.${styles.descLetter}`);
-    master.to(
-      dLetters,
-      {
-        opacity: 1,
-        y: "0%",
-        duration: 0.6,
-        stagger: 0.008,
-        ease: "power3.out",
-      },
-      0.3
-    );
-
-    master.to(
-      ctasRef.current,
-      { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
-      1.1
-    );
-
-    master.to(sideRef.current, { opacity: 1, duration: 0.01 }, 1.4);
-
-    STATS.forEach((stat, i) => {
-      const delay = 1.4 + i * 0.35;
       master.to(
-        statRefs.current[i],
-        { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
-        delay
+        videoRef.current,
+        { opacity: 0.3, duration: 1.5, ease: EASE.inOut },
+        0
       );
 
-      const counter = { val: 0 };
-      const valEl = valRefs.current[i];
+      /* Per-letter headline — animates TO resting; start shape from CSS. */
       master.to(
-        counter,
+        hLetters,
         {
-          val: stat.end,
-          duration: 0.6,
-          ease: "power2.out",
-          onUpdate: () => {
-            const v = stat.decimals
-              ? counter.val.toFixed(stat.decimals)
-              : Math.round(counter.val);
-            valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
-          },
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+          duration: DURATION.slow,
+          stagger: STAGGER.tight,
+          ease: EASE.out,
         },
-        delay
+        0.3
       );
-    });
 
-    /* ── FAST CONTENT FADE ─────────────────────────────────────────────
-       Content + stats are gone by 30% scroll into the hero (was 70%).
-       Tighter scrub (1 instead of 1.5) for snappier response. */
+      /* Description: fast micro-wash (very tight stagger), kept by design. */
+      master.to(
+        dLetters,
+        {
+          opacity: 1,
+          y: "0%",
+          duration: DURATION.base,
+          stagger: 0.008,
+          ease: EASE.out,
+        },
+        0.3
+      );
+
+      master.to(
+        ctasRef.current,
+        { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out },
+        1.1
+      );
+
+      master.to(sideRef.current, { opacity: 1, duration: 0.01 }, 1.4);
+
+      STATS.forEach((stat, i) => {
+        const delay = 1.4 + i * 0.35;
+        master.to(
+          statRefs.current[i],
+          { opacity: 1, y: 0, duration: DURATION.fast, ease: EASE.out },
+          delay
+        );
+
+        const counter = { val: 0 };
+        const valEl = valRefs.current[i];
+        master.to(
+          counter,
+          {
+            val: stat.end,
+            duration: DURATION.base,
+            ease: "power2.out",
+            onUpdate: () => {
+              const v = stat.decimals
+                ? counter.val.toFixed(stat.decimals)
+                : Math.round(counter.val);
+              valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
+            },
+          },
+          delay
+        );
+      });
+    }
+
+    /* ── Scroll: content + stats fade as you scroll into the hero. Keep the
+       opacity dissolve for everyone; drop the upward slide under reduced. ── */
     gsap.fromTo(
       [contentRef.current, sideRef.current],
       { opacity: 1, y: 0 },
       {
-        y: -80,
+        y: reduced ? 0 : -80,
         opacity: 0,
-        ease: "none",
+        ease: EASE.scrub,
         scrollTrigger: {
-          trigger: sectionRef.current,
+          trigger: scope,
           start: "top top",
           end: "40% top",
           scrub: 1,
@@ -166,31 +191,32 @@ export default function Hero({ onDemo }) {
       }
     );
 
-    /* Video bg resolves */
-    gsap.to(videoBgRef.current, {
-      scale: 1,
-      ease: "none",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom top",
-        scrub: 1,
-      },
-    });
+    /* Video bg zoom — pure parallax; skipped under reduced-motion. */
+    if (!reduced) {
+      gsap.to(videoBgRef.current, {
+        scale: 1,
+        ease: EASE.scrub,
+        scrollTrigger: {
+          trigger: scope,
+          start: "top top",
+          end: "bottom top",
+          scrub: 1,
+        },
+      });
+    }
 
-    gsap.to(sectionRef.current, {
+    /* Whole-section dissolve — opacity only, kept for everyone. */
+    gsap.to(scope, {
       opacity: 0,
       ease: "power2.in",
       scrollTrigger: {
-        trigger: sectionRef.current,
+        trigger: scope,
         start: "15% top",
         end: "60% top",
         scrub: 0.5,
       },
     });
-
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, []);
+  });
 
   return (
     <section ref={sectionRef} className={styles.hero}>

@@ -1,23 +1,23 @@
 "use client";
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect } from "react";
 import Footer from "@/components/Footer/Footer";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
+import {
+  gsap,
+  useGsap,
+  useReveal,
+  DURATION,
+  STAGGER,
+  DISTANCE,
+} from "@/lib/gsap";
 import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
 import styles from "./CompareIndex.module.css";
 
-gsap.registerPlugin(ScrollTrigger);
-
 export default function CompareIndexClient() {
-  const heroRef = useRef(null);
-  const pageRef = useRef(null);
-  const gridRef = useGlowCards();
-
   /* All compare-index CTAs are migration conversations — visitors here
      are evaluating Nautilus against an existing tool. */
   const { openDemo } = useDemo();
@@ -27,54 +27,47 @@ export default function CompareIndexClient() {
     ...COMPETITORS[slug],
   }));
 
+  /* Scroll reset is page logic, not animation. */
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (!heroRef.current) return;
+  }, []);
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
+  /* Hero intro — deliberate sequence (eyebrow → letters → sub), so the
+     timeline escape hatch. Scoped + reduced-aware via useGsap. */
+  const heroRef = useGsap(({ reduced, q }) => {
+    const tl = gsap.timeline();
     tl.fromTo(
-      `.${styles.heroEyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
+      q(`.${styles.heroEyebrow}`),
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+      { opacity: 1, y: 0, duration: reduced ? 0 : DURATION.fast },
       0
     );
-
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+    /* Per-letter title — animates TO resting; start shape from .heroLetter CSS. */
     tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.022 },
-      0.15
-    );
-
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      0.55
-    );
-
-    /* Card stagger on scroll */
-    if (!pageRef.current) return;
-    const cards = pageRef.current.querySelectorAll(`.${styles.card}`);
-    gsap.fromTo(
-      cards,
-      { opacity: 0, y: 24 },
+      q(`.${styles.heroLetter}`),
       {
         opacity: 1,
-        y: 0,
-        duration: 0.7,
-        stagger: 0.1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: cards[0],
-          start: "top 85%",
-        },
-      }
+        y: "0%",
+        rotateX: 0,
+        duration: reduced ? 0 : DURATION.base,
+        stagger: reduced ? 0 : STAGGER.tight,
+      },
+      0.15
     );
+    tl.fromTo(
+      q(`.${styles.heroSub}`),
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+      { opacity: 1, y: 0, duration: reduced ? 0 : DURATION.base },
+      0.45
+    );
+  });
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, []);
+  /* Card grid — plain scroll stagger, declarative. Scope on the page;
+     the grid is marked data-reveal="stagger" below. */
+  const pageRef = useReveal();
+
+  /* Glow-card hover context for the grid. */
+  const gridRef = useGlowCards();
 
   return (
     <div ref={pageRef} className={styles.page}>
@@ -101,7 +94,11 @@ export default function CompareIndexClient() {
       </section>
 
       {/* ── COMPETITOR CARDS ── */}
-      <section ref={gridRef} className={`${styles.grid} glow-cards`}>
+      <section
+        ref={gridRef}
+        data-reveal="stagger"
+        className={`${styles.grid} glow-cards`}
+      >
         {competitors.map((c, i) => (
           <TransitionLink
             key={c.slug}

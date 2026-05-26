@@ -1,6 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════════════
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
    LOGO WALL
-   ───────────────────────────────────────────────────────────────────────
+   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
    Customer trust band. Renders below Hero on the home page.
    
    Treatment:
@@ -11,7 +11,7 @@
    - Muted text color, lifts to full white on hover
    - Different emphasis styles per logo (caps / italic / default) for
      visual interest while staying coherent
-   ═══════════════════════════════════════════════════════════════════════ */
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .wall {
   background: var(--dark);
@@ -26,7 +26,7 @@
   padding: 0 48px;
 }
 
-/* ── Eyebrow ── */
+/* тФАтФА Eyebrow тФАтФА */
 .eyebrow {
   display: flex;
   align-items: center;
@@ -44,11 +44,11 @@
   width: 5px;
   height: 5px;
   background: var(--accent);
-  box-shadow: 0 0 5px rgba(212, 168, 83, 0.5);
+  box-shadow: 0 0 5px rgb(var(--accent-rgb) / 0.5);
   flex-shrink: 0;
 }
 
-/* ── Grid ── */
+/* тФАтФА Grid тФАтФА */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -57,7 +57,7 @@
   border-left: 1px solid rgba(242, 240, 239, 0.06);
 }
 
-/* ── Each logo ── */
+/* тФАтФА Each logo тФАтФА */
 .logo {
   display: flex;
   align-items: center;
@@ -76,7 +76,7 @@
   background: rgba(255, 255, 255, 0.018);
 }
 
-/* The "mark" — geometric Unicode shape acting as logo glyph */
+/* The "mark" тАФ geometric Unicode shape acting as logo glyph */
 .logoMark {
   font-size: 16px;
   color: var(--accent);
@@ -99,8 +99,8 @@
   line-height: 1;
 }
 
-/* Per-logo emphasis variants — gives the row visual variation
-     so it doesn't read as a flat list */
+/* Per-logo emphasis variants тАФ gives the row visual variation
+       so it doesn't read as a flat list */
 .logoCaps .logoName {
   font-family: var(--mono);
   font-size: 12px;
@@ -113,9 +113,9 @@
   font-weight: 500;
 }
 
-/* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       RESPONSIVE
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);

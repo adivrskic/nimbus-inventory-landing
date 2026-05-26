@@ -1,13 +1,18 @@
 "use client";
-import { useEffect, useRef } from "react";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
+import {
+  gsap,
+  ScrollTrigger,
+  useGsap,
+  DURATION,
+  EASE,
+  STAGGER,
+  DISTANCE,
+  TRIGGER,
+} from "@/lib/gsap";
 import styles from "./Integrations.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const CATEGORIES = [
   {
@@ -81,64 +86,77 @@ const DESC_LINES = [
 ];
 
 export default function Integrations() {
-  const sectionRef = useRef(null);
-  const headerRef = useRef(null);
-  const cellRefs = useRef([]);
-  const bottomRefs = useRef([]);
   const glowRef = useGlowCards();
 
-  useEffect(() => {
-    const header = headerRef.current;
-    const hLetters = header.querySelectorAll(`.${styles.headLetter}`);
-    const dLetters = header.querySelectorAll(`.${styles.headerDescLetter}`);
-
-    gsap.to(hLetters, {
+  /* All animation for this section lives in one scoped context. useGsap gives
+     us a scoped selector (q), the reduced-motion flag, and automatic cleanup
+     via ctx.revert() — so the old `ScrollTrigger.getAll().forEach(t=>t.kill())`
+     (which nuked sibling components' triggers) is gone. Motion values come
+     from the shared tokens, so this section stays uniform with the rest of
+     the site while keeping its bespoke highlight behavior. */
+  const sectionRef = useGsap(({ reduced, q }) => {
+    /* ── Title: standardized per-letter headline timing. Animates TO the
+          resting state; the hidden start (opacity 0 + transform) is defined
+          in .headLetter's CSS, so the entrance SHAPE is preserved. ── */
+    gsap.to(q(`.${styles.headLetter}`), {
       opacity: 1,
       y: "0%",
       rotateX: 0,
-      duration: 0.4,
-      stagger: 0.014,
-      ease: "power4.out",
-      scrollTrigger: { trigger: header, start: "top 65%" },
+      duration: reduced ? 0 : DURATION.fast,
+      stagger: reduced ? 0 : STAGGER.tight,
+      ease: EASE.out,
+      scrollTrigger: {
+        trigger: q(`.${styles.header}`)[0],
+        start: TRIGGER.reveal,
+      },
     });
-    gsap.to(dLetters, {
+
+    /* ── Description: a deliberate fast micro-wash (very tight stagger), not
+          a standard reveal — kept by design. Lives here in the bespoke zone
+          rather than going through useHeadlineReveal so its character is
+          preserved. ── */
+    gsap.to(q(`.${styles.headerDescLetter}`), {
       opacity: 1,
       y: "0%",
-      duration: 0.3,
-      stagger: 0.005,
-      ease: "power3.out",
-      scrollTrigger: { trigger: header, start: "top 55%" },
+      duration: reduced ? 0 : 0.3,
+      stagger: reduced ? 0 : 0.005,
+      ease: EASE.out,
+      scrollTrigger: {
+        trigger: q(`.${styles.headerDesc}`)[0],
+        start: TRIGGER.reveal,
+      },
     });
 
-    // Cell entrance animations
-    cellRefs.current.forEach((cell) => {
-      if (!cell) return;
+    /* ── Card entrances. Each cell fades up as it enters (independent
+          triggers, matching the original). Top grid uses the section start,
+          the platform row the slightly later reveal start. ── */
+    q(`.${styles.cell}`).forEach((cell) => {
       gsap.to(cell, {
         opacity: 1,
         y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: cell, start: "top 80%" },
+        duration: reduced ? 0 : DURATION.base,
+        ease: EASE.out,
+        scrollTrigger: { trigger: cell, start: TRIGGER.section },
       });
     });
-    bottomRefs.current.forEach((cell) => {
-      if (!cell) return;
+    q(`.${styles.bottomCell}`).forEach((cell) => {
       gsap.to(cell, {
         opacity: 1,
         y: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        scrollTrigger: { trigger: cell, start: "top 85%" },
+        duration: reduced ? 0 : DURATION.base,
+        ease: EASE.out,
+        scrollTrigger: { trigger: cell, start: TRIGGER.reveal },
       });
     });
 
-    // Mutually exclusive highlighting: top grid active → bottom loses it, and vice versa
-    const topCells = cellRefs.current.filter(Boolean);
-    const botCells = bottomRefs.current.filter(Boolean);
-
-    function deactivateAll(cells) {
+    /* ── Mutually-exclusive highlight: top grid active ⇄ bottom grid active.
+          Behavioral (toggles a class), not motion — so it runs regardless of
+          reduced-motion. Created inside the context, so it's reverted on
+          unmount with everything else. ── */
+    const topCells = Array.from(q(`.${styles.cell}`));
+    const botCells = Array.from(q(`.${styles.bottomCell}`));
+    const deactivateAll = (cells) =>
       cells.forEach((c) => c.classList.remove(styles.cellActive));
-    }
 
     topCells.forEach((cell) => {
       ScrollTrigger.create({
@@ -176,9 +194,8 @@ export default function Integrations() {
       });
     });
 
-    // Per-item accent
-    const allItems = sectionRef.current.querySelectorAll(`.${styles.item}`);
-    allItems.forEach((item) => {
+    /* ── Per-item accent — highlights individual integration links in view. ── */
+    q(`.${styles.item}`).forEach((item) => {
       ScrollTrigger.create({
         trigger: item,
         start: "top 80%",
@@ -189,13 +206,11 @@ export default function Integrations() {
         onLeaveBack: () => item.classList.remove(styles.itemActive),
       });
     });
-
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, []);
+  });
 
   return (
     <section ref={sectionRef} id="integrations" className={styles.section}>
-      <div ref={headerRef} className={styles.header}>
+      <div className={styles.header}>
         <h2 className="heading-lg">
           <SplitText
             tokens={H_LINES}
@@ -207,7 +222,6 @@ export default function Integrations() {
             }}
           />
         </h2>
-        {/* AFTER */}
         <div className={styles.headerDesc}>
           <SplitText
             lines={DESC_LINES}
@@ -222,12 +236,8 @@ export default function Integrations() {
 
       <div ref={glowRef} className={`${styles.gridOuter} glow-cards`}>
         <div className={styles.grid}>
-          {CATEGORIES.map((cat, i) => (
-            <div
-              key={cat.tag}
-              ref={(el) => (cellRefs.current[i] = el)}
-              className={`${styles.cell} glow-card`}
-            >
+          {CATEGORIES.map((cat) => (
+            <div key={cat.tag} className={`${styles.cell} glow-card`}>
               <div className="glow-card-border" />
               <div className={`${styles.cellContent} glow-card-content`}>
                 <div className={styles.cellTag}>{cat.tag}</div>
@@ -253,12 +263,8 @@ export default function Integrations() {
         </div>
 
         <div className={styles.bottomRow}>
-          {PLATFORMS.map((p, i) => (
-            <div
-              key={p.title}
-              ref={(el) => (bottomRefs.current[i] = el)}
-              className={`${styles.bottomCell} glow-card`}
-            >
+          {PLATFORMS.map((p) => (
+            <div key={p.title} className={`${styles.bottomCell} glow-card`}>
               <div className="glow-card-border" />
               <div className={`${styles.bottomCellContent} glow-card-content`}>
                 <div className={styles.bottomLabel}>{p.label}</div>

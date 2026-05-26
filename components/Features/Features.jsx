@@ -388,57 +388,67 @@ export default function Features() {
   const prevActive = useRef(-1);
 
   useEffect(() => {
-    gsap.to(headerRef.current.children, {
-      y: 0,
-      opacity: 1,
-      duration: 0.8,
-      stagger: 0.1,
-      ease: "power3.out",
-      scrollTrigger: { trigger: headerRef.current, start: "top 85%" },
-    });
-
-    const rows = rowRefs.current.filter(Boolean);
-
-    rows.forEach((row) => {
-      gsap.to(row, {
-        opacity: 1,
+    // Scope all GSAP work to this section. gsap.context() records every
+    // tween, timeline, and ScrollTrigger created inside the callback, so
+    // ctx.revert() on unmount tears down ONLY this component's instances.
+    // The previous cleanup — ScrollTrigger.getAll().forEach(t => t.kill())
+    // — killed every ScrollTrigger on the page (Hero, AISection, etc.),
+    // which breaks sibling scroll animations on client-side route changes
+    // (TransitionLink) and under React strict-mode's double-mount. Matches
+    // the scoped pattern Hero uses.
+    const ctx = gsap.context(() => {
+      gsap.to(headerRef.current.children, {
         y: 0,
-        duration: 0.5,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.1,
         ease: "power3.out",
-        scrollTrigger: { trigger: row, start: "top 80%" },
+        scrollTrigger: { trigger: headerRef.current, start: "top 85%" },
       });
-    });
 
-    rows.forEach((row, i) => {
-      ScrollTrigger.create({
-        trigger: row,
-        start: "top 55%",
-        end: "bottom 45%",
-        onEnter: () => setActiveRow(i),
-        onEnterBack: () => setActiveRow(i),
-        onLeave: () => setActiveRow((prev) => (prev === i ? -1 : prev)),
-        onLeaveBack: () => setActiveRow((prev) => (prev === i ? -1 : prev)),
+      const rows = rowRefs.current.filter(Boolean);
+
+      rows.forEach((row) => {
+        gsap.to(row, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power3.out",
+          scrollTrigger: { trigger: row, start: "top 80%" },
+        });
       });
-    });
 
-    // Reset all visuals on mount
-    rows.forEach((r) => resetVisual(r));
+      rows.forEach((row, i) => {
+        ScrollTrigger.create({
+          trigger: row,
+          start: "top 55%",
+          end: "bottom 45%",
+          onEnter: () => setActiveRow(i),
+          onEnterBack: () => setActiveRow(i),
+          onLeave: () => setActiveRow((prev) => (prev === i ? -1 : prev)),
+          onLeaveBack: () => setActiveRow((prev) => (prev === i ? -1 : prev)),
+        });
+      });
 
-    const frameTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 20%",
-        end: "bottom top",
-        scrub: 1,
-      },
-    });
-    frameTl.to(
-      accentRef.current,
-      { opacity: 1, duration: 0.3, ease: "power2.inOut" },
-      0.7
-    );
+      // Reset all visuals on mount
+      rows.forEach((r) => resetVisual(r));
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+      const frameTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 20%",
+          end: "bottom top",
+          scrub: 1,
+        },
+      });
+      frameTl.to(
+        accentRef.current,
+        { opacity: 1, duration: 0.3, ease: "power2.inOut" },
+        0.7
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
   }, []);
 
   useEffect(() => {

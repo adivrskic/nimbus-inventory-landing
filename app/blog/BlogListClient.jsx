@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, useMemo } from "react";
-import gsap from "gsap";
+import {
+  gsap,
+  DURATION,
+  STAGGER,
+  DISTANCE,
+  EASE,
+  prefersReducedMotion,
+} from "@/lib/gsap";
 import {
   ResourceShell,
   useResourceBrowseAnimations,
@@ -43,15 +50,16 @@ export default function BlogListClient() {
     const items = listRef.current.querySelectorAll(
       `.${shellStyles.browseItem}`
     );
+    const reduced = prefersReducedMotion();
     gsap.fromTo(
       items,
-      { opacity: 0, y: 12 },
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
       {
         opacity: 1,
         y: 0,
-        duration: 0.4,
-        stagger: 0.04,
-        ease: "power2.out",
+        duration: reduced ? 0 : DURATION.fast,
+        stagger: reduced ? 0 : STAGGER.base,
+        ease: EASE.out,
       }
     );
   }, [activeTag]);

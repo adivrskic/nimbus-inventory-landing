@@ -1,12 +1,12 @@
-/* ═══════════════════════════════════════════════════════════════════════
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
    TESTIMONIALS
-   ───────────────────────────────────────────────────────────────────────
+   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
    Layout: header + featured pull-quote + 6-card grid.
    
    The featured card and the grid cards both use the glow-card pattern
-   (see globals.css → .glow-card / .glow-cards / .glow-card-content).
+   (see globals.css тЖТ .glow-card / .glow-cards / .glow-card-content).
    That means:
-     - outer wrapper (.featured / .card) is a shell — border-radius from
+     - outer wrapper (.featured / .card) is a shell тАФ border-radius from
        globals (.glow-card), no padding, no background, no manual hover.
      - inner element (.featuredInner / .cardInner) holds padding +
        internal layout; globals' .glow-card-content provides background
@@ -15,12 +15,12 @@
        on container hover, 3D tilt) all come from the shared system.
        DO NOT add manual `:hover` border/bg transitions here.
    
-   Critical: never set `height` on .featuredInner or .cardInner — globals
+   Critical: never set `height` on .featuredInner or .cardInner тАФ globals
    provides `height: calc(100% - 2px)` + `margin: 1px` which is the
    mechanism that produces the 1px gap where the border-glow shines
    through. Overriding height collapses the gap and silently kills the
    effect.
-   ═══════════════════════════════════════════════════════════════════════ */
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .section {
   background: var(--dark);
@@ -34,9 +34,9 @@
   padding: 0 48px;
 }
 
-/* ─────────────────────────────────────────────────────
-     HEADER
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       HEADER
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .header {
   max-width: 760px;
   margin-bottom: 64px;
@@ -66,20 +66,20 @@
   font-weight: 500;
 }
 
-/* Glow-cards context — both featured + grid live inside */
+/* Glow-cards context тАФ both featured + grid live inside */
 .glowWrap {
   /* Nothing layout-wise; just exists so useGlowCards has a single
-       container to attach mousemove tracking and find all .glow-card
-       descendants. */
+         container to attach mousemove tracking and find all .glow-card
+         descendants. */
 }
 
-/* ─────────────────────────────────────────────────────
-     FEATURED PULL-QUOTE
-     
-     Outer wrapper is just a shell. Inner element does all the layout.
-     Border-radius from globals (.glow-card → 20px). We bump it slightly
-     via a specificity-doubled selector below so featured stays distinct.
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       FEATURED PULL-QUOTE
+       
+       Outer wrapper is just a shell. Inner element does all the layout.
+       Border-radius from globals (.glow-card тЖТ 20px). We bump it slightly
+       via a specificity-doubled selector below so featured stays distinct.
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .featured {
   position: relative;
   margin-bottom: 64px;
@@ -87,7 +87,7 @@
 }
 .featured.featured {
   /* Specificity bump so we override globals' .glow-card { border-radius: 20px }
-       — featured cards get a slightly larger radius to feel distinct. */
+         тАФ featured cards get a slightly larger radius to feel distinct. */
   border-radius: 24px;
 }
 
@@ -121,7 +121,7 @@
   text-transform: uppercase;
   color: var(--accent);
   padding: 5px 10px;
-  border: 1px solid rgba(212, 168, 83, 0.35);
+  border: 1px solid rgb(var(--accent-rgb) / 0.35);
   margin-bottom: 28px;
 }
 
@@ -162,9 +162,9 @@
   color: rgba(242, 240, 239, 0.55);
 }
 
-/* ─────────────────────────────────────────────────────
-     6-CARD GRID
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       6-CARD GRID
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -180,9 +180,9 @@
   display: flex;
   flex-direction: column;
   padding: 28px 28px 26px;
-  /* IMPORTANT: do not set height here — globals' .glow-card-content
-       gives this calc(100% - 2px) + margin: 1px, which is what creates
-       the 1px gap where the gold border-glow is visible on hover. */
+  /* IMPORTANT: do not set height here тАФ globals' .glow-card-content
+         gives this calc(100% - 2px) + margin: 1px, which is what creates
+         the 1px gap where the gold border-glow is visible on hover. */
 }
 
 .cardTag {
@@ -194,7 +194,7 @@
   text-transform: uppercase;
   color: var(--accent);
   padding: 4px 9px;
-  border: 1px solid rgba(212, 168, 83, 0.25);
+  border: 1px solid rgb(var(--accent-rgb) / 0.25);
   margin-bottom: 22px;
 }
 
@@ -242,9 +242,9 @@
   color: rgba(242, 240, 239, 0.5);
 }
 
-/* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       RESPONSIVE
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);

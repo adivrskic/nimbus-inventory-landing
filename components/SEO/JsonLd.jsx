@@ -8,10 +8,14 @@
 // ──────────────────────────────────────────────────────────────────────────
 
 export default function JsonLd({ data }) {
+  // Escape "<" so a value can never close the <script> tag early
+  // (e.g. a "</script>" substring in any current or future dynamic field).
+  // Cheap, standard hardening for dangerouslySetInnerHTML + JSON-LD.
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: json }}
     />
   );
 }

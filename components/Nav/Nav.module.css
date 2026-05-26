@@ -1,21 +1,21 @@
-/* ═══════════════════════════════════════════════════════════════════════
-   NAV — Deep Underwater Theme · Frosted Glass
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+   NAV тАФ Deep Underwater Theme ┬╖ Frosted Glass
 
    Two changes from the previous version:
 
    1. The frosted glass effect is now PRESENT FROM THE FIRST PAINT,
       not just after scroll. The previous transparent default looked
-      disconnected from the dark scene below — the nav appeared to
+      disconnected from the dark scene below тАФ the nav appeared to
       float in the void. Now there's always a thin frost; .scrolled
       just deepens it.
 
-   2. All semi-transparent base colors moved from rgba(2, 10, 22, …)
-      to rgba(4, 9, 28, …). That second value is the EXACT rgb
-      decomposition of #04091c — the section bg color the warehouse
+   2. All semi-transparent base colors moved from rgba(2, 10, 22, тАж)
+      to rgba(4, 9, 28, тАж). That second value is the EXACT rgb
+      decomposition of #04091c тАФ the section bg color the warehouse
       floor and the page beneath it both resolve to. Now the nav,
       mega menu, mobile sheet, and scrim all tint toward the same
       navy as everything else.
-   ═══════════════════════════════════════════════════════════════════════ */
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .nav {
   position: fixed;
@@ -24,9 +24,9 @@
   right: 0;
   z-index: 100;
   /* Height grows by the top inset; padding-top pushes the 72px bar below
-     the Dynamic Island so the logo/links never sit under it. With
-     box-sizing:border-box the visible bar stays exactly 72px. The L/R
-     insets keep content off the side notch in landscape. */
+       the Dynamic Island so the logo/links never sit under it. With
+       box-sizing:border-box the visible bar stays exactly 72px. The L/R
+       insets keep content off the side notch in landscape. */
   height: calc(72px + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) calc(24px + env(safe-area-inset-right)) 0
     calc(24px + env(safe-area-inset-left));
@@ -34,10 +34,10 @@
   align-items: center;
   justify-content: space-between;
 
-  /* Transparent by default — nav floats over the hero with no
-         surface of its own. Frosted glass only kicks in once the user
-         scrolls past 60px or opens a mega menu (see .scrolled below).
-         The transition animates the bg/blur/border in/out smoothly. */
+  /* Transparent by default тАФ nav floats over the hero with no
+           surface of its own. Frosted glass only kicks in once the user
+           scrolls past 60px or opens a mega menu (see .scrolled below).
+           The transition animates the bg/blur/border in/out smoothly. */
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -49,7 +49,7 @@
 
 .scrolled {
   /* On scroll: same color, more opacity + slightly stronger blur for
-         the "the surface settled in" feel. */
+           the "the surface settled in" feel. */
   background: rgba(4, 9, 28, 0.68);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -85,10 +85,10 @@
   display: block;
   line-height: 1;
 }
-/* INVENTORY wordmark — letters rendered as individual spans inside a
-     flex container that's pinned to width: 100% of the wrapping <div>.
-     Since the wrapping div sizes to its widest child (Nautilus), the
-     letters justify-between to exactly that width. No magic numbers. */
+/* INVENTORY wordmark тАФ letters rendered as individual spans inside a
+       flex container that's pinned to width: 100% of the wrapping <div>.
+       Since the wrapping div sizes to its widest child (Nautilus), the
+       letters justify-between to exactly that width. No magic numbers. */
 .logoSub {
   font-family: var(--mono);
   font-size: 8px;
@@ -137,7 +137,7 @@
 }
 .chevron {
   opacity: 0.3;
-  transition: opacity 0.3s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s, transform 0.35s var(--ease-smooth);
   margin-top: 1px;
 }
 .chevronOpen {
@@ -186,9 +186,9 @@
   border-color: var(--accent);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         MEGA MENU SHELL — frosted glass
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           MEGA MENU SHELL тАФ frosted glass
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .megaWrap {
   position: fixed;
@@ -201,15 +201,15 @@
   overflow: hidden;
 
   /* Mega menu is denser (more content, needs readability) so we push
-         opacity higher than the nav. Same base color → no perceived shift
-         between the two surfaces. */
+           opacity higher than the nav. Same base color тЖТ no perceived shift
+           between the two surfaces. */
   background: rgba(4, 9, 28, 0.68);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
 
-  /* Subtle inner highlight on the top edge — sells the "glass" feel,
-         reads as a hairline reflection where the panel meets the nav. */
-  box-shadow: inset 0 1px 0 0 rgba(212, 168, 83, 0.06),
+  /* Subtle inner highlight on the top edge тАФ sells the "glass" feel,
+           reads as a hairline reflection where the panel meets the nav. */
+  box-shadow: inset 0 1px 0 0 rgb(var(--accent-rgb) / 0.06),
     0 20px 40px -12px rgba(0, 0, 0, 0.4);
 }
 .megaWrapDark {
@@ -273,15 +273,15 @@
   color: var(--white);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         MEGA MENU GRIDS
-         ───────────────────────────────────────────────────────────────────────
-         All three mega menus share .megaRichItem (title + desc, brighter
-         title, gold hover) but lay out differently:
-           - Integrations:  3-col category grid (.megaCols + .megaMoreCol)
-           - Industries:    4-col flat grid (.megaIndustriesGrid)
-           - More:          4-col category grid (.megaMoreGrid + .megaMoreCol)
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           MEGA MENU GRIDS
+           тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+           All three mega menus share .megaRichItem (title + desc, brighter
+           title, gold hover) but lay out differently:
+             - Integrations:  3-col category grid (.megaCols + .megaMoreCol)
+             - Industries:    4-col flat grid (.megaIndustriesGrid)
+             - More:          4-col category grid (.megaMoreGrid + .megaMoreCol)
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .megaCols {
   display: grid;
@@ -313,13 +313,13 @@
   border-bottom: 1px solid rgba(160, 200, 235, 0.06);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         MEGA RICH ITEM — title + descriptor link
-         ───────────────────────────────────────────────────────────────────────
-         Used by all three mega menus. Negative horizontal margin lets the
-         hover background extend slightly past the column's natural item
-         width so it feels generous, not boxy.
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           MEGA RICH ITEM тАФ title + descriptor link
+           тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+           Used by all three mega menus. Negative horizontal margin lets the
+           hover background extend slightly past the column's natural item
+           width so it feels generous, not boxy.
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .megaRichItem {
   display: flex;
   flex-direction: column;
@@ -351,25 +351,25 @@
   font-weight: 400;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         MEGA FEATURED CALLOUT — used in the More mega menu (ROI Calculator)
-         ───────────────────────────────────────────────────────────────────────
-         Gold-tinted promo card with arrow lower-right. Sits on the LEFT side
-         of the More mega menu below the .megaDesc.
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           MEGA FEATURED CALLOUT тАФ used in the More mega menu (ROI Calculator)
+           тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+           Gold-tinted promo card with arrow lower-right. Sits on the LEFT side
+           of the More mega menu below the .megaDesc.
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .megaFeatured {
   position: relative;
   display: block;
   margin-top: 22px;
   padding: 18px 20px 20px;
-  background: rgba(212, 168, 83, 0.06);
-  border: 1px solid rgba(212, 168, 83, 0.18);
+  background: rgb(var(--accent-rgb) / 0.06);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   text-decoration: none;
   transition: background 0.25s, border-color 0.25s, transform 0.25s;
 }
 .megaFeatured:hover {
-  background: rgba(212, 168, 83, 0.11);
-  border-color: rgba(212, 168, 83, 0.35);
+  background: rgb(var(--accent-rgb) / 0.11);
+  border-color: rgb(var(--accent-rgb) / 0.35);
 }
 .megaFeaturedTag {
   font-family: var(--mono);
@@ -405,13 +405,13 @@
   transform: translateX(4px);
 }
 
-/* ─── Scrim (behind mega when open) ──────────────────────────────── */
+/* тФАтФАтФА Scrim (behind mega when open) тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 98;
-  /* Same navy family — when the mega opens, the entire stack reads as
-         one continuous frosted surface tinted toward #04091c. */
+  /* Same navy family тАФ when the mega opens, the entire stack reads as
+           one continuous frosted surface tinted toward #04091c. */
   background: rgba(4, 9, 28, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -420,9 +420,9 @@
   transition: opacity 0.3s;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         RESPONSIVE — mega menu
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           RESPONSIVE тАФ mega menu
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 @media (max-width: 1024px) {
   .nav {
     padding: 0 24px;
@@ -480,9 +480,9 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-         HAMBURGER + MOBILE MENU
-         ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+           HAMBURGER + MOBILE MENU
+           тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .hamburger {
   display: none;
@@ -523,7 +523,7 @@
   top: calc(60px + env(safe-area-inset-top));
   z-index: 9998;
   /* Mobile sheet runs near opaque so text always reads on small
-         screens, but still tints to the same navy family. */
+           screens, but still tints to the same navy family. */
   background: rgba(4, 9, 28, 0.92);
   backdrop-filter: blur(32px) saturate(165%);
   -webkit-backdrop-filter: blur(32px) saturate(165%);

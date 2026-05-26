@@ -1,14 +1,14 @@
 .section {
   width: 100%;
   background: var(--dark);
-  padding: 140px 0;
+  padding: var(--section-y) 0;
   position: relative;
   overflow: hidden;
 }
 .header {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 48px 80px;
+  padding: 0 var(--page-gutter) 80px;
   text-align: center;
 }
 .headLine {
@@ -37,7 +37,7 @@
 .listWrap {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0 var(--page-gutter);
   position: relative;
 }
 .list {
@@ -55,8 +55,8 @@
   width: 100%;
   text-align: center;
   padding: 0 40px;
-  transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    padding 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: grid-template-rows 0.5s var(--ease-smooth),
+    padding 0.5s var(--ease-smooth);
   cursor: default;
 }
 .item.active {
@@ -81,7 +81,7 @@
   text-align: center;
   transform: translateY(0);
   will-change: transform;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s;
+  transition: transform 0.5s var(--ease-smooth), color 0.4s;
 }
 .item.active .title {
   transform: translateY(-100%);
@@ -102,7 +102,7 @@
   text-align: center;
   transform: translateY(100%);
   will-change: transform;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s var(--ease-smooth);
 }
 .item.active .titleGhost {
   transform: translateY(0%);
@@ -145,8 +145,8 @@
   width: 0;
   height: 0;
   opacity: 0;
-  transition: opacity 0.35s ease, width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s ease, width 0.35s var(--ease-smooth),
+    height 0.35s var(--ease-smooth);
   pointer-events: none;
   background: none !important;
   border-radius: 0 !important;
@@ -177,10 +177,10 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 80px 0;
+    padding: var(--section-y) 0;
   }
   .header {
-    padding: 0 24px 48px;
+    padding: 0 var(--page-gutter) 48px;
   }
   .listWrap {
     padding: 0 20px;

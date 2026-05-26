@@ -34,20 +34,27 @@
 //     secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}
 //   />
 //
-// `secondaryAction` is optional. The component always uses TransitionLink
-// for the secondary, which is what every existing consumer was doing.
+// `secondaryAction` is optional. Pass `{ href, label }` for a navigation
+// link (rendered with TransitionLink — the original behavior) or
+// `{ onClick, label }` for an action button (e.g. opening the demo modal).
+// Either way it gets the same .secondaryLink treatment.
 // ──────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import {
+  gsap,
+  useGsap,
+  DURATION,
+  EASE,
+  DISTANCE,
+  TRIGGER,
+  SCRUB,
+} from "@/lib/gsap";
 import styles from "./FinalCTACard.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function FinalCTACard({
   label,
@@ -56,7 +63,6 @@ export default function FinalCTACard({
   primaryAction,
   secondaryAction,
 }) {
-  const sectionRef = useRef(null);
   const fillRef = useRef(null);
 
   /* Make the fill layer `inert` via the DOM property. Doing it via a
@@ -66,55 +72,43 @@ export default function FinalCTACard({
     if (fillRef.current) fillRef.current.inert = true;
   }, []);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    const fill = fillRef.current;
-    if (!section || !fill) return;
-
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    /* Fade-in. Runs for everyone — gentle, short, no large motion. */
-    const fadeTrigger = gsap.fromTo(
-      section,
-      { opacity: 0, y: 16 },
+  /* Scoped animation context. Returns the ref for the section. */
+  const sectionRef = useGsap(({ reduced, scope }) => {
+    /* Fade-in. Runs for everyone — gentle, short, no large motion. Under
+       reduced-motion it resolves instantly (duration 0, no travel). */
+    gsap.fromTo(
+      scope,
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
       {
         opacity: 1,
         y: 0,
-        duration: 0.6,
-        ease: "power3.out",
-        scrollTrigger: { trigger: section, start: "top 85%" },
+        duration: reduced ? 0 : DURATION.base,
+        ease: EASE.out,
+        scrollTrigger: { trigger: scope, start: TRIGGER.reveal },
       }
     );
 
-    /* Scroll-tied wipe. Skipped under reduced-motion — the card just
-       stays in its base (light) state, which is fully readable. */
-    let wipeTrigger = null;
-    if (!reduceMotion) {
-      wipeTrigger = gsap.fromTo(
-        fill,
+    /* Scroll-tied wipe. Skipped under reduced-motion — the card just stays
+       in its base (light) state, which is fully readable. The start/end
+       bounds define the wipe's scroll range, so they stay literal; only the
+       scrub smoothing comes from the shared SCRUB token. */
+    if (!reduced && fillRef.current) {
+      gsap.fromTo(
+        fillRef.current,
         { clipPath: "inset(0 100% 0 0)" },
         {
           clipPath: "inset(0 0% 0 0)",
-          ease: "none",
+          ease: EASE.scrub,
           scrollTrigger: {
-            trigger: section,
+            trigger: scope,
             start: "top 75%",
             end: "top 25%",
-            scrub: 0.6,
+            scrub: SCRUB,
           },
         }
       );
     }
-
-    /* Cleanup — kill ONLY our own triggers, not every ScrollTrigger on
-       the page. The consumer pages still own their other animations. */
-    return () => {
-      fadeTrigger?.scrollTrigger?.kill();
-      wipeTrigger?.scrollTrigger?.kill();
-    };
-  }, []);
+  });
 
   /* Helper to render the content tree. `inverted` swaps the color
      palette; `decorative` replaces interactive elements with non-
@@ -143,6 +137,18 @@ export default function FinalCTACard({
             <span className={styles.secondaryLink}>
               {secondaryAction.label}
             </span>
+          ) : secondaryAction.onClick ? (
+            /* Button variant — for secondaries that trigger an action
+               (e.g. opening the demo modal) rather than navigating. Styled
+               identically to the link via .secondaryLink (which carries the
+               button resets). */
+            <button
+              type="button"
+              className={styles.secondaryLink}
+              onClick={secondaryAction.onClick}
+            >
+              {secondaryAction.label}
+            </button>
           ) : (
             <TransitionLink
               href={secondaryAction.href}

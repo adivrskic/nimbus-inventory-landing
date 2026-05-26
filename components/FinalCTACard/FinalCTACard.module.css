@@ -39,8 +39,8 @@
   border: 1px solid rgba(212, 168, 83, 0.2);
   border-left: 2px solid var(--accent);
   /* Clip the fill layer to the card's box edges as a defensive measure.
-       clip-path on the fill layer is what actually drives the wipe; this
-       just guards against any sub-pixel bleed. */
+         clip-path on the fill layer is what actually drives the wipe; this
+         just guards against any sub-pixel bleed. */
   overflow: hidden;
 }
 
@@ -93,6 +93,13 @@
   letter-spacing: 0.5px;
   color: rgba(242, 240, 239, 0.7);
   text-decoration: none;
+  /* Resets so the <button> variant (onClick secondary) renders identically
+       to the <a>/<span> variants. Harmless for those. */
+  background: none;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
   border-bottom: 1px solid rgba(242, 240, 239, 0.2);
   padding: 8px 0;
   transition: color 0.2s, border-color 0.2s;
@@ -108,17 +115,17 @@
   position: absolute;
   inset: 0;
   /* Padding must mirror .card so the duplicate .content lines up with
-       the base content pixel-for-pixel. If you ever change .card's
-       padding (including the responsive breakpoints below), match it
-       here too. */
+         the base content pixel-for-pixel. If you ever change .card's
+         padding (including the responsive breakpoints below), match it
+         here too. */
   padding: 60px 56px 64px;
   background: var(--accent);
   /* JS sets the initial state too, but this is the visual fallback if
-       JS hasn't run yet: card stays in its base (muted) state. */
+         JS hasn't run yet: card stays in its base (muted) state. */
   clip-path: inset(0 100% 0 0);
   /* Decorative — never receives events. The inert property (set in
-       JSX via ref) also strips focus + a11y, this is just belt-and-
-       braces for click events. */
+         JSX via ref) also strips focus + a11y, this is just belt-and-
+         braces for click events. */
   pointer-events: none;
 }
 
@@ -126,7 +133,7 @@
 
 .contentInverted .label {
   /* Was accent gold over muted bg — on solid gold we need ink-on-gold
-       for legibility. Same pairing the primary CornerButton already uses. */
+         for legibility. Same pairing the primary CornerButton already uses. */
   color: var(--ink);
 }
 
@@ -136,7 +143,7 @@
 
 .contentInverted .desc {
   /* Slightly transparent ink keeps the desc visually subordinate to
-       the title (same hierarchy as the light state, just dark side). */
+         the title (same hierarchy as the light state, just dark side). */
   color: rgba(2, 6, 15, 0.7);
 }
 
@@ -172,8 +179,8 @@
 @media (prefers-reduced-motion: reduce) {
   .section {
     /* JS already skips the GSAP fade for reduced-motion users via its
-         own check, but ensure the section is visible if JS hasn't loaded
-         at all. */
+           own check, but ensure the section is visible if JS hasn't loaded
+           at all. */
     opacity: 1;
   }
 }

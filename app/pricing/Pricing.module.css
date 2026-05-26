@@ -109,7 +109,7 @@
   left: 4px;
   width: calc(50% - 4px);
   background: var(--accent);
-  transition: transform 0.4s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: transform 0.4s var(--ease-smooth);
   z-index: 0;
   pointer-events: none;
 }
@@ -132,7 +132,7 @@
   text-transform: uppercase;
   color: rgba(242, 240, 239, 0.55);
   cursor: pointer;
-  transition: color 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: color 0.3s var(--ease-smooth);
 }
 .pillBtnActive {
   color: var(--ink);
@@ -157,7 +157,7 @@
 /* When Annual is NOT active (slider is over Monthly), the badge stays
    gold against the transparent shell — acts as a teaser. */
 .pillBtn:not(.pillBtnActive) .pillBadge {
-  background: rgba(212, 168, 83, 0.15);
+  background: rgb(var(--accent-rgb) / 0.15);
   color: var(--accent);
 }
 
@@ -186,7 +186,8 @@
   flex-direction: column;
   opacity: 0;
   transform: translateY(24px);
-  transition: background 0.4s;
+  transition: background 0.4s var(--ease-smooth),
+    box-shadow 0.4s var(--ease-smooth);
   overflow: hidden;
 }
 .tier + .tier {
@@ -197,7 +198,7 @@
 .tierFeatured {
   background: linear-gradient(
     180deg,
-    rgba(212, 168, 83, 0.03) 0%,
+    rgb(var(--accent-rgb) / 0.03) 0%,
     transparent 40%
   );
 }
@@ -212,8 +213,7 @@
   height: 2px;
   background: rgba(242, 240, 239, 0.1);
   width: 40px;
-  transition: width 0.5s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)),
-    background 0.3s;
+  transition: width 0.5s var(--ease-smooth), background 0.3s;
   z-index: 1;
 }
 .tierFeatured::before {
@@ -221,6 +221,52 @@
 }
 .tier:not(.tierFeatured):hover::before {
   width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────
+   Cursor-following accent glow — mirrors the Integrations
+   glow cards. ::before is already the top accent strip, so
+   the glow lives on ::after. --mouse-x / --mouse-y are set
+   per-card by the pointer tracker in PricingClient.
+───────────────────────────────────────────────────── */
+.tier::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgb(var(--accent-rgb) / 0.1),
+    transparent 45%
+  );
+  transition: opacity 0.5s var(--ease-smooth);
+}
+
+/* Content sits above the glow (::after, z0) and the big
+   background numeral (z-1). */
+.tierContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ── Highlight the card under the cursor ── */
+.tier:hover {
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.22),
+    inset 0 0 70px rgb(var(--accent-rgb) / 0.05);
+}
+.tier:hover::after {
+  opacity: 1;
+}
+.tier:not(.tierFeatured):hover {
+  background: rgb(var(--accent-rgb) / 0.025);
+}
+.tier:not(.tierFeatured):hover::before {
+  background: rgb(var(--accent-rgb) / 0.5);
 }
 
 /* Big editorial section numeral, behind content */
@@ -309,6 +355,9 @@
   color: rgba(242, 240, 239, 0.55);
   margin-bottom: 40px;
   max-width: 340px;
+  /* Fixed so both cards' price blocks (and everything below) start at the
+     same Y regardless of copy length — the key alignment fix. */
+  min-height: 84px;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -485,13 +534,13 @@
   background: var(--accent);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: transform 0.3s var(--ease-smooth);
 }
 .matrixRow:hover::before {
   transform: scaleY(1);
 }
 .matrixRow:hover {
-  background: rgba(212, 168, 83, 0.025);
+  background: rgb(var(--accent-rgb) / 0.025);
 }
 .matrixHeader {
   display: grid;
@@ -571,7 +620,7 @@
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: transform 0.3s var(--ease-smooth);
 }
 .faqHeader:hover::before {
   transform: scaleX(1);
@@ -590,8 +639,7 @@
 .faqIcon {
   flex-shrink: 0;
   color: rgba(242, 240, 239, 0.4);
-  transition: transform 0.4s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)),
-    color 0.25s;
+  transition: transform 0.4s var(--ease-smooth), color 0.25s;
   margin-left: 24px;
 }
 .faqIconOpen {
@@ -601,7 +649,7 @@
 .faqBody {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.5s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: max-height 0.5s var(--ease-smooth);
 }
 .faqBodyOpen {
   max-height: 400px;

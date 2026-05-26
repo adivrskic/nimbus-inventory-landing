@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import gsap from "gsap";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
 import Logo from "@/components/shared/Logo";
-import { validateDemo } from "@/lib/validation";
+import { validateDemo, EMAIL_RE } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -495,7 +495,17 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
 
   useEffect(() => {
     if (!mounted) return;
+    const reduced = prefersReducedMotion();
     if (isOpen && !animatingOut) {
+      if (reduced) {
+        gsap.set(backdropRef.current, { opacity: 1 });
+        gsap.set(panelRef.current, { scale: 1, opacity: 1, y: 0 });
+        gsap.set([leftColRef.current, centerColRef.current].filter(Boolean), {
+          opacity: 1,
+          y: 0,
+        });
+        return;
+      }
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
       tl.fromTo(
         backdropRef.current,
@@ -515,6 +525,15 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
           "-=0.3"
         );
     } else if (animatingOut) {
+      if (reduced) {
+        gsap.set([leftColRef.current, centerColRef.current].filter(Boolean), {
+          opacity: 0,
+          y: -8,
+        });
+        gsap.set(panelRef.current, { scale: 0.95, opacity: 0 });
+        gsap.set(backdropRef.current, { opacity: 0 });
+        return;
+      }
       const tl = gsap.timeline({ defaults: { ease: "power2.in" } });
       tl.to([leftColRef.current, centerColRef.current].filter(Boolean), {
         opacity: 0,
@@ -542,6 +561,10 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     lastTopicRef.current = topicKey;
     const targets = document.querySelectorAll(`.${styles.topicSwap}`);
     if (targets.length === 0) return;
+    if (prefersReducedMotion()) {
+      gsap.set(targets, { opacity: 1, y: 0 });
+      return;
+    }
     gsap.fromTo(
       targets,
       { opacity: 0, y: 6 },
@@ -562,6 +585,14 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   /* Success view intro animation */
   useEffect(() => {
     if (status === "success" && successRef.current) {
+      if (prefersReducedMotion()) {
+        gsap.set(successRef.current, { opacity: 1, y: 0 });
+        gsap.set(successRef.current.querySelectorAll("[data-success-item]"), {
+          opacity: 1,
+          y: 0,
+        });
+        return;
+      }
       gsap.fromTo(
         successRef.current,
         { opacity: 0, y: 10 },
@@ -684,7 +715,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     if (!val) return false;
     if (errors[name]) return false;
     if (name === "email") {
-      return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val);
+      return EMAIL_RE.test(val);
     }
     return true;
   };

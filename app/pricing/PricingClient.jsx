@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
 import styles from "./Pricing.module.css";
@@ -126,15 +127,6 @@ const H_LINES = [
 const SUB_TEXT =
   "Two tiers. Flat per-warehouse pricing. No per-user fees, no surprises.";
 
-const FINAL_H_LINES = [
-  [
-    { t: "Need", a: false },
-    { t: "a", a: false },
-    { t: "custom", a: false },
-  ],
-  [{ t: "quote?", a: true }],
-];
-
 /* Icons */
 const CheckIcon = ({ size = 12 }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
@@ -163,13 +155,11 @@ const fmt = (n) => n.toLocaleString("en-US");
 export default function PricingClient() {
   const heroRef = useRef(null);
   const tierRefs = useRef([]);
+  const tiersRef = useRef(null);
   const matrixSectionRef = useRef(null);
   const matrixRowRefs = useRef([]);
   const faqSectionRef = useRef(null);
   const faqItemRefs = useRef([]);
-  const finalCtaRef = useRef(null);
-  const finalBracketTLRef = useRef(null);
-  const finalBracketBRRef = useRef(null);
 
   /* Demo modal — global, mounted in app/layout.js. openDemo accepts an
      optional topic key ("demo" | "sales" | "migration" | "integration")
@@ -296,34 +286,8 @@ export default function PricingClient() {
       }
     );
 
-    /* Final CTA */
-    const ctl = gsap.timeline({
-      scrollTrigger: { trigger: finalCtaRef.current, start: "top 65%" },
-      defaults: { ease: "power4.out" },
-    });
-    ctl
-      .to(finalBracketTLRef.current, {
-        width: 48,
-        height: 48,
-        opacity: 0.25,
-        duration: 0.5,
-      })
-      .to(
-        finalBracketBRRef.current,
-        { width: 48, height: 48, opacity: 0.25, duration: 0.5 },
-        "-=0.3"
-      )
-      .to(
-        finalCtaRef.current?.querySelectorAll(`.${styles.headLetter}`),
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.5, stagger: 0.014 },
-        "-=0.3"
-      )
-      .to(`.${styles.finalSub}`, { opacity: 1, y: 0, duration: 0.4 }, "-=0.2")
-      .to(
-        `.${styles.finalCtas}`,
-        { opacity: 1, y: 0, duration: 0.4 },
-        "-=0.15"
-      );
+    /* The bottom CTA is now <FinalCTACard>, which owns its own scroll-in
+       reveal + gold wipe — no page-level timeline needed here anymore. */
 
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
@@ -338,6 +302,26 @@ export default function PricingClient() {
       { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }
     );
   }, [billing]);
+
+  /* Cursor-following accent glow on the tier cards — sets --mouse-x /
+     --mouse-y per card, the same mechanism the Integrations glow cards
+     use. The glow's opacity is driven by :hover in CSS; this only
+     positions the radial center under the pointer. */
+  useEffect(() => {
+    const wrap = tiersRef.current;
+    if (!wrap) return;
+    const cards = wrap.querySelectorAll(`.${styles.tier}`);
+    if (!cards.length) return;
+    const onMove = (e) => {
+      cards.forEach((card) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--mouse-x", `${e.clientX - r.left}px`);
+        card.style.setProperty("--mouse-y", `${e.clientY - r.top}px`);
+      });
+    };
+    wrap.addEventListener("mousemove", onMove);
+    return () => wrap.removeEventListener("mousemove", onMove);
+  }, []);
 
   const proPrice =
     billing === "annual" ? PRICING.pro.annual : PRICING.pro.monthly;
@@ -424,7 +408,7 @@ export default function PricingClient() {
           a strike-through of the monthly price + a "Save $X/yr" call-out
           in gold.
       ───────────────────────────────────────────────────── */}
-      <section className={styles.tiers}>
+      <section ref={tiersRef} className={styles.tiers}>
         {TIERS.map((tier, ti) => (
           <div
             key={tier.key}
@@ -438,78 +422,82 @@ export default function PricingClient() {
               {tier.number}
             </span>
 
-            <div className={styles.tierNumber}>
-              {tier.number} / {tier.name.toUpperCase()}
-            </div>
-            <div className={styles.tierName}>{tier.name}</div>
-            <div className={styles.tierLabel}>{tier.label}</div>
-            <p className={styles.tierDesc}>{tier.desc}</p>
+            <div className={styles.tierContent}>
+              <div className={styles.tierNumber}>
+                {tier.number} / {tier.name.toUpperCase()}
+              </div>
+              <div className={styles.tierName}>{tier.name}</div>
+              <div className={styles.tierLabel}>{tier.label}</div>
+              <p className={styles.tierDesc}>{tier.desc}</p>
 
-            <div className={styles.priceBlock}>
-              {tier.key === "pro" ? (
-                <>
-                  <div ref={proPriceRef} className={styles.price}>
-                    {billing === "annual" && (
-                      <span className={styles.priceStrike}>
-                        ${fmt(PRICING.pro.monthly)}
-                      </span>
-                    )}
-                    <span className={styles.priceCurrency}>$</span>
-                    <span className={styles.priceValue}>{fmt(proPrice)}</span>
-                    <span className={styles.priceCadence}>/mo</span>
-                  </div>
-                  <div className={styles.priceUnit}>per warehouse</div>
-                  <div className={styles.priceNote}>
-                    {billing === "annual" ? (
-                      <>
-                        <span className={styles.priceSavings}>
-                          Save ${fmt(annualSavings)}/yr
+              <div className={styles.priceBlock}>
+                {tier.key === "pro" ? (
+                  <>
+                    <div ref={proPriceRef} className={styles.price}>
+                      {billing === "annual" && (
+                        <span className={styles.priceStrike}>
+                          ${fmt(PRICING.pro.monthly)}
                         </span>
-                        <span className={styles.priceMuted}>
-                          {" "}
-                          · Billed annually
-                        </span>
-                      </>
-                    ) : (
-                      "Billed monthly · Cancel anytime"
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.priceCustom}>Custom</div>
-                  <div className={styles.priceUnit}>Volume pricing</div>
-                  <div className={styles.priceNote}>
-                    Talk to sales for a tailored quote
-                  </div>
-                </>
-              )}
+                      )}
+                      <span className={styles.priceCurrency}>$</span>
+                      <span className={styles.priceValue}>{fmt(proPrice)}</span>
+                      <span className={styles.priceCadence}>/mo</span>
+                    </div>
+                    <div className={styles.priceUnit}>per warehouse</div>
+                    <div className={styles.priceNote}>
+                      {billing === "annual" ? (
+                        <>
+                          <span className={styles.priceSavings}>
+                            Save ${fmt(annualSavings)}/yr
+                          </span>
+                          <span className={styles.priceMuted}>
+                            {" "}
+                            · Billed annually
+                          </span>
+                        </>
+                      ) : (
+                        "Billed monthly · Cancel anytime"
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.priceCustom}>Custom</div>
+                    <div className={styles.priceUnit}>Volume pricing</div>
+                    <div className={styles.priceNote}>
+                      Talk to sales for a tailored quote
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className={styles.ctaRow}>
+                <CornerButton
+                  variant={tier.ctaVariant}
+                  onClick={() =>
+                    openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
+                  }
+                >
+                  {tier.cta}
+                </CornerButton>
+              </div>
+
+              <div className={styles.tierDivider} />
+
+              <div className={styles.tierIncludesLabel}>
+                {tier.includesLabel}
+              </div>
+              <ul className={styles.tierList}>
+                {tier.features.map((f, i) => (
+                  <li key={i} className={styles.tierItem}>
+                    <span className={styles.tierItemMark}>
+                      <CheckIcon size={12} />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <div className={styles.ctaRow}>
-              <CornerButton
-                variant={tier.ctaVariant}
-                onClick={() =>
-                  openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
-                }
-              >
-                {tier.cta}
-              </CornerButton>
-            </div>
-
-            <div className={styles.tierDivider} />
-
-            <div className={styles.tierIncludesLabel}>{tier.includesLabel}</div>
-            <ul className={styles.tierList}>
-              {tier.features.map((f, i) => (
-                <li key={i} className={styles.tierItem}>
-                  <span className={styles.tierItemMark}>
-                    <CheckIcon size={12} />
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
           </div>
         ))}
       </section>
@@ -609,43 +597,19 @@ export default function PricingClient() {
       </section>
 
       {/* ── Final CTA ── */}
-      <section ref={finalCtaRef} className={styles.finalCta}>
-        <div className="dot-grid" />
-        <div ref={finalBracketTLRef} className={styles.finalBracketTL} />
-        <div ref={finalBracketBRRef} className={styles.finalBracketBR} />
-
-        <div className={styles.finalInner}>
-          <h2 className={styles.finalHeadline}>
-            <SplitText
-              tokens={FINAL_H_LINES}
-              classNames={{
-                line: styles.headLine,
-                letter: styles.headLetter,
-                accent: styles.finalHeadlineAccent,
-                space: styles.headSpace,
-              }}
-            />
-          </h2>
-          <p className={styles.finalSub}>
-            Tell us about your operation — warehouse count, SKU volume,
-            integration needs — and we&apos;ll put together a tailored proposal.
-          </p>
-          <div className={styles.finalCtas}>
-            <CornerButton
-              variant="primary"
-              onClick={() => openDemo("demo", { source: "final_cta_pricing" })}
-            >
-              Request a Demo
-            </CornerButton>
-            <CornerButton
-              variant="ghost"
-              onClick={() => openDemo("sales", { source: "final_cta_pricing" })}
-            >
-              Talk to Sales
-            </CornerButton>
-          </div>
-        </div>
-      </section>
+      <FinalCTACard
+        label="Custom pricing"
+        title="Need a custom quote?"
+        desc="Tell us about your operation — warehouse count, SKU volume, integration needs — and we'll put together a tailored proposal."
+        primaryAction={{
+          onClick: () => openDemo("demo", { source: "final_cta_pricing" }),
+          label: "Request a Demo",
+        }}
+        secondaryAction={{
+          onClick: () => openDemo("sales", { source: "final_cta_pricing" }),
+          label: "Talk to Sales",
+        }}
+      />
 
       <Footer />
     </div>

@@ -1,12 +1,9 @@
 "use client";
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useRef } from "react";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
+import { gsap, useGsap, DURATION, EASE, STAGGER, TRIGGER } from "@/lib/gsap";
 import styles from "./FinalCTA.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const H_LINES = [
   [
@@ -29,38 +26,62 @@ const DESC_LINES = [
 ];
 
 export default function FinalCTA({ onDemo }) {
-  const sectionRef = useRef(null);
   const bracketTLRef = useRef(null);
   const bracketBRRef = useRef(null);
   const ctasRef = useRef(null);
   const trustRef = useRef(null);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    const hLetters = section.querySelectorAll(`.${styles.headLetter}`);
-    const dLetters = section.querySelectorAll(`.${styles.descLetter}`);
+  /* Scroll-triggered intro. Deliberate sequence, so the timeline escape
+     hatch. Scoped to the section; reduced-motion sets the end state at once. */
+  const sectionRef = useGsap(({ reduced, q, scope }) => {
+    const hLetters = q(`.${styles.headLetter}`);
+    const dLetters = q(`.${styles.descLetter}`);
+
+    if (reduced) {
+      gsap.set([bracketTLRef.current, bracketBRRef.current], {
+        width: 48,
+        height: 48,
+        opacity: 0.2,
+      });
+      gsap.set([...hLetters, ...dLetters], {
+        opacity: 1,
+        y: "0%",
+        rotateX: 0,
+      });
+      gsap.set([ctasRef.current, trustRef.current], { opacity: 1, y: 0 });
+      return;
+    }
 
     const tl = gsap.timeline({
-      scrollTrigger: { trigger: section, start: "top 65%" },
-      defaults: { ease: "power4.out" },
+      scrollTrigger: { trigger: scope, start: TRIGGER.reveal },
+      defaults: { ease: EASE.out },
     });
 
     tl.to(bracketTLRef.current, {
       width: 48,
       height: 48,
       opacity: 0.2,
-      duration: 0.5,
+      duration: DURATION.base,
     })
       .to(
         bracketBRRef.current,
-        { width: 48, height: 48, opacity: 0.2, duration: 0.5 },
+        { width: 48, height: 48, opacity: 0.2, duration: DURATION.base },
         "-=0.3"
       )
+      /* Per-letter headline — animates TO resting; start shape from CSS. */
       .to(
         hLetters,
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.4, stagger: 0.014 },
+        {
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+          duration: DURATION.fast,
+          stagger: STAGGER.tight,
+        },
         "-=0.3"
       )
+      /* Description: deliberate fast micro-wash (very tight stagger), kept
+         as a bespoke effect rather than a standard reveal. */
       .to(
         dLetters,
         {
@@ -68,15 +89,17 @@ export default function FinalCTA({ onDemo }) {
           y: "0%",
           duration: 0.3,
           stagger: 0.005,
-          ease: "power3.out",
+          ease: EASE.out,
         },
         "-=0.2"
       )
-      .to(ctasRef.current, { opacity: 1, y: 0, duration: 0.4 }, "-=0.15")
-      .to(trustRef.current, { opacity: 1, duration: 0.3 }, "-=0.2");
-
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, []);
+      .to(
+        ctasRef.current,
+        { opacity: 1, y: 0, duration: DURATION.fast },
+        "-=0.15"
+      )
+      .to(trustRef.current, { opacity: 1, duration: DURATION.fast }, "-=0.2");
+  });
 
   return (
     <section ref={sectionRef} className={styles.section}>

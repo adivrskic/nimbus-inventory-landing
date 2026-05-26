@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -10,10 +8,23 @@ import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import {
+  gsap,
+  ScrollTrigger,
+  DURATION,
+  EASE,
+  STAGGER,
+  DISTANCE,
+  TRIGGER,
+} from "@/lib/gsap";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
-gsap.registerPlugin(ScrollTrigger);
+/* Reduced-motion query pair for gsap.matchMedia. */
+const MM = {
+  motion: "(prefers-reduced-motion: no-preference)",
+  reduced: "(prefers-reduced-motion: reduce)",
+};
 
 /* ─────────────────────────────────────────────────────
    MATRIX CELL — gold check, muted dash, or amber half-circle
@@ -58,19 +69,13 @@ function MatrixCell({ value, accent = false }) {
 export default function CompareClient({ slug }) {
   const competitor = COMPETITORS[slug];
   const pageRef = useRef(null);
-  const heroRef = useRef(null);
 
   /* Compare pages are inherently about migration — every CTA here opens
      the demo modal with topic "migration" so the lead lands in sales
      with the right context already attached. */
   const { openDemo } = useDemo();
 
-  /* Glow-card wiring for the cross-link grid at the bottom of the page.
-     The hook returns a ref to attach to the .glow-cards container; it
-     walks the descendants for `.glow-card` nodes and binds mousemove
-     tracking (per-card radial gradient + 3D tilt) on mount.
-     Container-level hover lights the border-glow on every card at once
-     (matches Industries / Integrations / Testimonials behavior). */
+  /* Glow-card wiring for the cross-link grid at the bottom of the page. */
   const glowRef = useGlowCards();
 
   /* Other comparisons for cross-link grid */
@@ -81,19 +86,15 @@ export default function CompareClient({ slug }) {
 
   useEffect(() => {
     /* ──────────────────────────────────────────────────────────────────
-       Reset scroll on slug change.
-       
-       Lenis owns the scroll position globally (LenisProvider attaches it
-       to window.__lenis). window.scrollTo() alone gets overridden because
-       Lenis's RAF loop snaps the page back to its internal scroll value
-       on the next tick. So we use lenis.scrollTo with immediate+force —
-       that updates BOTH the browser scroll position and Lenis's internal
-       state, making the reset stick.
-       
-       The double-call (sync + rAF) covers the edge case where the
-       transition overlay finishes its fade-out after the new component
-       has already mounted — without the rAF callback, Lenis can briefly
-       restore the previous page's scroll position before settling at 0.
+       Reset scroll on slug change. (Load-bearing — see original notes.)
+
+       Lenis owns the scroll position globally (window.__lenis). A plain
+       window.scrollTo() gets snapped back by Lenis's RAF loop, so we use
+       lenis.scrollTo(immediate+force) which updates both the browser and
+       Lenis's internal state. The double-call (sync + rAF) covers the case
+       where the transition overlay finishes fading after the new component
+       mounts. Kept inline so it runs BEFORE the ScrollTrigger.refresh()
+       below — triggers must be measured at scroll=0.
     ─────────────────────────────────────────────────────────────────── */
     const resetScroll = () => {
       if (typeof window === "undefined") return;
@@ -107,128 +108,148 @@ export default function CompareClient({ slug }) {
     resetScroll();
     const rafId = requestAnimationFrame(resetScroll);
 
-    if (!competitor || !heroRef.current) {
+    if (!competitor || !pageRef.current) {
       return () => cancelAnimationFrame(rafId);
     }
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+    /* Scoped context: every tween/trigger created here is reverted on
+       cleanup (no global ScrollTrigger.getAll().kill()). matchMedia gives us
+       the reduced-motion gate. */
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add(MM, (mc) => {
+        const reduced = !!mc.conditions.reduced;
+        const q = gsap.utils.selector(pageRef);
 
-    tl.fromTo(
-      `.${styles.heroIndex}`,
-      { opacity: 0, y: -8 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0
-    );
+        /* ── Hero intro (mount sequence, not scroll-tied) ── */
+        if (reduced) {
+          gsap.set(
+            q(
+              `.${styles.heroIndex}, .${styles.markBrand}, .${styles.markVs}, .${styles.markCompetitor}, .${styles.heroLetter}, .${styles.heroDesc}, .${styles.heroCTA}`
+            ),
+            { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0 }
+          );
+        } else {
+          const tl = gsap.timeline();
+          tl.fromTo(
+            q(`.${styles.heroIndex}`),
+            { opacity: 0, y: -8 },
+            { opacity: 1, y: 0, duration: DURATION.fast },
+            0
+          );
+          tl.fromTo(
+            q(`.${styles.markBrand}`),
+            { opacity: 0, x: -20 },
+            { opacity: 1, x: 0, duration: DURATION.base },
+            0.15
+          );
+          tl.fromTo(
+            q(`.${styles.markVs}`),
+            { opacity: 0, scale: 0.6 },
+            {
+              opacity: 1,
+              scale: 1,
+              duration: DURATION.fast,
+              ease: "back.out(2)",
+            },
+            0.3
+          );
+          tl.fromTo(
+            q(`.${styles.markCompetitor}`),
+            { opacity: 0, x: 20 },
+            { opacity: 1, x: 0, duration: DURATION.base },
+            0.4
+          );
+          /* Per-letter title — animates TO resting; start shape from CSS. */
+          tl.to(
+            q(`.${styles.heroLetter}`),
+            {
+              opacity: 1,
+              y: "0%",
+              rotateX: 0,
+              duration: DURATION.base,
+              stagger: STAGGER.tight,
+            },
+            0.65
+          );
+          tl.fromTo(
+            q(`.${styles.heroDesc}`),
+            { opacity: 0, y: DISTANCE.sm },
+            { opacity: 1, y: 0, duration: DURATION.base },
+            0.95
+          );
+          tl.fromTo(
+            q(`.${styles.heroCTA}`),
+            { opacity: 0, y: DISTANCE.sm },
+            { opacity: 1, y: 0, duration: DURATION.base },
+            1.1
+          );
+        }
 
-    /* The Nautilus × vs × Competitor mark animates in */
-    tl.fromTo(
-      `.${styles.markBrand}`,
-      { opacity: 0, x: -20 },
-      { opacity: 1, x: 0, duration: 0.5 },
-      0.15
-    );
-    tl.fromTo(
-      `.${styles.markVs}`,
-      { opacity: 0, scale: 0.6 },
-      { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" },
-      0.3
-    );
-    tl.fromTo(
-      `.${styles.markCompetitor}`,
-      { opacity: 0, x: 20 },
-      { opacity: 1, x: 0, duration: 0.5 },
-      0.4
-    );
+        /* ── Section reveals on scroll ── */
+        q(`.${styles.section}`).forEach((sec) => {
+          const num = sec.querySelector(`.${styles.sectionNum}`);
+          /* .honestCard MUST stay in this list — §04's wrapper is opacity:0
+             in CSS, and opacity is multiplicative, so without animating the
+             wrapper its children never become visible. */
+          const content = sec.querySelectorAll(
+            `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
+          );
 
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.7, stagger: 0.02 },
-      0.65
-    );
-
-    tl.fromTo(
-      `.${styles.heroDesc}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      0.95
-    );
-    tl.fromTo(
-      `.${styles.heroCTA}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      1.1
-    );
-
-    if (!pageRef.current) return;
-
-    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
-    sections.forEach((sec) => {
-      const num = sec.querySelector(`.${styles.sectionNum}`);
-      /* IMPORTANT: .honestCard was previously omitted from this list, which
-         meant the §04 wrapper stayed at the CSS-default opacity: 0 forever
-         (only .honestStrength items animated to 1, but CSS opacity is
-         multiplicative — items inside an opacity:0 parent stay invisible).
-         Adding .honestCard here is what makes §04 render at all. */
-      const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
-      );
-      if (num) {
-        gsap.fromTo(
-          num,
-          { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
+          if (num) {
+            gsap.fromTo(
+              num,
+              { opacity: 0, x: reduced ? 0 : -20 },
+              {
+                opacity: 1,
+                x: 0,
+                duration: reduced ? 0 : DURATION.slow,
+                ease: EASE.out,
+                scrollTrigger: { trigger: sec, start: TRIGGER.section },
+              }
+            );
           }
-        );
-      }
-      if (content.length > 0) {
+          if (content.length > 0) {
+            gsap.fromTo(
+              content,
+              { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+              {
+                opacity: 1,
+                y: 0,
+                duration: reduced ? 0 : DURATION.base,
+                stagger: reduced ? 0 : STAGGER.base,
+                ease: EASE.out,
+                scrollTrigger: { trigger: sec, start: TRIGGER.reveal },
+              }
+            );
+          }
+        });
+
+        /* ── Cross-link cards stagger in ── */
         gsap.fromTo(
-          content,
-          { opacity: 0, y: 14 },
+          q(`.${styles.crossCard}`),
+          { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
           {
             opacity: 1,
             y: 0,
-            duration: 0.55,
-            stagger: 0.05,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
+            duration: reduced ? 0 : DURATION.base,
+            stagger: reduced ? 0 : STAGGER.base,
+            ease: EASE.out,
+            scrollTrigger: {
+              trigger: q(`.${styles.crossLinks}`)[0],
+              start: TRIGGER.section,
+            },
           }
         );
-      }
-    });
 
-    /* Cross-link cards stagger-in. .crossCard is now the glow-card OUTER
-       shell, so animating opacity/y on it still works — the glow
-       hover effects (mouse-radial + 3D tilt) are driven independently
-       by useGlowCards on transforms that don't conflict with y/opacity. */
-    gsap.fromTo(
-      `.${styles.crossCard}`,
-      { opacity: 0, y: 14 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        stagger: 0.08,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: `.${styles.crossLinks}`,
-          start: "top 80%",
-        },
-      }
-    );
-
-    /* After all triggers are created from scroll=0 (the position we just
-       forced), tell ScrollTrigger to recalc against the new content. */
-    ScrollTrigger.refresh();
+        /* Recalc against the freshly-reset (scroll=0) layout. */
+        ScrollTrigger.refresh();
+      });
+    }, pageRef);
 
     return () => {
       cancelAnimationFrame(rafId);
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, [slug, competitor]);
 
@@ -260,7 +281,7 @@ export default function CompareClient({ slug }) {
       <Nav />
 
       {/* ── HERO ── */}
-      <section ref={heroRef} className={styles.hero}>
+      <section className={styles.hero}>
         <div className={styles.heroIndex}>
           <span>Compare</span>
           <span className={styles.heroIndexDot} />
@@ -466,14 +487,7 @@ export default function CompareClient({ slug }) {
         </div>
       </section>
 
-      {/* ── CROSS-LINKS — glow-card grid ──
-          Each TransitionLink is a glow-card outer shell; the
-          glow-card-border div sits at the same z-level so the gold
-          border-radial gradient can shine through the 1px gap that
-          .glow-card-content (via globals) introduces with margin: 1px
-          + height: calc(100% - 2px). Container has the `glow-cards`
-          class so hovering anywhere in the grid lights up the borders
-          on every card. */}
+      {/* ── CROSS-LINKS — glow-card grid ── */}
       {others.length > 0 && (
         <section className={styles.crossLinks}>
           <div className={styles.crossLinksLabel}>Other comparisons</div>

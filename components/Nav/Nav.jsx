@@ -236,11 +236,8 @@ function MobileMenu({ open, links, onClose, onDemo }) {
   }, [open]);
 
   return (
-    /* id is referenced by the hamburger's aria-controls so screen
-       readers can resolve what the hamburger toggles. */
     <div
       ref={menuRef}
-      id="mobile-menu"
       className={styles.mobileMenu}
       style={{ display: "none" }}
     >
@@ -468,11 +465,12 @@ export default function Nav({ onDemo, dark }) {
   }, [openMenu]);
 
   const megaActive = openMenu !== null;
+
   const links = [
     { text: "AI Engine", href: "/#ai-engine" },
     { text: "Features", href: "/#features" },
-    { text: "Integrations", href: "/integration", mega: "integrations" },
-    { text: "Industries", href: "/industry", mega: "industries" },
+    { text: "Integrations", href: "/#integrations", mega: "integrations" },
+    { text: "Industries", href: "/#industries", mega: "industries" },
     { text: "More", href: "/pricing", mega: "more" },
   ];
 
@@ -490,13 +488,7 @@ export default function Nav({ onDemo, dark }) {
           <Logo size={27} />
           <div>
             <span className={styles.logoText}>Nautilus</span>
-            <span className={styles.logoSub} aria-label="Inventory">
-              {Array.from("INVENTORY").map((letter, i) => (
-                <span key={i} aria-hidden="true">
-                  {letter}
-                </span>
-              ))}
-            </span>
+            <span className={styles.logoSub}>Inventory</span>
           </div>
         </TransitionLink>
 
@@ -584,18 +576,11 @@ export default function Nav({ onDemo, dark }) {
             Request a Demo
           </button>
 
-          {/* Hamburger
-              ────────
-              aria-label swaps to mirror state ("Open menu" vs "Close menu"),
-              aria-expanded reflects whether the mobile menu is open, and
-              aria-controls resolves to the mobile menu's id so AT can
-              announce the relationship. WCAG 4.1.2 (Name, Role, Value). */}
+          {/* Hamburger */}
           <button
             className={styles.hamburger}
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
+            aria-label="Toggle menu"
           >
             <span
               className={`${styles.hamburgerLine} ${

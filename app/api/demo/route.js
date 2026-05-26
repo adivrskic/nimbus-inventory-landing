@@ -1,40 +1,22 @@
 // ──────────────────────────────────────────────────────────────────────────
 // app/api/demo/route.js
 // ──────────────────────────────────────────────────────────────────────────
-// POST /api/demo — handles demo request submissions from DemoModal.
+// POST /api/demo — demo requests from DemoModal. Validation + rate limiting
+// here; email delivery + persistence in lib/email.js. IP hashing is shared
+// (lib/ipHash); the cap() helper + field caps come from lib/site.
 //
-// Now passes meta (source_url, user_agent, ip_hash) through to
-// sendDemoRequestEmail so the form_submissions row gets full context.
-// Email delivery + persistence are both handled inside lib/email.js —
-// this route is just validation, rate limiting, and shaping the form
-// payload.
+// Response envelope is { ok, error?, fieldErrors? } on every path.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { validateDemo } from "@/lib/validation";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { sendDemoRequestEmail } from "@/lib/email";
+import { hashIp } from "@/lib/ipHash";
+import { cap, FIELD_CAPS } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const cap = (s, max = 500) => String(s || "").slice(0, max);
-
-/* Daily-rotating IP hash. Same pattern as the contact + chat routes —
-   sha256(ip|YYYY-MM-DD|salt), truncated to 128 bits. Stable within a day
-   for spam pattern detection, not stable across days so it doesn't
-   function as a long-term identifier. */
-function hashIp(ip) {
-  if (!ip) return null;
-  const day = new Date().toISOString().slice(0, 10);
-  const salt = process.env.IP_HASH_SALT || "demo-default-salt";
-  return crypto
-    .createHash("sha256")
-    .update(`${ip}|${day}|${salt}`)
-    .digest("hex")
-    .slice(0, 32);
-}
 
 export async function POST(req) {
   // ── Rate limit by IP ──
@@ -42,18 +24,11 @@ export async function POST(req) {
   const limit = rateLimit(ip);
   if (!limit.ok) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Too many requests. Please try again later.",
-      },
-      {
-        status: 429,
-        headers: { "Retry-After": String(limit.retryAfterSec) },
-      }
+      { ok: false, error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } }
     );
   }
 
-  // ── Parse body ──
   let body;
   try {
     body = await req.json();
@@ -64,16 +39,13 @@ export async function POST(req) {
     );
   }
 
-  // ── Honeypot ── (silently accept-and-drop so bots don't retry)
+  // ── Honeypot ── silently accept-and-drop so bots don't retry.
   if (body && typeof body.website === "string" && body.website.trim() !== "") {
     return NextResponse.json({ ok: true });
   }
 
-  // ── Validate ──
-  // `topic` and `topicLabel` come from DemoModal's chip selector and ride
-  // through into the sales email so the rep sees what the meeting is
-  // about before replying. They're optional in the validator, so older
-  // clients (or callers that don't set them) still work.
+  // `topic`/`topicLabel` ride through to the sales email so the rep sees
+  // what the meeting is about. Optional in the validator for older clients.
   const form = {
     name: String(body?.name || "").trim(),
     email: String(body?.email || "").trim(),
@@ -95,14 +67,12 @@ export async function POST(req) {
     );
   }
 
-  // ── Meta for form_submissions row ──
   const meta = {
-    sourceUrl: cap(body?.source_url || "", 500),
-    userAgent: cap(req.headers.get("user-agent") || "", 500),
+    sourceUrl: cap(body?.source_url || "", FIELD_CAPS.url),
+    userAgent: cap(req.headers.get("user-agent") || "", FIELD_CAPS.userAgent),
     ipHash: hashIp(ip),
   };
 
-  // ── Send email + persist ──
   try {
     const res = await sendDemoRequestEmail(form, meta);
     if (res?.error) {

@@ -1,9 +1,13 @@
-/* ═══════════════════════════════════════════════════════════════════════
-   COMPARE INDEX — Marketing-type landing for /compare
-   
-   Pattern: hero + 3-card grid + outro CTA. Each card previews a full
-   comparison with the same vs-mark + key-differences + read-arrow pattern.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+   MARKETING PAGE TYPE тАФ Comparison pages
+   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+   Same Marketing vocabulary as Industry/Integration, but with:
+   - "Nautilus vs Competitor" mark in hero (positioning signature)
+   - Two-column "At a glance" with Nautilus favored visually
+   - Spec-sheet feature matrix table (signature)
+   - Honest-take card calling out when competitor is the better fit
+   - Cross-link grid at the bottom using the glow-card system
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .page {
   background: var(--dark);
@@ -13,45 +17,99 @@
   overflow-x: hidden;
 }
 
-/* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+         HERO
+      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 160px 0px 60px;
+  padding: 160px 0px 100px;
+  position: relative;
 }
 
-.heroEyebrow {
+.heroIndex {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 28px;
+  color: rgba(242, 240, 239, 0.5);
+  margin-bottom: 56px;
+  flex-wrap: wrap;
   opacity: 0;
 }
+.heroIndexDot {
+  width: 4px;
+  height: 4px;
+  background: rgba(242, 240, 239, 0.25);
+  flex-shrink: 0;
+}
+.heroIndexCategory {
+  color: var(--accent);
+}
 
-.heroTitle {
+/* тФАтФА The Nautilus vs Competitor mark тФАтФА */
+.mark {
+  display: flex;
+  align-items: baseline;
+  gap: 28px;
+  margin-bottom: 56px;
+  flex-wrap: wrap;
   font-family: var(--display);
   font-size: clamp(48px, 7vw, 96px);
   font-weight: 700;
-  letter-spacing: -3px;
+  letter-spacing: -2.5px;
   line-height: 1;
-  margin: 0 0 36px;
+}
+.markBrand {
   color: var(--white);
-  max-width: 1000px;
+  opacity: 0;
+}
+.markVs {
+  color: var(--accent);
+  font-style: italic;
+  font-size: 0.55em;
+  font-weight: 400;
+  display: inline-block;
+  opacity: 0;
+  letter-spacing: -0.5px;
+  padding: 0 0.1em;
+  position: relative;
+  top: -0.05em;
+}
+.markCompetitor {
+  color: rgba(242, 240, 239, 0.55);
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* тФАтФА Tagline below the mark, per-letter тФАтФА */
+.heroTitle {
+  font-family: var(--display);
+  font-size: clamp(40px, 5.5vw, 72px);
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  color: var(--white);
+  margin: 0 0 32px;
+  max-width: 900px;
 }
 .heroLine {
-  display: inline-block;
+  display: block;
   overflow: hidden;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
+}
+.heroLineInner {
+  display: inline-block;
 }
 .heroLetter {
   display: inline-block;
   opacity: 0;
   transform: translateY(100%) rotateX(35deg);
   transform-origin: bottom center;
+  color: var(--white);
 }
 .heroLetterAccent {
   color: var(--accent);
@@ -63,199 +121,664 @@
   width: 0.28em;
 }
 
-.heroSub {
+.heroDesc {
   font-family: var(--display);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.65;
   color: rgba(242, 240, 239, 0.55);
   max-width: 640px;
-  margin: 0;
+  margin: 0 0 48px;
   opacity: 0;
 }
 
-/* ─────────────────────────────────────────────────────
-     CARD GRID
-  ───────────────────────────────────────────────────── */
-.grid {
+.heroCTA {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  opacity: 0;
+}
+.heroSecondary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 8px 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+.heroSecondary:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+         SECTIONS тАФ Marketing editorial numeral pattern
+      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+.section {
+  position: relative;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 60px 0px 100px;
+  padding: 100px 0px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: 280px 1fr;
+  gap: 56px;
+  align-items: start;
 }
 
-.card {
-  position: relative;
-  overflow: hidden;
+.sectionNum {
+  font-family: var(--display);
+  font-size: clamp(140px, 18vw, 260px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -8px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
+  text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
+  user-select: none;
+  position: sticky;
+  top: 100px;
+  align-self: start;
   opacity: 0;
-  min-height: 480px;
-  text-decoration: none;
+}
+.sectionContent {
+  min-width: 0;
+}
+.sectionLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.sectionTitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  color: var(--white);
+  margin: 0 0 18px;
+  max-width: 720px;
+  opacity: 0;
+}
+.sectionDesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 580px;
+  margin: 0 0 56px;
+  opacity: 0;
 }
 
-.cardInner {
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         ┬з01 QUICK COMPARE тАФ two columns side by side
+         Nautilus on the left visually favored (gold accents, full opacity).
+         Competitor on the right (muted dashes, lower opacity).
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.quickCompare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid rgba(242, 240, 239, 0.08);
+  background: rgba(255, 255, 255, 0.012);
+}
+.quickCol {
+  padding: 32px 32px 36px;
+  opacity: 0;
+}
+.quickColNautilus {
+  border-right: 1px solid rgb(var(--accent-rgb) / 0.25);
+  background: rgb(var(--accent-rgb) / 0.025);
+}
+.quickColCompetitor {
+  /* Slightly muted to subtly favor Nautilus */
+}
+.quickColHead {
   display: flex;
   flex-direction: column;
-  padding: 36px 32px 32px;
-  /* The glow-card system from globals.css provides:
-         background: var(--dark)
-         border-radius: inherit
-         height: calc(100% - 2px)
-         margin: 1px
-         width: calc(100% - 2px)
-         — creating the 1px gap where the gold border glow shines through
-         on container hover, plus the radial mouse-follow gradient inside. */
+  gap: 6px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
+  margin-bottom: 22px;
 }
-
-.cardIndex {
-  position: absolute;
-  top: 22px;
-  right: 24px;
+.quickColName {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--white);
+}
+.quickColTag {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 1.5px;
-  color: rgba(242, 240, 239, 0.3);
+  text-transform: uppercase;
+  color: var(--accent);
 }
-
-.cardHead {
+.quickColTagMuted {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.45);
+}
+.quickList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: 14px;
-  margin-bottom: 14px;
 }
-.cardVs {
+.quickItem,
+.quickItemMuted {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: baseline;
   font-family: var(--display);
-  font-size: 28px;
-  font-style: italic;
-  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.quickItem {
+  color: rgba(242, 240, 239, 0.9);
+}
+.quickItemMuted {
+  color: rgba(242, 240, 239, 0.55);
+}
+.quickCheck {
   color: var(--accent);
-  line-height: 1;
-}
-.cardName {
-  font-family: var(--display);
-  font-size: clamp(28px, 3vw, 38px);
   font-weight: 700;
-  letter-spacing: -1.2px;
-  color: var(--white);
-  line-height: 1;
+  font-size: 14px;
+  text-align: center;
 }
-.card:hover .cardName {
-  color: var(--accent);
+.quickDash {
+  color: rgba(242, 240, 239, 0.3);
+  font-weight: 400;
+  font-size: 14px;
+  text-align: center;
 }
 
-.cardCategory {
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         ┬з02 FEATURE MATRIX тАФ spec sheet table
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.matrix {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(242, 240, 239, 0.08);
+}
+.matrixHead {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px;
+  gap: 24px;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.2);
+}
+.matrixHeadFeature {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.55);
+}
+.matrixHeadBrand {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-align: center;
+  font-weight: 600;
+}
+.matrixHeadCompetitor {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 1.8px;
   text-transform: uppercase;
   color: rgba(242, 240, 239, 0.5);
-  margin-bottom: 22px;
+  text-align: center;
 }
-
-.cardDesc {
-  font-family: var(--display);
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: rgba(242, 240, 239, 0.65);
-  margin: 0 0 24px;
-}
-
-.cardDivider {
-  height: 1px;
-  background: rgba(242, 240, 239, 0.08);
-  margin-bottom: 22px;
-}
-
-.cardKeysLabel {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-
-.cardKeys {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
-}
-.cardKey {
+.matrixRow {
   display: grid;
-  grid-template-columns: 20px 1fr;
-  gap: 10px;
-  align-items: baseline;
-  font-family: var(--display);
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: rgba(242, 240, 239, 0.8);
+  grid-template-columns: 1fr 120px 120px;
+  gap: 24px;
+  padding: 16px 24px;
+  align-items: center;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
+  transition: background 0.2s;
+  opacity: 0;
 }
-.cardKeyCheck {
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 12px;
+.matrixRow:hover {
+  background: rgba(255, 255, 255, 0.012);
+}
+.matrixFeature {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--white);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+.matrixCol {
   text-align: center;
 }
 
-.cardFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 18px;
-  border-top: 1px solid rgba(242, 240, 239, 0.06);
+/* The mark glyphs */
+.matrixMark {
+  display: inline-block;
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: rgba(242, 240, 239, 0.7);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
 }
-.cardFootText {
-  transition: color 0.2s;
+.matrixMarkYes {
+  color: rgba(34, 197, 94, 0.85);
 }
-.cardFootArrow {
-  color: rgba(242, 240, 239, 0.5);
-  font-size: 14px;
-  transition: color 0.2s, transform 0.25s;
-}
-.card:hover .cardFootText,
-.card:hover .cardFootArrow {
+.matrixMarkYesAccent {
   color: var(--accent);
 }
-.card:hover .cardFootArrow {
+.matrixMarkPartial {
+  color: #d97706;
+}
+.matrixMarkNo {
+  color: rgba(242, 240, 239, 0.25);
+  font-weight: 400;
+}
+.matrixMarkText {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(242, 240, 239, 0.65);
+  letter-spacing: 0.5px;
+}
+
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         ┬з03 REASONS тАФ numbered list pattern
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.reasons {
+  display: flex;
+  flex-direction: column;
+}
+.reason {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  padding: 32px 0;
+  border-top: 1px solid rgba(242, 240, 239, 0.06);
+  align-items: start;
+  opacity: 0;
+}
+.reason:last-child {
+  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+}
+.reasonLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 6px;
+}
+.reasonNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.reasonMark {
+  width: 28px;
+  height: 1px;
+  background: rgb(var(--accent-rgb) / 0.5);
+}
+.reasonRight {
+  min-width: 0;
+}
+.reasonTitle {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--white);
+  line-height: 1.25;
+  margin: 0 0 10px;
+}
+.reasonDesc {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(242, 240, 239, 0.55);
+  margin: 0;
+  max-width: 580px;
+}
+
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         ┬з04 HONEST TAKE тАФ outlined card with distinct treatment
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.honestCard {
+  padding: 36px 40px 40px;
+  border: 1px solid rgba(242, 240, 239, 0.12);
+  background: rgba(255, 255, 255, 0.018);
+  border-left: 2px solid rgba(242, 240, 239, 0.4);
+  opacity: 0;
+}
+.honestCardLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.85);
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+.honestList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.honestStrength {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 14px;
+  align-items: baseline;
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(242, 240, 239, 0.85);
+  opacity: 0;
+}
+.honestStrengthMark {
+  width: 8px;
+  height: 8px;
+  background: rgba(242, 240, 239, 0.5);
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.honestCardFoot {
+  padding-top: 24px;
+  border-top: 1px solid rgba(242, 240, 239, 0.08);
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  font-style: italic;
+}
+
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         CROSS-LINKS тАФ glow-card grid
+         тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+         The grid container has `glow-cards` (globals) + the ref from
+         useGlowCards. Each card is a TransitionLink (.glow-card outer
+         shell + .crossCard for layout + opacity entrance), with a
+         .glow-card-border sibling and a .glow-card-content / .crossCardInner
+         child that holds the actual content.
+         
+         Rules of engagement (same as every other glow-card on the site):
+         тАв Outer shell sets shape + entrance opacity ONLY. No background,
+           no border, no hover transforms тАФ globals' .glow-card / .glow-card::before
+           provide all of that.
+         тАв Inner element holds padding + layout. NEVER set height on the
+           inner тАФ globals provides `height: calc(100% - 2px); margin: 1px;`
+           and overriding that collapses the 1px gap where the border-glow
+           shines through.
+         тАв Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
+           Don't add CSS hover transforms; they'll fight with the GSAP
+           overwrite logic and look glitchy.
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.crossLinks {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 0px 60px;
+}
+.crossLinksLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 36px;
+}
+.crossLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* Outer shell тАФ shape + entrance only. Globals adds border-radius 20px,
+       cursor: pointer, the mouse-radial ::before, and (via the
+       .glow-card-border child) the border-glow gradient. */
+.crossCard {
+  position: relative;
+  text-decoration: none;
+  min-height: 160px;
+  opacity: 0;
+}
+
+/* Inner content wrapper. Pairs with `glow-card-content` from globals,
+       which provides the dark background and the 1px inset that creates
+       the visible border-glow gap. We supply padding + flex layout only. */
+.crossCardInner {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 26px 22px;
+}
+
+.crossCardMeta {
+  font-family: var(--display);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.crossCardTitle {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.crossCardCategory {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.5);
+  flex: 1;
+}
+.crossCardArrow {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: rgba(242, 240, 239, 0.4);
+  transition: color 0.2s, transform 0.25s;
+}
+/* Arrow-only hover affordance. The card-level hover (gold border-glow +
+       mouse-radial gradient + 3D tilt) is handled by the glow-card system,
+       not by these styles. */
+.crossCard:hover .crossCardArrow {
+  color: var(--accent);
   transform: translateX(6px);
 }
 
-/* ─────────────────────────────────────────────────────
-     RESPONSIVE
-  ───────────────────────────────────────────────────── */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         FINAL CTA
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.finalCTA {
+  max-width: 1200px;
+  margin: 60px auto 100px;
+  padding: 0 48px;
+  opacity: 0;
+}
+.finalCTAInner {
+  padding: 60px 56px 64px;
+  background: rgb(var(--accent-rgb) / 0.025);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
+  border-left: 2px solid var(--accent);
+}
+.finalCTALabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.finalCTATitle {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 700px;
+}
+.finalCTADesc {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 620px;
+  margin: 0 0 32px;
+}
+.finalCTAButtons {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         NOT FOUND
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 80px 24px;
+  text-align: center;
+}
+.notFoundLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.notFound h1 {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin: 0 0 32px;
+}
+.backLink {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.4);
+}
+
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+         RESPONSIVE
+      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 @media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
+  .section {
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    padding: 80px 32px;
+  }
+  .sectionNum {
+    font-size: clamp(100px, 14vw, 160px);
+    letter-spacing: -4px;
+  }
+  .matrixHead,
+  .matrixRow {
+    grid-template-columns: 1fr 90px 90px;
+    gap: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 
 @media (max-width: 768px) {
   .hero {
-    padding: 120px 24px 40px;
+    padding: 120px 24px 80px;
   }
-  .grid {
+  .mark {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 36px;
+  }
+  .section {
     grid-template-columns: 1fr;
-    padding: 40px 24px 80px;
+    gap: 24px;
+    padding: 60px 24px;
   }
-  .card {
-    min-height: 0;
+  .sectionNum {
+    position: static;
+    font-size: 96px;
+    letter-spacing: -3px;
+    margin-bottom: -20px;
   }
-  .cardInner {
-    padding: 30px 26px 28px;
+  .quickCompare {
+    grid-template-columns: 1fr;
   }
-  .outro {
+  .quickColNautilus {
+    border-right: none;
+    border-bottom: 1px solid rgb(var(--accent-rgb) / 0.25);
+  }
+  .matrixHead,
+  .matrixRow {
+    grid-template-columns: 1fr 60px 60px;
+    gap: 12px;
+    padding: 14px 14px;
+  }
+  .matrixHeadFeature,
+  .matrixHeadBrand,
+  .matrixHeadCompetitor {
+    font-size: 9px;
+    letter-spacing: 1.3px;
+  }
+  .matrixFeature {
+    font-size: 13.5px;
+  }
+  .reason {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .reasonLeft {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0;
+  }
+  .honestCard {
+    padding: 28px 24px 32px;
+  }
+  .crossLinksGrid {
+    grid-template-columns: 1fr;
+  }
+  .crossLinks {
+    padding: 60px 24px 40px;
+  }
+  .finalCTA {
+    margin: 40px auto 80px;
     padding: 0 24px;
-    margin-bottom: 80px;
   }
-  .outroInner {
+  .finalCTAInner {
     padding: 40px 28px 44px;
   }
 }

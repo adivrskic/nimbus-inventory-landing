@@ -1,16 +1,16 @@
-/* ═══════════════════════════════════════════════════════════════════════
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
    ROI CALCULATOR
-   ───────────────────────────────────────────────────────────────────────
+   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
    Distinctive treatment within the Marketing page type:
-   - The story paragraph IS the input form — numbers in the sentence are
+   - The story paragraph IS the input form тАФ numbers in the sentence are
      editable text inputs styled as inline text with a dotted gold underline
    - Big animated $LOSS and $SAVINGS numbers in the story (60-80px display)
    - Editorial section numerals (Marketing pattern) anchor the breakdown
      and assumptions sections
-   - Horizontal bar chart in the breakdown — bars animate width as inputs
+   - Horizontal bar chart in the breakdown тАФ bars animate width as inputs
      change, smoothly via CSS transition
    - Receipt-style total at the bottom of the breakdown
-   ═══════════════════════════════════════════════════════════════════════ */
+   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 
 .page {
   background: var(--dark);
@@ -20,9 +20,9 @@
   overflow-x: hidden;
 }
 
-/* ─────────────────────────────────────────────────────
-     HERO
-  ───────────────────────────────────────────────────── */
+/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+       HERO
+    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
@@ -95,10 +95,10 @@
   border-bottom-color: var(--accent);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     THE STORY — the centerpiece
-     The editable paragraph that doubles as the input form.
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       THE STORY тАФ the centerpiece
+       The editable paragraph that doubles as the input form.
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .story {
   max-width: 1400px;
   margin: 0 auto;
@@ -121,7 +121,7 @@
   width: 6px;
   height: 6px;
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(212, 168, 83, 0.5);
+  box-shadow: 0 0 6px rgb(var(--accent-rgb) / 0.5);
   animation: storyPulse 2.4s ease-in-out infinite;
 }
 @keyframes storyPulse {
@@ -134,7 +134,7 @@
   }
 }
 
-/* The story paragraphs — large readable display type */
+/* The story paragraphs тАФ large readable display type */
 .storyText,
 .storyTextSecondary {
   font-family: var(--display);
@@ -203,7 +203,7 @@
 .storyReset:hover {
   color: var(--accent);
   border-color: var(--accent);
-  background: rgba(212, 168, 83, 0.04);
+  background: rgb(var(--accent-rgb) / 0.04);
 }
 .storyHint {
   font-family: var(--mono);
@@ -222,11 +222,11 @@
   letter-spacing: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     INLINE EDITABLE NUMBER — the magic component
-     Looks like inline text. Click to edit. Dotted gold underline signals
-     editability without being distracting.
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       INLINE EDITABLE NUMBER тАФ the magic component
+       Looks like inline text. Click to edit. Dotted gold underline signals
+       editability without being distracting.
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .editable {
   display: inline-flex;
   align-items: baseline;
@@ -263,7 +263,7 @@
   outline: none;
   padding: 0 8px 4px;
   margin: 0;
-  border-bottom: 1.5px dotted rgba(212, 168, 83, 0.55);
+  border-bottom: 1.5px dotted rgb(var(--accent-rgb) / 0.55);
   border-radius: 0;
   cursor: text;
   transition: border-color 0.2s, background 0.2s, color 0.2s;
@@ -283,22 +283,22 @@
 }
 .editableInput:hover {
   border-bottom-color: var(--accent);
-  background: rgba(212, 168, 83, 0.04);
+  background: rgb(var(--accent-rgb) / 0.04);
 }
 .editableInputFocused {
   border-bottom: 1.5px solid var(--accent);
-  background: rgba(212, 168, 83, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
   color: var(--white);
   font-style: normal;
-  box-shadow: inset 0 -2px 0 rgba(212, 168, 83, 0.2);
+  box-shadow: inset 0 -2px 0 rgb(var(--accent-rgb) / 0.2);
 }
 .editableInputFocused:hover {
-  background: rgba(212, 168, 83, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     EDITORIAL SECTIONS — same pattern as Marketing pages
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       EDITORIAL SECTIONS тАФ same pattern as Marketing pages
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .section {
   position: relative;
   max-width: 1400px;
@@ -316,8 +316,8 @@
   line-height: 0.85;
   letter-spacing: -8px;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(212, 168, 83, 0.55);
-  text-stroke: 1px rgba(212, 168, 83, 0.55);
+  -webkit-text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
+  text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
   user-select: none;
   position: sticky;
   top: 100px;
@@ -357,9 +357,9 @@
   opacity: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     BREAKDOWN — animated horizontal bar chart
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       BREAKDOWN тАФ animated horizontal bar chart
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .breakdown {
   display: flex;
   flex-direction: column;
@@ -416,10 +416,10 @@
   background: linear-gradient(
     90deg,
     var(--accent) 0%,
-    rgba(212, 168, 83, 0.6) 100%
+    rgb(var(--accent-rgb) / 0.6) 100%
   );
   /* Smooth bar resize as values change */
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: width 0.6s var(--ease-out);
   width: 0%;
 }
 .breakdownBarFill::after {
@@ -430,7 +430,7 @@
   bottom: 0;
   width: 2px;
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(212, 168, 83, 0.6);
+  box-shadow: 0 0 6px rgb(var(--accent-rgb) / 0.6);
 }
 
 .breakdownDesc {
@@ -441,11 +441,11 @@
   margin-left: 56px;
 }
 
-/* Total row — bigger, with top hairline */
+/* Total row тАФ bigger, with top hairline */
 .totalBar {
   margin-top: 56px;
   padding-top: 32px;
-  border-top: 1px solid rgba(212, 168, 83, 0.25);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.25);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -470,9 +470,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     ASSUMPTIONS — definition list
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       ASSUMPTIONS тАФ definition list
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .assumptions {
   margin: 0;
   padding: 0;
@@ -502,9 +502,9 @@
   margin: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     FINAL CTA
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       FINAL CTA
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -513,8 +513,8 @@
 }
 .finalCTAInner {
   padding: 60px 56px 64px;
-  background: rgba(212, 168, 83, 0.025);
-  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: rgb(var(--accent-rgb) / 0.025);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-left: 2px solid var(--accent);
 }
 .finalCTALabel {
@@ -550,9 +550,9 @@
   flex-wrap: wrap;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-     RESPONSIVE
-  ═══════════════════════════════════════════════════════════════════════ */
+/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+       RESPONSIVE
+    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;

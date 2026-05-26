@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import gsap from "gsap";
+import {
+  gsap,
+  DURATION,
+  STAGGER,
+  DISTANCE,
+  EASE,
+  prefersReducedMotion,
+} from "@/lib/gsap";
 import { ResourceShell } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
@@ -41,16 +48,17 @@ export default function HelpClient() {
     const groups = groupsRef.current.querySelectorAll(
       `.${pageStyles.categoryGroup}`
     );
+    const reduced = prefersReducedMotion();
     gsap.fromTo(
       groups,
-      { opacity: 0, y: 14 },
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
       {
         opacity: 1,
         y: 0,
-        duration: 0.5,
-        stagger: 0.08,
-        ease: "power3.out",
-        delay: 0.7,
+        duration: reduced ? 0 : DURATION.base,
+        stagger: reduced ? 0 : STAGGER.base,
+        ease: EASE.out,
+        delay: reduced ? 0 : 0.7,
       }
     );
   }, []);
@@ -66,10 +74,17 @@ export default function HelpClient() {
     const groups = groupsRef.current.querySelectorAll(
       `.${pageStyles.categoryGroup}`
     );
+    const reduced = prefersReducedMotion();
     gsap.fromTo(
       groups,
-      { opacity: 0, y: 8 },
-      { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, ease: "power2.out" }
+      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+      {
+        opacity: 1,
+        y: 0,
+        duration: reduced ? 0 : DURATION.fast,
+        stagger: reduced ? 0 : STAGGER.base,
+        ease: EASE.out,
+      }
     );
   }, [query]);
 

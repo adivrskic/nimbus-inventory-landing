@@ -19,6 +19,7 @@
   --gray-5: #262626;
   --gray-6: #171717;
   --accent: #d4a853;
+  --accent-rgb: 212 168 83; /* channels for rgb(var(--accent-rgb) / A) alpha use */
   --accent-dim: rgba(212, 168, 83, 0.15);
 
   --bg: var(--black);
@@ -30,6 +31,19 @@
   --border-subtle: rgba(255, 255, 255, 0.06);
   --surface: var(--gray-6);
   --glass-bg: rgba(0, 0, 0, 0.8);
+
+  /* ── Section rhythm ──────────────────────────────────────────────────
+     Unified vertical spacing + horizontal gutter for home/content
+     sections. Use these instead of per-section hardcoded values so every
+     section breathes the same and content edges line up as you scroll.
+       --section-y     standard content section (top/bottom)
+       --section-y-lg  finale / emphasis section (e.g. FinalCTA)
+       --page-gutter   left/right content gutter, shared by every section
+     All three are responsive via clamp(), so the mobile breakpoints no
+     longer need their own bespoke section padding. */
+  --section-y: clamp(96px, 11vw, 140px);
+  --section-y-lg: clamp(120px, 14vw, 180px);
+  --page-gutter: clamp(24px, 5vw, 48px);
 
   --display: var(--font-satoshi), system-ui, -apple-system, BlinkMacSystemFont,
     sans-serif;
