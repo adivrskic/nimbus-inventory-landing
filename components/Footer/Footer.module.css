@@ -148,26 +148,58 @@
 
 @media (max-width: 768px) {
   .footer {
-    padding: 60px 24px 32px;
+    padding: 64px 24px 28px;
   }
+
+  /* Brand spans full width on top; the four link columns sit in a tidy
+     2×2 grid underneath instead of one tall single-file stack. */
   .inner {
-    flex-direction: column;
-    gap: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px 24px;
   }
   .brand {
-    min-width: 100%;
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  .brandDesc {
+    max-width: 320px;
   }
   .col {
-    width: 100%;
+    width: auto;
+    min-width: 0;
+  }
+  .colTitle {
+    margin-bottom: 14px;
   }
   .colLinks {
     gap: 12px;
   }
-  .bottom {
-    justify-content: center;
-    text-align: center;
-  }
   .badges {
     justify-content: flex-start;
+  }
+
+  /* Bottom bar: copyright over legal links, both centered, with the
+     legal row wrapping cleanly instead of overflowing. */
+  .bottom {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    margin-top: 44px;
+  }
+  .legalLinks {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+  }
+}
+
+/* Very small phones — a single column of links reads better than a
+   cramped 2×2 once the viewport is genuinely narrow. */
+@media (max-width: 380px) {
+  .inner {
+    grid-template-columns: 1fr;
   }
 }

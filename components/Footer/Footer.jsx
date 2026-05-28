@@ -164,7 +164,11 @@ export default function Footer() {
 
         // Helix position
         const hx = p.t * (w + 200) - 100;
-        const wave = time * 0.2 + p.t * Math.PI * 6 + p.phase;
+        // Coil frequency: p.t * Math.PI * N controls how many twists pack
+        // across the band's width. Lower N = longer, more stretched-out
+        // coils. Was 6 (3 full rotations) — read as a tight, squished
+        // braid; 3.5 (~1.75 rotations) opens it into a long, lazy helix.
+        const wave = time * 0.2 + p.t * Math.PI * 3.5 + p.phase;
         const hy = cy + Math.sin(wave) * p.radius * p.strand;
 
         // Scattered position

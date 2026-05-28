@@ -9,24 +9,34 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function LenisProvider({ children }) {
   useEffect(() => {
-    /**
-     * Skip smooth scroll for users who prefer reduced motion.
-     * Native browser scroll is more accessible and predictable for these users.
-     */
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
+    /**
+     * Skip smooth scroll for:
+     *   1. Reduced-motion users — native scroll is more accessible.
+     *   2. Touch / coarse-pointer devices — Lenis's syncTouch fought the
+     *      browser's own inertia and read as laggy on phones/tablets.
+     *      Native momentum scroll is smoother and far lighter on mobile
+     *      GPUs/battery. Every window.__lenis consumer already falls back
+     *      to native scroll when __lenis is null, so this is safe.
+     *
+     * matchMedia at mount is fine here — device class (touch vs pointer)
+     * effectively never changes mid-session.
+     */
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const isTouch = window.matchMedia(
+      "(hover: none) and (pointer: coarse)"
+    ).matches;
+
+    if (reduceMotion || isTouch) return;
+
+    /* smoothWheel only — touch is handled natively now, so the syncTouch
+       family of options is gone. */
     const lenis = new Lenis({
       lerp: 0.06,
       smoothWheel: true,
-      syncTouch: true,
-      syncTouchLerp: 0.04,
-      touchInertiaMultiplier: 25,
       wheelMultiplier: 0.8,
     });
     window.__lenis = lenis;

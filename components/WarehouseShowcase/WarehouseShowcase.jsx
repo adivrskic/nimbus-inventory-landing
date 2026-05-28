@@ -549,7 +549,9 @@ export default function WarehouseShowcase() {
       powerPreference: "high-performance",
     });
     renderer.setSize(w, h, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.5 : 2)
+    );
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1378,7 +1380,7 @@ export default function WarehouseShowcase() {
       const distScale = clamp(60 / dist, 0.6, 1.25) * (a.scale ?? 1);
       const lift = (a.lift ?? 0) * distScale;
       const slide = (a.slide ?? 0) * distScale;
-      const cardX = sx + slide;
+      let cardX = sx + slide;
       let cardY = sy - lift;
 
       const yAnchorPct = lift > 4 ? -100 : -50;
@@ -1403,6 +1405,19 @@ export default function WarehouseShowcase() {
       const topAnchorOffset = yAnchorPct === -100 ? scaledH : scaledH * 0.5;
       const minCardY = topAnchorOffset + SAFE_TOP;
       if (cardY < minCardY) cardY = minCardY;
+
+      /* Horizontal clamp — cards are centered with translate(-50%), so
+         keep their half-width (post-scale) plus a 16px gutter inside the
+         canvas on both sides. `w` is the canvas client width set in
+         resize(). Skip if the card is wider than the viewport (the CSS
+         width cap handles that case). */
+      const SAFE_X = 16;
+      const halfW = ((el.offsetWidth || 0) * distScale) / 2;
+      const minCardX = halfW + SAFE_X;
+      const maxCardX = w - halfW - SAFE_X;
+      if (maxCardX > minCardX) {
+        cardX = Math.min(Math.max(cardX, minCardX), maxCardX);
+      }
 
       el.style.transform =
         `translate3d(${cardX}px, ${cardY}px, 0) ` +
@@ -1437,6 +1452,11 @@ export default function WarehouseShowcase() {
       h = canvas.clientHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
+      /* Portrait/phone aspect crops the wide warehouse hard at the 46°
+         desktop FOV. Widen the lens on narrow viewports so the full floor
+         reads. (Mirrors AISection's camZMobile pull-back.) The render
+         loop only writes camera.position, never fov, so this sticks. */
+      camera.fov = w < 768 ? 62 : 46;
       camera.updateProjectionMatrix();
     }
     let resizeTimer;
