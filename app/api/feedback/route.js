@@ -1,6 +1,25 @@
+// ──────────────────────────────────────────────────────────────────────────
+// app/api/feedback/route.js
+// ──────────────────────────────────────────────────────────────────────────
+// POST /api/feedback — "was this article helpful?" yes/no votes from help
+// + blog pages, with an optional free-text reason.
+//
+// Hardened to match the other write surfaces:
+//   - IP read + hash come from the shared lib/ipHash.js (trusted Netlify
+//     client-IP header + a salt that FAILS CLOSED in production). The old
+//     local copy here used a guessable "feedback-default-salt" that did NOT
+//     throw in prod, leaving the stored ip_hash reversible.
+//   - Per-IP rate limit via lib/rateLimit.js, in its own "feedback"
+//     namespace (looser cap than the lead forms — voting on several
+//     articles in one session is legitimate).
+//   - Hidden-`website` honeypot, accept-and-drop (return ok, skip the
+//     insert) so bots get no retry signal.
+// ──────────────────────────────────────────────────────────────────────────
+
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { getClientIp, hashIp } from "@/lib/ipHash";
+import { rateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,32 +29,29 @@ const REASON_MAX = 2000;
 const RESOURCE_MAX = 200;
 const SESSION_MAX = 100;
 
-/* sha256 of "ip|YYYY-MM-DD|salt", truncated to 128 bits.
-   Stable within a day (so we can spot "100 votes in 5min from same IP"
-   patterns) but not stable across days, so it never functions as a
-   long-term identifier and stays GDPR-friendly. */
-function hashIp(ip) {
-  if (!ip) return null;
-  const day = new Date().toISOString().slice(0, 10);
-  const salt = process.env.IP_HASH_SALT || "feedback-default-salt";
-  return crypto
-    .createHash("sha256")
-    .update(`${ip}|${day}|${salt}`)
-    .digest("hex")
-    .slice(0, 32);
-}
-
-function getIp(request) {
-  /* Standard forwarded-IP headers. Vercel sets x-forwarded-for; other
-     hosts may set x-real-ip. First entry in the comma list is the
-     original client. */
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || null;
-}
+// Looser than the 5/hr lead-form cap: a curious reader may vote on a
+// handful of help articles in one sitting. Still bounds runaway spam.
+const FEEDBACK_MAX_PER_HOUR = 30;
 
 export async function POST(request) {
   try {
+    // ── Rate limit by IP (own namespace, so it doesn't share the lead
+    //    forms' budget) ──
+    const ip = getClientIp(request);
+    const limit = rateLimit(ip, {
+      namespace: "feedback",
+      max: FEEDBACK_MAX_PER_HOUR,
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSec) },
+        }
+      );
+    }
+
     let body;
     try {
       body = await request.json();
@@ -44,6 +60,12 @@ export async function POST(request) {
         { error: "Invalid request body." },
         { status: 400 }
       );
+    }
+
+    // ── Honeypot ── hidden "website" field; real users never fill it.
+    // Accept-and-drop: return ok so bots get no retry signal, skip insert.
+    if (body.website && String(body.website).trim() !== "") {
+      return NextResponse.json({ ok: true });
     }
 
     /* ── Validation ── */
@@ -70,7 +92,6 @@ export async function POST(request) {
 
     /* ── Insert ── */
     const supabase = getSupabaseAdmin();
-    const ip = getIp(request);
     const userAgent = request.headers.get("user-agent")?.slice(0, 500) || null;
 
     const { error } = await supabase.from("article_feedback").insert({
