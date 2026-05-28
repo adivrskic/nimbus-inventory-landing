@@ -104,6 +104,7 @@ body::after {
   left: env(safe-area-inset-left, 0px);
   /* …everything else unchanged… */
   transform: translateY(-100%);
+  visibility: hidden;
 }
 .skip-link:focus,
 .skip-link:focus-visible {
