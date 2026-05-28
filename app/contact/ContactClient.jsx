@@ -300,44 +300,83 @@ export default function ContactClient() {
     [form, status]
   );
 
-  /* Animations.
-     The section-numeral animation block from before is kept structurally
-     but is now no-op for this page because the .sectionNum element is
-     gone — `if (num)` guards against that. The content stagger still
-     finds .sectionLabel/.sectionTitle/.sectionDesc/.formGrid and runs. */
+  /* ── Animations — uniform with IndustryPage ──────────────────────────
+     Hero intro reads strictly top-to-bottom: eyebrow -> title letters ->
+     subtitle. Each step is anchored to the END of the previous one (">"
+     with a small negative overlap) instead of a fixed start time, so the
+     subtitle never resolves before the per-letter title does — holds
+     regardless of headline length.
+
+     The form section reveal is gated behind the hero intro: because the
+     form sits in the initial viewport on load, without the gate its
+     scroll trigger fires immediately and races the intro. Gated, it's
+     QUEUED and released the moment the intro completes. A section
+     scrolled to later (none here today) would play immediately.
+
+     The section-numeral block is kept structurally but is a no-op for
+     this page — .sectionNum is gone, and the `if (num)` guard skips it. */
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
+    /* Eyebrow */
     tl.fromTo(
       `.${styles.heroEyebrow}`,
       { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
-      0.1
+      { opacity: 1, y: 0, duration: 0.4 },
+      0
     );
 
-    /* Per-letter headline */
+    /* Per-letter headline — starts just as the eyebrow lands. */
     const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
     tl.to(
       letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.025 },
-      0.2
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+      ">-0.05"
     );
 
+    /* Subtitle — anchored to the END of the title stagger. */
     tl.fromTo(
       `.${styles.heroSub}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.55 },
-      0.6
+      ">-0.2"
     );
 
-    /* Section content stagger on scroll. No more numeral selector since
-       the editorial 01 has been removed — the if(num) guard makes that
-       safe. .channelCard was also dropped from the list because the
-       channel grid section is gone. */
-    if (!pageRef.current) return;
+    /* ── Gate the scroll reveals behind the hero intro ── */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      if (!trigger) return;
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
+
+    /* Section content stagger. The numeral selector + if(num) guard are
+       kept for parity with the other page types even though Contact's
+       editorial 01 was removed. .channelCard was dropped from the list
+       because the channel grid section is gone. */
+    if (!pageRef.current) {
+      return () => {
+        cancelled = true;
+        ScrollTrigger.getAll().forEach((t) => t.kill());
+      };
+    }
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
@@ -345,20 +384,16 @@ export default function ContactClient() {
         `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.formGrid}`
       );
       if (num) {
-        gsap.fromTo(
+        gatedReveal(
           num,
           { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
-          }
+          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+          sec,
+          "top 80%"
         );
       }
       if (content.length > 0) {
-        gsap.fromTo(
+        gatedReveal(
           content,
           { opacity: 0, y: 16 },
           {
@@ -367,13 +402,17 @@ export default function ContactClient() {
             duration: 0.55,
             stagger: 0.07,
             ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
-          }
+          },
+          sec,
+          "top 78%"
         );
       }
     });
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   const isSubmitting = status === "submitting";

@@ -1,21 +1,17 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/Footer/Footer";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
-import {
-  gsap,
-  useGsap,
-  useReveal,
-  DURATION,
-  STAGGER,
-  DISTANCE,
-} from "@/lib/gsap";
 import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
 import styles from "./CompareIndex.module.css";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function CompareIndexClient() {
   /* All compare-index CTAs are migration conversations — visitors here
@@ -27,47 +23,89 @@ export default function CompareIndexClient() {
     ...COMPETITORS[slug],
   }));
 
-  /* Scroll reset is page logic, not animation. */
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  /* Hero intro — deliberate sequence (eyebrow → letters → sub), so the
-     timeline escape hatch. Scoped + reduced-aware via useGsap. */
-  const heroRef = useGsap(({ reduced, q }) => {
-    const tl = gsap.timeline();
-    tl.fromTo(
-      q(`.${styles.heroEyebrow}`),
-      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-      { opacity: 1, y: 0, duration: reduced ? 0 : DURATION.fast },
-      0
-    );
-    /* Per-letter title — animates TO resting; start shape from .heroLetter CSS. */
-    tl.to(
-      q(`.${styles.heroLetter}`),
-      {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-        duration: reduced ? 0 : DURATION.base,
-        stagger: reduced ? 0 : STAGGER.tight,
-      },
-      0.15
-    );
-    tl.fromTo(
-      q(`.${styles.heroSub}`),
-      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-      { opacity: 1, y: 0, duration: reduced ? 0 : DURATION.base },
-      0.45
-    );
-  });
-
-  /* Card grid — plain scroll stagger, declarative. Scope on the page;
-     the grid is marked data-reveal="stagger" below. */
-  const pageRef = useReveal();
+  const pageRef = useRef(null);
+  const heroRef = useRef(null);
 
   /* Glow-card hover context for the grid. */
   const gridRef = useGlowCards();
+
+  /* ── Animations — uniform with IndustryPage ──────────────────────────
+     Hero intro reads strictly top-to-bottom (eyebrow -> title letters ->
+     subtitle), each step anchored to the END of the previous one (">" with
+     a small negative overlap) rather than a fixed start time, so the lower
+     elements never resolve before the per-letter title does.
+
+     The card grid reveal is gated behind the hero intro: cards visible on
+     initial load are QUEUED and released the moment the intro completes;
+     if the grid is scrolled to later it plays immediately. Removes the
+     initial-viewport race without delaying below-fold content. */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (!heroRef.current || !pageRef.current) return;
+
+    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+    /* Eyebrow */
+    tl.fromTo(
+      `.${styles.heroEyebrow}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.4 },
+      0
+    );
+
+    /* Per-letter title — starts just as the eyebrow lands. */
+    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+    tl.to(
+      letters,
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+      ">-0.05"
+    );
+
+    /* Subtitle — anchored to the END of the title stagger. */
+    tl.fromTo(
+      `.${styles.heroSub}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.55 },
+      ">-0.2"
+    );
+
+    /* ── Gate the grid reveal behind the hero intro ── */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      if (!trigger) return;
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
+
+    /* Competitor cards — same stagger/feel as the Industry cross-link grid. */
+    const grid = pageRef.current.querySelector(`.${styles.grid}`);
+    gatedReveal(
+      `.${styles.card}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+      grid,
+      "top 80%"
+    );
+
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
 
   return (
     <div ref={pageRef} className={styles.page}>
@@ -94,11 +132,7 @@ export default function CompareIndexClient() {
       </section>
 
       {/* ── COMPETITOR CARDS ── */}
-      <section
-        ref={gridRef}
-        data-reveal="stagger"
-        className={`${styles.grid} glow-cards`}
-      >
+      <section ref={gridRef} className={`${styles.grid} glow-cards`}>
         {competitors.map((c, i) => (
           <TransitionLink
             key={c.slug}

@@ -8,7 +8,10 @@ import {
   EASE,
   prefersReducedMotion,
 } from "@/lib/gsap";
-import { ResourceShell } from "@/components/ResourceShell";
+import {
+  ResourceShell,
+  useResourceBrowseAnimations,
+} from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import DemoModal from "@/components/DemoModal/DemoModal";
@@ -42,28 +45,21 @@ export default function HelpClient() {
     0
   );
 
-  /* Stagger groups on mount */
-  useEffect(() => {
-    if (!groupsRef.current) return;
-    const groups = groupsRef.current.querySelectorAll(
-      `.${pageStyles.categoryGroup}`
-    );
-    const reduced = prefersReducedMotion();
-    gsap.fromTo(
-      groups,
-      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-      {
-        opacity: 1,
-        y: 0,
-        duration: reduced ? 0 : DURATION.base,
-        stagger: reduced ? 0 : STAGGER.base,
-        ease: EASE.out,
-        delay: reduced ? 0 : 0.7,
-      }
-    );
-  }, []);
+  /* Initial reveal — the shared Browse hook. This is the same gated
+     pattern every Resource page uses: it staggers the category groups up
+     on scroll, but the play is HELD until the shell's header intro
+     finishes (via the shell's introGate), then released. This replaces
+     the old hand-rolled mount stagger with `delay: 0.7`, which was just a
+     fixed guess at the header-intro duration and drifted out of sync the
+     moment that timing changed. The groups are tagged with the shell's
+     `browseItem` class so the hook can find them. */
+  useResourceBrowseAnimations(groupsRef);
 
-  /* Re-animate when search filters change */
+  /* Re-animate when the search filter changes. This is a re-shuffle that
+     fires OUTSIDE the gated reveal hook (the hook already played once on
+     mount), so per lib/gsap guidance it reads prefersReducedMotion()
+     directly rather than going through matchMedia. The isFirst guard
+     skips the mount render so it never double-fires with the hook above. */
   const isFirst = useRef(true);
   useEffect(() => {
     if (isFirst.current) {
@@ -84,6 +80,7 @@ export default function HelpClient() {
         duration: reduced ? 0 : DURATION.fast,
         stagger: reduced ? 0 : STAGGER.base,
         ease: EASE.out,
+        overwrite: "auto",
       }
     );
   }, [query]);
@@ -167,7 +164,10 @@ export default function HelpClient() {
           )}
 
           {filtered.map((cat, ci) => (
-            <section key={cat.slug} className={pageStyles.categoryGroup}>
+            <section
+              key={cat.slug}
+              className={`${pageStyles.categoryGroup} ${shellStyles.browseItem}`}
+            >
               <div className={pageStyles.categoryHeader}>
                 <span className={pageStyles.categoryNum}>
                   {String(ci + 1).padStart(2, "0")}

@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -8,23 +10,10 @@ import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import {
-  gsap,
-  ScrollTrigger,
-  DURATION,
-  EASE,
-  STAGGER,
-  DISTANCE,
-  TRIGGER,
-} from "@/lib/gsap";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
-/* Reduced-motion query pair for gsap.matchMedia. */
-const MM = {
-  motion: "(prefers-reduced-motion: no-preference)",
-  reduced: "(prefers-reduced-motion: reduce)",
-};
+gsap.registerPlugin(ScrollTrigger);
 
 /* ─────────────────────────────────────────────────────
    MATRIX CELL — gold check, muted dash, or amber half-circle
@@ -112,144 +101,144 @@ export default function CompareClient({ slug }) {
       return () => cancelAnimationFrame(rafId);
     }
 
-    /* Scoped context: every tween/trigger created here is reverted on
-       cleanup (no global ScrollTrigger.getAll().kill()). matchMedia gives us
-       the reduced-motion gate. */
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mm.add(MM, (mc) => {
-        const reduced = !!mc.conditions.reduced;
-        const q = gsap.utils.selector(pageRef);
+    /* ── Hero intro — uniform with IndustryPage ──────────────────────────
+       Reads strictly top-to-bottom: index strip -> "Nautilus vs X" mark ->
+       per-letter title -> description -> CTAs. Each step is anchored to the
+       END of the previous one (">" with a small negative overlap) rather
+       than a fixed start time, so the lower elements never resolve before
+       the per-letter title does — order holds regardless of headline
+       length. The mark keeps its signature beat (brand slides in, "vs"
+       pops, competitor slides in) but is now chained relatively. */
+    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-        /* ── Hero intro (mount sequence, not scroll-tied) ── */
-        if (reduced) {
-          gsap.set(
-            q(
-              `.${styles.heroIndex}, .${styles.markBrand}, .${styles.markVs}, .${styles.markCompetitor}, .${styles.heroLetter}, .${styles.heroDesc}, .${styles.heroCTA}`
-            ),
-            { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0 }
-          );
-        } else {
-          const tl = gsap.timeline();
-          tl.fromTo(
-            q(`.${styles.heroIndex}`),
-            { opacity: 0, y: -8 },
-            { opacity: 1, y: 0, duration: DURATION.fast },
-            0
-          );
-          tl.fromTo(
-            q(`.${styles.markBrand}`),
-            { opacity: 0, x: -20 },
-            { opacity: 1, x: 0, duration: DURATION.base },
-            0.15
-          );
-          tl.fromTo(
-            q(`.${styles.markVs}`),
-            { opacity: 0, scale: 0.6 },
-            {
-              opacity: 1,
-              scale: 1,
-              duration: DURATION.fast,
-              ease: "back.out(2)",
-            },
-            0.3
-          );
-          tl.fromTo(
-            q(`.${styles.markCompetitor}`),
-            { opacity: 0, x: 20 },
-            { opacity: 1, x: 0, duration: DURATION.base },
-            0.4
-          );
-          /* Per-letter title — animates TO resting; start shape from CSS. */
-          tl.to(
-            q(`.${styles.heroLetter}`),
-            {
-              opacity: 1,
-              y: "0%",
-              rotateX: 0,
-              duration: DURATION.base,
-              stagger: STAGGER.tight,
-            },
-            0.65
-          );
-          tl.fromTo(
-            q(`.${styles.heroDesc}`),
-            { opacity: 0, y: DISTANCE.sm },
-            { opacity: 1, y: 0, duration: DURATION.base },
-            0.95
-          );
-          tl.fromTo(
-            q(`.${styles.heroCTA}`),
-            { opacity: 0, y: DISTANCE.sm },
-            { opacity: 1, y: 0, duration: DURATION.base },
-            1.1
-          );
-        }
+    tl.fromTo(
+      `.${styles.heroIndex}`,
+      { opacity: 0, y: -8 },
+      { opacity: 1, y: 0, duration: 0.4 },
+      0
+    );
+    tl.fromTo(
+      `.${styles.markBrand}`,
+      { opacity: 0, x: -20 },
+      { opacity: 1, x: 0, duration: 0.55 },
+      ">-0.1"
+    );
+    tl.fromTo(
+      `.${styles.markVs}`,
+      { opacity: 0, scale: 0.6 },
+      { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" },
+      ">-0.25"
+    );
+    tl.fromTo(
+      `.${styles.markCompetitor}`,
+      { opacity: 0, x: 20 },
+      { opacity: 1, x: 0, duration: 0.55 },
+      ">-0.2"
+    );
 
-        /* ── Section reveals on scroll ── */
-        q(`.${styles.section}`).forEach((sec) => {
-          const num = sec.querySelector(`.${styles.sectionNum}`);
-          /* .honestCard MUST stay in this list — §04's wrapper is opacity:0
-             in CSS, and opacity is multiplicative, so without animating the
-             wrapper its children never become visible. */
-          const content = sec.querySelectorAll(
-            `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
-          );
+    /* Per-letter title — start shape comes from .heroLetter CSS. */
+    const letters = pageRef.current.querySelectorAll(`.${styles.heroLetter}`);
+    tl.to(
+      letters,
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+      ">-0.1"
+    );
 
-          if (num) {
-            gsap.fromTo(
-              num,
-              { opacity: 0, x: reduced ? 0 : -20 },
-              {
-                opacity: 1,
-                x: 0,
-                duration: reduced ? 0 : DURATION.slow,
-                ease: EASE.out,
-                scrollTrigger: { trigger: sec, start: TRIGGER.section },
-              }
-            );
-          }
-          if (content.length > 0) {
-            gsap.fromTo(
-              content,
-              { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-              {
-                opacity: 1,
-                y: 0,
-                duration: reduced ? 0 : DURATION.base,
-                stagger: reduced ? 0 : STAGGER.base,
-                ease: EASE.out,
-                scrollTrigger: { trigger: sec, start: TRIGGER.reveal },
-              }
-            );
-          }
-        });
+    tl.fromTo(
+      `.${styles.heroDesc}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.55 },
+      ">-0.2"
+    );
+    tl.fromTo(
+      `.${styles.heroCTA}`,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.5 },
+      ">-0.15"
+    );
 
-        /* ── Cross-link cards stagger in ── */
-        gsap.fromTo(
-          q(`.${styles.crossCard}`),
-          { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+    /* ── Gate the scroll reveals behind the hero intro ──────────────────
+       A reveal that fires on initial load is QUEUED and released the moment
+       the intro completes; a section scrolled to later plays immediately.
+       Removes the initial-viewport race without delaying below-fold
+       content. */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      if (!trigger) return;
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
+
+    /* Section reveals — content fades up, the big numeral scales-and-fades. */
+    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
+    sections.forEach((sec) => {
+      const num = sec.querySelector(`.${styles.sectionNum}`);
+      /* .honestCard MUST stay in this list — §04's wrapper is opacity:0
+         in CSS, and opacity is multiplicative, so without animating the
+         wrapper its children never become visible. */
+      const content = sec.querySelectorAll(
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
+      );
+
+      if (num) {
+        gatedReveal(
+          num,
+          { opacity: 0, x: -20 },
+          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+          sec,
+          "top 80%"
+        );
+      }
+      if (content.length > 0) {
+        gatedReveal(
+          content,
+          { opacity: 0, y: 16 },
           {
             opacity: 1,
             y: 0,
-            duration: reduced ? 0 : DURATION.base,
-            stagger: reduced ? 0 : STAGGER.base,
-            ease: EASE.out,
-            scrollTrigger: {
-              trigger: q(`.${styles.crossLinks}`)[0],
-              start: TRIGGER.section,
-            },
-          }
+            duration: 0.55,
+            stagger: 0.07,
+            ease: "power3.out",
+          },
+          sec,
+          "top 78%"
         );
+      }
+    });
 
-        /* Recalc against the freshly-reset (scroll=0) layout. */
-        ScrollTrigger.refresh();
-      });
-    }, pageRef);
+    /* Cross-link cards (only rendered when others.length > 0). */
+    const crossLinks = pageRef.current.querySelector(`.${styles.crossLinks}`);
+    if (crossLinks) {
+      gatedReveal(
+        `.${styles.crossCard}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        crossLinks,
+        "top 80%"
+      );
+    }
+
+    /* Recalc against the freshly-reset (scroll=0) layout. */
+    ScrollTrigger.refresh();
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafId);
-      ctx.revert();
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [slug, competitor]);
 

@@ -270,80 +270,124 @@ export default function CalculatorClient() {
     return () => clearTimeout(t);
   }, [size, pickers, accuracy, wage, computed.total]);
 
-  /* Animations */
+  /* ── Animations — uniform with IndustryPage ──────────────────────────
+     Hero intro reads strictly top-to-bottom: eyebrow -> title letters ->
+     subtitle -> editable story. Each step is anchored to the END of the
+     previous one (">" with a small negative offset for a gentle overlap)
+     instead of a fixed start time, so the lower elements never resolve
+     before the per-letter title does — holds regardless of headline length.
+
+     Scroll reveals below are gated behind the hero intro: a reveal that
+     fires on initial load is QUEUED and released the moment the intro
+     completes; a section scrolled to later plays immediately, exactly as
+     before. This removes the initial-viewport race without artificially
+     delaying below-fold content. */
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
+    /* Eyebrow */
     tl.fromTo(
       `.${styles.heroEyebrow}`,
       { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
+      { opacity: 1, y: 0, duration: 0.4 },
       0
     );
 
+    /* Per-letter title — starts just as the eyebrow lands. */
     const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
     tl.to(
       letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.022 },
-      0.1
+      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+      ">-0.05"
     );
 
+    /* Subtitle — anchored to the END of the title stagger. */
     tl.fromTo(
       `.${styles.heroSub}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.55 },
-      0.5
+      ">-0.2"
     );
 
+    /* Editable story block — follows the subtitle. */
     tl.fromTo(
       `.${styles.story}`,
       { opacity: 0, y: 24 },
       { opacity: 1, y: 0, duration: 0.7 },
-      0.65
+      ">-0.15"
     );
 
-    if (!pageRef.current) return;
+    /* ── Gate the scroll reveals behind the hero intro ── */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    /* Build a paused reveal tween + a once-only trigger that plays it
+       through the intro gate. Mirrors the original fromTo vars exactly. */
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      if (!trigger) return;
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
 
-    /* Section reveals */
+    /* Section reveals — content fades up, the big numeral scales-and-fades */
+    if (!pageRef.current) {
+      return () => {
+        cancelled = true;
+        ScrollTrigger.getAll().forEach((t) => t.kill());
+      };
+    }
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
       const content = sec.querySelectorAll(
         `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
       );
+
       if (num) {
-        gsap.fromTo(
+        gatedReveal(
           num,
           { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
-          }
+          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+          sec,
+          "top 80%"
         );
       }
       if (content.length > 0) {
-        gsap.fromTo(
+        gatedReveal(
           content,
-          { opacity: 0, y: 14 },
+          { opacity: 0, y: 16 },
           {
             opacity: 1,
             y: 0,
             duration: 0.55,
-            stagger: 0.06,
+            stagger: 0.07,
             ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
-          }
+          },
+          sec,
+          "top 78%"
         );
       }
     });
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   const breakdown = [
