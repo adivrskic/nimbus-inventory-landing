@@ -672,27 +672,32 @@
   color: var(--white);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       RESPONSIVE
-       тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
 @media (max-width: 720px) {
   .backdrop {
     padding: 0;
+    align-items: stretch; /* don't center a sheet taller than the viewport */
   }
   .panel {
     grid-template-columns: 1fr;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* dvh tracks the *visible* viewport as the toolbar moves */
     max-width: none;
+    max-height: none; /* was inheriting calc(100vh - 64px) — clipped the sheet */
     border: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .closeBtn {
+    top: calc(12px + env(safe-area-inset-top, 0px)); /* clear the notch */
+    right: calc(12px + env(safe-area-inset-right, 0px));
   }
   .leftCol {
     border-right: none;
     border-bottom: 1px solid rgba(160, 200, 235, 0.08);
-    padding: 22px 20px 18px;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 18px;
     gap: 18px;
   }
-  /* Mobile: topic list flips horizontal, scrollable */
   .topicList {
     flex-direction: row;
     gap: 6px;
@@ -705,21 +710,25 @@
     flex: 0 0 auto;
     padding: 8px 14px;
   }
-  /* Hide agenda on mobile (form-first) */
   .leftSection + .leftSection {
     display: none;
   }
   .centerCol {
-    padding: 28px 20px 28px;
+    padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px)); /* clear home indicator */
   }
   .cornerBracket {
-    width: 14px;
-    height: 14px;
+    display: none; /* decorative brackets overlap the notch/edges on a full-bleed sheet */
   }
   .formTitle {
     font-size: 22px;
   }
   .successWrap {
     padding: 60px 24px;
+  }
+
+  /* Same iOS focus-zoom fix as the chat — the form inputs are under 16px. */
+  .fieldInput,
+  .fieldTextarea {
+    font-size: 16px;
   }
 }
