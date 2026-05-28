@@ -9,6 +9,8 @@
 // validation, rate limiting, and shaping the form payload.
 //
 // IP reading + hashing come from the shared lib/ipHash.js.
+//
+// NOTE: rateLimit is now async (durable Supabase-backed limiter) — awaited.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
@@ -23,7 +25,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   const ip = getClientIp(req);
-  const limit = rateLimit(ip);
+  const limit = await rateLimit(ip);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, error: "Too many requests. Please try again later." },

@@ -6,6 +6,8 @@
 // (lib/ipHash); the cap() helper + field caps come from lib/site.
 //
 // Response envelope is { ok, error?, fieldErrors? } on every path.
+//
+// NOTE: rateLimit is now async (durable Supabase-backed limiter) — awaited.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
@@ -21,7 +23,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req) {
   // ── Rate limit by IP ──
   const ip = getClientIp(req);
-  const limit = rateLimit(ip);
+  const limit = await rateLimit(ip);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, error: "Too many requests. Please try again later." },

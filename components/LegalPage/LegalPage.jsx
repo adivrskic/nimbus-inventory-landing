@@ -82,8 +82,14 @@ export default function LegalPage({ slug }) {
       );
     }
 
+    /* From the title down, the header reads strictly top-to-bottom: title
+       letters → recital → gold rule, each anchored to the END of the step
+       above it (">" with a small negative offset for a gentle overlap) so the
+       recital never settles before the per-letter title finishes. The seal +
+       docMeta above keep their original timing. */
+
     /* Recital — italic preamble below the title. */
-    tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.5 }, 0.6);
+    tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.5 }, ">-0.15");
 
     /* Gold rule under the header — scales in from the left.
        CSS leaves it at opacity: 0.6 for the no-JS state, so we
@@ -92,8 +98,36 @@ export default function LegalPage({ slug }) {
       `.${styles.rule}`,
       { scaleX: 0, opacity: 0 },
       { scaleX: 1, opacity: 0.6, duration: 0.6 },
-      0.75
+      ">-0.1"
     );
+
+    /* ── Gate the scroll reveals behind the header intro ────────────────
+       The header intro above plays on mount; the section + signature reveals
+       below are scroll-triggered. Without a gate, any section near enough to
+       the top to satisfy its trigger on initial load animates in immediately,
+       racing (and finishing before) the header. So: a reveal that fires on
+       initial load is QUEUED and released the moment the intro completes; a
+       section scrolled to later plays immediately, exactly as before.
+       Below-fold content is never delayed artificially. */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
 
     /* Section reveals on scroll — each section's parts (gutter
        § marker, heading, body prose, marginalia summary) stagger in
@@ -105,7 +139,7 @@ export default function LegalPage({ slug }) {
           `.${styles.sectionGutter}, .${styles.sectionHeading}, .${styles.sectionBody}, .${styles.marginalia}`
         );
         if (els.length) {
-          gsap.fromTo(
+          gatedReveal(
             els,
             { opacity: 0, y: 14 },
             {
@@ -114,30 +148,27 @@ export default function LegalPage({ slug }) {
               duration: 0.55,
               stagger: 0.06,
               ease: "power3.out",
-              scrollTrigger: { trigger: sec, start: "top 82%" },
-            }
+            },
+            sec,
+            "top 82%"
           );
         }
       });
 
       /* Signature block at the end. */
-      gsap.fromTo(
+      gatedReveal(
         `.${styles.signature}`,
         { opacity: 0, y: 18 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: `.${styles.signature}`,
-            start: "top 85%",
-          },
-        }
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        `.${styles.signature}`,
+        "top 85%"
       );
     }
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, [slug, page]);
 
   /* ─── 404 STATE ─── matches the .notFound / .notFoundInner /

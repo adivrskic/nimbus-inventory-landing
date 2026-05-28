@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import SplitText from "@/components/shared/SplitText";
@@ -22,6 +23,69 @@ const MM = {
   reduced: "(prefers-reduced-motion: reduce)",
 };
 
+/* ───────────────────────────────────────────────────────────────────────
+   Shell intro gate
+   ───────────────────────────────────────────────────────────────────────
+   The shell's header intro plays on mount (in the component below). The
+   body-animation hooks (useResourceSectionAnimations /
+   useResourceBrowseAnimations) run from the PAGE component — separate from
+   the shell — and are scroll-triggered. On a tall header the first section /
+   browse item can sit close enough to the fold to satisfy its trigger on
+   initial load, which makes the body animate in WHILE the header is still
+   playing.
+
+   Because the header intro and the body reveals live in different
+   components, they can't share a local timeline the way the detail pages do.
+   This tiny module-level gate bridges them (everything that touches it —
+   the shell + both hooks — lives in this one file, so the state stays
+   contained here):
+
+     - reset()    — called when the shell intro (re)mounts. Also arms a
+                    safety timeout so content can never get stuck hidden if
+                    the intro is interrupted (fast nav, Strict-Mode remount).
+     - resolve()  — called when the intro finishes (or immediately under
+                    reduced-motion). Flushes any queued reveals.
+     - whenDone() — used by the hooks: run now if the intro is already done,
+                    otherwise queue until it is.
+
+   A reveal that fires on initial load is held until the intro completes; a
+   section/item scrolled to later still plays immediately. Below-fold content
+   is never delayed artificially. */
+const introGate = (() => {
+  let done = false;
+  let waiters = [];
+  let safety = null;
+  const clearSafety = () => {
+    if (safety) {
+      clearTimeout(safety);
+      safety = null;
+    }
+  };
+  const api = {
+    reset() {
+      done = false;
+      waiters = [];
+      clearSafety();
+      /* Failsafe: never gate content longer than this, even if the intro's
+         onComplete never fires (e.g. the timeline is reverted mid-play). */
+      safety = setTimeout(() => api.resolve(), 3000);
+    },
+    resolve() {
+      if (done) return;
+      done = true;
+      clearSafety();
+      const fns = waiters;
+      waiters = [];
+      fns.forEach((fn) => fn());
+    },
+    whenDone(fn) {
+      if (done) fn();
+      else waiters.push(fn);
+    },
+  };
+  return api;
+})();
+
 /**
  * Shared shell for all Resource page-type pages (Read AND Browse).
  *
@@ -34,7 +98,8 @@ const MM = {
  *  - Footer
  *
  * Animations: Mount timeline for header chrome. Pages handle body animations
- * separately (most use the exported `useResourceSectionAnimations` hook).
+ * separately (most use the exported `useResourceSectionAnimations` hook),
+ * which now wait for this intro to finish via the introGate above.
  *
  * Props:
  *  - topStrip?: { text, link?: { href, text } }
@@ -61,13 +126,18 @@ export default function ResourceShell({
 
   /* Mount intro timeline. Scoped to the PAGE wrapper (not the inner shell)
      because the top strip renders as a sibling of the shell — a selector
-     scoped to the shell would miss it. The deliberate staged sequence
-     (eyebrow → title → subtitle → metadata → sidebar) is preserved; only the
-     easing/timing language is standardized to the shared tokens, so resource
-     pages now match the rest of the site instead of using their own softer
-     curve. Under reduced-motion everything is set to its final state at once. */
+     scoped to the shell would miss it. The staged sequence now reads strictly
+     top-to-bottom: topStrip → eyebrow → title → subtitle → metadata →
+     sidebar. The lower three are anchored to the END of the step above them
+     (">" with a small negative offset for a gentle overlap) instead of fixed
+     times, so the subtitle/metadata can't settle before the per-letter title
+     finishes. Under reduced-motion everything is set to its final state at
+     once. Either way the introGate is resolved when the intro is done so the
+     body reveals can run. */
   const rootRef = useGsap(
     ({ reduced, q }) => {
+      introGate.reset();
+
       const all = [
         ...q(`.${styles.topStrip}`),
         ...q(`.${styles.headerEyebrow}`),
@@ -79,11 +149,13 @@ export default function ResourceShell({
 
       if (reduced) {
         gsap.set(all, { opacity: 1, x: 0, y: 0, rotateX: 0 });
+        introGate.resolve();
         return;
       }
 
       const tl = gsap.timeline({
         defaults: { ease: EASE.out, duration: DURATION.base },
+        onComplete: () => introGate.resolve(),
       });
 
       if (topStrip) {
@@ -121,26 +193,35 @@ export default function ResourceShell({
         );
       }
 
+      /* Subtitle — anchored to the END of the title so it never resolves
+         before the headline does. */
       if (subtitle) {
         tl.fromTo(
           q(`.${styles.headerSub}`),
           { opacity: 0, y: 10 },
           { opacity: 1, y: 0 },
-          0.5
+          ">-0.15"
         );
       }
+      /* Metadata grid — follows the subtitle. */
       if (metadata && metadata.length > 0) {
         tl.fromTo(
           q(`.${styles.specCell}`),
           { opacity: 0, y: 8 },
           { opacity: 1, y: 0, stagger: STAGGER.base },
-          0.6
+          ">-0.1"
         );
       }
 
+      /* Sidebar (TOC column) — follows the header. */
       const sidebars = q(`.${styles.sidebar}`);
       if (sidebars.length) {
-        tl.fromTo(sidebars, { opacity: 0, x: -6 }, { opacity: 1, x: 0 }, 0.7);
+        tl.fromTo(
+          sidebars,
+          { opacity: 0, x: -6 },
+          { opacity: 1, x: 0 },
+          ">-0.1"
+        );
       }
     },
     [topStrip, eyebrow, title, subtitle, metadata]
@@ -210,9 +291,13 @@ export default function ResourceShell({
    cascade down the page (the whole cascade is gated on the first section
    entering, then plays through; that staged behavior is preserved).
 
-   Now wrapped in gsap.context (scoped to the passed-in containerRef) +
+   Now also gated behind the shell's header intro via introGate: if the first
+   section is in view on load, the cascade is queued and released the moment
+   the header finishes; a page scrolled into later plays at once.
+
+   Wrapped in gsap.context (scoped to the passed-in containerRef) +
    gsap.matchMedia, so cleanup is ctx.revert() and reduced-motion collapses
-   movement/duration. Selectors and the cascade structure are unchanged.
+   movement/duration.
 
    Usage:
      const contentRef = useRef(null);
@@ -232,14 +317,9 @@ export function useResourceSectionAnimations(containerRef) {
       mm.add(MM, (mc) => {
         const reduced = !!mc.conditions.reduced;
 
-        const masterTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: sections[0],
-            start: TRIGGER.section,
-            end: "bottom bottom",
-            scrub: false,
-          },
-        });
+        /* Build the cascade paused; ScrollTrigger fires it on section[0]
+           entering, but the play is held until the header intro completes. */
+        const masterTl = gsap.timeline({ paused: true });
 
         sections.forEach((section) => {
           const targets = section.querySelectorAll(
@@ -260,6 +340,13 @@ export function useResourceSectionAnimations(containerRef) {
             "+=0.2" // small gap between sections for breathing room
           );
         });
+
+        ScrollTrigger.create({
+          trigger: sections[0],
+          start: TRIGGER.section,
+          once: true,
+          onEnter: () => introGate.whenDone(() => masterTl.play()),
+        });
       });
     }, containerRef);
 
@@ -271,7 +358,7 @@ export function useResourceSectionAnimations(containerRef) {
    useResourceBrowseAnimations
    ───────────────────────────────────────────────────────────────────────
    Hook for Browse pages (Blog list, Help list). Staggers .browseItem nodes
-   up on scroll. Same modernization as above.
+   up on scroll, gated behind the header intro the same way.
    ═══════════════════════════════════════════════════════════════════════ */
 export function useResourceBrowseAnimations(containerRef) {
   useEffect(() => {
@@ -285,7 +372,7 @@ export function useResourceBrowseAnimations(containerRef) {
       const mm = gsap.matchMedia();
       mm.add(MM, (mc) => {
         const reduced = !!mc.conditions.reduced;
-        gsap.fromTo(
+        const tween = gsap.fromTo(
           items,
           { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
           {
@@ -294,9 +381,15 @@ export function useResourceBrowseAnimations(containerRef) {
             duration: reduced ? 0 : DURATION.base,
             stagger: reduced ? 0 : STAGGER.base,
             ease: EASE.out,
-            scrollTrigger: { trigger: items[0], start: TRIGGER.reveal },
+            paused: true,
           }
         );
+        ScrollTrigger.create({
+          trigger: items[0],
+          start: TRIGGER.reveal,
+          once: true,
+          onEnter: () => introGate.whenDone(() => tween.play()),
+        });
       });
     }, containerRef);
 

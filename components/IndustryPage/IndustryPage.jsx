@@ -103,7 +103,13 @@ export default function IndustryPage({ slug }) {
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-    /* Hero index strip */
+    /* Hero intro reads strictly top-to-bottom: index strip -> title letters
+       -> subtitle -> CTAs. Each step is anchored to the END of the previous
+       one (">" with a small negative offset for a gentle overlap) instead of
+       a fixed start time, so the lower elements never resolve before the
+       per-letter title does. Order holds regardless of headline length. */
+
+    /* Index strip (top of the hero) */
     tl.fromTo(
       `.${styles.heroIndex}`,
       { opacity: 0, y: -8 },
@@ -111,29 +117,60 @@ export default function IndustryPage({ slug }) {
       0
     );
 
-    /* Per-letter title */
+    /* Per-letter title — starts just as the index lands. */
     const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
     tl.to(
       letters,
       { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
-      0.15
+      ">-0.05"
     );
 
-    /* Sub */
+    /* Subtitle — anchored to the END of the title stagger. */
     tl.fromTo(
       `.${styles.heroSub}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.55 },
-      0.55
+      ">-0.2"
     );
 
-    /* CTAs */
+    /* CTAs — follow the subtitle. */
     tl.fromTo(
       `.${styles.heroCTA}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.5 },
-      0.7
+      ">-0.15"
     );
+
+    /* ── Gate the scroll reveals behind the hero intro ──────────────────
+       The header intro above plays on mount; the section reveals below are
+       scroll-triggered. Without a gate, any section near enough to the top
+       to satisfy its trigger on initial load animates in immediately —
+       racing (and finishing before) the header. So: a reveal that fires on
+       initial load is QUEUED and released the moment the intro completes; a
+       section scrolled to later plays immediately, exactly as before.
+       Below-fold content is never delayed artificially — only the
+       initial-viewport race is removed. */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    /* Build a paused reveal tween + a once-only trigger that plays it through
+       the intro gate. Mirrors the original fromTo vars exactly. */
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
 
     /* Sections — each section's content fades up, the big numeral scales-and-fades */
     if (!pageRef.current) return;
@@ -145,20 +182,16 @@ export default function IndustryPage({ slug }) {
       );
 
       if (num) {
-        gsap.fromTo(
+        gatedReveal(
           num,
           { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
-          }
+          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+          sec,
+          "top 80%"
         );
       }
       if (content.length > 0) {
-        gsap.fromTo(
+        gatedReveal(
           content,
           { opacity: 0, y: 16 },
           {
@@ -167,30 +200,26 @@ export default function IndustryPage({ slug }) {
             duration: 0.55,
             stagger: 0.07,
             ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
-          }
+          },
+          sec,
+          "top 78%"
         );
       }
     });
 
     /* Cross-link cards */
-    gsap.fromTo(
+    gatedReveal(
       `.${styles.crossCard}`,
       { opacity: 0, y: 14 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        stagger: 0.08,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: `.${styles.crossLinks}`,
-          start: "top 80%",
-        },
-      }
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+      `.${styles.crossLinks}`,
+      "top 80%"
     );
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, [slug, industry]);
 
   if (!industry) {

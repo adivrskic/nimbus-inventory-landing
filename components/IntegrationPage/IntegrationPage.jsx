@@ -139,7 +139,9 @@ export default function IntegrationPage({ slug }) {
       0
     );
 
-    /* Connection mark — Nautilus + ×/connector + Partner — staggered in */
+    /* Connection mark — Nautilus + ×/connector + Partner — staggered in.
+       These three sit on one row, so they keep their own left-to-right
+       choreography (brand → connector pop → partner) at fixed times. */
     tl.fromTo(
       `.${styles.markBrand}`,
       { opacity: 0, x: -20 },
@@ -159,26 +161,63 @@ export default function IntegrationPage({ slug }) {
       0.45
     );
 
-    /* Per-letter tagline */
+    /* From here the hero reads strictly top-to-bottom: tagline → description
+       → CTA, each anchored to the END of the step above it (">" with a small
+       negative offset for a gentle overlap) so the lower elements never
+       resolve before the per-letter tagline does. */
+
+    /* Per-letter tagline — begins as the connection mark lands. */
     const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
     tl.to(
       letters,
       { opacity: 1, y: "0%", rotateX: 0, duration: 0.65, stagger: 0.018 },
-      0.7
+      ">-0.1"
     );
 
+    /* Description — anchored to the END of the tagline. */
     tl.fromTo(
       `.${styles.heroDesc}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.5 },
-      1.0
+      ">-0.2"
     );
+
+    /* CTA — follows the description. */
     tl.fromTo(
       `.${styles.heroCTA}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.5 },
-      1.15
+      ">-0.15"
     );
+
+    /* ── Gate the scroll reveals behind the hero intro ──────────────────
+       The header intro above plays on mount; the section reveals below are
+       scroll-triggered. Without a gate, any section near enough to the top
+       to satisfy its trigger on initial load animates in immediately —
+       racing (and finishing before) the header. So: a reveal that fires on
+       initial load is QUEUED and released the moment the intro completes; a
+       section scrolled to later plays immediately, exactly as before.
+       Below-fold content is never delayed artificially — only the
+       initial-viewport race is removed. */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
 
     /* Sections — same numbered editorial pattern as Industry */
     if (!pageRef.current) return;
@@ -190,20 +229,16 @@ export default function IntegrationPage({ slug }) {
       );
 
       if (num) {
-        gsap.fromTo(
+        gatedReveal(
           num,
           { opacity: 0, x: -20 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 80%" },
-          }
+          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+          sec,
+          "top 80%"
         );
       }
       if (content.length > 0) {
-        gsap.fromTo(
+        gatedReveal(
           content,
           { opacity: 0, y: 16 },
           {
@@ -212,29 +247,25 @@ export default function IntegrationPage({ slug }) {
             duration: 0.55,
             stagger: 0.06,
             ease: "power3.out",
-            scrollTrigger: { trigger: sec, start: "top 78%" },
-          }
+          },
+          sec,
+          "top 78%"
         );
       }
     });
 
-    gsap.fromTo(
+    gatedReveal(
       `.${styles.crossCard}`,
       { opacity: 0, y: 14 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        stagger: 0.08,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: `.${styles.crossLinks}`,
-          start: "top 80%",
-        },
-      }
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+      `.${styles.crossLinks}`,
+      "top 80%"
     );
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, [slug, integration]);
 
   if (!integration) {

@@ -9,11 +9,13 @@
 //     client-IP header + a salt that FAILS CLOSED in production). The old
 //     local copy here used a guessable "feedback-default-salt" that did NOT
 //     throw in prod, leaving the stored ip_hash reversible.
-//   - Per-IP rate limit via lib/rateLimit.js, in its own "feedback"
-//     namespace (looser cap than the lead forms — voting on several
-//     articles in one session is legitimate).
+//   - Per-IP rate limit via lib/rateLimit.js (durable Supabase-backed), in
+//     its own "feedback" namespace with a looser cap than the lead forms —
+//     voting on several articles in one session is legitimate.
 //   - Hidden-`website` honeypot, accept-and-drop (return ok, skip the
 //     insert) so bots get no retry signal.
+//
+// NOTE: rateLimit is now async — awaited.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
@@ -38,7 +40,7 @@ export async function POST(request) {
     // ── Rate limit by IP (own namespace, so it doesn't share the lead
     //    forms' budget) ──
     const ip = getClientIp(request);
-    const limit = rateLimit(ip, {
+    const limit = await rateLimit(ip, {
       namespace: "feedback",
       max: FEEDBACK_MAX_PER_HOUR,
     });

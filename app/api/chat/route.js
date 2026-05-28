@@ -17,6 +17,14 @@
 // 429 responses are returned as regular JSON (not SSE) — the client checks
 // res.status before opening the stream.
 //
+// ── Rate limiting (security finding #1) ──
+// checkRateLimit is keyed on BOTH the visitor cookie AND the daily-rotating
+// IP hash, plus a global daily-token breaker. The cookie alone is no longer
+// the cost cap — a scripted client that drops the cookie still hits the
+// per-IP and global ceilings. The same ipHash computed here for the limiter
+// is reused on the conversation row, so the per-IP counts the RPC reads are
+// consistent with what gets stored.
+//
 // ── Canned-answer intercept ──
 // Before opening the Anthropic stream, the user's message is checked
 // against matchCanned() in lib/chat/canned-answers.js. On a hit:
@@ -147,9 +155,13 @@ export async function POST(request) {
   }
 
   const visitorId = await getOrCreateVisitor();
+  /* Compute the IP hash once and reuse it for both the rate-limit check
+     (per-IP + global ceilings) and the conversation row, so the counts the
+     RPC reads stay consistent with what gets stored. */
+  const ipHash = hashIp(getIp(request));
 
   // ── Rate limit ─────────────────────────────────────────────────────────
-  const rate = await checkRateLimit(visitorId);
+  const rate = await checkRateLimit(visitorId, ipHash);
   if (!rate.ok) {
     return NextResponse.json(
       {
@@ -192,7 +204,7 @@ export async function POST(request) {
         source_url: sourceUrl,
         source_topic: sourceTopic,
         user_agent: request.headers.get("user-agent")?.slice(0, 500) || null,
-        ip_hash: hashIp(getIp(request)),
+        ip_hash: ipHash,
         lead_captured: !!userEmail,
       })
       .select("id")

@@ -1,25 +1,25 @@
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-   MARKETING PAGE TYPE тАФ Industry pages
-   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+/* ===========================================================================
+   MARKETING PAGE TYPE — Industry pages
+   ---------------------------------------------------------------------------
    Feel: Editorial / case study. Magazine-style.
-   
+
    Distinctive vocabulary:
    - HUGE outlined section numerals (240px+) anchored to the left margin
-     as section signposts тАФ the strongest visual signature
+     as section signposts — the strongest visual signature
    - Asymmetric grid: number column + content column
-   - Paired Challenge тЖФ Solution layout with arrow divider
+   - Paired Challenge <-> Solution layout with arrow divider
    - Massive stat numerals (Big numbers as design elements)
-   - Cross-link grid at the end тАФ glow-cards
-   - Workflow steps тАФ glow-cards
+   - Cross-link grid at the end — glow-cards
+   - Workflow steps — glow-cards
    - Final CTA without bracket decorations
-   
+
    Shared with other page types:
    - Per-letter rotateX H1 (brand signature)
    - Italic gold accent word in headline
    - Fade-up scroll animations
    - Sharp corners, hairline borders
    - Mono caps for labels
-   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+   =========================================================================== */
 
 .page {
   background: var(--dark);
@@ -29,9 +29,9 @@
   overflow-x: hidden;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         HERO
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           HERO
+     --------------------------------------------------------------------------- */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
@@ -80,10 +80,15 @@
 .heroLineInner {
   display: inline-block;
 }
+/* Per-letter entrance start shape (animates TO y:0%/rotateX:0 in the hero
+     timeline). The Y travel was reduced from translateY(100%) to translateY(35%)
+     — roughly a 65% cut — so the letters rise a short, elegant distance instead
+     of a full line-height. 30%–50% is the usable range to taste; rotateX(35deg)
+     is left as the brand signature (ease toward ~20deg if it still feels heavy). */
 .heroLetter {
   display: inline-block;
   opacity: 0;
-  transform: translateY(100%) rotateX(35deg);
+  transform: translateY(35%) rotateX(35deg);
   transform-origin: bottom center;
 }
 .heroLetterAccent {
@@ -128,9 +133,9 @@
   border-bottom-color: var(--accent);
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         SECTIONS тАФ huge numeral anchor + asymmetric content column
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           SECTIONS — huge numeral anchor + asymmetric content column
+     --------------------------------------------------------------------------- */
 .section {
   position: relative;
   max-width: 1400px;
@@ -191,9 +196,9 @@
   opacity: 0;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         CHALLENGE тЖФ SOLUTION PAIRS  (list-style, unchanged)
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           CHALLENGE <-> SOLUTION PAIRS  (list-style, unchanged)
+     --------------------------------------------------------------------------- */
 .pairs {
   display: flex;
   flex-direction: column;
@@ -289,14 +294,14 @@
   color: rgba(242, 240, 239, 0.5);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         WORKFLOW STEPS тАФ glow-cards
-         тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         Container has the `glow-cards` class + useGlowCards ref. Each step
-         has the glow-card outer/border/content structure. Container gap
-         replaces the old shared-border-grid look тАФ each step is now a
-         discrete rounded card.
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ===========================================================================
+           WORKFLOW STEPS — glow-cards
+           ---------------------------------------------------------------------
+           Container has the `glow-cards` class + useGlowCards ref. Each step
+           has the glow-card outer/border/content structure. Container gap
+           replaces the old shared-border-grid look — each step is now a
+           discrete rounded card.
+     =========================================================================== */
 .workflow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -304,16 +309,16 @@
   /* removed: border-top, border-left (no more shared-border grid) */
 }
 .workflowStep {
-  /* Outer shell тАФ just shape and entrance opacity.
-         Glow-card globals provide: border-radius: 20px, cursor: pointer.
-         The .glow-card-content inner gets background + 1px-inset border peek. */
+  /* Outer shell — just shape and entrance opacity.
+           Glow-card globals provide: border-radius: 20px, cursor: pointer.
+           The .glow-card-content inner gets background + 1px-inset border peek. */
   position: relative;
   opacity: 0;
 }
 .workflowStepInner {
-  /* Padding lives here now. DO NOT set height тАФ globals' .glow-card-content
-         provides height: calc(100% - 2px) + margin: 1px which is the 1px gap
-         where the gold border-glow shines through on hover. */
+  /* Padding lives here now. DO NOT set height — globals' .glow-card-content
+           provides height: calc(100% - 2px) + margin: 1px which is the 1px gap
+           where the gold border-glow shines through on hover. */
   padding: 28px 24px 32px;
   display: flex;
   flex-direction: column;
@@ -341,9 +346,9 @@
   margin: 0;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         STATS тАФ massive numerals (column-separators, not cards)
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           STATS — massive numerals (column-separators, not cards)
+     --------------------------------------------------------------------------- */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -378,9 +383,9 @@
   color: rgba(242, 240, 239, 0.55);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         CROSS-LINKS тАФ glow-cards
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ===========================================================================
+           CROSS-LINKS — glow-cards
+     =========================================================================== */
 .crossLinks {
   max-width: 1400px;
   margin: 0 auto;
@@ -400,7 +405,7 @@
   gap: 16px;
 }
 .crossCard {
-  /* Outer shell тАФ globals provides border-radius 20px + cursor. */
+  /* Outer shell — globals provides border-radius 20px + cursor. */
   position: relative;
   min-height: 200px;
   opacity: 0;
@@ -442,9 +447,9 @@
   transform: translateX(6px);
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         FINAL CTA
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           FINAL CTA
+     --------------------------------------------------------------------------- */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -490,9 +495,9 @@
   flex-wrap: wrap;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         NOT FOUND
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           NOT FOUND
+     --------------------------------------------------------------------------- */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -527,9 +532,9 @@
   border-bottom: 1px solid rgb(var(--accent-rgb) / 0.4);
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         RESPONSIVE
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ---------------------------------------------------------------------------
+           RESPONSIVE
+     --------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
