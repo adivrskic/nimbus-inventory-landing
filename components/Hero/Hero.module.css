@@ -8,6 +8,19 @@
       black scrim. Now reads `var(--hero-overlay)` from the ocean theme.
    3. .scrollDim — `background: var(--black)` still works in v4+ since
       --black is now solid #02060f. Behavior identical.
+
+   Responsive line handling (orphan/widow fix):
+   - The headline letters are inline-block (for the clip-reveal), which
+     means a too-narrow line can break between ANY two letters — producing
+     mid-word splits and lone words. Each .line is now `white-space: nowrap`
+     so a line never wraps; combined with the 3-line headline grouping (max
+     22 chars/line) the font stays legible on mobile without overflowing.
+   - The description is mono body copy that SHOULD wrap on a phone, so it
+     can't use nowrap. Instead its letters switch to `display: inline` on
+     mobile, which flows as continuous text and only breaks at the
+     inline-block word-spacers — word-safe wrapping, no mid-word splits.
+     The slide becomes a fade (opacity animates on inline; transform does
+     not), and `text-wrap: pretty` discourages a lone trailing word.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .hero {
@@ -73,6 +86,10 @@
   display: block;
   overflow: hidden;
   padding-bottom: 6px;
+  /* Never wrap a headline line: prevents mid-word breaks AND lone words.
+       The clip-reveal relies on each line being a single row, so this also
+       keeps the per-letter slide intact at every width. */
+  white-space: nowrap;
 }
 .letter {
   display: inline-block;
@@ -160,12 +177,26 @@
     padding: 0 24px 60px;
   }
   .headline {
-    font-size: clamp(32px, 8vw, 48px);
+    /* Tuned for the 3-line grouping (longest line "warehouse
+         intelligence" ≈ 22 chars) so nowrap lines never overflow. */
+    font-size: clamp(26px, 7vw, 48px);
     letter-spacing: -1px;
     margin-bottom: 24px;
   }
   .desc {
     font-size: 12px;
+  }
+  /* Let the description wrap as word-safe flowing text on mobile.
+       inline (not inline-block) flows as continuous text and only breaks
+       at the .descSpace word-spacers — no mid-word splits. Slide becomes a
+       fade; pretty avoids a lone trailing word. */
+  .descLine {
+    overflow: visible;
+    text-wrap: pretty;
+  }
+  .descLetter {
+    display: inline;
+    transform: none;
   }
   .sideData {
     display: none;
@@ -177,7 +208,7 @@
 }
 @media (max-width: 480px) {
   .headline {
-    font-size: clamp(28px, 9vw, 40px);
+    font-size: clamp(24px, 7vw, 38px);
     letter-spacing: -0.5px;
   }
   .content {

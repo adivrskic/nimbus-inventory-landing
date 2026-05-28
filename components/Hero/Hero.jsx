@@ -28,6 +28,10 @@ const HEADLINE_LINES = [
     words: [
       { text: "The", accent: false },
       { text: "complete", accent: false },
+    ],
+  },
+  {
+    words: [
       { text: "solution", accent: false },
       { text: "for", accent: false },
     ],
