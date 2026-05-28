@@ -534,6 +534,13 @@ export default function WarehouseShowcase() {
     pausedRef.current = paused;
   }, [paused]);
 
+  /* Whether the section is on (or near) screen. The render loop keeps
+     itself scheduled but bails before doing any scene work or issuing a
+     draw call while this is false — no point burning GPU/CPU on a scene
+     nobody can see. Mirrors AISection's gating and the Footer helix's
+     IntersectionObserver. Set up inside the main effect below. */
+  const sectionVisibleRef = useRef(false);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
@@ -1481,6 +1488,21 @@ export default function WarehouseShowcase() {
       },
     });
 
+    /* ─── VISIBILITY GATE ────────────────────────────────────────
+       Flip sectionVisibleRef as the section enters/leaves the viewport
+       (with a 200px margin so the scene is already warmed up by the time
+       it's actually on screen). The render loop checks this and skips all
+       scene work + the draw call while off-screen, so this heavy WebGL
+       scene stops costing GPU/CPU once the user scrolls past it. The rAF
+       itself stays scheduled so it resumes instantly on scroll-back. */
+    const visObserver = new IntersectionObserver(
+      ([entry]) => {
+        sectionVisibleRef.current = entry.isIntersecting;
+      },
+      { rootMargin: "200px 0px" }
+    );
+    visObserver.observe(section);
+
     /* ─── HELPERS ──────────────────────────────────────────────── */
     const tmpMatrix = new THREE.Matrix4();
     const tmpVec = new THREE.Vector3();
@@ -1551,6 +1573,12 @@ export default function WarehouseShowcase() {
     let rafId;
 
     function render() {
+      /* Keep the loop alive first, then bail before any work if the
+         section is off-screen — so the scene resumes instantly when it
+         scrolls back into view but costs nothing while it's not. */
+      rafId = requestAnimationFrame(render);
+      if (!sectionVisibleRef.current) return;
+
       const time = (performance.now() - t0) / 1000;
       const p = progressRef.current;
       const mode = modeFromP(p);
@@ -2045,8 +2073,6 @@ export default function WarehouseShowcase() {
         const timeOpt = fmtTime((distOpt / Math.max(1, OPT_TOTAL)) * OPT_TIME);
         setUi({ mode, distOpt, timeOpt, pickedOpt: livePicks });
       }
-
-      rafId = requestAnimationFrame(render);
     }
     render();
 
@@ -2054,6 +2080,7 @@ export default function WarehouseShowcase() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
       st.kill();
+      visObserver.disconnect();
       renderer.dispose();
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();

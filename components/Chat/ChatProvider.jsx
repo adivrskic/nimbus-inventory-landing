@@ -41,6 +41,17 @@
 // launcher. Suppressed routes (/ask, /help) unmount this component, so the
 // listener simply isn't present there.
 //
+// Code splitting:
+// ChatDrawer is dynamic-imported (ssr:false) so its markup, the URL-linkify
+// logic, the focus-trap machinery, and everything it pulls in are split into
+// a separate chunk that loads on first open rather than shipping in the
+// bundle every page downloads up front. The launcher stays statically
+// imported — it's tiny and always on screen. Because the drawer is only
+// rendered behind `{open && ...}`, the chunk fetch happens exactly when the
+// user first opens the chat; subsequent opens are instant (chunk cached).
+// State still lives here in the provider, so splitting the drawer out has no
+// effect on transcript persistence.
+//
 // Accessibility:
 // We capture document.activeElement when the drawer opens (typically the
 // floating chat launcher button) and restore focus to it on close. This
@@ -60,10 +71,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import ChatLauncher from "./ChatLauncher";
-import ChatDrawer from "./ChatDrawer";
 import { useChatStream } from "./useChatStream";
 import { track } from "@/lib/analytics";
+
+/* Lazy chunk — fetched on first open (see "Code splitting" note above). */
+const ChatDrawer = dynamic(() => import("./ChatDrawer"), { ssr: false });
 
 const STORAGE_KEY = "Nautilus_chat_conv_id";
 

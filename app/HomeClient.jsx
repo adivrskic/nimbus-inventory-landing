@@ -1,25 +1,36 @@
 "use client";
+import dynamic from "next/dynamic";
 import Hero from "@/components/Hero/Hero";
-import AISection from "@/components/AISection/AISection";
-import ProblemSolution from "@/components/ProblemSolution/ProblemSolution";
 import Features from "@/components/Features/Features";
-import WarehouseShowcase from "@/components/WarehouseShowcase/WarehouseShowcase";
-import Testimonials from "@/components/Testimonials/Testimonials";
-import Integrations from "@/components/Integrations/Integrations";
-import Industries from "@/components/Industries/Industries";
-import Footer from "@/components/Footer/Footer";
-import FinalCTA from "@/components/FinalCTA/FinalCTA";
-import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import ProblemSolution from "@/components/ProblemSolution/ProblemSolution";
 import HashScroller from "@/components/HashScroller/HashScroller";
+import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 
-/* Nav + DemoModal removed — both live in app/layout.js now. We still need
-   openDemo to pass to home-page sections that have their own demo CTAs
-   (Hero, ProblemSolution, WarehouseShowcase, FinalCTA). Pull it from
-   context. */
+/* Heavy / below-the-fold sections — split into their own chunks.
+   ssl:false because they're canvas/scroll-driven and add nothing to the
+   server-rendered HTML or to LCP. The `loading` placeholders reserve the
+   right height so deferring them doesn't introduce layout shift (CLS). */
+const AISection = dynamic(() => import("@/components/AISection/AISection"), {
+  ssr: false,
+  loading: () => <div style={{ height: "100vh" }} aria-hidden="true" />,
+});
+const WarehouseShowcase = dynamic(
+  () => import("@/components/WarehouseShowcase/WarehouseShowcase"),
+  {
+    ssr: false,
+    // matches .scrollSpace height so the page doesn't jump when it mounts
+    loading: () => <div style={{ height: "380vh" }} aria-hidden="true" />,
+  }
+);
+const Integrations = dynamic(() =>
+  import("@/components/Integrations/Integrations")
+);
+const Industries = dynamic(() => import("@/components/Industries/Industries"));
+const Footer = dynamic(() => import("@/components/Footer/Footer"));
+
 export default function HomeClient() {
   const { openDemo } = useDemo();
-
   return (
     <>
       <HashScroller />
@@ -28,14 +39,8 @@ export default function HomeClient() {
       <Features />
       <ProblemSolution onDemo={openDemo} />
       <WarehouseShowcase onDemo={openDemo} />
-      {/* <Testimonials /> */}
       <Integrations />
       <Industries />
-      <FinalCTA onDemo={openDemo} />
-      {/* Card-style final CTA — same accent-wipe-on-scroll treatment used
-          on the compare / industry / integration pages. Its primary action
-          opens the Nautilus Helper AI chat drawer by dispatching the
-          `open-chat` window event that ChatProvider listens for. */}
       <FinalCTACard
         label="Still have questions?"
         title="Ask Nautilus anything, right now."

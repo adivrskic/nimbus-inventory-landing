@@ -82,20 +82,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Global grain texture overlay */
+/* Global grain texture overlay.
+   Sized to the viewport (was top/left -50% + 200%×200%, which is vestigial
+   now that the grain no longer animates) so the compositor maintains one
+   viewport's worth of blended layer instead of four — a meaningful cut to
+   per-frame compositing cost during scroll. The noise still tiles
+   seamlessly via background-size, so the look is unchanged.
+
+   Disabled entirely on mobile (see media query below), where a fixed
+   full-screen mix-blend-mode layer is the most expensive per-frame work
+   for INP and the texture is the least noticeable. If desktop INP ever
+   needs more, dropping `mix-blend-mode: overlay` is the next lever — at
+   this opacity the visual difference is minimal. */
 body::after {
   content: "";
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  inset: 0;
   z-index: 9999;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 128px 128px;
   opacity: 0.03;
   mix-blend-mode: overlay;
+}
+@media (max-width: 768px) {
+  body::after {
+    display: none;
+  }
 }
 
 .skip-link {
