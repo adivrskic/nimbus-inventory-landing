@@ -119,7 +119,7 @@ The chat is the centerpiece of the repo. It runs in two surfaces — a slide-in 
 
 1. **Origin check** (production only) against an allowlist (`ALLOWED_HOSTS` + `*.netlify.app` + localhost).
 2. **Visitor resolution** via an httpOnly, sameSite cookie (`lib/chat/visitor.js`), so transcripts are scoped to a visitor without a full auth system.
-3. **Rate limiting** (`lib/chat/rate-limit.js`) — three layers: a 500ms minimum interval (in-memory), an hourly ceiling (40), and daily ceilings (200 messages / ~1M tokens). Fails **open** on DB error.
+3. **Rate limiting** (`lib/chat/rate-limit.js`) — four layers: a 500ms minimum interval (in-memory), a global daily token breaker across all visitors, per-visitor ceilings (40/hour, 200/day, ~1M tokens/day), and looser per-IP ceilings (so rotating the visitor cookie from one source still trips a cap). On a DB error it degrades to a small bounded per-process grace quota rather than failing **open**.
 4. **Conversation + message persistence** to Supabase (`chat_conversations`, `chat_messages`).
 5. **Canned-answer intercept** (`lib/chat/canned-answers.js`) — FAQ-style questions (pricing, "ai features", "vs fishbowl", and the literal starter buttons) are matched by exact key or tightly-anchored regex, then streamed back char-by-char so they're indistinguishable from a real AI response. Skips the Anthropic call entirely.
 6. **The agentic loop** (max 5 iterations) — `anthropic.messages.stream(...)` with the system prompt, tools, and trimmed history. Text deltas stream out as `text` events; tool calls are executed and fed back in.
@@ -233,7 +233,7 @@ There is exactly one Supabase client: `lib/supabase.js#getSupabaseAdmin()`, a mo
 
 ### Data tables
 
-`chat_conversations`, `chat_messages`, `chat_leads`, `chat_events`, `form_submissions`, and a visitor table backing rate limits. Two RPCs are used: `check_visitor_rate` (hourly/daily/token counts) and `increment_cta_count`.
+`chat_conversations`, `chat_messages`, `chat_leads`, `chat_events`, `form_submissions`, and a visitor table backing rate limits. Three RPCs are used: `check_rate` (per-IP form/feedback limiter), `check_chat_rate` (chat visitor/IP/global counts), and `increment_cta_count`.
 
 ### Providers (in `app/layout.js`, outermost → innermost)
 
@@ -247,7 +247,7 @@ The chat is the only streaming surface: SSE from `app/api/chat/route.js` (`runti
 
 ## SEO
 
-- **Root metadata** (`app/layout.js`) — `metadataBase`, a title template (`%s | Nautilus WMS`), keyword set, Open Graph + Twitter (`summary_large_image`, `/og-image.png`), full `robots` directives, and a canonical URL. `viewport.themeColor` is `#04091c`.
+- **Root metadata** (`app/layout.js`) — `metadataBase`, a title template (`%s | Nautilus Inventory`), keyword set, Open Graph + Twitter (`summary_large_image`, `/og-image.png`), full `robots` directives, and a canonical URL. `viewport.themeColor` is `#04091c`.
 - **Per-page metadata** — every route exports its own `metadata` (or `generateMetadata` for dynamic segments) with an **absolute** canonical URL. Keep canonicals absolute and consistent across all pages.
 - **Structured data** (`components/SEO/JsonLd.jsx`) — `orgSchema`, `softwareSchema` (carries `aggregateRating`), and `websiteSchema` (with a `SearchAction` pointing at `/ask`) are emitted on the home page. Per-page schemas (FAQPage, Article, BreadcrumbList) live on their own routes.
 - **Sitemap** (`app/sitemap.js`) — generated dynamically: static pages plus one entry per integration, industry, comparison, blog post, help article, and legal page, each with a tuned priority/change-frequency.
@@ -347,7 +347,7 @@ lib/
     ├── knowledge-base.js      # Assembled KB string (keep in sync with pricing/features)
     ├── tool-handlers.js      # get_calendly_link, draft_email, capture_lead, propose_cta
     ├── canned-answers.js     # FAQ intercept
-    ├── rate-limit.js         # 3-layer chat rate limiting
+    ├── rate-limit.js         # Layered chat rate limiting
     └── visitor.js            # httpOnly visitor cookie + IP hashing
 ```
 
@@ -418,6 +418,6 @@ Netlify, with the standard Next.js plugin.
 - **The knowledge base goes stale silently.** `lib/chat/knowledge-base.js` hand-mirrors pricing and features. Change the pricing page without updating it and the bot quotes the old price with total confidence. Same for the data modules feeding it.
 - **The sitemap is hand-maintained at the top level.** Adding a top-level route to `Nav` without adding it to `app/sitemap.js` ships an unindexed page. Re-enabling `/trust` etc. means touching both.
 - **Index client wrappers are deliberately dumb.** Don't move `metadata` into them, don't let them render `Nav`/`<main>`, don't self-import. The header comments spell out exactly what belongs where — read them before editing.
-- **Rate limiting fails open.** If the Supabase RPC errors, chat requests are allowed through rather than blocked. Fine for v1; revisit if you see abuse exploiting a DB outage.
+- **Rate limiting degrades to a bounded fallback, not open.** If a rate-limit RPC errors, both the chat limiter (`lib/chat/rate-limit.js`) and the form limiter (`lib/rateLimit.js`) fall back to a small per-process in-memory cap — bounded, lost on deploy, not shared across instances. It's a backstop; the DB-backed RPCs are the primary control.
 - **Visitor isolation is just a `where` clause.** With no RLS, every chat/history query is scoped only by the explicit `visitor_id` filter. Drop it and you leak transcripts across visitors.
 - **No test suite.** Validate changes against the dev server manually.
