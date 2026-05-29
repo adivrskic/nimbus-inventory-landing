@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import SplitText from "@/components/shared/SplitText";
@@ -285,6 +286,34 @@ export default function CalculatorClient() {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
+
+    /* Reduced motion: skip the intro choreography and jump every animated
+       element straight to its final, visible state. Without this, hero
+       letters + section reveals would still animate on load for users who
+       asked the OS for reduced motion. SplitText already renders an sr-only
+       flat headline, so screen readers are unaffected either way. */
+    if (prefersReducedMotion()) {
+      gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
+        opacity: 1,
+        y: "0%",
+        rotateX: 0,
+      });
+      gsap.set(
+        heroRef.current.querySelectorAll(
+          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.story}`
+        ),
+        { opacity: 1, y: 0 }
+      );
+      if (pageRef.current) {
+        gsap.set(
+          pageRef.current.querySelectorAll(
+            `.${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
+          ),
+          { opacity: 1, x: 0, y: 0 }
+        );
+      }
+      return;
+    }
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 

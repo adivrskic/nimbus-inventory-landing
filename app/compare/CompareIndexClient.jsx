@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
@@ -42,6 +43,23 @@ export default function CompareIndexClient() {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current || !pageRef.current) return;
+
+    /* Reduced motion: jump hero + grid straight to visible, skip the
+       choreography. SplitText keeps the sr-only flat headline. */
+    if (prefersReducedMotion()) {
+      gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
+        opacity: 1,
+        y: "0%",
+        rotateX: 0,
+      });
+      gsap.set(
+        pageRef.current.querySelectorAll(
+          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.card}`
+        ),
+        { opacity: 1, y: 0 }
+      );
+      return;
+    }
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 

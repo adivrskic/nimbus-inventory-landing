@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
@@ -318,6 +319,32 @@ export default function ContactClient() {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
+
+    /* Reduced motion: jump every animated element to its final state and
+       skip the intro choreography + gated reveals. SplitText keeps the
+       sr-only flat headline, so screen readers are unaffected. */
+    if (prefersReducedMotion()) {
+      gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
+        opacity: 1,
+        y: "0%",
+        rotateX: 0,
+      });
+      gsap.set(
+        heroRef.current.querySelectorAll(
+          `.${styles.heroEyebrow}, .${styles.heroSub}`
+        ),
+        { opacity: 1, y: 0 }
+      );
+      if (pageRef.current) {
+        gsap.set(
+          pageRef.current.querySelectorAll(
+            `.${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.formGrid}`
+          ),
+          { opacity: 1, x: 0, y: 0 }
+        );
+      }
+      return;
+    }
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 

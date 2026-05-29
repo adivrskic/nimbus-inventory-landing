@@ -341,7 +341,7 @@ function DebugPanel({ uniformsRef, motionRef }) {
     try {
       await navigator.clipboard.writeText(cfg);
     } catch {
-      console.log(cfg);
+      /* clipboard blocked — dev-only tool, nothing to surface */
     }
   };
 
@@ -527,6 +527,7 @@ export default function AISection() {
 
   const [debug, setDebug] = useState(false);
   useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
     setDebug(new URLSearchParams(window.location.search).has("debug"));
   }, []);
 

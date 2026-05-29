@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/gsap";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -98,6 +99,19 @@ export default function CompareClient({ slug }) {
     const rafId = requestAnimationFrame(resetScroll);
 
     if (!competitor || !pageRef.current) {
+      return () => cancelAnimationFrame(rafId);
+    }
+
+    /* Reduced motion: jump every animated element to its final state and
+       skip the intro choreography + gated reveals. Still cancels the
+       scroll-reset rAF on cleanup. SplitText keeps the sr-only headline. */
+    if (prefersReducedMotion()) {
+      gsap.set(
+        pageRef.current.querySelectorAll(
+          `.${styles.heroLetter}, .${styles.heroIndex}, .${styles.markBrand}, .${styles.markVs}, .${styles.markCompetitor}, .${styles.heroDesc}, .${styles.heroCTA}, .${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}, .${styles.crossCard}`
+        ),
+        { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0 }
+      );
       return () => cancelAnimationFrame(rafId);
     }
 
