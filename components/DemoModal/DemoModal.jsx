@@ -19,6 +19,12 @@ import styles from "./DemoModal.module.css";
    agenda items — all swappable elements cross-fade together when the
    topic changes.
 
+   On mobile the left column collapses to a top bar: the topic buttons
+   render icon-only in a single 4-up row (no horizontal scroll) and the
+   selected topic's name is surfaced beneath them via .topicSelected.
+   The buttons carry an aria-label so hiding the inline name on mobile
+   doesn't strip their accessible name.
+
    API contract is unchanged — POST /api/demo with the same form +
    topic + topicLabel payload. DemoContext, validation, and API route
    work as-is.
@@ -398,6 +404,9 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   }, [isOpen, initialTopic]);
 
   const topic = getTopic(topicKey);
+  /* Icon for the currently-selected topic — used by the mobile-only
+     .topicSelected header, where the topic buttons render icon-only. */
+  const TopicIcon = TOPIC_ICONS[topic.key];
 
   /* Calendly URL with topic carried as utm_content */
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || "";
@@ -839,6 +848,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                           type="button"
                           role="radio"
                           aria-checked={active}
+                          aria-label={t.chip}
                           onClick={() => setTopicKey(t.key)}
                           className={`${styles.topicItem} ${
                             active ? styles.topicItemActive : ""
@@ -853,6 +863,21 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                     );
                   })}
                 </ul>
+
+                {/* Mobile-only header. The topic buttons render icon-only on
+                    small screens, so this mirrors the active choice in text.
+                    aria-hidden because the selected radio already conveys it
+                    (aria-checked + aria-label). */}
+                <div
+                  className={`${styles.topicSelected} ${styles.topicSwap}`}
+                  key={`sel-${topicKey}`}
+                  aria-hidden="true"
+                >
+                  <span className={styles.topicSelectedIcon}>
+                    <TopicIcon />
+                  </span>
+                  <span className={styles.topicSelectedName}>{topic.chip}</span>
+                </div>
               </div>
 
               <div

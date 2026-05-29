@@ -1,20 +1,29 @@
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-   DemoModal тАФ two-column, integrated left panel
-   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-   LEFT (220px)   Topic selector + agenda. Same panel surface as center
+/* ═══════════════════════════════════════════════════════════════════════
+   DemoModal — two-column, integrated left panel
+   ───────────────────────────────────────────────────────────────────────
+   LEFT (270px)   Topic selector + agenda. Same panel surface as center
                   (NO separate gradient), separated only by a hairline
-                  border-right. Reads as part of the modal, not as a
-                  sidebar attached to it.
+                  border-right.
 
-   CENTER (1fr)   Form column, gets the breathing room from the dropped
-                  right column.
-
-   Modal max-width is 1040px тАФ a bit wider than the original 1100px
-   feel but with the form occupying most of it now.
+   CENTER (1fr)   Form column.
 
    Sharp corners throughout. All swappable elements wrap in .topicSwap
    so they cross-fade together when the topic changes.
-   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+
+   ── Mobile topic bar ──
+   On phones the left column collapses to a top bar. The topic buttons
+   render as a single row of icon-only tiles (a 4-up grid — no horizontal
+   scroll), and the selected topic's name is surfaced beneath them via the
+   .topicSelected header. The buttons carry an aria-label in JSX so hiding
+   the inline name doesn't strip their accessible name.
+
+   ── Mobile overflow rules ──
+   The panel must never exceed the screen width:
+     · width: 100% (NOT 100vw — 100vw includes the scrollbar gutter).
+     · grid columns use minmax(0, …) so a wide child shrinks the track.
+     · min-width: 0 on text-bearing flex/grid children so text wraps.
+     · overflow-x: hidden on backdrop + panel as a final backstop.
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .backdrop {
   position: fixed;
@@ -37,10 +46,6 @@
   grid-template-columns: 270px minmax(0, 1fr);
   width: 100%;
   max-width: 1040px;
-  /* Modal expands to fit its content. Capped at viewport height with a
-       fallback scroll only if content ever overflows тАФ under normal
-       conditions both columns sit at their natural heights and the modal
-       is one continuous panel. */
   max-height: calc(100vh - 64px);
   background: rgba(6, 18, 36, 0.92);
   border: 1px solid rgba(160, 200, 235, 0.12);
@@ -50,9 +55,10 @@
   transform: scale(0.96);
   cursor: default;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
-/* тФАтФАтФА Decorative gold corner brackets тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Decorative gold corner brackets ─────────────────────────────── */
 .cornerBracket {
   position: absolute;
   width: 18px;
@@ -73,7 +79,7 @@
   border-right: 1.5px solid var(--accent);
 }
 
-/* тФАтФАтФА Close button тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Close button ────────────────────────────────────────────────── */
 .closeBtn {
   position: absolute;
   top: 16px;
@@ -97,18 +103,16 @@
   color: var(--white);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       LEFT COLUMN тАФ topic selector + agenda
-       тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-       No separate bg. Just a hairline border-right. Reads as a column of
-       the modal, not a separate sidebar.
-       тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         LEFT COLUMN — topic selector + agenda
+     ═══════════════════════════════════════════════════════════════════════ */
 .leftCol {
   display: flex;
   flex-direction: column;
   gap: 28px;
   padding: 32px 22px 28px;
   border-right: 1px solid rgba(160, 200, 235, 0.08);
+  min-width: 0;
 }
 .logoMark {
   display: flex;
@@ -127,6 +131,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
 .eyebrow {
@@ -138,7 +143,7 @@
   color: var(--text-muted);
 }
 
-/* Topic list тАФ compact vertical, icon + name only */
+/* Topic list — compact vertical, icon + name (desktop) */
 .topicList {
   list-style: none;
   padding: 0;
@@ -191,6 +196,7 @@
   letter-spacing: 0.2px;
   color: var(--text-secondary);
   transition: color 0.18s;
+  white-space: nowrap;
 }
 .topicItem:hover .topicName {
   color: var(--white);
@@ -199,7 +205,31 @@
   color: var(--accent);
 }
 
-/* Agenda list тАФ quiet, no card treatment */
+/* Selected-topic header — hidden on desktop (the inline names cover it),
+     shown on mobile beneath the icon-only row. */
+.topicSelected {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  margin-top: 2px;
+}
+.topicSelectedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.topicSelectedName {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--white);
+  min-width: 0;
+}
+
+/* Agenda list — quiet, no card treatment */
 .agendaList {
   list-style: none;
   padding: 0;
@@ -210,7 +240,7 @@
 }
 .agendaItem {
   display: grid;
-  grid-template-columns: 8px 1fr;
+  grid-template-columns: 8px minmax(0, 1fr);
   gap: 10px;
   align-items: start;
   font-family: var(--display);
@@ -228,15 +258,17 @@
 }
 .agendaItemText {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       CENTER COLUMN тАФ form
-       тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         CENTER COLUMN — form
+     ═══════════════════════════════════════════════════════════════════════ */
 .centerCol {
   display: flex;
   flex-direction: column;
   padding: 48px 44px 36px;
+  min-width: 0;
 }
 
 .formHeader {
@@ -259,10 +291,10 @@
   max-width: 520px;
 }
 
-/* тФАтФАтФА Calendly express card тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Calendly express card ───────────────────────────────────────── */
 .calendlyCard {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
   padding: 16px 18px;
@@ -287,11 +319,13 @@
   background: rgb(var(--accent-rgb) / 0.14);
   border: 1px solid rgb(var(--accent-rgb) / 0.4);
   color: var(--accent);
+  flex-shrink: 0;
 }
 .calendlyCardText {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
 }
 .calendlyCardTitle {
   font-family: var(--display);
@@ -316,7 +350,7 @@
   transform: translateX(3px);
 }
 
-/* тФАтФАтФА Form divider тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Form divider ────────────────────────────────────────────────── */
 .formDivider {
   display: flex;
   align-items: center;
@@ -338,10 +372,11 @@
   color: var(--text-muted);
 }
 
-/* тФАтФАтФА Form fields тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Form fields ─────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .honeypot {
@@ -354,6 +389,7 @@
 
 .fieldGroup {
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 .fieldShell {
@@ -394,6 +430,7 @@
   font-size: 13px;
   outline: none;
   caret-color: var(--accent);
+  box-sizing: border-box;
 }
 .fieldInput:disabled {
   opacity: 0.5;
@@ -494,6 +531,7 @@
   font-size: 10px;
   color: var(--text-muted);
   flex: 1;
+  min-width: 0;
 }
 .charCount {
   font-family: var(--mono);
@@ -521,7 +559,7 @@
   color: rgb(252, 165, 165);
 }
 
-/* тФАтФАтФА Submit button тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ─── Submit button ───────────────────────────────────────────────── */
 .submitBtn {
   position: relative;
   width: 100%;
@@ -537,6 +575,7 @@
   cursor: pointer;
   transition: background 0.25s, color 0.25s, border-color 0.25s;
   margin-top: 8px;
+  box-sizing: border-box;
 }
 .submitBtn:not(:disabled):hover {
   background: var(--accent-bright);
@@ -574,9 +613,9 @@
   }
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       SUCCESS VIEW
-       тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         SUCCESS VIEW
+     ═══════════════════════════════════════════════════════════════════════ */
 .successWrap {
   grid-column: 1 / -1;
   display: flex;
@@ -586,6 +625,7 @@
   padding: 80px 48px;
   max-width: 520px;
   margin: 0 auto;
+  min-width: 0;
 }
 .successIcon {
   width: 64px;
@@ -676,20 +716,22 @@
   .backdrop {
     padding: 0;
     align-items: stretch; /* don't center a sheet taller than the viewport */
+    overflow: hidden; /* final backstop: nothing escapes the viewport box */
   }
   .panel {
-    grid-template-columns: 1fr;
-    width: 100vw;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%; /* NOT 100vw — avoids scrollbar-gutter overshoot */
+    max-width: 100%;
     height: 100vh;
-    height: 100dvh; /* dvh tracks the *visible* viewport as the toolbar moves */
-    max-width: none;
-    max-height: none; /* was inheriting calc(100vh - 64px) — clipped the sheet */
+    height: 100dvh;
+    max-height: none;
     border: none;
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
   .closeBtn {
-    top: calc(12px + env(safe-area-inset-top, 0px)); /* clear the notch */
+    top: calc(12px + env(safe-area-inset-top, 0px));
     right: calc(12px + env(safe-area-inset-right, 0px));
   }
   .leftCol {
@@ -698,26 +740,39 @@
     padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 18px;
     gap: 18px;
   }
+
+  /* Topic bar: one row of icon-only tiles (4-up grid, no horizontal
+       scroll). The selected name moves to the .topicSelected header below. */
   .topicList {
-    flex-direction: row;
-    gap: 6px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 -20px;
-    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
   }
   .topicItem {
-    flex: 0 0 auto;
-    padding: 8px 14px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 12px 4px;
   }
+  .topicName {
+    display: none; /* aria-label on the button keeps the accessible name */
+  }
+  .topicSelected {
+    display: flex; /* surface the active topic's name in text */
+  }
+
   .leftSection + .leftSection {
-    display: none;
+    display: none; /* hide the agenda on mobile to keep the bar compact */
   }
   .centerCol {
-    padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px)); /* clear home indicator */
+    padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px));
   }
   .cornerBracket {
-    display: none; /* decorative brackets overlap the notch/edges on a full-bleed sheet */
+    display: none;
   }
   .formTitle {
     font-size: 22px;
@@ -726,7 +781,7 @@
     padding: 60px 24px;
   }
 
-  /* Same iOS focus-zoom fix as the chat — the form inputs are under 16px. */
+  /* iOS focus-zoom fix — inputs are under 16px otherwise. */
   .fieldInput,
   .fieldTextarea {
     font-size: 16px;
