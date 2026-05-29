@@ -11,18 +11,6 @@ export default function LenisProvider({ children }) {
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
 
-    /**
-     * Skip smooth scroll for:
-     *   1. Reduced-motion users — native scroll is more accessible.
-     *   2. Touch / coarse-pointer devices — Lenis's syncTouch fought the
-     *      browser's own inertia and read as laggy on phones/tablets.
-     *      Native momentum scroll is smoother and far lighter on mobile
-     *      GPUs/battery. Every window.__lenis consumer already falls back
-     *      to native scroll when __lenis is null, so this is safe.
-     *
-     * matchMedia at mount is fine here — device class (touch vs pointer)
-     * effectively never changes mid-session.
-     */
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
@@ -32,8 +20,6 @@ export default function LenisProvider({ children }) {
 
     if (reduceMotion || isTouch) return;
 
-    /* smoothWheel only — touch is handled natively now, so the syncTouch
-       family of options is gone. */
     const lenis = new Lenis({
       lerp: 0.06,
       smoothWheel: true,
