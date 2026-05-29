@@ -14,7 +14,11 @@ import {
 import { vertexShader, fragmentShader } from "@/lib/shaders";
 import styles from "./AISection.module.css";
 
+/* Desktop particle budget. Mobile uses a reduced count chosen at init
+   (see COUNT inside the WebGL effect) so the per-frame physics loop —
+   which is O(particles) on the main thread — stays light on phones. */
 const PARTICLE_COUNT = 50000;
+const PARTICLE_COUNT_MOBILE = 22000;
 const OFFSET = 5.5;
 const TO_RAD = Math.PI / 180;
 
@@ -234,6 +238,13 @@ function animProgress(p) {
 
 /* ─────────────────────────────────────────────────────────────────────
    SCRAMBLE TEXT RENDERER
+
+   Renders one inline-block <span> per character so the RAF scramble loop
+   can drive each letter's textContent + opacity independently. This is
+   purely decorative — the real, readable copy is emitted alongside it as
+   an .srOnly node and this whole tree is wrapped in aria-hidden by the
+   caller, so screen readers and crawlers get clean text while sighted
+   users get the scramble-in effect.
    ───────────────────────────────────────────────────────────────────── */
 function renderScramble(text, keyPrefix = "") {
   const parts = text.split(/(\s+)/);
@@ -255,7 +266,7 @@ function renderScramble(text, keyPrefix = "") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   DEBUG PANEL — depth + motion + orbit
+   DEBUG PANEL — depth + motion + orbit  (dev-only; see `debug` gate below)
    ═══════════════════════════════════════════════════════════════════════ */
 const DEPTH_DEFAULTS = {
   near: 11,
@@ -521,6 +532,17 @@ export default function AISection() {
     pausedRef.current = paused;
   }, [paused]);
 
+  /* prefers-reduced-motion gate for the *ambient* motion (jitter, field
+     orbit, pointer parallax). The scroll-driven formation itself is
+     user-initiated and stays on — we only suppress the autonomous churn
+     that motion-sensitive users shouldn't get. */
+  const reducedRef = useRef(false);
+  /* Desktop pointer parallax. pointerRef is the raw target (-1..1 from
+     viewport center); pointerSmoothRef is the eased value the animate
+     loop reads so the shape glides toward the cursor instead of snapping. */
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const pointerSmoothRef = useRef({ x: 0, y: 0 });
+
   const rebuildShapesRef = useRef(null);
   const uniformsRef = useRef(null);
   const motionRef = useRef({ ...MOTION_DEFAULTS });
@@ -529,6 +551,34 @@ export default function AISection() {
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     setDebug(new URLSearchParams(window.location.search).has("debug"));
+  }, []);
+
+  /* Reduced-motion media query + desktop pointer tracking. Both write to
+     refs (no React state) so they never trigger a re-render; the WebGL
+     loop samples them each frame. */
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const applyMQ = () => {
+      reducedRef.current = mq.matches;
+      if (mq.matches) {
+        pointerRef.current.x = 0;
+        pointerRef.current.y = 0;
+      }
+    };
+    applyMQ();
+    mq.addEventListener?.("change", applyMQ);
+
+    const onPointer = (e) => {
+      if (reducedRef.current || window.innerWidth < 768) return;
+      pointerRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerRef.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("pointermove", onPointer, { passive: true });
+
+    return () => {
+      mq.removeEventListener?.("change", applyMQ);
+      window.removeEventListener("pointermove", onPointer);
+    };
   }, []);
 
   useEffect(() => {
@@ -758,6 +808,15 @@ export default function AISection() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    /* Particle budget chosen once, from the initial viewport. The
+       physics loop below is O(COUNT) on the main thread every frame, so
+       a phone running 50k is the section's biggest INP risk — mobile
+       gets a lighter cloud. Every buffer + geometry attribute is sized
+       to COUNT so the count stays internally consistent; a later
+       mobile↔desktop resize re-poses the shapes at the same count. */
+    const COUNT =
+      window.innerWidth < 768 ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT;
+
     let cleanup = () => {};
     let frameId;
 
@@ -770,7 +829,6 @@ export default function AISection() {
         antialias: true,
         powerPreference: "high-performance",
       });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 0);
 
       const scene = new THREE.Scene();
@@ -784,9 +842,15 @@ export default function AISection() {
       const resize = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
+        const mobile = w < 768;
+        /* Cap DPR lower on mobile — at 50k→22k particles the fragment
+           cost of a 3× retina buffer is wasted on a section that reads
+           fine at 1.5×. */
+        renderer.setPixelRatio(
+          Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2)
+        );
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
-        const mobile = w < 768;
         camera.position.z = mobile ? CFG.camZMobile : CFG.camZ;
         camera.updateProjectionMatrix();
 
@@ -799,7 +863,7 @@ export default function AISection() {
       resize();
       window.addEventListener("resize", resize);
 
-      const scattered = generateScattered(PARTICLE_COUNT);
+      const scattered = generateScattered(COUNT);
       const shapes = [null, null, null, null];
 
       /* Per-scene per-particle phase buffers, written by each scene's
@@ -809,10 +873,10 @@ export default function AISection() {
          -1 (== "no pulse") so a generator that hasn't been updated to
          return phases degrades to no-op rather than misfiring. */
       const phaseBuffers = {
-        voice: new Float32Array(PARTICLE_COUNT),
-        spatial: new Float32Array(PARTICLE_COUNT),
-        search: new Float32Array(PARTICLE_COUNT),
-        chart: new Float32Array(PARTICLE_COUNT),
+        voice: new Float32Array(COUNT),
+        spatial: new Float32Array(COUNT),
+        search: new Float32Array(COUNT),
+        chart: new Float32Array(COUNT),
       };
       phaseBuffers.voice.fill(-1);
       phaseBuffers.spatial.fill(-1);
@@ -828,7 +892,7 @@ export default function AISection() {
         const params = sec[mode];
         const fn = SHAPE_GENERATORS[sec.gen];
 
-        const result = fn(PARTICLE_COUNT, 0, 0, 0);
+        const result = fn(COUNT, 0, 0, 0);
 
         /* Scenes that drive a shader pulse return { positions, phases };
            other generators return a plain Float32Array. Normalize and
@@ -880,10 +944,10 @@ export default function AISection() {
       rebuildShapes();
       rebuildShapesRef.current = rebuildShapes;
 
-      const physicsPos = new Float32Array(PARTICLE_COUNT * 3);
-      for (let i = 0; i < PARTICLE_COUNT * 3; i++) physicsPos[i] = scattered[i];
-      const currentPos = new Float32Array(PARTICLE_COUNT * 3);
-      const physicsVel = new Float32Array(PARTICLE_COUNT * 3);
+      const physicsPos = new Float32Array(COUNT * 3);
+      for (let i = 0; i < COUNT * 3; i++) physicsPos[i] = scattered[i];
+      const currentPos = new Float32Array(COUNT * 3);
+      const physicsVel = new Float32Array(COUNT * 3);
 
       geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
@@ -891,10 +955,10 @@ export default function AISection() {
         new THREE.BufferAttribute(currentPos, 3)
       );
 
-      const baseSizes = new Float32Array(PARTICLE_COUNT);
+      const baseSizes = new Float32Array(COUNT);
       const mobileInit = window.innerWidth < 768;
       const sizeScale = mobileInit ? 1.6 : 1.25;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
+      for (let i = 0; i < COUNT; i++) {
         baseSizes[i] = (0.7 + Math.random() * 1.2) * sizeScale;
       }
       geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
@@ -921,8 +985,8 @@ export default function AISection() {
         new THREE.BufferAttribute(phaseBuffers.chart, 1)
       );
 
-      const seeds = new Float32Array(PARTICLE_COUNT * 3);
-      for (let i = 0; i < PARTICLE_COUNT * 3; i++) seeds[i] = Math.random();
+      const seeds = new Float32Array(COUNT * 3);
+      for (let i = 0; i < COUNT * 3; i++) seeds[i] = Math.random();
 
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -987,6 +1051,15 @@ export default function AISection() {
 
         const t = performance.now() * 0.001;
         const s = stateRef.current;
+        const reduced = reducedRef.current;
+
+        /* Ease the pointer toward its raw target so parallax glides. When
+           reduced-motion is on, the target is pinned to (0,0) so this
+           decays to center and contributes nothing. */
+        const ptT = pointerRef.current;
+        const ptS = pointerSmoothRef.current;
+        ptS.x += (ptT.x - ptS.x) * 0.05;
+        ptS.y += (ptT.y - ptS.y) * 0.05;
 
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
@@ -1028,8 +1101,17 @@ export default function AISection() {
         const rotXDeg = paramsA.rotX * blendInv + paramsB.rotX * blend;
         const rotYDeg = paramsA.rotY * blendInv + paramsB.rotY * blend;
         const rotZDeg = paramsA.rotZ * blendInv + paramsB.rotZ * blend;
-        const rotX = rotXDeg * TO_RAD;
-        const rotY = rotYDeg * TO_RAD;
+
+        const mot = motionRef.current;
+
+        /* Pointer parallax: the formed shape tilts a few degrees toward
+           the cursor. Scaled by sFormation so it only expresses on a
+           formed shape (a scattered cloud shouldn't swivel), and zeroed
+           under reduced-motion. Added in radians on top of the section's
+           static pose before the rotation matrix is built. */
+        const tilt = reduced ? 0 : sFormation * 0.1;
+        const rotX = rotXDeg * TO_RAD + ptS.y * tilt;
+        const rotY = rotYDeg * TO_RAD + ptS.x * tilt;
         const rotZ = rotZDeg * TO_RAD;
 
         const cX = Math.cos(rotX),
@@ -1070,30 +1152,31 @@ export default function AISection() {
         const offX = offXA * blendInv + offXB * blend;
         const offY = offYA * blendInv + offYB * blend;
 
-        const mot = motionRef.current;
         const k = mot.stiffness;
         const damp = mot.damping;
-        const jb = mot.jitterAmp;
+        /* Jitter amplitude + field-orbit are the ambient motion — both
+           suppressed under reduced-motion (jb = 0 makes the jitter term
+           vanish; yaw/pitch = 0 freezes the orbit). */
+        const jb = reduced ? 0 : mot.jitterAmp;
         const jf = mot.jitterFreq;
 
-        /* Orbit only expresses itself on a FORMED shape. Scaling the
-           angle by sFormation means that when particles are scattered
-           between blocks (sFormation → 0) there is zero orbit rotation —
-           the loose cloud just drifts via jitter instead of tumbling
-           around the shape's center point, which is what read as a jerky
-           "rotate around a point" during the scatter. As a shape forms
-           (sFormation → 1) the orbit eases back in at full strength, so
-           the intended "field orbits the static shape" effect is
-           preserved exactly where it belongs. */
+        /* Field orbit — REVIVED. The scattered field rotates around the
+           active shape's center, scaled by sFormation so a loose cloud
+           between blocks doesn't tumble around a point (that scaling is
+           what stops the old jerky "rotate around nothing" read). As a
+           shape forms (sFormation → 1) the orbit eases back to full
+           strength via motionRef.orbitYaw/orbitPitch, delivering the
+           intended "field orbits the static shape" effect. Previously
+           hardcoded to 0, so none of this expressed at all. */
         const orbitT = (animP - 0.5) * 2 * sFormation;
-        const yaw = 0;
-        const pitch = 0;
+        const yaw = reduced ? 0 : orbitT * mot.orbitYaw;
+        const pitch = reduced ? 0 : orbitT * mot.orbitPitch;
         const cosY = Math.cos(yaw);
         const sinY = Math.sin(yaw);
         const cosP = Math.cos(pitch);
         const sinP = Math.sin(pitch);
 
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
+        for (let i = 0; i < COUNT; i++) {
           const i3 = i * 3;
 
           /* Blend the particle's target position between shape A and
@@ -1106,7 +1189,7 @@ export default function AISection() {
           let py = shapeA[i3 + 1] * blendInv + shapeB[i3 + 1] * blend;
           let pz = shapeA[i3 + 2] * blendInv + shapeB[i3 + 2] * blend;
 
-          /* Rotate shape — fixed pose every frame */
+          /* Rotate shape — fixed pose (+ pointer tilt) every frame */
           const py1 = py * cX - pz * sX;
           const pz1 = py * sX + pz * cX;
           py = py1;
@@ -1226,6 +1309,11 @@ export default function AISection() {
 
   return (
     <section ref={sectionRef} id="ai-engine" className={styles.section}>
+      {/* Real section landmark for screen readers + crawlers. The visible
+          headings below are decorative scramble spans (aria-hidden), so
+          this is what conveys the section's purpose in the a11y tree. */}
+      <h2 className={styles.srOnly}>Inside the Nautilus AI engine</h2>
+
       <div className={styles.canvasWrap}>
         <canvas ref={canvasRef} aria-hidden="true" />
       </div>
@@ -1263,14 +1351,26 @@ export default function AISection() {
                   ))}
                 </div>
 
+                {/* Each heading carries the real text in an .srOnly node
+                    (read by SR / indexed by crawlers) plus the decorative
+                    scramble tree wrapped in aria-hidden. */}
                 <div className={styles.cardEyebrow}>
-                  {renderScramble(sec.badge, `${sec.key}-eyebrow`)}
+                  <span className={styles.srOnly}>{sec.badge}</span>
+                  <span aria-hidden="true">
+                    {renderScramble(sec.badge, `${sec.key}-eyebrow`)}
+                  </span>
                 </div>
                 <h3 className={styles.cardTitle}>
-                  {renderScramble(sec.title, `${sec.key}-title`)}
+                  <span className={styles.srOnly}>{sec.title}</span>
+                  <span aria-hidden="true">
+                    {renderScramble(sec.title, `${sec.key}-title`)}
+                  </span>
                 </h3>
                 <p className={styles.cardDesc}>
-                  {renderScramble(sec.desc, `${sec.key}-desc`)}
+                  <span className={styles.srOnly}>{sec.desc}</span>
+                  <span aria-hidden="true">
+                    {renderScramble(sec.desc, `${sec.key}-desc`)}
+                  </span>
                 </p>
               </div>
             ))}

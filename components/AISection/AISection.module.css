@@ -5,6 +5,24 @@
   margin-bottom: -150vh; /* restored — original value, drives the section's scroll length */
   /* overflow: hidden REMOVED — was clipping the canvas and breaking sticky behavior */
 }
+
+/* ── Screen-reader-only utility ──
+   Visually hidden but exposed to assistive tech + crawlers. Used for the
+   section's real <h2> and the real eyebrow/title/desc text that sits
+   behind the decorative (aria-hidden) scramble spans. Standard
+   clip-rect technique; does not affect layout. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .canvasWrap {
   position: sticky;
   top: 0;
@@ -169,6 +187,13 @@
 .sideTick:hover {
   background: var(--accent);
 }
+/* Keyboard focus affordance — the ticks are real buttons (jump-to-block)
+   but had no visible focus state. Gold ring matches the site's accent
+   without rounding the sharp-corner vocabulary. */
+.sideTick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
 
 /* ── Scramble char span ──
    Each letter is its own inline-block so the RAF loop can drive its
@@ -204,6 +229,9 @@
   letter-spacing: -1.5px;
   color: var(--white);
   margin: 0 0 18px;
+  /* The title floats over the live particle field; a soft dark glow
+     keeps it legible against bright clusters without a visible plate. */
+  text-shadow: 0 1px 28px rgba(2, 9, 28, 0.55);
 }
 .cardDesc {
   font-family: var(--display);
@@ -212,6 +240,7 @@
   font-weight: 400;
   color: rgba(180, 205, 230, 0.65);
   margin: 0;
+  text-shadow: 0 1px 18px rgba(2, 9, 28, 0.45);
 }
 
 /* ── Invisible scroll spacers ── */
@@ -224,7 +253,7 @@
   min-height: 150vh; /* restored — original value */
 }
 /* ═══════════════════════════════════════════════════════════════════════
-   DEBUG PANEL — only mounted when ?debug is in the URL
+   DEBUG PANEL — only mounted when ?debug is in the URL (dev builds only)
    Fixed-position dark overlay. Sliders are native range inputs styled
    with appearance:none + custom thumb (gold square, no rounding to
    match the site's sharp-corner vocabulary).
@@ -566,5 +595,21 @@
   .dbgToggle {
     top: 72px;
     right: 12px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   REDUCED MOTION
+   The ambient particle motion (jitter / field orbit / pointer parallax)
+   is already suppressed in JS via prefers-reduced-motion. This is the
+   CSS backstop for the DOM-side transitions so the section settles
+   instantly rather than easing.
+   ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sideBar,
+  .sideFill,
+  .sideTick,
+  .scrambleChar {
+    transition: none;
   }
 }
