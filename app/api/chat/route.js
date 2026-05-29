@@ -25,9 +25,12 @@
 // is reused on the conversation row, so the per-IP counts the RPC reads are
 // consistent with what gets stored.
 //
-// ── Canned-answer intercept ──
-// Before opening the Anthropic stream, the user's message is checked
-// against matchCanned() in lib/chat/canned-answers.js. On a hit:
+// ── Canned-answer intercept (first turn only) ──
+// matchCanned() is consulted ONLY when the conversation is brand new (no
+// prior messages). On a follow-up turn, the message always goes to the model
+// so it has the full history — a canned answer can never clobber a question
+// that depends on earlier context ("what about for 3 of those?"). On a
+// first-turn hit:
 //   1. The canned text is streamed in small chunks via the same `text`
 //      SSE events used by the AI path (~250 chars/sec, indistinguishable
 //      from a real streaming response on the client side).
@@ -43,6 +46,20 @@
 // resolved the same way. The user message is still inserted before the
 // match check, so abuse-pattern detection (high-volume same-input
 // probes) sees these calls too.
+//
+// ── Transient-error retry ──
+// streamClaudeTurn() retries a single time on a transient Anthropic error
+// (5xx / 529 overloaded / connection drop) — but ONLY if nothing has been
+// streamed to the client yet for that turn. Once any text or tool_start has
+// gone out, a retry would duplicate visible output, so we let the error
+// bubble to the outer handler instead. Retries cost nothing extra: we only
+// re-issue a request that already failed before producing output.
+//
+// ── Tiered model ──
+// pickModel() (claude-config.js) picks the faster/cheaper model for
+// confidently-simple help questions and the stronger model for anything
+// sales-y, comparative, or multi-step. The model is chosen once per user turn
+// and reused across any tool-use loop iterations of that turn.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
@@ -51,10 +68,10 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 import {
   SYSTEM_PROMPT,
   TOOLS,
-  CLAUDE_MODEL,
   MAX_TOKENS,
   buildMessagesArray,
   trimHistory,
+  pickModel,
 } from "@/lib/chat/claude-config";
 import { handleTool } from "@/lib/chat/tool-handlers";
 import { getOrCreateVisitor, getIp, hashIp } from "@/lib/chat/visitor";
@@ -78,6 +95,11 @@ const MESSAGE_MAX_LEN = 4000;
    not "clearly fake." */
 const CANNED_CHUNK_SIZE = 3;
 const CANNED_DELAY_MS = 12;
+
+/* How long to wait before the single transient-error retry. Short — the
+   point is to ride out a momentary blip, not to back off a sustained
+   outage (the bounded retry count handles that). */
+const RETRY_BACKOFF_MS = 400;
 
 /* Origin allowlist for production. Requests from any other origin get a
    403 before we touch Claude. Dev (NODE_ENV !== "production") skips this
@@ -107,6 +129,21 @@ function isAllowedOrigin(origin) {
   }
 }
 
+/* A transient error is one worth retrying once: server-side overload
+   (5xx incl. 529 overloaded_error) or a dropped/failed connection. A 4xx
+   (bad request, auth, our own 429) is a real problem a retry won't fix, so
+   we don't retry those. */
+function isTransientAnthropicError(err) {
+  const status = err?.status ?? err?.statusCode;
+  if (typeof status === "number" && status >= 500) return true;
+  const type = err?.error?.type || err?.type;
+  if (type === "overloaded_error" || type === "api_error") return true;
+  const name = err?.name || "";
+  if (name === "APIConnectionError" || name === "APIConnectionTimeoutError")
+    return true;
+  return false;
+}
+
 /* Stream a canned text string back through the SSE pipe. Splits into
    CANNED_CHUNK_SIZE chunks with CANNED_DELAY_MS between sends, so the
    client renders the same incremental typing effect it would for an
@@ -119,6 +156,120 @@ async function streamCannedText(text, send) {
       await new Promise((r) => setTimeout(r, CANNED_DELAY_MS));
     }
   }
+}
+
+/* Run ONE Claude turn: open the stream, forward text/tool deltas through
+   `send`, and accumulate the assistant text, tool calls, token usage, and
+   stop reason. Retries once on a transient error IF nothing has streamed to
+   the client yet (tracked by `emitted`) — otherwise a retry would duplicate
+   visible output, so the error is rethrown for the outer handler. Returns
+   the accumulated turn state. */
+async function streamClaudeTurn(messages, send, model) {
+  const MAX_ATTEMPTS = 2; // initial try + one retry
+  let lastErr;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let emitted = false; // true once anything user-visible has been sent
+    let assistantText = "";
+    const toolCalls = [];
+    let currentToolCall = null;
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cacheCreationTokens = 0;
+    let stopReason = null;
+
+    try {
+      const claudeStream = anthropic.messages.stream({
+        model,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        tools: TOOLS,
+        messages,
+      });
+
+      for await (const event of claudeStream) {
+        if (event.type === "message_start") {
+          const usage = event.message?.usage || {};
+          inputTokens = usage.input_tokens || 0;
+          cacheReadTokens = usage.cache_read_input_tokens || 0;
+          cacheCreationTokens = usage.cache_creation_input_tokens || 0;
+        } else if (event.type === "content_block_start") {
+          if (event.content_block.type === "tool_use") {
+            currentToolCall = {
+              id: event.content_block.id,
+              name: event.content_block.name,
+              inputJson: "",
+            };
+            emitted = true;
+            send("tool_start", { name: event.content_block.name });
+          }
+        } else if (event.type === "content_block_delta") {
+          if (event.delta.type === "text_delta") {
+            assistantText += event.delta.text;
+            emitted = true;
+            send("text", { text: event.delta.text });
+          } else if (
+            event.delta.type === "input_json_delta" &&
+            currentToolCall
+          ) {
+            currentToolCall.inputJson += event.delta.partial_json || "";
+          }
+        } else if (event.type === "content_block_stop") {
+          if (currentToolCall) {
+            let input = {};
+            try {
+              input = currentToolCall.inputJson
+                ? JSON.parse(currentToolCall.inputJson)
+                : {};
+            } catch {
+              console.error(
+                "[chat] Bad tool input JSON:",
+                currentToolCall.inputJson
+              );
+            }
+            toolCalls.push({
+              id: currentToolCall.id,
+              name: currentToolCall.name,
+              input,
+            });
+            currentToolCall = null;
+          }
+        } else if (event.type === "message_delta") {
+          if (event.delta?.stop_reason) stopReason = event.delta.stop_reason;
+          if (event.usage?.output_tokens)
+            outputTokens = event.usage.output_tokens;
+        }
+      }
+
+      return {
+        assistantText,
+        toolCalls,
+        inputTokens,
+        outputTokens,
+        cacheReadTokens,
+        cacheCreationTokens,
+        stopReason,
+      };
+    } catch (err) {
+      lastErr = err;
+      const canRetry =
+        !emitted && attempt < MAX_ATTEMPTS && isTransientAnthropicError(err);
+      if (canRetry) {
+        console.warn(
+          `[chat] transient Anthropic error (attempt ${attempt}/${MAX_ATTEMPTS}), retrying:`,
+          err?.status || err?.name || "unknown"
+        );
+        await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS));
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  /* Unreachable in practice — the loop either returns or throws — but keeps
+     the function total. */
+  throw lastErr;
 }
 
 export async function POST(request) {
@@ -183,7 +334,11 @@ export async function POST(request) {
   const userName = String(body.user_name || "").slice(0, 200) || null;
 
   // ── Resolve or create conversation ─────────────────────────────────────
+  // conversationExisted tracks whether this is a continuing conversation (it
+  // resolved to a row that already belongs to the visitor) vs. a brand-new
+  // one. It gates the canned-answer intercept to first turns only.
   let conversationId = body.conversation_id || null;
+  let conversationExisted = false;
   if (conversationId) {
     const { data: existing } = await supabase
       .from("chat_conversations")
@@ -191,7 +346,8 @@ export async function POST(request) {
       .eq("id", conversationId)
       .eq("visitor_id", visitorId)
       .maybeSingle();
-    if (!existing) conversationId = null;
+    if (existing) conversationExisted = true;
+    else conversationId = null;
   }
 
   if (!conversationId) {
@@ -227,12 +383,13 @@ export async function POST(request) {
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", conversationId);
 
-  // ── Canned-answer check ────────────────────────────────────────────────
-  // Done BEFORE fetching history because canned answers don't need it —
-  // they're keyed on the user's current message alone. If matched, the
-  // entire Anthropic path is skipped. If not matched, fall through to
-  // the normal flow which fetches history and runs the loop.
-  const canned = matchCanned(message);
+  // ── Canned-answer check (first turn only) ──────────────────────────────
+  // Skipped on continuing conversations so a canned answer can't clobber a
+  // context-dependent follow-up. On a new conversation there's no prior
+  // context to lose, and a canned hit lets us skip Anthropic entirely. Done
+  // BEFORE fetching history because a canned answer is keyed on the current
+  // message alone.
+  const canned = conversationExisted ? null : matchCanned(message);
 
   const { data: history } = canned
     ? { data: null }
@@ -306,6 +463,12 @@ export async function POST(request) {
         }
 
         // ── Standard AI path ──────────────────────────────────────────
+        /* Pick the model once for this whole user turn and reuse it across
+           any tool-use loop iterations. Simple help questions go to the
+           faster/cheaper model; anything sales-y, comparative, or multi-step
+           gets the stronger one. See pickModel() in claude-config.js. */
+        const model = pickModel(message);
+
         for (let loop = 0; loop < MAX_LOOPS; loop++) {
           /* Cap history to the last MAX_HISTORY_MESSAGES (default 60).
              trimHistory also enforces the user-message-first invariant
@@ -314,75 +477,19 @@ export async function POST(request) {
           const trimmed = trimHistory(workingHistory);
           const messages = buildMessagesArray(trimmed);
 
-          const claudeStream = anthropic.messages.stream({
-            model: CLAUDE_MODEL,
-            max_tokens: MAX_TOKENS,
-            system: SYSTEM_PROMPT,
-            tools: TOOLS,
-            messages,
-          });
+          /* streamClaudeTurn forwards text/tool deltas through `send` as
+             they arrive and retries once on a transient pre-output error. */
+          const {
+            assistantText: turnText,
+            toolCalls,
+            inputTokens,
+            outputTokens,
+            cacheReadTokens,
+            cacheCreationTokens,
+            stopReason,
+          } = await streamClaudeTurn(messages, send, model);
 
-          let assistantText = "";
-          const toolCalls = [];
-          let currentToolCall = null;
-          let inputTokens = 0;
-          let outputTokens = 0;
-          let cacheReadTokens = 0;
-          let cacheCreationTokens = 0;
-          let stopReason = null;
-
-          for await (const event of claudeStream) {
-            if (event.type === "message_start") {
-              const usage = event.message?.usage || {};
-              inputTokens = usage.input_tokens || 0;
-              cacheReadTokens = usage.cache_read_input_tokens || 0;
-              cacheCreationTokens = usage.cache_creation_input_tokens || 0;
-            } else if (event.type === "content_block_start") {
-              if (event.content_block.type === "tool_use") {
-                currentToolCall = {
-                  id: event.content_block.id,
-                  name: event.content_block.name,
-                  inputJson: "",
-                };
-                send("tool_start", { name: event.content_block.name });
-              }
-            } else if (event.type === "content_block_delta") {
-              if (event.delta.type === "text_delta") {
-                assistantText += event.delta.text;
-                send("text", { text: event.delta.text });
-              } else if (
-                event.delta.type === "input_json_delta" &&
-                currentToolCall
-              ) {
-                currentToolCall.inputJson += event.delta.partial_json || "";
-              }
-            } else if (event.type === "content_block_stop") {
-              if (currentToolCall) {
-                let input = {};
-                try {
-                  input = currentToolCall.inputJson
-                    ? JSON.parse(currentToolCall.inputJson)
-                    : {};
-                } catch {
-                  console.error(
-                    "[chat] Bad tool input JSON:",
-                    currentToolCall.inputJson
-                  );
-                }
-                toolCalls.push({
-                  id: currentToolCall.id,
-                  name: currentToolCall.name,
-                  input,
-                });
-                currentToolCall = null;
-              }
-            } else if (event.type === "message_delta") {
-              if (event.delta?.stop_reason)
-                stopReason = event.delta.stop_reason;
-              if (event.usage?.output_tokens)
-                outputTokens = event.usage.output_tokens;
-            }
-          }
+          let assistantText = turnText;
 
           /* If Claude hit the per-response token cap, append a clear
              marker so:

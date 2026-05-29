@@ -12,7 +12,9 @@
 //
 // Events fired from this file:
 //   - chat_message_sent      at the top of send()
-//   - chat_cta_shown         in handleEvent when a `cta` event arrives
+//   - chat_cta_shown         in handleEvent when a `cta` event arrives, OR
+//                            when a `calendly` event arrives (we surface it
+//                            as a book_call CTA card — see the calendly note)
 //   - chat_rate_limit_hit    on 429 response
 //   - chat_reset             in reset()
 //
@@ -220,8 +222,25 @@ export function useChatStream({ userEmail, userName } = {}) {
       });
       setCta(payload);
     } else if (type === "calendly") {
-      if (payload.url && typeof window !== "undefined") {
-        window.open(payload.url, "_blank", "noopener");
+      /* get_calendly_link fired. We used to window.open(url) here, but
+         that runs inside an async stream read — outside any user gesture —
+         so popup blockers swallow it in most browsers and the user just
+         sees nothing happen. Instead, surface it as a book_call CTA card
+         (the exact card propose_cta uses). The user clicks through, which
+         is a real gesture and never gets blocked. Mirrors the propose_cta
+         shape so ChatDrawer's CTACard / AskClient's AskCTA render it with
+         no changes. */
+      if (payload?.url && typeof window !== "undefined") {
+        track("chat_cta_shown", {
+          cta_type: "book_call",
+          topic: payload.topic || "demo",
+        });
+        setCta({
+          type: "book_call",
+          topic: payload.topic || "demo",
+          calendly_url: payload.url,
+          reason: "User asked to book time.",
+        });
       }
     } else if (type === "error") {
       setMessages((prev) =>
