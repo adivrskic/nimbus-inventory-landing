@@ -18,9 +18,40 @@
   --gray-4: #404040;
   --gray-5: #262626;
   --gray-6: #171717;
+
+  /* ── CANONICAL ACCENT USAGE ──────────────────────────────────────────
+     Reference the accent exactly two ways, never any other:
+       solid color → var(--accent)
+       with alpha  → rgb(var(--accent-rgb) / 0.15)   (space-separated channels)
+     Do NOT hardcode rgba(212, 168, 83, …) anywhere — it bypasses theming
+     and is the single biggest source of accent drift in the codebase.
+     (Tints like --accent-bright / --accent-soft live in the theme file.) */
   --accent: #d4a853;
   --accent-rgb: 212 168 83; /* channels for rgb(var(--accent-rgb) / A) alpha use */
   --accent-dim: rgba(212, 168, 83, 0.15);
+
+  /* ── MARKETING NEUTRALS ──────────────────────────────────────────────
+     The marketing pages (/pricing, /industry, /integration, /compare) use
+     a warm off-white for hairlines + muted text. These tokens replace the
+     ~dozen hardcoded rgba(242, 240, 239, …) literals scattered across those
+     stylesheets with a small set of ROLES, so there's one place to retune
+     and one obvious thing to reach for.
+
+     Values match the current warm off-white exactly — adopting these is a
+     no-visual-change refactor (a couple of near-duplicate alphas, e.g.
+     0.5/0.55, collapse to one role; the difference is imperceptible).
+
+     To unify marketing onto the theme's cool-navy borders/text later, edit
+     --mk-fg-rgb here (e.g. to 160 200 235) — nothing else needs to change. */
+  --mk-fg-rgb: 242 240 239; /* warm off-white base channels */
+  --mk-text: rgb(var(--mk-fg-rgb) / 0.55); /* body copy, descriptions */
+  --mk-text-strong: rgb(var(--mk-fg-rgb) / 0.7); /* list items, emphasis */
+  --mk-text-muted: rgb(var(--mk-fg-rgb) / 0.4); /* labels, captions, icons */
+  --mk-text-faint: rgb(var(--mk-fg-rgb) / 0.3); /* notes, footnotes */
+  --mk-text-ghost: rgb(var(--mk-fg-rgb) / 0.2); /* disabled marks, dashes */
+  --mk-line: rgb(var(--mk-fg-rgb) / 0.08); /* standard hairline */
+  --mk-line-soft: rgb(var(--mk-fg-rgb) / 0.06); /* inner divider */
+  --mk-line-strong: rgb(var(--mk-fg-rgb) / 0.1); /* section top border */
 
   --bg: var(--black);
   --text: var(--white);

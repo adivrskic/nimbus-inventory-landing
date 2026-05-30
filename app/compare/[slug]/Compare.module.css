@@ -4,9 +4,13 @@
    Same Marketing vocabulary as Industry/Integration, but with:
    - "Nautilus vs Competitor" mark in hero (positioning signature)
    - Two-column "At a glance" with Nautilus favored visually
-   - Spec-sheet feature matrix table (signature)
+   - Spec-sheet feature matrix table (now the shared <FeatureMatrix>)
    - Honest-take card calling out when competitor is the better fit
    - Cross-link grid at the bottom using the glow-card system
+
+   Accent is referenced canonically — var(--accent) for solid, rgb(var(
+   --accent-rgb) / A) for alpha (was hardcoded rgba(212,168,83,…)).
+   The §02 feature-matrix styles now live in FeatureMatrix.module.css.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -18,8 +22,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-       HERO
-    ───────────────────────────────────────────────────── */
+         HERO
+      ───────────────────────────────────────────────────── */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
@@ -154,8 +158,8 @@
 }
 
 /* ─────────────────────────────────────────────────────
-       SECTIONS — Marketing editorial numeral pattern
-    ───────────────────────────────────────────────────── */
+         SECTIONS — Marketing editorial numeral pattern
+      ───────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1400px;
@@ -174,8 +178,8 @@
   line-height: 0.85;
   letter-spacing: -8px;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(212, 168, 83, 0.55);
-  text-stroke: 1px rgba(212, 168, 83, 0.55);
+  -webkit-text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
+  text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
   user-select: none;
   position: sticky;
   top: 100px;
@@ -216,10 +220,10 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       §01 QUICK COMPARE — two columns side by side
-       Nautilus on the left visually favored (gold accents, full opacity).
-       Competitor on the right (muted dashes, lower opacity).
-    ═══════════════════════════════════════════════════════════════════════ */
+         §01 QUICK COMPARE — two columns side by side
+         Nautilus on the left visually favored (gold accents, full opacity).
+         Competitor on the right (muted dashes, lower opacity).
+      ═══════════════════════════════════════════════════════════════════════ */
 .quickCompare {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -232,8 +236,8 @@
   opacity: 0;
 }
 .quickColNautilus {
-  border-right: 1px solid rgba(212, 168, 83, 0.25);
-  background: rgba(212, 168, 83, 0.025);
+  border-right: 1px solid rgb(var(--accent-rgb) / 0.25);
+  background: rgb(var(--accent-rgb) / 0.025);
 }
 .quickColCompetitor {
   /* Slightly muted to subtly favor Nautilus */
@@ -267,195 +271,21 @@
   text-transform: uppercase;
   color: rgba(242, 240, 239, 0.45);
 }
-.quickList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.quickItem,
-.quickItemMuted {
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 10px;
-  align-items: baseline;
-  font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.55;
-}
-.quickItem {
-  color: rgba(242, 240, 239, 0.9);
-}
-.quickItemMuted {
-  color: rgba(242, 240, 239, 0.55);
-}
-.quickCheck {
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 14px;
-  text-align: center;
-}
-.quickDash {
-  color: rgba(242, 240, 239, 0.3);
-  font-weight: 400;
-  font-size: 14px;
-  text-align: center;
-}
+
+/* §01 list items — extracted to the shared <CheckList> (Nautilus column =
+     check/strong, competitor column = dash/muted). The .quickCompare /
+     .quickCol* column shell above stays here. */
+
+/* §02 FEATURE MATRIX — extracted to components/shared/FeatureMatrix.
+     (Was .matrix / .matrixHead* / .matrixRow / .matrixMark* here.) */
 
 /* ═══════════════════════════════════════════════════════════════════════
-       §02 FEATURE MATRIX — spec sheet table
-    ═══════════════════════════════════════════════════════════════════════ */
-.matrix {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
-}
-.matrixHead {
-  display: grid;
-  grid-template-columns: 1fr 120px 120px;
-  gap: 24px;
-  padding: 14px 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(212, 168, 83, 0.2);
-}
-.matrixHeadFeature {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.55);
-}
-.matrixHeadBrand {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: var(--accent);
-  text-align: center;
-  font-weight: 600;
-}
-.matrixHeadCompetitor {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.5);
-  text-align: center;
-}
-.matrixRow {
-  display: grid;
-  grid-template-columns: 1fr 120px 120px;
-  gap: 24px;
-  padding: 16px 24px;
-  align-items: center;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.04);
-  transition: background 0.2s;
-  opacity: 0;
-}
-.matrixRow:hover {
-  background: rgba(255, 255, 255, 0.012);
-}
-.matrixFeature {
-  font-family: var(--display);
-  font-size: 15px;
-  color: var(--white);
-  font-weight: 500;
-  letter-spacing: -0.2px;
-}
-.matrixCol {
-  text-align: center;
-}
-
-/* The mark glyphs */
-.matrixMark {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 600;
-}
-.matrixMarkYes {
-  color: rgba(34, 197, 94, 0.85);
-}
-.matrixMarkYesAccent {
-  color: var(--accent);
-}
-.matrixMarkPartial {
-  color: #d97706;
-}
-.matrixMarkNo {
-  color: rgba(242, 240, 239, 0.25);
-  font-weight: 400;
-}
-.matrixMarkText {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: rgba(242, 240, 239, 0.65);
-  letter-spacing: 0.5px;
-}
+         §03 REASONS — extracted to the shared <NumberedList> (divided).
+      ═══════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════
-       §03 REASONS — numbered list pattern
-    ═══════════════════════════════════════════════════════════════════════ */
-.reasons {
-  display: flex;
-  flex-direction: column;
-}
-.reason {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 32px;
-  padding: 32px 0;
-  border-top: 1px solid rgba(242, 240, 239, 0.06);
-  align-items: start;
-  opacity: 0;
-}
-.reason:last-child {
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
-}
-.reasonLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 6px;
-}
-.reasonNum {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--accent);
-}
-.reasonMark {
-  width: 28px;
-  height: 1px;
-  background: rgba(212, 168, 83, 0.5);
-}
-.reasonRight {
-  min-width: 0;
-}
-.reasonTitle {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
-  color: var(--white);
-  line-height: 1.25;
-  margin: 0 0 10px;
-}
-.reasonDesc {
-  font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgba(242, 240, 239, 0.55);
-  margin: 0;
-  max-width: 580px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-       §04 HONEST TAKE — outlined card with distinct treatment
-    ═══════════════════════════════════════════════════════════════════════ */
+         §04 HONEST TAKE — outlined card with distinct treatment
+      ═══════════════════════════════════════════════════════════════════════ */
 .honestCard {
   padding: 36px 40px 40px;
   border: 1px solid rgba(242, 240, 239, 0.12);
@@ -472,31 +302,10 @@
   margin-bottom: 24px;
   font-weight: 600;
 }
-.honestList {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.honestStrength {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  gap: 14px;
-  align-items: baseline;
-  font-family: var(--display);
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(242, 240, 239, 0.85);
-  opacity: 0;
-}
-.honestStrengthMark {
-  width: 8px;
-  height: 8px;
-  background: rgba(242, 240, 239, 0.5);
-  margin-top: 5px;
-  flex-shrink: 0;
+/* The strengths list itself is the shared <CheckList> (square marker, lg).
+     This just carries the spacing the old .honestList provided. */
+.honestStrengths {
+  margin-bottom: 32px;
 }
 .honestCardFoot {
   padding-top: 24px;
@@ -509,26 +318,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       CROSS-LINKS — glow-card grid
-       ───────────────────────────────────────────────────────────────────
-       The grid container has `glow-cards` (globals) + the ref from
-       useGlowCards. Each card is a TransitionLink (.glow-card outer
-       shell + .crossCard for layout + opacity entrance), with a
-       .glow-card-border sibling and a .glow-card-content / .crossCardInner
-       child that holds the actual content.
-       
-       Rules of engagement (same as every other glow-card on the site):
-       • Outer shell sets shape + entrance opacity ONLY. No background,
-         no border, no hover transforms — globals' .glow-card / .glow-card::before
-         provide all of that.
-       • Inner element holds padding + layout. NEVER set height on the
-         inner — globals provides `height: calc(100% - 2px); margin: 1px;`
-         and overriding that collapses the 1px gap where the border-glow
-         shines through.
-       • Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
-         Don't add CSS hover transforms; they'll fight with the GSAP
-         overwrite logic and look glitchy.
-    ═══════════════════════════════════════════════════════════════════════ */
+         CROSS-LINKS — glow-card grid
+         ───────────────────────────────────────────────────────────────────
+         The grid container has `glow-cards` (globals) + the ref from
+         useGlowCards. Each card is a TransitionLink (.glow-card outer
+         shell + .crossCard for layout + opacity entrance), with a
+         .glow-card-border sibling and a .glow-card-content / .crossCardInner
+         child that holds the actual content.
+  
+         Rules of engagement (same as every other glow-card on the site):
+         • Outer shell sets shape + entrance opacity ONLY. No background,
+           no border, no hover transforms — globals' .glow-card / .glow-card::before
+           provide all of that.
+         • Inner element holds padding + layout. NEVER set height on the
+           inner — globals provides `height: calc(100% - 2px); margin: 1px;`
+           and overriding that collapses the 1px gap where the border-glow
+           shines through.
+         • Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
+           Don't add CSS hover transforms; they'll fight with the GSAP
+           overwrite logic and look glitchy.
+      ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
   max-width: 1400px;
   margin: 0 auto;
@@ -549,8 +358,8 @@
 }
 
 /* Outer shell — shape + entrance only. Globals adds border-radius 20px,
-     cursor: pointer, the mouse-radial ::before, and (via the
-     .glow-card-border child) the border-glow gradient. */
+       cursor: pointer, the mouse-radial ::before, and (via the
+       .glow-card-border child) the border-glow gradient. */
 .crossCard {
   position: relative;
   text-decoration: none;
@@ -559,8 +368,8 @@
 }
 
 /* Inner content wrapper. Pairs with `glow-card-content` from globals,
-     which provides the dark background and the 1px inset that creates
-     the visible border-glow gap. We supply padding + flex layout only. */
+       which provides the dark background and the 1px inset that creates
+       the visible border-glow gap. We supply padding + flex layout only. */
 .crossCardInner {
   display: flex;
   flex-direction: column;
@@ -599,16 +408,16 @@
   transition: color 0.2s, transform 0.25s;
 }
 /* Arrow-only hover affordance. The card-level hover (gold border-glow +
-     mouse-radial gradient + 3D tilt) is handled by the glow-card system,
-     not by these styles. */
+       mouse-radial gradient + 3D tilt) is handled by the glow-card system,
+       not by these styles. */
 .crossCard:hover .crossCardArrow {
   color: var(--accent);
   transform: translateX(6px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       FINAL CTA
-    ═══════════════════════════════════════════════════════════════════════ */
+         FINAL CTA
+      ═══════════════════════════════════════════════════════════════════════ */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -617,8 +426,8 @@
 }
 .finalCTAInner {
   padding: 60px 56px 64px;
-  background: rgba(212, 168, 83, 0.025);
-  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: rgb(var(--accent-rgb) / 0.025);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-left: 2px solid var(--accent);
 }
 .finalCTALabel {
@@ -655,8 +464,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       NOT FOUND
-    ═══════════════════════════════════════════════════════════════════════ */
+         NOT FOUND
+      ═══════════════════════════════════════════════════════════════════════ */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -688,12 +497,12 @@
   letter-spacing: 0.5px;
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(212, 168, 83, 0.4);
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-       RESPONSIVE
-    ═══════════════════════════════════════════════════════════════════════ */
+         RESPONSIVE
+      ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
@@ -703,13 +512,6 @@
   .sectionNum {
     font-size: clamp(100px, 14vw, 160px);
     letter-spacing: -4px;
-  }
-  .matrixHead,
-  .matrixRow {
-    grid-template-columns: 1fr 90px 90px;
-    gap: 16px;
-    padding-left: 16px;
-    padding-right: 16px;
   }
 }
 
@@ -739,31 +541,7 @@
   }
   .quickColNautilus {
     border-right: none;
-    border-bottom: 1px solid rgba(212, 168, 83, 0.25);
-  }
-  .matrixHead,
-  .matrixRow {
-    grid-template-columns: 1fr 60px 60px;
-    gap: 12px;
-    padding: 14px 14px;
-  }
-  .matrixHeadFeature,
-  .matrixHeadBrand,
-  .matrixHeadCompetitor {
-    font-size: 9px;
-    letter-spacing: 1.3px;
-  }
-  .matrixFeature {
-    font-size: 13.5px;
-  }
-  .reason {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  .reasonLeft {
-    flex-direction: row;
-    align-items: center;
-    padding-top: 0;
+    border-bottom: 1px solid rgb(var(--accent-rgb) / 0.25);
   }
   .honestCard {
     padding: 28px 24px 32px;

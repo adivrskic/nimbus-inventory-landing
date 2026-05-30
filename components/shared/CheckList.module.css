@@ -1,0 +1,83 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   CheckList — canonical marker list.
+   ───────────────────────────────────────────────────────────────────────
+   Display-font list with a leading marker. Neutrals use the shared --mk-*
+   tokens (the "strong" tone reads brighter than --mk-text-strong, so it's
+   expressed off the same --mk-fg-rgb channel at 0.85).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.md {
+  gap: 14px;
+}
+.lg {
+  gap: 18px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  align-items: start;
+  font-family: var(--display);
+}
+.md .item {
+  font-size: 15px;
+  line-height: 1.55;
+}
+.lg .item {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Opt-in start state for a host page's scroll-reveal (targets
+     [data-list-item]); under reduced-motion the host writes an inline opacity
+     that the global backstop forces back to 1. */
+.hidden {
+  opacity: 0;
+}
+
+/* ── Text tone ── */
+.toneStrong {
+  color: rgb(var(--mk-fg-rgb) / 0.85);
+}
+.toneDefault {
+  color: var(--mk-text-strong);
+}
+.toneMuted {
+  color: var(--mk-text);
+}
+
+/* ── Markers ── */
+.marker {
+  grid-column: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.check {
+  color: var(--accent);
+  margin-top: 0.15em;
+}
+.dash {
+  color: var(--mk-text-faint);
+  font-weight: 400;
+}
+.square {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45em;
+  background: rgb(var(--mk-fg-rgb) / 0.5);
+}
+
+.text {
+  grid-column: 2;
+  min-width: 0;
+}

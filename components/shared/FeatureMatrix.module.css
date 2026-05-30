@@ -1,0 +1,142 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   FeatureMatrix — canonical spec-sheet comparison table.
+   ───────────────────────────────────────────────────────────────────────
+   Reproduces the /compare detail matrix exactly. Neutrals use the shared
+   --mk-* tokens; the green/amber mark hues + a couple of very-faint surface
+   alphas have no token equivalent and are kept as literals (noted inline).
+
+   Tuned for a leading "Feature" column + 2 value columns, with the same
+   responsive column-shrink the compare page used (120 → 90 → 60px). The
+   header row stays visible; only `.row` (data rows) carry the reveal hook.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.matrix {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--mk-line);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px;
+  gap: 24px;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02); /* faint surface tint (no token) */
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.2); /* gold rule */
+}
+/* Neutral header rule for non-emphasized matrices (e.g. pricing). */
+.headRuleNeutral {
+  border-bottom-color: var(--mk-line);
+}
+
+.headFeature {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--mk-text);
+}
+.headCol {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  text-align: center;
+}
+/* Per-column tone — header color. */
+.headAccent {
+  color: var(--accent);
+  font-weight: 600;
+}
+.headDefault {
+  color: var(--white);
+}
+.headMuted {
+  color: var(--mk-text);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px;
+  gap: 24px;
+  padding: 16px 24px;
+  align-items: center;
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.04); /* very-faint divider */
+  transition: background 0.2s;
+}
+/* Opt-in start state for a host page's scroll-reveal (targets
+     [data-matrix-row]); under reduced-motion the host writes an inline
+     opacity that the global backstop forces back to 1. */
+.hidden {
+  opacity: 0;
+}
+.row:hover {
+  background: rgba(255, 255, 255, 0.012); /* faint hover tint (no token) */
+}
+
+.feature {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--white);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+.col {
+  text-align: center;
+}
+
+/* Mark glyphs — ✓ supported, ◐ partial, — not supported, else text. */
+.mark {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+}
+.markYes {
+  color: rgba(34, 197, 94, 0.85); /* competitor "yes" — green literal */
+}
+.markAccent {
+  color: var(--accent);
+}
+.markPartial {
+  color: #d97706; /* amber literal */
+}
+.markNo {
+  color: var(--mk-text-ghost);
+  font-weight: 400;
+}
+.markText {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--mk-text-strong);
+  letter-spacing: 0.5px;
+}
+
+/* ── Responsive — internal column widths shrink with the viewport ── */
+@media (max-width: 1024px) {
+  .head,
+  .row {
+    grid-template-columns: 1fr 90px 90px;
+    gap: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .head,
+  .row {
+    grid-template-columns: 1fr 60px 60px;
+    gap: 12px;
+    padding: 14px 14px;
+  }
+  .headFeature,
+  .headCol {
+    font-size: 9px;
+    letter-spacing: 1.3px;
+  }
+  .feature {
+    font-size: 13.5px;
+  }
+}

@@ -11,50 +11,13 @@ import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import FeatureMatrix from "@/components/shared/FeatureMatrix/FeatureMatrix";
+import CheckList from "@/components/shared/CheckList/CheckList";
+import NumberedList from "@/components/shared/NumberedList/NumberedList";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import styles from "./Compare.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
-
-/* ─────────────────────────────────────────────────────
-   MATRIX CELL — gold check, muted dash, or amber half-circle
-───────────────────────────────────────────────────── */
-function MatrixCell({ value, accent = false }) {
-  if (value === "yes") {
-    return (
-      <span
-        className={`${styles.matrixMark} ${
-          accent ? styles.matrixMarkYesAccent : styles.matrixMarkYes
-        }`}
-        aria-label="Supported"
-      >
-        ✓
-      </span>
-    );
-  }
-  if (value === "partial") {
-    return (
-      <span
-        className={`${styles.matrixMark} ${styles.matrixMarkPartial}`}
-        aria-label="Partial"
-      >
-        ◐
-      </span>
-    );
-  }
-  if (value === "no") {
-    return (
-      <span
-        className={`${styles.matrixMark} ${styles.matrixMarkNo}`}
-        aria-label="Not supported"
-      >
-        —
-      </span>
-    );
-  }
-  /* fallthrough — display as text label */
-  return <span className={styles.matrixMarkText}>{value}</span>;
-}
 
 export default function CompareClient({ slug }) {
   const competitor = COMPETITORS[slug];
@@ -104,11 +67,13 @@ export default function CompareClient({ slug }) {
 
     /* Reduced motion: jump every animated element to its final state and
        skip the intro choreography + gated reveals. Still cancels the
-       scroll-reset rAF on cleanup. SplitText keeps the sr-only headline. */
+       scroll-reset rAF on cleanup. SplitText keeps the sr-only headline.
+       The feature-matrix rows are the shared <FeatureMatrix>'s
+       [data-matrix-row] elements (was .matrixRow). */
     if (prefersReducedMotion()) {
       gsap.set(
         pageRef.current.querySelectorAll(
-          `.${styles.heroLetter}, .${styles.heroIndex}, .${styles.markBrand}, .${styles.markVs}, .${styles.markCompetitor}, .${styles.heroDesc}, .${styles.heroCTA}, .${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}, .${styles.crossCard}`
+          `.${styles.heroLetter}, .${styles.heroIndex}, .${styles.markBrand}, .${styles.markVs}, .${styles.markCompetitor}, .${styles.heroDesc}, .${styles.heroCTA}, .${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, [data-matrix-row], [data-list-item], .${styles.honestCard}, .${styles.crossCard}`
         ),
         { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0 }
       );
@@ -197,7 +162,10 @@ export default function CompareClient({ slug }) {
       });
     };
 
-    /* Section reveals — content fades up, the big numeral scales-and-fades. */
+    /* Section reveals — content fades up, the big numeral scales-and-fades.
+       The §02 matrix rows are now the shared <FeatureMatrix>'s
+       [data-matrix-row] elements (was .matrixRow); everything else is
+       unchanged. */
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
@@ -205,7 +173,7 @@ export default function CompareClient({ slug }) {
          in CSS, and opacity is multiplicative, so without animating the
          wrapper its children never become visible. */
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, .${styles.matrixRow}, .${styles.reason}, .${styles.honestCard}, .${styles.honestStrength}`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.quickCol}, [data-matrix-row], [data-list-item], .${styles.honestCard}`
       );
 
       if (num) {
@@ -351,14 +319,11 @@ export default function CompareClient({ slug }) {
                   Modern · cloud-native
                 </span>
               </div>
-              <ul className={styles.quickList}>
-                {quickPairs.map((p, i) => (
-                  <li key={i} className={styles.quickItem}>
-                    <span className={styles.quickCheck}>✓</span>
-                    <span>{p.Nautilus}</span>
-                  </li>
-                ))}
-              </ul>
+              <CheckList
+                items={quickPairs.map((p) => p.Nautilus)}
+                marker="check"
+                tone="strong"
+              />
             </div>
 
             {/* Competitor column */}
@@ -369,20 +334,17 @@ export default function CompareClient({ slug }) {
                   {competitor.category}
                 </span>
               </div>
-              <ul className={styles.quickList}>
-                {quickPairs.map((p, i) => (
-                  <li key={i} className={styles.quickItemMuted}>
-                    <span className={styles.quickDash}>—</span>
-                    <span>{p.competitor}</span>
-                  </li>
-                ))}
-              </ul>
+              <CheckList
+                items={quickPairs.map((p) => p.competitor)}
+                marker="dash"
+                tone="muted"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── §02 · FEATURE MATRIX ── */}
+      {/* ── §02 · FEATURE MATRIX — shared <FeatureMatrix> ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           02
@@ -395,27 +357,17 @@ export default function CompareClient({ slug }) {
             partial, — not supported.
           </p>
 
-          <div className={styles.matrix}>
-            <div className={styles.matrixHead}>
-              <div className={styles.matrixHeadFeature}>Feature</div>
-              <div className={styles.matrixHeadBrand}>Nautilus</div>
-              <div className={styles.matrixHeadCompetitor}>
-                {competitor.name}
-              </div>
-            </div>
-
-            {competitor.matrix.map((row, i) => (
-              <div key={i} className={styles.matrixRow}>
-                <div className={styles.matrixFeature}>{row.feature}</div>
-                <div className={styles.matrixCol}>
-                  <MatrixCell value={row.Nautilus} accent />
-                </div>
-                <div className={styles.matrixCol}>
-                  <MatrixCell value={row.competitor} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <FeatureMatrix
+            columns={[
+              { label: "Nautilus", tone: "accent" },
+              { label: competitor.name, tone: "muted" },
+            ]}
+            rows={competitor.matrix.map((row) => ({
+              feature: row.feature,
+              values: [row.Nautilus, row.competitor],
+            }))}
+            initiallyHidden
+          />
         </div>
       </section>
 
@@ -434,22 +386,7 @@ export default function CompareClient({ slug }) {
             customers migrating off {competitor.name}.
           </p>
 
-          <div className={styles.reasons}>
-            {competitor.reasons.map((r, i) => (
-              <div key={i} className={styles.reason}>
-                <div className={styles.reasonLeft}>
-                  <span className={styles.reasonNum}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className={styles.reasonMark} />
-                </div>
-                <div className={styles.reasonRight}>
-                  <h3 className={styles.reasonTitle}>{r.title}</h3>
-                  <p className={styles.reasonDesc}>{r.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <NumberedList items={competitor.reasons} divided initiallyHidden />
         </div>
       </section>
 
@@ -473,14 +410,14 @@ export default function CompareClient({ slug }) {
             <div className={styles.honestCardLabel}>
               Stay with {competitor.name} if:
             </div>
-            <ul className={styles.honestList}>
-              {competitor.competitorStrengths.map((s, i) => (
-                <li key={i} className={styles.honestStrength}>
-                  <span className={styles.honestStrengthMark} />
-                  <span>{s}</span>
-                </li>
-              ))}
-            </ul>
+            <CheckList
+              items={competitor.competitorStrengths}
+              marker="square"
+              tone="strong"
+              size="lg"
+              initiallyHidden
+              className={styles.honestStrengths}
+            />
             <div className={styles.honestCardFoot}>
               If none of these apply, you&apos;re likely a good fit for
               Nautilus. The next step is a 30-minute call where we walk through

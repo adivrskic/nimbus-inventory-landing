@@ -6,6 +6,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import Accordion from "@/components/shared/Accordion/Accordion";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
@@ -219,13 +220,15 @@ export default function IntegrationPage({ slug }) {
       });
     };
 
-    /* Sections — same numbered editorial pattern as Industry */
+    /* Sections — same numbered editorial pattern as Industry. The FAQ items
+       are now the shared Accordion's [data-accordion-item] elements (was
+       `.faq`), so they ride the same section reveal. */
     if (!pageRef.current) return;
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.feature}, .${styles.flow}, .${styles.step}, .${styles.stat}, .${styles.faq}`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.feature}, .${styles.flow}, .${styles.step}, .${styles.stat}, [data-accordion-item]`
       );
 
       if (num) {
@@ -471,7 +474,7 @@ export default function IntegrationPage({ slug }) {
         </div>
       </section>
 
-      {/* ── 05 · FAQ (per-integration with fallback to DEFAULT_INTEGRATION_FAQS) ── */}
+      {/* ── 05 · FAQ (per-integration with fallback) — shared Accordion ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           05
@@ -482,14 +485,7 @@ export default function IntegrationPage({ slug }) {
             {integration.title} questions, answered.
           </h2>
 
-          <div className={styles.faqList}>
-            {faqs.map((item, i) => (
-              <div key={i} className={styles.faq}>
-                <h3 className={styles.faqQ}>{item.q}</h3>
-                <p className={styles.faqA}>{item.a}</p>
-              </div>
-            ))}
-          </div>
+          <Accordion items={faqs} initiallyHidden />
         </div>
       </section>
 

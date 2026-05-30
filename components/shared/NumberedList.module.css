@@ -1,0 +1,83 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   NumberedList — editorial numbered list.
+   ───────────────────────────────────────────────────────────────────────
+   80px + 1fr grid: gold numeral + gold dash on the left, title + desc on
+   the right. Neutrals use the shared --mk-* tokens; accent via the canonical
+   rgb(var(--accent-rgb) / A).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  padding: 32px 0;
+  align-items: start;
+}
+.hidden {
+  opacity: 0;
+}
+
+/* Divided variant — hairline between items + under the last one. */
+.divided .item {
+  border-top: 1px solid var(--mk-line-soft);
+}
+.divided .item:last-child {
+  border-bottom: 1px solid var(--mk-line-soft);
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-top: 6px;
+}
+.num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.mark {
+  width: 28px;
+  height: 1px;
+  background: rgb(var(--accent-rgb) / 0.5);
+}
+
+.right {
+  min-width: 0;
+}
+.title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--white);
+  line-height: 1.25;
+  margin: 0 0 10px;
+}
+.desc {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mk-text);
+  margin: 0;
+  max-width: 580px;
+}
+
+@media (max-width: 768px) {
+  .item {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .left {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0;
+  }
+}

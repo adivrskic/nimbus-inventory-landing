@@ -6,6 +6,7 @@ import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
+import Accordion from "@/components/shared/Accordion/Accordion";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
@@ -128,7 +129,8 @@ const H_LINES = [
 const SUB_TEXT =
   "Two tiers. Flat per-warehouse pricing. No per-user fees, no surprises.";
 
-/* Icons */
+/* Icons — CheckIcon is used by the tier lists + the feature matrix. (The
+   FAQ's PlusIcon now lives inside the shared Accordion.) */
 const CheckIcon = ({ size = 12 }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
     <path
@@ -137,16 +139,6 @@ const CheckIcon = ({ size = 12 }) => (
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
-    />
-  </svg>
-);
-const PlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path
-      d="M7 1V13M1 7H13"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
     />
   </svg>
 );
@@ -160,7 +152,6 @@ export default function PricingClient() {
   const matrixSectionRef = useRef(null);
   const matrixRowRefs = useRef([]);
   const faqSectionRef = useRef(null);
-  const faqItemRefs = useRef([]);
 
   /* Demo modal — global, mounted in app/layout.js. openDemo accepts an
      optional topic key ("demo" | "sales" | "migration" | "integration")
@@ -170,7 +161,6 @@ export default function PricingClient() {
   const { openDemo } = useDemo();
 
   const [billing, setBilling] = useState("monthly");
-  const [openFaq, setOpenFaq] = useState(null);
 
   /* Billing toggle handler — fires pricing_billing_toggle analytics
      event only when the mode actually changes (clicking the active pill
@@ -181,17 +171,11 @@ export default function PricingClient() {
     setBilling(next);
   };
 
-  /* FAQ click handler — fires pricing_faq_expand only on OPEN (not on
-     close), and caps the question at 80 chars for GA4 dimension
-     cardinality. */
-  const onFaqClick = (fi) => {
-    const isOpen = openFaq === fi;
-    if (!isOpen) {
-      track("pricing_faq_expand", {
-        question: (FAQS[fi].q || "").slice(0, 80),
-      });
-    }
-    setOpenFaq(isOpen ? null : fi);
+  /* FAQ analytics — fired by the Accordion's onOpen (open only, never on
+     close), capped at 80 chars for GA4 dimension cardinality. Open/close
+     state itself now lives inside the shared Accordion. */
+  const onFaqOpen = (fi) => {
+    track("pricing_faq_expand", { question: (FAQS[fi].q || "").slice(0, 80) });
   };
 
   /* ── Intro + scroll animations — uniform with Calculator/IndustryPage ──
@@ -205,14 +189,20 @@ export default function PricingClient() {
      The scroll reveals below (tier cards, matrix rows, FAQ items) are
      GATED behind the hero intro: a reveal whose trigger is already
      satisfied on initial load is QUEUED and released the moment the intro
-     completes; a section scrolled to later plays immediately, exactly as
-     before. This removes the initial-viewport race (e.g. tier cards firing
-     at "top 82%" on a short viewport) without artificially delaying
-     below-fold content. */
+     completes; a section scrolled to later plays immediately. The FAQ
+     items are the shared Accordion's `[data-accordion-item]` elements. */
   useEffect(() => {
     window.scrollTo(0, 0);
     const hero = heroRef.current;
     if (!hero) return;
+
+    /* The Accordion items live inside the shared component; grab them by
+       the stable data attribute it stamps on each item. */
+    const faqItems = faqSectionRef.current
+      ? Array.from(
+          faqSectionRef.current.querySelectorAll("[data-accordion-item]")
+        )
+      : [];
 
     /* Reduced motion: skip the intro choreography and jump every animated
        element straight to its final, visible state. Without this, the hero
@@ -233,7 +223,7 @@ export default function PricingClient() {
       );
       gsap.set(tierRefs.current.filter(Boolean), { opacity: 1, y: 0 });
       gsap.set(matrixRowRefs.current.filter(Boolean), { opacity: 1, y: 0 });
-      gsap.set(faqItemRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+      if (faqItems.length) gsap.set(faqItems, { opacity: 1, y: 0 });
       return;
     }
 
@@ -319,10 +309,9 @@ export default function PricingClient() {
       "top 75%"
     );
 
-    /* FAQ items */
-    const faqs = faqItemRefs.current.filter(Boolean);
+    /* FAQ items — the shared Accordion's [data-accordion-item] elements. */
     gatedReveal(
-      faqs,
+      faqItems,
       { opacity: 0, y: 10 },
       { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power3.out" },
       faqSectionRef.current,
@@ -402,13 +391,6 @@ export default function PricingClient() {
 
         {/* ─────────────────────────────────────────────────────
             BILLING SELECTOR — pill toggle with sliding gold pill
-
-            The pill background slides between Monthly and Annual via a
-            CSS transform driven by inline style. When Annual is active,
-            the pill is on the right (gold), the Annual button text goes
-            dark (visible against gold), and the −20% badge contrasts.
-            On Monthly, the pill sits on the left and the −20% badge is
-            visible in gold as a teaser for the alternative.
         ───────────────────────────────────────────────────── */}
         <div className={styles.toggleWrap}>
           <div
@@ -450,14 +432,6 @@ export default function PricingClient() {
 
       {/* ─────────────────────────────────────────────────────
           TIER CARDS — Pro (featured) + Enterprise
-
-          Each card has a big editorial section numeral in the background
-          (very low opacity, behind content via z-index:-1 inside an
-          isolated stacking context). Pro carries a "Most Popular" pill
-          badge above its number prefix and a subtle gold tint on the
-          card background. When billing=annual, Pro's price block shows
-          a strike-through of the monthly price + a "Save $X/yr" call-out
-          in gold.
       ───────────────────────────────────────────────────── */}
       <section ref={tiersRef} className={styles.tiers}>
         {TIERS.map((tier, ti) => (
@@ -601,7 +575,7 @@ export default function PricingClient() {
         </div>
       </section>
 
-      {/* ── FAQ ── */}
+      {/* ── FAQ — shared Accordion ── */}
       <section ref={faqSectionRef} className={styles.faqSection}>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionHeadline}>
@@ -610,41 +584,12 @@ export default function PricingClient() {
           </h2>
         </div>
 
-        <div className={styles.faqList}>
-          {FAQS.map((faq, fi) => {
-            const isOpen = openFaq === fi;
-            return (
-              <div
-                key={fi}
-                ref={(el) => (faqItemRefs.current[fi] = el)}
-                className={styles.faqItem}
-              >
-                <button
-                  type="button"
-                  className={styles.faqHeader}
-                  onClick={() => onFaqClick(fi)}
-                  aria-expanded={isOpen}
-                >
-                  <span className={styles.faqQuestion}>{faq.q}</span>
-                  <span
-                    className={`${styles.faqIcon} ${
-                      isOpen ? styles.faqIconOpen : ""
-                    }`}
-                  >
-                    <PlusIcon />
-                  </span>
-                </button>
-                <div
-                  className={`${styles.faqBody} ${
-                    isOpen ? styles.faqBodyOpen : ""
-                  }`}
-                >
-                  <p className={styles.faqAnswer}>{faq.a}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <Accordion
+          items={FAQS}
+          onOpen={onFaqOpen}
+          initiallyHidden
+          className={styles.faqList}
+        />
       </section>
 
       {/* ── Final CTA ── */}

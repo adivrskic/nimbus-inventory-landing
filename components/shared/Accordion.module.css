@@ -1,0 +1,121 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Accordion — canonical disclosure / FAQ styling.
+   ───────────────────────────────────────────────────────────────────────
+   Ported verbatim from the Pricing FAQ (the chosen base) so it drops onto
+   every page looking identical to what Pricing had. Two deliberate
+   upgrades over that original:
+     - the open/close transition uses grid-template-rows 0fr→1fr (the same
+       technique the Industries component already uses) instead of a
+       max-height:400px magic number that clipped long answers.
+     - the panel is a labelled region (a11y) — see Accordion.jsx.
+
+   NEUTRALS: hairlines + muted text use the shared --mk-* marketing-neutral
+   tokens (defined in globals.css). Retune all marketing neutrals from there;
+   flipping --mk-fg-rgb unifies them onto the theme's cool-navy palette.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.list {
+  border-top: 1px solid var(--mk-line);
+}
+
+.item {
+  border-bottom: 1px solid var(--mk-line-soft);
+}
+
+/* Opt-in start state for scroll-reveal hosts (Pricing/Integration/Industry).
+     The host fades these in by targeting [data-accordion-item]; under
+     reduced-motion the host writes an inline opacity that the global
+     reduced-motion backstop forces back to 1. */
+.hidden {
+  opacity: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 26px 4px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  font-family: inherit;
+  color: inherit;
+}
+/* Left-edge gold tick that scales in on hover (Pricing signature). */
+.header::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s var(--ease-smooth);
+}
+.header:hover::before {
+  transform: scaleX(1);
+}
+
+.question {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--white);
+  letter-spacing: -0.3px;
+  transition: color 0.25s;
+}
+.header:hover .question {
+  color: var(--accent);
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-left: 24px;
+  color: var(--mk-text-muted);
+  display: inline-flex;
+  transition: transform 0.4s var(--ease-smooth), color 0.25s;
+}
+.iconOpen {
+  transform: rotate(45deg);
+  color: var(--accent);
+}
+
+/* Body — grid-rows collapse (0fr → 1fr). The inner wrapper clips so the
+     row can shrink below its content height. No max-height, no clipped
+     answers. */
+.body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s var(--ease-smooth);
+}
+.bodyOpen {
+  grid-template-rows: 1fr;
+}
+.bodyInner {
+  overflow: hidden;
+  min-height: 0;
+}
+.answer {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--mk-text);
+  padding: 0 4px 28px;
+  margin: 0;
+  max-width: 760px;
+  text-wrap: pretty;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 22px 4px;
+  }
+  .header::before {
+    display: none;
+  }
+}

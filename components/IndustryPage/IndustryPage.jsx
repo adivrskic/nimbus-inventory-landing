@@ -8,6 +8,7 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import Accordion from "@/components/shared/Accordion/Accordion";
 import { useDemo } from "@/lib/DemoContext";
 import { INDUSTRIES, DEFAULT_INDUSTRY_FAQS } from "./industryData";
 import styles from "./IndustryPage.module.css";
@@ -37,40 +38,6 @@ const WORKFLOW = [
     desc: "Verify items by scan, print labels, push tracking to sales channels.",
   },
 ];
-
-/* Inline styles for the FAQ section (section 04). Lives here rather
-   than in IndustryPage.module.css to keep this change file-isolated;
-   matches the visual treatment of the FAQ section on the integration
-   pages. If you ever move this into the CSS module, the equivalent
-   classes are .faqList / .faq / .faqQ / .faqA on the integration
-   stylesheet. */
-const FAQ_STYLES = {
-  list: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  item: {
-    padding: "28px 0",
-    borderTop: "1px solid rgba(242, 240, 239, 0.06)",
-  },
-  question: {
-    fontFamily: "var(--display)",
-    fontSize: "18px",
-    fontWeight: 600,
-    letterSpacing: "-0.3px",
-    color: "var(--white)",
-    lineHeight: 1.3,
-    margin: "0 0 10px",
-  },
-  answer: {
-    fontFamily: "var(--display)",
-    fontSize: "15px",
-    lineHeight: 1.7,
-    color: "rgba(242, 240, 239, 0.65)",
-    margin: 0,
-    textWrap: "pretty",
-  },
-};
 
 export default function IndustryPage({ slug }) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
@@ -172,13 +139,16 @@ export default function IndustryPage({ slug }) {
       });
     };
 
-    /* Sections — each section's content fades up, the big numeral scales-and-fades */
+    /* Sections — each section's content fades up, the big numeral scales-and-
+       fades. The FAQ items are now the shared Accordion's
+       [data-accordion-item] elements (they previously used inline styles and
+       didn't animate at all — now they reveal with their section). */
     if (!pageRef.current) return;
     const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.pair}, .${styles.workflowStep}, .${styles.stat}, .${styles.quote}`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.pair}, .${styles.workflowStep}, .${styles.stat}, .${styles.quote}, [data-accordion-item]`
       );
 
       if (num) {
@@ -410,7 +380,7 @@ export default function IndustryPage({ slug }) {
         </div>
       </section>
 
-      {/* ── 04 · FAQ (per-industry, with fallback to DEFAULT_INDUSTRY_FAQS) ── */}
+      {/* ── 04 · FAQ (per-industry, with fallback) — shared Accordion ── */}
       <section className={styles.section}>
         <div className={styles.sectionNum} aria-hidden="true">
           04
@@ -426,26 +396,9 @@ export default function IndustryPage({ slug }) {
             discovery call.
           </p>
 
-          {/* FAQ list. Styling is inline rather than in IndustryPage.module.css
-              to keep this addition file-isolated — see FAQ_STYLES at the top of
-              this file. The same visual treatment lives in classed form in
-              IntegrationPage.module.css if you ever want to consolidate. */}
-          <div style={FAQ_STYLES.list}>
-            {faqs.map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  ...FAQ_STYLES.item,
-                  /* Hide top border on the first item so the list opens
-                     cleanly under the sectionDesc paragraph above. */
-                  ...(i === 0 ? { borderTop: "none", paddingTop: "12px" } : {}),
-                }}
-              >
-                <h3 style={FAQ_STYLES.question}>{item.q}</h3>
-                <p style={FAQ_STYLES.answer}>{item.a}</p>
-              </div>
-            ))}
-          </div>
+          {/* Was an inline-styled flat list (FAQ_STYLES); now the shared
+              Accordion — interactive + consistent with every other page. */}
+          <Accordion items={faqs} initiallyHidden />
         </div>
       </section>
 
