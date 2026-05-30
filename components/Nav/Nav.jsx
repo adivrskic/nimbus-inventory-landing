@@ -547,7 +547,7 @@ export default function Nav({ onDemo, dark }) {
         </div>
 
         <div className={styles.rightGroup}>
-          <button
+          {/* <button
             className={`bracket-hover ${styles.stopBtn} hide-mobile`}
             onClick={togglePaused}
             title={paused ? "Resume animations" : "Pause animations"}
@@ -576,7 +576,7 @@ export default function Nav({ onDemo, dark }) {
                 />
               </svg>
             )}
-          </button>
+          </button> */}
           <button
             className={`bracket-hover ${styles.cta} hide-mobile`}
             onClick={fireDemo}

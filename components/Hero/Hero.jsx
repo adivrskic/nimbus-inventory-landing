@@ -21,6 +21,11 @@ import styles from "./Hero.module.css";
 
    Result: you scroll a small amount, the hero clears out fast and the
    next section (AISection) is ready to take over visually.
+
+   ───────────────────────────────────────────────────────────────────────
+   Intro timing (this pass): the mount cascade now uses the same
+   RELATIVE-anchoring the other pages' header intros use, instead of the
+   hand-counted absolute start times it had before. See the timeline below.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const HEADLINE_LINES = [
@@ -108,13 +113,27 @@ export default function Hero({ onDemo }) {
     } else {
       const master = gsap.timeline({ defaults: { ease: EASE.out } });
 
+      /* Ambient video reveal — runs UNDERNEATH the content cascade from
+         t=0, deliberately slow; it's the scene settling, not part of the
+         top-to-bottom sequence, so it gets an absolute position. */
       master.to(
         videoRef.current,
         { opacity: 0.3, duration: 1.5, ease: EASE.inOut },
         0
       );
 
-      /* Per-letter headline — animates TO resting; start shape from CSS. */
+      /* ── Top-to-bottom content cascade ──
+         Headline is the first content beat; every beat after it is anchored
+         RELATIVE to the end of the beat before it (">-0.x" starts it x
+         seconds before the previous beat finishes, for a gentle overlap).
+         This is the same relative-anchoring the header intros on the other
+         pages use: the sequence reads strictly top → bottom and stays in
+         sync if any single duration/stagger is later retuned, rather than
+         drifting the way the old hand-counted absolute starts (0.3 / 1.1 /
+         1.4 / 1.4 + i*0.35) did. */
+
+      /* Headline — per-letter clip reveal. Animates TO resting; the hidden
+         start shape comes from CSS (.letter). */
       master.to(
         hLetters,
         {
@@ -125,10 +144,11 @@ export default function Hero({ onDemo }) {
           stagger: STAGGER.tight,
           ease: EASE.out,
         },
-        0.3
+        0.2
       );
 
-      /* Description: fast micro-wash (very tight stagger), kept by design. */
+      /* Description — fast per-letter micro-wash (very tight stagger, kept
+         by design). Overlaps the tail of the headline. */
       master.to(
         dLetters,
         {
@@ -138,23 +158,32 @@ export default function Hero({ onDemo }) {
           stagger: 0.008,
           ease: EASE.out,
         },
-        0.3
+        ">-0.45"
       );
 
+      /* CTAs. */
       master.to(
         ctasRef.current,
         { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out },
-        1.1
+        ">-0.2"
       );
 
-      master.to(sideRef.current, { opacity: 1, duration: 0.01 }, 1.4);
+      /* Stats column. A label pinned just before the end of the CTA beat
+         anchors the whole group to the cascade; the container is flipped
+         visible (its blocks carry their own opacity:0 → animated below) and
+         each stat fades up + counts up on a relative step off that label —
+         replacing the old absolute `1.4 + i*0.35` and tightening the step
+         (0.35 → 0.16) so the stats don't trail a full second behind. */
+      master.addLabel("stats", ">-0.05");
+      master.set(sideRef.current, { opacity: 1 }, "stats-=0.1");
 
       STATS.forEach((stat, i) => {
-        const delay = 1.4 + i * 0.35;
+        const at = `stats+=${i * 0.16}`;
+
         master.to(
           statRefs.current[i],
           { opacity: 1, y: 0, duration: DURATION.fast, ease: EASE.out },
-          delay
+          at
         );
 
         const counter = { val: 0 };
@@ -172,7 +201,7 @@ export default function Hero({ onDemo }) {
               valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
             },
           },
-          delay
+          at
         );
       });
     }
