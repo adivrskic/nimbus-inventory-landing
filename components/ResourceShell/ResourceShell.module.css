@@ -479,6 +479,10 @@
   margin-bottom: 0;
   border-bottom: 1px solid rgba(242, 240, 239, 0.08);
   flex-wrap: wrap;
+  /* Starts hidden and is revealed by useResourceBrowseAnimations as the
+     first beat of the browse reveal — same as .browseItem. Without this it
+     popped in at full opacity while the list below it animated in. */
+  opacity: 0;
 }
 .browseCount {
   font-family: var(--mono);

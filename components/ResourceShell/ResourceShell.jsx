@@ -357,42 +357,94 @@ export function useResourceSectionAnimations(containerRef) {
 /* ═══════════════════════════════════════════════════════════════════════
    useResourceBrowseAnimations
    ───────────────────────────────────────────────────────────────────────
-   Hook for Browse pages (Blog list, Help list). Staggers .browseItem nodes
-   up on scroll, gated behind the header intro the same way.
+   Hook for Browse pages (Blog list, Help list). Reveals the browse block on
+   scroll, gated behind the header intro the same way.
+
+   The reveal includes the .browseHead (count + filter row, when present) as
+   its first beat, then staggers the item nodes. The head lives as a SIBLING
+   of the list, so it isn't reachable from a ref placed on the list itself —
+   we resolve the shared .browse ancestor with closest() and query both the
+   head and the items from there. This works whether the page hands us a ref
+   on .browseList or on .browse. Head + items are passed as node references,
+   so the gsap.context scope (containerRef) still governs cleanup via
+   ctx.revert() regardless of where the nodes sit relative to the ref.
+
+   ITEM SELECTOR
+   -------------
+   By default the item nodes are `.browseItem` (blog list). But that class
+   also carries a 2-column card layout, which is wrong for pages whose items
+   have their own markup (e.g. Help's full-width category groups). Such pages
+   pass `{ itemSelector }` — the resolved CSS-module class name for their own
+   item — so they get the gated reveal WITHOUT borrowing the card layout, and
+   give that class its own `opacity: 0` start state. Backward compatible: the
+   blog list passes nothing and still defaults to `.browseItem`.
    ═══════════════════════════════════════════════════════════════════════ */
-export function useResourceBrowseAnimations(containerRef) {
+export function useResourceBrowseAnimations(containerRef, options = {}) {
+  const { itemSelector } = options;
+
   useEffect(() => {
     if (!containerRef.current) return;
-    const items = containerRef.current.querySelectorAll(
-      `.${styles.browseItem}`
-    );
-    if (!items.length) return;
+
+    /* Climb to the shared .browse wrapper so we can see the head, which is a
+       sibling of the list. Falls back to the container itself if the ancestor
+       isn't found (Help has none — its container is the groups wrapper). */
+    const scope =
+      containerRef.current.closest(`.${styles.browse}`) || containerRef.current;
+    const head = scope.querySelector(`.${styles.browseHead}`);
+    const itemClass = itemSelector || styles.browseItem;
+    const items = scope.querySelectorAll(`.${itemClass}`);
+    if (!head && !items.length) return;
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
       mm.add(MM, (mc) => {
         const reduced = !!mc.conditions.reduced;
-        const tween = gsap.fromTo(
-          items,
-          { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-          {
-            opacity: 1,
-            y: 0,
-            duration: reduced ? 0 : DURATION.base,
-            stagger: reduced ? 0 : STAGGER.base,
-            ease: EASE.out,
-            paused: true,
-          }
-        );
+
+        const tl = gsap.timeline({ paused: true });
+
+        /* Head first — the count + filters fade up as the lead-in. */
+        if (head) {
+          tl.fromTo(
+            head,
+            { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+            {
+              opacity: 1,
+              y: 0,
+              duration: reduced ? 0 : DURATION.base,
+              ease: EASE.out,
+            },
+            0
+          );
+        }
+
+        /* Then the item stagger, overlapping slightly with the head so the
+           two read as one gesture rather than two separate reveals. */
+        if (items.length) {
+          tl.fromTo(
+            items,
+            { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+            {
+              opacity: 1,
+              y: 0,
+              duration: reduced ? 0 : DURATION.base,
+              stagger: reduced ? 0 : STAGGER.base,
+              ease: EASE.out,
+            },
+            head ? ">-0.1" : 0
+          );
+        }
+
+        /* Trigger on the head when present (it sits above the list) so the
+           whole block is gated as a unit; fall back to the first item. */
         ScrollTrigger.create({
-          trigger: items[0],
+          trigger: head || items[0],
           start: TRIGGER.reveal,
           once: true,
-          onEnter: () => introGate.whenDone(() => tween.play()),
+          onEnter: () => introGate.whenDone(() => tl.play()),
         });
       });
     }, containerRef);
 
     return () => ctx.revert();
-  }, [containerRef]);
+  }, [containerRef, itemSelector]);
 }

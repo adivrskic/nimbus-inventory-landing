@@ -27,16 +27,32 @@
    look identical (consistent with the rest of the site's glow-card grids,
    none of which single out one card). Visual hierarchy comes from the
    single CTA below the grid instead.
+
+   ── Motion ──
+   The reveal runs on the shared motion tokens (DURATION, EASE, STAGGER,
+   DISTANCE, TRIGGER) re-exported by @/lib/gsap, so it inherits the same
+   timing/easing vocabulary as the hero, section reveals, and Nav. gsap is
+   imported FROM @/lib/gsap (not "gsap" directly) so ScrollTrigger is
+   registered once and gsap.defaults apply. The eyebrow → cards → CTA
+   sequence uses the same relative-offset anchoring as the IndustryPage
+   hero ("<"/">" with a small negative overlap) rather than fixed start
+   times, so the cadence holds regardless of the underlying token values.
    ────────────────────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  gsap,
+  ScrollTrigger,
+  prefersReducedMotion,
+  DURATION,
+  EASE,
+  STAGGER,
+  DISTANCE,
+  TRIGGER,
+} from "@/lib/gsap";
 import CornerButton from "@/components/shared/CornerButton";
 import useGlowCards from "@/lib/useGlowCards";
 import styles from "./ProblemSolution.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const COLUMNS = [
   {
@@ -87,16 +103,13 @@ export default function ProblemSolution({ onDemo }) {
   /* Mount-only animation — fires once when the section enters the
      viewport, then unbinds. No scrub, no pin, no progress mapping.
      Eyebrow → cards stagger → CTA is the same cadence the other
-     editorial sections use on this site. */
+     editorial sections use on this site, now driven by the shared
+     motion tokens so it stays in lockstep with the rest of the site. */
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduceMotion) {
+    if (prefersReducedMotion()) {
       gsap.set(
         section.querySelectorAll(
           `.${styles.eyebrow}, .${styles.col}, .${styles.ctaRow}`
@@ -107,33 +120,38 @@ export default function ProblemSolution({ onDemo }) {
     }
 
     const tl = gsap.timeline({
-      defaults: { ease: "power3.out" },
+      defaults: { ease: EASE.out },
       scrollTrigger: {
         trigger: section,
-        start: "top 78%",
+        start: TRIGGER.reveal,
         once: true,
       },
     });
 
+    /* Eyebrow first. */
     tl.fromTo(
       `.${styles.eyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
+      { opacity: 0, y: DISTANCE.sm },
+      { opacity: 1, y: 0, duration: DURATION.fast },
       0
     );
 
+    /* Cards — anchored to the eyebrow's tail with a gentle overlap, then
+       staggered. Slightly longer duration than the eyebrow/CTA so the
+       card rise reads as the centerpiece of the sequence. */
     tl.fromTo(
       `.${styles.col}`,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 },
-      0.15
+      { opacity: 0, y: DISTANCE.sm },
+      { opacity: 1, y: 0, duration: DURATION.base, stagger: STAGGER.base },
+      ">-0.1"
     );
 
+    /* CTA — follows the last card. */
     tl.fromTo(
       `.${styles.ctaRow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      0.55
+      { opacity: 0, y: DISTANCE.sm },
+      { opacity: 1, y: 0, duration: DURATION.fast },
+      ">-0.15"
     );
 
     return () => {

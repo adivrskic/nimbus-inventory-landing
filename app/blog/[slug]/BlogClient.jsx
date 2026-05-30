@@ -1,15 +1,27 @@
 "use client";
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import {
   ResourceShell,
   ResourceTOC,
   useResourceSectionAnimations,
 } from "@/components/ResourceShell";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  gsap,
+  DURATION,
+  EASE,
+  STAGGER,
+  DISTANCE,
+  TRIGGER,
+  prefersReducedMotion,
+} from "@/lib/gsap";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Blog.module.css";
 import { useDemo } from "@/lib/DemoContext";
 import { BLOG_POSTS } from "@/lib/blogData";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const slugify = (s) =>
   s
@@ -43,6 +55,50 @@ export default function BlogClient({ slug }) {
     return BLOG_POSTS.filter(
       (p) => p.slug !== post.slug && p.tag === post.tag
     ).slice(0, 3);
+  }, [post]);
+
+  /* Reveal the page-specific outro blocks (the publish-meta footer + the
+     related-posts list) on scroll, matching the article cascade's feel.
+     These aren't `.section` content and use Blog-only classes, so
+     useResourceSectionAnimations never touches them — without this they'd
+     sit at full opacity while the article above animated in. They live at
+     the very bottom of a multi-section post, so a plain scroll trigger is
+     enough; no intro gating is needed (they're never above the fold on a
+     real article, so they can't race the header intro). Tokens +
+     reduced-motion handling mirror the section hook; gsap.context scoped to
+     contentRef cleans the tween + trigger up on unmount / slug change. */
+  useEffect(() => {
+    if (!contentRef.current || !post) return;
+    const footer = contentRef.current.querySelector(
+      `.${pageStyles.postFooter}`
+    );
+    const relatedBlock = contentRef.current.querySelector(
+      `.${pageStyles.related}`
+    );
+    const blocks = [footer, relatedBlock].filter(Boolean);
+    if (!blocks.length) return;
+
+    const ctx = gsap.context(() => {
+      const reduced = prefersReducedMotion();
+      gsap.fromTo(
+        blocks,
+        { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+        {
+          opacity: 1,
+          y: 0,
+          duration: reduced ? 0 : DURATION.base,
+          stagger: reduced ? 0 : STAGGER.base,
+          ease: EASE.out,
+          scrollTrigger: {
+            trigger: blocks[0],
+            start: TRIGGER.reveal,
+            once: true,
+          },
+        }
+      );
+    }, contentRef);
+
+    return () => ctx.revert();
   }, [post]);
 
   if (!post) {

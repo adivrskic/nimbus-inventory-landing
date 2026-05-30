@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
    BLOG — page-specific styles only.
    Shell + reading typography in ResourceShell.module.css.
-   
+
    Owns: post footer meta row, related posts list, not-found CTA.
    ═══════════════════════════════════════════════════════════════════════ */
 
@@ -12,6 +12,9 @@
   margin-top: 48px;
   padding-top: 32px;
   border-top: 1px solid rgba(242, 240, 239, 0.08);
+  /* Starts hidden; revealed on scroll by BlogClient alongside .related so
+     these page-specific blocks animate in like the article above them. */
+  opacity: 0;
 }
 .postFooterRow {
   display: flex;
@@ -44,6 +47,9 @@
   margin-top: 64px;
   padding-top: 36px;
   border-top: 1px solid rgba(242, 240, 239, 0.08);
+  /* Revealed as one block (border + label + list together) on scroll — see
+     the reveal effect in BlogClient. */
+  opacity: 0;
 }
 .relatedLabel {
   font-family: var(--mono);

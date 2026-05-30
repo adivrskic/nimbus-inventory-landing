@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
@@ -193,11 +194,48 @@ export default function PricingClient() {
     setOpenFaq(isOpen ? null : fi);
   };
 
-  /* Intro + scroll animations */
+  /* ── Intro + scroll animations — uniform with Calculator/IndustryPage ──
+     Hero intro reads strictly top-to-bottom: eyebrow -> headline letters
+     -> subtitle -> billing toggle. Each step is anchored to the END of the
+     previous one (">" with a small negative offset for a gentle overlap)
+     rather than a fixed start time, so the lower elements never resolve
+     before the per-letter headline does — holds regardless of headline
+     length.
+
+     The scroll reveals below (tier cards, matrix rows, FAQ items) are
+     GATED behind the hero intro: a reveal whose trigger is already
+     satisfied on initial load is QUEUED and released the moment the intro
+     completes; a section scrolled to later plays immediately, exactly as
+     before. This removes the initial-viewport race (e.g. tier cards firing
+     at "top 82%" on a short viewport) without artificially delaying
+     below-fold content. */
   useEffect(() => {
     window.scrollTo(0, 0);
     const hero = heroRef.current;
     if (!hero) return;
+
+    /* Reduced motion: skip the intro choreography and jump every animated
+       element straight to its final, visible state. Without this, the hero
+       letters + every scroll reveal would still animate for users who
+       asked the OS for reduced motion. SplitText already renders an
+       sr-only flat headline, so screen readers are unaffected either way. */
+    if (prefersReducedMotion()) {
+      gsap.set(hero.querySelectorAll(`.${styles.headLetter}`), {
+        opacity: 1,
+        y: "0%",
+        rotateX: 0,
+      });
+      gsap.set(
+        hero.querySelectorAll(
+          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.toggleWrap}`
+        ),
+        { opacity: 1, y: 0 }
+      );
+      gsap.set(tierRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+      gsap.set(matrixRowRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+      gsap.set(faqItemRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+      return;
+    }
 
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
@@ -209,7 +247,7 @@ export default function PricingClient() {
       0
     );
 
-    /* Headline letters */
+    /* Per-letter headline — starts just as the eyebrow lands. */
     const hLetters = hero.querySelectorAll(`.${styles.headLetter}`);
     tl.to(
       hLetters,
@@ -221,81 +259,94 @@ export default function PricingClient() {
         stagger: 0.016,
         ease: "power4.out",
       },
-      0.15
+      ">-0.05"
     );
 
-    /* Sub — simple fade-up (was per-letter; matching Calculator's
-       simpler editorial reveal). */
+    /* Sub — anchored to the END of the headline stagger. */
     tl.fromTo(
       `.${styles.heroSub}`,
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.55 },
-      0.55
+      ">-0.2"
     );
 
-    /* Toggle */
-    tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, 0.8);
+    /* Billing toggle — follows the subtitle. */
+    tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, ">-0.15");
+
+    /* ── Gate the scroll reveals behind the hero intro ── */
+    let cancelled = false;
+    let introDone = false;
+    const queued = [];
+    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+    tl.eventCallback("onComplete", () => {
+      if (cancelled) return;
+      introDone = true;
+      queued.forEach((fn) => fn());
+      queued.length = 0;
+    });
+    /* Build a paused reveal tween + a once-only trigger that plays it
+       through the intro gate. Mirrors the original fromTo vars exactly. */
+    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+      if (!trigger) return;
+      const list = Array.isArray(targets) ? targets.filter(Boolean) : targets;
+      if (Array.isArray(list) && list.length === 0) return;
+      const tween = gsap.fromTo(list, fromVars, { ...toVars, paused: true });
+      ScrollTrigger.create({
+        trigger,
+        start,
+        once: true,
+        onEnter: () => runWhenIntroDone(() => tween.play()),
+      });
+    };
 
     /* Tier cards */
     const tiers = tierRefs.current.filter(Boolean);
-    gsap.to(tiers, {
-      opacity: 1,
-      y: 0,
-      duration: 0.7,
-      stagger: 0.12,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: tiers[0],
-        start: "top 82%",
-      },
-    });
+    gatedReveal(
+      tiers,
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease: "power3.out" },
+      tiers[0],
+      "top 82%"
+    );
 
     /* Matrix rows */
     const rows = matrixRowRefs.current.filter(Boolean);
-    gsap.fromTo(
+    gatedReveal(
       rows,
       { opacity: 0, y: 8 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.4,
-        stagger: 0.035,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: matrixSectionRef.current,
-          start: "top 75%",
-        },
-      }
+      { opacity: 1, y: 0, duration: 0.4, stagger: 0.035, ease: "power2.out" },
+      matrixSectionRef.current,
+      "top 75%"
     );
 
     /* FAQ items */
     const faqs = faqItemRefs.current.filter(Boolean);
-    gsap.fromTo(
+    gatedReveal(
       faqs,
       { opacity: 0, y: 10 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        stagger: 0.06,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: faqSectionRef.current,
-          start: "top 78%",
-        },
-      }
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power3.out" },
+      faqSectionRef.current,
+      "top 78%"
     );
 
-    /* The bottom CTA is now <FinalCTACard>, which owns its own scroll-in
-       reveal + gold wipe — no page-level timeline needed here anymore. */
+    /* The bottom CTA is <FinalCTACard>, which owns its own scroll-in
+       reveal + gold wipe — no page-level timeline needed here. */
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    return () => {
+      cancelled = true;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   /* Price morph when toggle changes */
   const proPriceRef = useRef(null);
   useEffect(() => {
     if (!proPriceRef.current) return;
+    /* Reduced motion: settle instantly instead of fading the price in. */
+    if (prefersReducedMotion()) {
+      gsap.set(proPriceRef.current, { opacity: 1, y: 0 });
+      return;
+    }
     gsap.fromTo(
       proPriceRef.current,
       { opacity: 0, y: 6 },
@@ -351,7 +402,7 @@ export default function PricingClient() {
 
         {/* ─────────────────────────────────────────────────────
             BILLING SELECTOR — pill toggle with sliding gold pill
-            
+
             The pill background slides between Monthly and Annual via a
             CSS transform driven by inline style. When Annual is active,
             the pill is on the right (gold), the Annual button text goes
@@ -399,7 +450,7 @@ export default function PricingClient() {
 
       {/* ─────────────────────────────────────────────────────
           TIER CARDS — Pro (featured) + Enterprise
-          
+
           Each card has a big editorial section numeral in the background
           (very low opacity, behind content via z-index:-1 inside an
           isolated stacking context). Pro carries a "Most Popular" pill

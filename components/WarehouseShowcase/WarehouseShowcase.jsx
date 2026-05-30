@@ -2101,7 +2101,7 @@ export default function WarehouseShowcase() {
     <section
       ref={sectionRef}
       className={styles.section}
-      id="wareh"
+      id="warehouse"
       style={{ "--section-bg": SECTION_BG_HEX }}
     >
       <div ref={stickyRef} className={styles.sticky}>

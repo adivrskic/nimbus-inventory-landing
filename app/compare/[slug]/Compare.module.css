@@ -80,7 +80,7 @@
   top: -0.05em;
 }
 .markCompetitor {
-  color: rgba(242, 240, 239, 0.55);
+  color: var(--accent);
   font-weight: 600;
   opacity: 0;
 }

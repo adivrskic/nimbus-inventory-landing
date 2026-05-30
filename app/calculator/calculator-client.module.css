@@ -1,16 +1,16 @@
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
+/* ═══════════════════════════════════════════════════════════════════════
    ROI CALCULATOR
-   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+   ───────────────────────────────────────────────────────────────────────
    Distinctive treatment within the Marketing page type:
-   - The story paragraph IS the input form тАФ numbers in the sentence are
+   - The story paragraph IS the input form — numbers in the sentence are
      editable text inputs styled as inline text with a dotted gold underline
    - Big animated $LOSS and $SAVINGS numbers in the story (60-80px display)
    - Editorial section numerals (Marketing pattern) anchor the breakdown
      and assumptions sections
-   - Horizontal bar chart in the breakdown тАФ bars animate width as inputs
+   - Horizontal bar chart in the breakdown — bars animate width as inputs
      change, smoothly via CSS transition
    - Receipt-style total at the bottom of the breakdown
-   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
   background: var(--dark);
@@ -20,9 +20,9 @@
   overflow-x: hidden;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-       HERO
-    тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ───────────────────────────────────────────────────────────────────────
+         HERO
+     ─────────────────────────────────────────────────────────────────────── */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
@@ -95,10 +95,10 @@
   border-bottom-color: var(--accent);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       THE STORY тАФ the centerpiece
-       The editable paragraph that doubles as the input form.
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         THE STORY — the centerpiece
+         The editable paragraph that doubles as the input form.
+     ═══════════════════════════════════════════════════════════════════════ */
 .story {
   max-width: 1400px;
   margin: 0 auto;
@@ -134,7 +134,7 @@
   }
 }
 
-/* The story paragraphs тАФ large readable display type */
+/* The story paragraphs — large readable display type */
 .storyText,
 .storyTextSecondary {
   font-family: var(--display);
@@ -178,7 +178,10 @@
   font-style: italic;
 }
 
-/* Reset + keyboard hint row */
+/* Reset + keyboard hint row.
+     NOTE: the Reset control is now a <CornerButton>, which brings its own
+     styling. The old .storyReset rule below is left in place (unused) in
+     case you revert; safe to delete. */
 .storyControls {
   display: flex;
   align-items: center;
@@ -222,11 +225,19 @@
   letter-spacing: 0;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       INLINE EDITABLE NUMBER тАФ the magic component
-       Looks like inline text. Click to edit. Dotted gold underline signals
-       editability without being distracting.
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         INLINE EDITABLE NUMBER — the magic component
+         Looks like inline text. Click to edit. Dotted gold underline signals
+         editability without being distracting.
+  
+         Width: the JSX sets an explicit inline width in `ch` based on the
+         value's character count. Because the field uses tabular-nums, every
+         digit is exactly 1ch wide, so (length + slack)ch reliably covers the
+         rendered text in EVERY browser — no dependency on `field-sizing`
+         (which sized the box to the advance width and clipped the italic
+         glyph's right-side ink overhang). box-sizing: content-box keeps that
+         ch width as the pure text area; min/max-width clamp the extremes.
+     ═══════════════════════════════════════════════════════════════════════ */
 .editable {
   display: inline-flex;
   align-items: baseline;
@@ -261,14 +272,16 @@
   background: transparent;
   border: none;
   outline: none;
-  padding: 0 8px 4px;
+  padding: 0 6px 4px;
   margin: 0;
   border-bottom: 1.5px dotted rgb(var(--accent-rgb) / 0.55);
   border-radius: 0;
   cursor: text;
   transition: border-color 0.2s, background 0.2s, color 0.2s;
-  /* Auto-size to content where supported (Chrome 123+, Edge, Safari TP) */
-  field-sizing: content;
+  /* Width comes from the inline `width: <n>ch` set in the JSX. content-box
+       so that ch value is the text area itself; the small padding sits
+       outside it. NOT using field-sizing — see the block comment above. */
+  box-sizing: content-box;
   min-width: 60px;
   max-width: 280px;
   text-align: center;
@@ -296,9 +309,9 @@
   background: rgb(var(--accent-rgb) / 0.08);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       EDITORIAL SECTIONS тАФ same pattern as Marketing pages
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         EDITORIAL SECTIONS — same pattern as Marketing pages
+     ═══════════════════════════════════════════════════════════════════════ */
 .section {
   position: relative;
   max-width: 1400px;
@@ -357,9 +370,9 @@
   opacity: 0;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       BREAKDOWN тАФ animated horizontal bar chart
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         BREAKDOWN — animated horizontal bar chart
+     ═══════════════════════════════════════════════════════════════════════ */
 .breakdown {
   display: flex;
   flex-direction: column;
@@ -441,7 +454,7 @@
   margin-left: 56px;
 }
 
-/* Total row тАФ bigger, with top hairline */
+/* Total row — bigger, with top hairline */
 .totalBar {
   margin-top: 56px;
   padding-top: 32px;
@@ -470,9 +483,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       ASSUMPTIONS тАФ definition list
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         ASSUMPTIONS — definition list
+     ═══════════════════════════════════════════════════════════════════════ */
 .assumptions {
   margin: 0;
   padding: 0;
@@ -502,9 +515,9 @@
   margin: 0;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       FINAL CTA
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         FINAL CTA
+     ═══════════════════════════════════════════════════════════════════════ */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -550,9 +563,9 @@
   flex-wrap: wrap;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-       RESPONSIVE
-    тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+         RESPONSIVE
+     ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;

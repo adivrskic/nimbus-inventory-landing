@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
+import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
@@ -153,15 +154,21 @@ function InlineNumber({
       e.preventDefault();
       setRawInput(String(Math.round(value)));
       inputRef.current?.blur();
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      const next = clamp(value + step, range.min, range.max);
-      onChange(next);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      const next = clamp(value - step, range.min, range.max);
+      const dir = e.key === "ArrowUp" ? 1 : -1;
+      const step = (e.shiftKey ? 10 : 1) * dir;
+      /* Base the nudge on the live edited value when focused (rawInput)
+         so repeated presses compound correctly and don't read a stale
+         `value` prop; fall back to the committed value otherwise. */
+      const base = focused ? parseInput(rawInput) : value;
+      const next = clamp(base + step, range.min, range.max);
+      /* Keep BOTH in sync. rawInput is what the focused field shows;
+         value drives the recalculation and is what handleBlur commits.
+         The old handler updated only `value`, so while focused the field
+         kept showing the pre-nudge number AND blur then overwrote the
+         nudge with the stale rawInput — i.e. the arrows appeared dead. */
+      setRawInput(String(next));
       onChange(next);
     }
   };
@@ -174,6 +181,14 @@ function InlineNumber({
         type="text"
         inputMode="numeric"
         value={displayed}
+        /* Explicit ch-based width so sizing works in EVERY browser, not
+           just ones supporting field-sizing. The field uses tabular-nums,
+           so every digit is exactly 1ch wide — meaning (length + slack)ch
+           always covers the actual rendered advance. The +2 slack is what
+           leaves room for the italic glyph's right-side overhang and the
+           caret, so the last digit no longer clips. min/max-width in CSS
+           still clamp the extremes. */
+        style={{ width: `${displayed.length + 2}ch` }}
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -523,13 +538,9 @@ export default function CalculatorClient() {
         </p>
 
         <div className={styles.storyControls}>
-          <button
-            type="button"
-            onClick={resetDefaults}
-            className={styles.storyReset}
-          >
+          <CornerButton onClick={resetDefaults}>
             ↺ Reset to defaults
-          </button>
+          </CornerButton>
           <div className={styles.storyHint}>
             <span className={styles.storyHintKbd}>↑ ↓</span> to nudge ·{" "}
             <span className={styles.storyHintKbd}>Shift</span> + arrows to step

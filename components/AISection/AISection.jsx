@@ -22,6 +22,25 @@ const PARTICLE_COUNT_MOBILE = 22000;
 const OFFSET = 5.5;
 const TO_RAD = Math.PI / 180;
 
+/* ── Particle alpha envelope (scroll-driven) ──────────────────────────
+   The cloud is invisible at the section's edges and only reaches full
+   strength through the middle, so (a) the hero above has time to clear
+   before particles fade in, and (b) the cloud clears out quickly before
+   the Features section scrolls up over the sticky canvas.
+
+   FADE_IN_*  — measured as firstBlock.top / viewportHeight. Large while
+                the section is entering from below, decreasing as you
+                scroll in. Hidden at/above _START, full at/below _END.
+   FADE_OUT_* — measured as lastBlock.bottom / viewportHeight. Large while
+                the last shape is still on screen, decreasing as it exits
+                upward. Full at/above _START, gone at/below _END.
+   These are eyeball-tuned starting points — adjust the IN pair to line
+   up with the hero's exit, the OUT pair to clear before Features. */
+const FADE_IN_START = 1.0; // first block's top still at the viewport bottom → hidden
+const FADE_IN_END = 0.6; // fully present just before the first shape forms
+const FADE_OUT_START = 1.15; // start clearing right after the last shape passes its peak
+const FADE_OUT_END = 0.5; // fully gone well before Features covers the canvas
+
 const SHAPE_GENERATORS = {
   voice: generateVoiceScene,
   spatial: generateSpatialScene,
@@ -619,6 +638,7 @@ export default function AISection() {
     globalAlpha: 0,
     shapeProgresses: [0, 0, 0, 0],
     fadeOut: 0,
+    fadeIn: 0,
   });
 
   useEffect(() => {
@@ -719,17 +739,38 @@ export default function AISection() {
       stateRef.current.shapeProgresses = shapeProgresses;
       formationsRef.current = formations;
 
+      /* Fade-in envelope — particles ramp from invisible to full as the
+         first block's top climbs from the viewport bottom upward, so the
+         hero above has time to clear before the cloud appears. Measured
+         as firstBlock.top / vh: ≈1 while the section is still entering,
+         decreasing as you scroll in. */
+      const firstBlock = blocks[0];
+      if (firstBlock) {
+        const topRatio = firstBlock.getBoundingClientRect().top / vh;
+        stateRef.current.fadeIn = Math.max(
+          0,
+          Math.min(
+            1,
+            (FADE_IN_START - topRatio) / (FADE_IN_START - FADE_IN_END)
+          )
+        );
+      }
+
+      /* Fade-out envelope — starts earlier and finishes sooner than the
+         old 0.6·vh→0 ramp so the cloud is gone before the Features
+         section scrolls up over the sticky canvas. Measured as
+         lastBlock.bottom / vh: large while the last shape is on screen,
+         decreasing as it exits upward. */
       const lastBlock = blocks[blocks.length - 1];
       if (lastBlock) {
-        const r = lastBlock.getBoundingClientRect();
-        if (r.bottom < vh * 0.6) {
-          stateRef.current.fadeOut = Math.max(
-            0,
-            Math.min(1, 1 - r.bottom / (vh * 0.6))
-          );
-        } else {
-          stateRef.current.fadeOut = 0;
-        }
+        const bottomRatio = lastBlock.getBoundingClientRect().bottom / vh;
+        stateRef.current.fadeOut = Math.max(
+          0,
+          Math.min(
+            1,
+            (FADE_OUT_START - bottomRatio) / (FADE_OUT_START - FADE_OUT_END)
+          )
+        );
       }
 
       if (max1 > 0.5) setActiveIdx(activeShape);
@@ -1064,10 +1105,17 @@ export default function AISection() {
         sFormation += (s.formation - sFormation) * CFG.smoothFormation;
         sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
 
+        /* Alpha envelope: the base/formation curve sets how bright a
+           formed vs scattered cloud is, then BOTH scroll-driven
+           envelopes multiply in — fadeIn ramps the cloud up at the top
+           of the section (after the hero clears), (1 - fadeOut) ramps it
+           back down at the bottom (before Features overlaps). Either at
+           0 forces the cloud fully invisible regardless of formation. */
         const fadeOut = s.fadeOut || 0;
+        const fadeIn = s.fadeIn ?? 1;
         const baseAlpha = 0.4;
         const targetAlpha =
-          (baseAlpha + (1 - baseAlpha) * sFormation) * (1 - fadeOut);
+          (baseAlpha + (1 - baseAlpha) * sFormation) * (1 - fadeOut) * fadeIn;
         sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
 
         const shapeA = shapes[s.activeShape];

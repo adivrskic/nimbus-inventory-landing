@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import {
   gsap,
   DURATION,
@@ -19,6 +19,15 @@ import { BLOG_POSTS } from "@/lib/blogData";
 
 const TAGS = ["All", ...Array.from(new Set(BLOG_POSTS.map((p) => p.tag)))];
 
+/* useLayoutEffect on the client, useEffect on the server. The filter
+   re-animation has to set its from-state (opacity 0) BEFORE the browser
+   paints the newly-filtered list, otherwise the new posts flash in at full
+   opacity for a frame and then snap to 0 to animate. useLayoutEffect fires
+   before paint and kills that flicker; the isomorphic guard avoids React's
+   server-side useLayoutEffect warning during SSR. */
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export default function BlogListClient() {
   const listRef = useRef(null);
 
@@ -36,32 +45,44 @@ export default function BlogListClient() {
     [activeTag]
   );
 
-  /* Browse-item stagger on initial mount */
+  /* Initial browse-item stagger on mount — owned by the shared hook so it
+     stays uniform with every other ResourceShell page (and gated behind the
+     shell's hero intro there, not here). */
   useResourceBrowseAnimations(listRef);
 
-  /* Re-animate when filter changes (different post set) */
+  /* Re-animate the list when the filter changes (a different post set).
+     Runs as a pre-paint layout effect so the incoming items never flash in
+     at full opacity before being reset to their from-state. Wrapped in a
+     gsap.context scoped to the list: the selector is resolved within
+     listRef, and the returned revert() cleans the tween up before the next
+     filter change so rapid tag-clicking can't stack half-finished reveals
+     (overwrite: "auto" is a second guard for the same race). Tokens +
+     reduced-motion handling are unchanged. */
   const isFirst = useRef(true);
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     if (isFirst.current) {
       isFirst.current = false;
       return;
     }
     if (!listRef.current) return;
-    const items = listRef.current.querySelectorAll(
-      `.${shellStyles.browseItem}`
-    );
+
     const reduced = prefersReducedMotion();
-    gsap.fromTo(
-      items,
-      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-      {
-        opacity: 1,
-        y: 0,
-        duration: reduced ? 0 : DURATION.fast,
-        stagger: reduced ? 0 : STAGGER.base,
-        ease: EASE.out,
-      }
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        `.${shellStyles.browseItem}`,
+        { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+        {
+          opacity: 1,
+          y: 0,
+          duration: reduced ? 0 : DURATION.fast,
+          stagger: reduced ? 0 : STAGGER.base,
+          ease: EASE.out,
+          overwrite: "auto",
+        }
+      );
+    }, listRef);
+
+    return () => ctx.revert();
   }, [activeTag]);
 
   return (

@@ -25,7 +25,6 @@
   gap: 40px;
   padding: 56px 64px;
   width: 100%;
-  border-bottom: 1px solid var(--border-subtle);
   position: relative;
   opacity: 0;
   transform: translateY(30px);

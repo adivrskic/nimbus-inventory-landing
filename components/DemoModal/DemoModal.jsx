@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import {
+  gsap,
+  prefersReducedMotion,
+  DURATION,
+  EASE,
+  STAGGER,
+  DISTANCE,
+} from "@/lib/gsap";
 import Logo from "@/components/shared/Logo";
 import { validateDemo, EMAIL_RE } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
@@ -42,6 +49,15 @@ import styles from "./DemoModal.module.css";
    aria-labelledby="demo-modal-title") is preserved; the h2 inside
    the center column carries the matching id and acts as the
    accessible name.
+
+   ── Motion ──
+   Animations are driven through the shared motion tokens (DURATION,
+   EASE, STAGGER, DISTANCE) re-exported by @/lib/gsap, so the modal
+   inherits the same timing/easing vocabulary as the hero, section
+   reveals, and Nav. Entrances cascade the interior (left column
+   slides in on x like Nav's .megaLeft; center content rises on y like
+   the hero); the exit is intentionally plain + fast (power2.in),
+   matching every other exit on the site.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const COMMENTS_MAX = 2000;
@@ -486,7 +502,17 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     [form, status, topicKey, topic.emailLabel]
   );
 
-  /* ── Mount/unmount + open/close animations ────────────────────────── */
+  /* ── Mount/unmount + open/close animations ────────────────────────
+     Entrances follow the house cascade: the shell scales in as one
+     gesture, then the interior populates — the left column slides in on
+     x (mirroring Nav's .megaLeft), the center content rises on y in a
+     stagger (mirroring the hero / section reveals). Tokens come from
+     lib/motion via lib/gsap so this inherits the global timing/easing.
+
+     The exit is intentionally plain and fast (power2.in), matching every
+     other exit on the site (Nav mega + mobile menu) — no reverse cascade.
+     Children are filtered by offsetParent so hidden tracks (e.g. the
+     agenda column, display:none'd on mobile) don't eat a stagger slot. */
   useEffect(() => {
     if (isOpen) {
       setMounted(true);
@@ -505,57 +531,67 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
   useEffect(() => {
     if (!mounted) return;
     const reduced = prefersReducedMotion();
+
+    const visibleKids = (ref) =>
+      ref.current
+        ? Array.from(ref.current.children).filter(
+            (el) => el.offsetParent !== null
+          )
+        : [];
+    const leftKids = visibleKids(leftColRef);
+    const centerKids = visibleKids(centerColRef);
+
     if (isOpen && !animatingOut) {
       if (reduced) {
         gsap.set(backdropRef.current, { opacity: 1 });
-        gsap.set(panelRef.current, { scale: 1, opacity: 1, y: 0 });
-        gsap.set([leftColRef.current, centerColRef.current].filter(Boolean), {
-          opacity: 1,
-          y: 0,
-        });
+        gsap.set(panelRef.current, { scale: 1, opacity: 1 });
+        gsap.set([...leftKids, ...centerKids], { opacity: 1, x: 0, y: 0 });
         return;
       }
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      const tl = gsap.timeline({ defaults: { ease: EASE.out } });
       tl.fromTo(
         backdropRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.3 }
+        { opacity: 1, duration: DURATION.fast }
       )
         .fromTo(
           panelRef.current,
-          { scale: 0.96, opacity: 0, y: 16 },
-          { scale: 1, opacity: 1, y: 0, duration: 0.45 },
-          "-=0.18"
+          { scale: 0.96, opacity: 0 },
+          { scale: 1, opacity: 1, duration: DURATION.base },
+          "<"
         )
         .fromTo(
-          [leftColRef.current, centerColRef.current].filter(Boolean),
-          { opacity: 0, y: 14 },
-          { opacity: 1, y: 0, duration: 0.4, stagger: 0.08 },
-          "-=0.3"
+          leftKids,
+          { opacity: 0, x: -DISTANCE.sm },
+          {
+            opacity: 1,
+            x: 0,
+            duration: DURATION.fast,
+            stagger: STAGGER.tight,
+          },
+          "<0.12"
+        )
+        .fromTo(
+          centerKids,
+          { opacity: 0, y: DISTANCE.sm },
+          { opacity: 1, y: 0, duration: DURATION.fast, stagger: STAGGER.base },
+          "<0.04"
         );
+      return () => tl.kill();
     } else if (animatingOut) {
       if (reduced) {
-        gsap.set([leftColRef.current, centerColRef.current].filter(Boolean), {
-          opacity: 0,
-          y: -8,
-        });
-        gsap.set(panelRef.current, { scale: 0.95, opacity: 0 });
+        gsap.set([...leftKids, ...centerKids], { opacity: 0 });
+        gsap.set(panelRef.current, { scale: 0.97, opacity: 0 });
         gsap.set(backdropRef.current, { opacity: 0 });
         return;
       }
       const tl = gsap.timeline({ defaults: { ease: "power2.in" } });
-      tl.to([leftColRef.current, centerColRef.current].filter(Boolean), {
-        opacity: 0,
-        y: -8,
-        duration: 0.2,
-        stagger: 0.04,
-      })
-        .to(
-          panelRef.current,
-          { scale: 0.95, opacity: 0, duration: 0.3 },
-          "-=0.1"
-        )
-        .to(backdropRef.current, { opacity: 0, duration: 0.25 }, "-=0.18");
+      tl.to(panelRef.current, { scale: 0.97, opacity: 0, duration: 0.3 }).to(
+        backdropRef.current,
+        { opacity: 0, duration: 0.28 },
+        "<0.06"
+      );
+      return () => tl.kill();
     }
   }, [isOpen, mounted, animatingOut]);
 
@@ -577,7 +613,13 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
     gsap.fromTo(
       targets,
       { opacity: 0, y: 6 },
-      { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.02 }
+      {
+        opacity: 1,
+        y: 0,
+        duration: DURATION.fast,
+        ease: EASE.out,
+        stagger: STAGGER.tight,
+      }
     );
   }, [topicKey, mounted]);
 
@@ -605,7 +647,7 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       gsap.fromTo(
         successRef.current,
         { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }
+        { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out }
       );
       gsap.fromTo(
         successRef.current.querySelectorAll("[data-success-item]"),
@@ -613,9 +655,9 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
         {
           opacity: 1,
           y: 0,
-          duration: 0.4,
-          stagger: 0.08,
-          ease: "power3.out",
+          duration: DURATION.fast,
+          stagger: STAGGER.base,
+          ease: EASE.out,
           delay: 0.15,
         }
       );

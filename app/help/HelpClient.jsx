@@ -1,5 +1,12 @@
 "use client";
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   gsap,
   DURATION,
@@ -18,6 +25,13 @@ import DemoModal from "@/components/DemoModal/DemoModal";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Help.module.css";
 import { HELP_CATEGORIES } from "@/lib/helpData";
+
+/* useLayoutEffect on the client, useEffect on the server. The filter
+   re-stagger must set its from-state before paint: categories that survive a
+   search keep their DOM node (keyed by slug) with a settled opacity:1, so a
+   post-paint effect would flash them to 0 before animating. */
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export default function HelpClient() {
   const groupsRef = useRef(null);
@@ -45,44 +59,51 @@ export default function HelpClient() {
     0
   );
 
-  /* Initial reveal — the shared Browse hook. This is the same gated
-     pattern every Resource page uses: it staggers the category groups up
-     on scroll, but the play is HELD until the shell's header intro
-     finishes (via the shell's introGate), then released. This replaces
-     the old hand-rolled mount stagger with `delay: 0.7`, which was just a
-     fixed guess at the header-intro duration and drifted out of sync the
-     moment that timing changed. The groups are tagged with the shell's
-     `browseItem` class so the hook can find them. */
-  useResourceBrowseAnimations(groupsRef);
+  /* Initial reveal — the shared Browse hook, the same gated pattern every
+     Resource page uses: it staggers the category groups up on scroll, but the
+     play is HELD until the shell's header intro finishes (via introGate), then
+     released. We pass itemSelector so the hook targets our own
+     `.categoryGroup` markup. The group used to borrow the shell's
+     `.browseItem` class to be found by this hook, but that class also forced a
+     2-column card grid (1fr + 200px) meant for blog-list cards, which squashed
+     the article list into the narrow right column. Pointing the hook at our
+     own class keeps the gated reveal and drops the broken layout. */
+  useResourceBrowseAnimations(groupsRef, {
+    itemSelector: pageStyles.categoryGroup,
+  });
 
-  /* Re-animate when the search filter changes. This is a re-shuffle that
-     fires OUTSIDE the gated reveal hook (the hook already played once on
-     mount), so per lib/gsap guidance it reads prefersReducedMotion()
-     directly rather than going through matchMedia. The isFirst guard
-     skips the mount render so it never double-fires with the hook above. */
+  /* Re-animate when the search filter changes. Runs as a pre-paint layout
+     effect (no flash on reused group nodes) wrapped in gsap.context (scoped
+     to the groups wrapper; ctx.revert() cleans up before the next change).
+     This fires OUTSIDE the gated reveal hook — the hook already played once on
+     mount — so per lib/gsap guidance it reads prefersReducedMotion() directly
+     rather than going through matchMedia. The isFirst guard skips the mount
+     render so it never double-fires with the hook above. */
   const isFirst = useRef(true);
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     if (isFirst.current) {
       isFirst.current = false;
       return;
     }
     if (!groupsRef.current) return;
-    const groups = groupsRef.current.querySelectorAll(
-      `.${pageStyles.categoryGroup}`
-    );
+
     const reduced = prefersReducedMotion();
-    gsap.fromTo(
-      groups,
-      { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
-      {
-        opacity: 1,
-        y: 0,
-        duration: reduced ? 0 : DURATION.fast,
-        stagger: reduced ? 0 : STAGGER.base,
-        ease: EASE.out,
-        overwrite: "auto",
-      }
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        `.${pageStyles.categoryGroup}`,
+        { opacity: 0, y: reduced ? 0 : DISTANCE.sm },
+        {
+          opacity: 1,
+          y: 0,
+          duration: reduced ? 0 : DURATION.fast,
+          stagger: reduced ? 0 : STAGGER.base,
+          ease: EASE.out,
+          overwrite: "auto",
+        }
+      );
+    }, groupsRef);
+
+    return () => ctx.revert();
   }, [query]);
 
   return (
@@ -164,10 +185,7 @@ export default function HelpClient() {
           )}
 
           {filtered.map((cat, ci) => (
-            <section
-              key={cat.slug}
-              className={`${pageStyles.categoryGroup} ${shellStyles.browseItem}`}
-            >
+            <section key={cat.slug} className={pageStyles.categoryGroup}>
               <div className={pageStyles.categoryHeader}>
                 <span className={pageStyles.categoryNum}>
                   {String(ci + 1).padStart(2, "0")}

@@ -1,13 +1,18 @@
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-   MARKETING PAGE TYPE тАФ Comparison pages
-   тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
+/* ═══════════════════════════════════════════════════════════════════════
+   MARKETING PAGE TYPE — Comparison pages
+   ───────────────────────────────────────────────────────────────────────
    Same Marketing vocabulary as Industry/Integration, but with:
    - "Nautilus vs Competitor" mark in hero (positioning signature)
    - Two-column "At a glance" with Nautilus favored visually
    - Spec-sheet feature matrix table (signature)
    - Honest-take card calling out when competitor is the better fit
    - Cross-link grid at the bottom using the glow-card system
-   тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+
+   NOTE: the index page (CompareIndexClient) uses the HERO block + the
+   "INDEX — COMPETITOR CARD GRID" block below. The SECTIONS / QUICK
+   COMPARE / MATRIX / REASONS / HONEST blocks belong to the per-competitor
+   detail page and are left intact here.
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .page {
   background: var(--dark);
@@ -17,9 +22,9 @@
   overflow-x: hidden;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         HERO
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ───────────────────────────────────────────────────────────────────────
+           HERO
+     ─────────────────────────────────────────────────────────────────────── */
 .hero {
   max-width: 1400px;
   margin: 0 auto;
@@ -50,7 +55,20 @@
   color: var(--accent);
 }
 
-/* тФАтФА The Nautilus vs Competitor mark тФАтФА */
+/* Index-page eyebrow ("Compare"). Was missing — the index JSX references
+     styles.heroEyebrow, which didn't exist, so the label rendered unstyled
+     and never received its opacity:0 entrance state for the intro tween. */
+.heroEyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
+  opacity: 0;
+}
+
+/* ── The Nautilus vs Competitor mark (detail page) ── */
 .mark {
   display: flex;
   align-items: baseline;
@@ -85,7 +103,7 @@
   opacity: 0;
 }
 
-/* тФАтФА Tagline below the mark, per-letter тФАтФА */
+/* ── Tagline below the mark, per-letter ── */
 .heroTitle {
   font-family: var(--display);
   font-size: clamp(40px, 5.5vw, 72px);
@@ -131,6 +149,19 @@
   opacity: 0;
 }
 
+/* Index-page subtitle. Was missing — the index JSX references
+     styles.heroSub. Mirrors .heroDesc but with no bottom margin since it's
+     the last hero element. opacity:0 feeds the intro tween. */
+.heroSub {
+  font-family: var(--display);
+  font-size: 17px;
+  line-height: 1.65;
+  color: rgba(242, 240, 239, 0.55);
+  max-width: 640px;
+  margin: 0;
+  opacity: 0;
+}
+
 .heroCTA {
   display: flex;
   align-items: center;
@@ -153,9 +184,173 @@
   border-bottom-color: var(--accent);
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         SECTIONS тАФ Marketing editorial numeral pattern
-      тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+/* ═══════════════════════════════════════════════════════════════════════
+           INDEX — COMPETITOR CARD GRID  (glow-card system)
+     ───────────────────────────────────────────────────────────────────────
+     Used by CompareIndexClient. The grid container carries `glow-cards`
+     (globals) + the useGlowCards ref for the shared hover context. Each card
+     is a TransitionLink with `glow-card` (outer shell) + a `.glow-card-border`
+     sibling + a `.glow-card-content` / .cardInner child holding the content.
+  
+     Rules of engagement (same as every other glow-card on the site):
+     • Outer shell (.card) sets shape + entrance opacity ONLY. No background,
+       no border, no padding, no hover transforms — globals own all of that.
+     • Inner (.cardInner) holds padding + layout. NEVER set height — globals
+       provide `height: calc(100% - 2px); margin: 1px`, which is what creates
+       the 1px gap where the gold border-glow shines through. The footer is
+       pinned to the bottom with margin-top:auto inside the flex column, so
+       it relies on that globals-provided height rather than a height here.
+     ═══════════════════════════════════════════════════════════════════════ */
+.grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 0px 80px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* Outer shell — shape + entrance only. */
+.card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  min-height: 340px;
+  opacity: 0;
+}
+
+/* Inner content — pairs with `glow-card-content` from globals (dark fill +
+     1px inset). We supply padding + flex layout only. Do NOT set height. */
+.cardInner {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 30px 26px;
+  position: relative;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cardVs {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--accent);
+}
+.cardName {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--white);
+  line-height: 1.05;
+}
+
+.cardCategory {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.5);
+  margin-bottom: 18px;
+}
+
+.cardDesc {
+  font-family: var(--display);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(242, 240, 239, 0.6);
+  margin: 0 0 20px;
+}
+
+.cardDivider {
+  height: 1px;
+  background: rgba(242, 240, 239, 0.08);
+  margin: 0 0 18px;
+}
+
+.cardKeysLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.4);
+  margin-bottom: 14px;
+}
+.cardKeys {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cardKey {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(242, 240, 239, 0.8);
+}
+.cardKeyCheck {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Footer pinned to the bottom of the card (margin-top:auto works because
+     globals give .glow-card-content its full height). */
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+.cardFootText {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.6);
+}
+.cardFootArrow {
+  font-family: var(--mono);
+  font-size: 16px;
+  color: rgba(242, 240, 239, 0.4);
+  transition: color 0.2s, transform 0.25s;
+}
+/* Arrow-only hover affordance. The card-level hover (gold border-glow +
+     mouse-radial gradient + 3D tilt) is handled by the glow-card system. */
+.card:hover .cardFootArrow {
+  color: var(--accent);
+  transform: translateX(6px);
+}
+
+/* Small index detail in the top-right of each card */
+.cardIndex {
+  position: absolute;
+  top: 24px;
+  right: 26px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(242, 240, 239, 0.35);
+}
+
+/* ───────────────────────────────────────────────────────────────────────
+           SECTIONS — Marketing editorial numeral pattern (detail page)
+     ─────────────────────────────────────────────────────────────────────── */
 .section {
   position: relative;
   max-width: 1400px;
@@ -215,11 +410,11 @@
   opacity: 0;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         ┬з01 QUICK COMPARE тАФ two columns side by side
-         Nautilus on the left visually favored (gold accents, full opacity).
-         Competitor on the right (muted dashes, lower opacity).
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           §01 QUICK COMPARE — two columns side by side (detail page)
+           Nautilus on the left visually favored (gold accents, full opacity).
+           Competitor on the right (muted dashes, lower opacity).
+     ═══════════════════════════════════════════════════════════════════════ */
 .quickCompare {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -304,9 +499,9 @@
   text-align: center;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         ┬з02 FEATURE MATRIX тАФ spec sheet table
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           §02 FEATURE MATRIX — spec sheet table (detail page)
+     ═══════════════════════════════════════════════════════════════════════ */
 .matrix {
   display: flex;
   flex-direction: column;
@@ -396,9 +591,9 @@
   letter-spacing: 0.5px;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         ┬з03 REASONS тАФ numbered list pattern
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           §03 REASONS — numbered list pattern (detail page)
+     ═══════════════════════════════════════════════════════════════════════ */
 .reasons {
   display: flex;
   flex-direction: column;
@@ -453,9 +648,9 @@
   max-width: 580px;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         ┬з04 HONEST TAKE тАФ outlined card with distinct treatment
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           §04 HONEST TAKE — outlined card with distinct treatment (detail)
+     ═══════════════════════════════════════════════════════════════════════ */
 .honestCard {
   padding: 36px 40px 40px;
   border: 1px solid rgba(242, 240, 239, 0.12);
@@ -508,27 +703,25 @@
   font-style: italic;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         CROSS-LINKS тАФ glow-card grid
-         тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА
-         The grid container has `glow-cards` (globals) + the ref from
-         useGlowCards. Each card is a TransitionLink (.glow-card outer
-         shell + .crossCard for layout + opacity entrance), with a
-         .glow-card-border sibling and a .glow-card-content / .crossCardInner
-         child that holds the actual content.
-         
-         Rules of engagement (same as every other glow-card on the site):
-         тАв Outer shell sets shape + entrance opacity ONLY. No background,
-           no border, no hover transforms тАФ globals' .glow-card / .glow-card::before
-           provide all of that.
-         тАв Inner element holds padding + layout. NEVER set height on the
-           inner тАФ globals provides `height: calc(100% - 2px); margin: 1px;`
-           and overriding that collapses the 1px gap where the border-glow
-           shines through.
-         тАв Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
-           Don't add CSS hover transforms; they'll fight with the GSAP
-           overwrite logic and look glitchy.
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           CROSS-LINKS — glow-card grid (detail page)
+           ───────────────────────────────────────────────────────────────
+           The grid container has `glow-cards` (globals) + the ref from
+           useGlowCards. Each card is a TransitionLink (.glow-card outer
+           shell + .crossCard for layout + opacity entrance), with a
+           .glow-card-border sibling and a .glow-card-content / .crossCardInner
+           child that holds the actual content.
+  
+           Rules of engagement (same as every other glow-card on the site):
+           • Outer shell sets shape + entrance opacity ONLY. No background,
+             no border, no hover transforms — globals' .glow-card / ::before
+             provide all of that.
+           • Inner element holds padding + layout. NEVER set height on the
+             inner — globals provide `height: calc(100% - 2px); margin: 1px;`
+             and overriding that collapses the 1px border-glow gap.
+           • Per-card 3D tilt comes from useGlowCards via GSAP (rotationX/Y).
+             Don't add CSS hover transforms; they'll fight the GSAP overwrite.
+     ═══════════════════════════════════════════════════════════════════════ */
 .crossLinks {
   max-width: 1400px;
   margin: 0 auto;
@@ -548,9 +741,9 @@
   gap: 16px;
 }
 
-/* Outer shell тАФ shape + entrance only. Globals adds border-radius 20px,
-       cursor: pointer, the mouse-radial ::before, and (via the
-       .glow-card-border child) the border-glow gradient. */
+/* Outer shell — shape + entrance only. Globals add border-radius 20px,
+     cursor: pointer, the mouse-radial ::before, and (via the
+     .glow-card-border child) the border-glow gradient. */
 .crossCard {
   position: relative;
   text-decoration: none;
@@ -559,8 +752,8 @@
 }
 
 /* Inner content wrapper. Pairs with `glow-card-content` from globals,
-       which provides the dark background and the 1px inset that creates
-       the visible border-glow gap. We supply padding + flex layout only. */
+     which provides the dark background and the 1px inset that creates
+     the visible border-glow gap. We supply padding + flex layout only. */
 .crossCardInner {
   display: flex;
   flex-direction: column;
@@ -599,16 +792,15 @@
   transition: color 0.2s, transform 0.25s;
 }
 /* Arrow-only hover affordance. The card-level hover (gold border-glow +
-       mouse-radial gradient + 3D tilt) is handled by the glow-card system,
-       not by these styles. */
+     mouse-radial gradient + 3D tilt) is handled by the glow-card system. */
 .crossCard:hover .crossCardArrow {
   color: var(--accent);
   transform: translateX(6px);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         FINAL CTA
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           FINAL CTA
+     ═══════════════════════════════════════════════════════════════════════ */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -654,9 +846,9 @@
   flex-wrap: wrap;
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         NOT FOUND
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           NOT FOUND
+     ═══════════════════════════════════════════════════════════════════════ */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -691,9 +883,9 @@
   border-bottom: 1px solid rgb(var(--accent-rgb) / 0.4);
 }
 
-/* тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР
-         RESPONSIVE
-      тХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХРтХР */
+/* ═══════════════════════════════════════════════════════════════════════
+           RESPONSIVE
+     ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
@@ -723,6 +915,19 @@
     gap: 8px;
     margin-bottom: 36px;
   }
+
+  /* Index grid collapses to a single column with page gutters. */
+  .grid {
+    grid-template-columns: 1fr;
+    padding: 0 24px 60px;
+  }
+  .card {
+    min-height: 0;
+  }
+  .cardInner {
+    padding: 24px 22px 22px;
+  }
+
   .section {
     grid-template-columns: 1fr;
     gap: 24px;
