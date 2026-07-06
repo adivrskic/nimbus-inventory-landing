@@ -1,4 +1,5 @@
 import CompareIndexClient from "./CompareIndexClient";
+import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
 
 export const metadata = {
   title: "Compare Nautilus",
@@ -15,5 +16,18 @@ export const metadata = {
 };
 
 export default function CompareIndexPage() {
-  return <CompareIndexClient />;
+  /* Trim each competitor to only the fields the index cards render —
+     name/category/heroDesc plus the first 3 Nautilus quick-compare lines
+     ("Key differences"). Keeping the full compareData import out of the
+     client component means the ~12.5 KB module (feature matrices, switch
+     reasons, strengths...) stays on the server instead of shipping in the
+     route's JS chunk + hydration payload. */
+  const competitors = COMPARE_SLUGS.map((slug) => ({
+    slug,
+    name: COMPETITORS[slug].name,
+    category: COMPETITORS[slug].category,
+    heroDesc: COMPETITORS[slug].heroDesc,
+    keyDifferences: COMPETITORS[slug].quickCompare.Nautilus.slice(0, 3),
+  }));
+  return <CompareIndexClient competitors={competitors} />;
 }

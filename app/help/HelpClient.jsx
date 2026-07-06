@@ -24,7 +24,6 @@ import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import DemoModal from "@/components/DemoModal/DemoModal";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Help.module.css";
-import { HELP_CATEGORIES } from "@/lib/helpData";
 
 /* useLayoutEffect on the client, useEffect on the server. The filter
    re-stagger must set its from-state before paint: categories that survive a
@@ -33,7 +32,9 @@ import { HELP_CATEGORIES } from "@/lib/helpData";
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-export default function HelpClient() {
+/* `categories` arrives pre-trimmed from the server page (app/help/page.js):
+   category slug/title + article slug/title only — never article bodies. */
+export default function HelpClient({ categories }) {
   const groupsRef = useRef(null);
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -45,16 +46,18 @@ export default function HelpClient() {
      categories with no matching articles drop out entirely. */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return HELP_CATEGORIES;
-    return HELP_CATEGORIES.map((cat) => {
-      const articles = cat.articles.filter((a) =>
-        a.title.toLowerCase().includes(q)
-      );
-      return articles.length > 0 ? { ...cat, articles } : null;
-    }).filter(Boolean);
-  }, [query]);
+    if (!q) return categories;
+    return categories
+      .map((cat) => {
+        const articles = cat.articles.filter((a) =>
+          a.title.toLowerCase().includes(q)
+        );
+        return articles.length > 0 ? { ...cat, articles } : null;
+      })
+      .filter(Boolean);
+  }, [query, categories]);
 
-  const totalArticles = HELP_CATEGORIES.reduce(
+  const totalArticles = categories.reduce(
     (a, c) => a + c.articles.length,
     0
   );
@@ -165,7 +168,7 @@ export default function HelpClient() {
                   (a, c) => a + c.articles.length,
                   0
                 )} of ${totalArticles} articles`
-              : `${totalArticles} articles · ${HELP_CATEGORIES.length} categories`}
+              : `${totalArticles} articles · ${categories.length} categories`}
           </span>
         </div>
 

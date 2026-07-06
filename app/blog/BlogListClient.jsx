@@ -15,9 +15,6 @@ import {
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useDemo } from "@/lib/DemoContext";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
-import { BLOG_POSTS } from "@/lib/blogData";
-
-const TAGS = ["All", ...Array.from(new Set(BLOG_POSTS.map((p) => p.tag)))];
 
 /* useLayoutEffect on the client, useEffect on the server. The filter
    re-animation has to set its from-state (opacity 0) BEFORE the browser
@@ -28,7 +25,9 @@ const TAGS = ["All", ...Array.from(new Set(BLOG_POSTS.map((p) => p.tag)))];
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-export default function BlogListClient() {
+/* `posts` arrives pre-trimmed from the server page (app/blog/page.js):
+   only slug/tag/date/readTime/title/desc — never full post bodies. */
+export default function BlogListClient({ posts }) {
   const listRef = useRef(null);
 
   /* ResourceShell still gets onDemo so any in-shell CTA works. The modal
@@ -37,12 +36,15 @@ export default function BlogListClient() {
 
   const [activeTag, setActiveTag] = useState("All");
 
+  const TAGS = useMemo(
+    () => ["All", ...Array.from(new Set(posts.map((p) => p.tag)))],
+    [posts]
+  );
+
   const filtered = useMemo(
     () =>
-      activeTag === "All"
-        ? BLOG_POSTS
-        : BLOG_POSTS.filter((p) => p.tag === activeTag),
-    [activeTag]
+      activeTag === "All" ? posts : posts.filter((p) => p.tag === activeTag),
+    [activeTag, posts]
   );
 
   /* Initial browse-item stagger on mount — owned by the shared hook so it

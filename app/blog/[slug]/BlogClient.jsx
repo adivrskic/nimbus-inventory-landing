@@ -19,7 +19,6 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Blog.module.css";
 import { useDemo } from "@/lib/DemoContext";
-import { BLOG_POSTS } from "@/lib/blogData";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -29,7 +28,11 @@ const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-export default function BlogClient({ slug }) {
+/* `post` (the single matched post, full content blocks included) and
+   `related` (same-tag posts trimmed to slug/title/date/readTime) are
+   resolved server-side in app/blog/[slug]/page.js so this client chunk
+   never bundles the full BLOG_POSTS data module. */
+export default function BlogClient({ post, related }) {
   const contentRef = useRef(null);
   useResourceSectionAnimations(contentRef);
 
@@ -39,22 +42,12 @@ export default function BlogClient({ slug }) {
     [openDemoCtx]
   );
 
-  const post = BLOG_POSTS.find((p) => p.slug === slug);
-
   /* Derive sections from the post's h2 blocks for the TOC */
   const sections = useMemo(() => {
     if (!post) return [];
     return post.content
       .filter((b) => b.type === "h2")
       .map((b) => ({ id: slugify(b.text), label: b.text }));
-  }, [post]);
-
-  /* Related posts: same tag, excluding current, first 3 */
-  const related = useMemo(() => {
-    if (!post) return [];
-    return BLOG_POSTS.filter(
-      (p) => p.slug !== post.slug && p.tag === post.tag
-    ).slice(0, 3);
   }, [post]);
 
   /* Reveal the page-specific outro blocks (the publish-meta footer + the

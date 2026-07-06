@@ -11,16 +11,18 @@ import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import FeatureMatrix from "@/components/shared/FeatureMatrix/FeatureMatrix";
-import CheckList from "@/components/shared/CheckList/CheckList";
-import NumberedList from "@/components/shared/NumberedList/NumberedList";
-import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
+import FeatureMatrix from "@/components/shared/FeatureMatrix";
+import CheckList from "@/components/shared/CheckList";
+import NumberedList from "@/components/shared/NumberedList";
 import styles from "./Compare.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function CompareClient({ slug }) {
-  const competitor = COMPETITORS[slug];
+/* `competitor` (the single matched entry, full object) and `others`
+   (cross-link list trimmed to slug/name/category) are resolved
+   server-side in app/compare/[slug]/page.js so this client chunk never
+   bundles the full compareData module. */
+export default function CompareClient({ competitor, others }) {
   const pageRef = useRef(null);
 
   /* Compare pages are inherently about migration — every CTA here opens
@@ -30,12 +32,6 @@ export default function CompareClient({ slug }) {
 
   /* Glow-card wiring for the cross-link grid at the bottom of the page. */
   const glowRef = useGlowCards();
-
-  /* Other comparisons for cross-link grid */
-  const others = COMPARE_SLUGS.filter((s) => s !== slug).map((s) => ({
-    slug: s,
-    ...COMPETITORS[s],
-  }));
 
   useEffect(() => {
     /* ──────────────────────────────────────────────────────────────────
@@ -222,7 +218,7 @@ export default function CompareClient({ slug }) {
       cancelAnimationFrame(rafId);
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, [slug, competitor]);
+  }, [competitor]);
 
   if (!competitor) {
     return (

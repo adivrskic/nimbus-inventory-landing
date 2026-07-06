@@ -26,6 +26,18 @@ export async function generateMetadata({ params }) {
 
 export default async function ComparePage({ params }) {
   const { slug } = await params;
-  if (!COMPETITORS[slug]) notFound();
-  return <CompareClient slug={slug} />;
+  const competitor = COMPETITORS[slug];
+  if (!competitor) notFound();
+
+  /* Only the matched competitor (full object) plus a trimmed cross-link
+     list of the others (slug/name/category — the fields the cards render)
+     cross the server→client boundary, keeping the full compareData module
+     out of the route's JS chunk + hydration payload. */
+  const others = COMPARE_SLUGS.filter((s) => s !== slug).map((s) => ({
+    slug: s,
+    name: COMPETITORS[s].name,
+    category: COMPETITORS[s].category,
+  }));
+
+  return <CompareClient competitor={competitor} others={others} />;
 }

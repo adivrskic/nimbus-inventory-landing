@@ -34,6 +34,13 @@
    If an industry omits `workflow` or `faqs`, the renderer falls back to
    the WORKFLOW const in IndustryPage.jsx and DEFAULT_INDUSTRY_FAQS
    exported below.
+
+   KEEP IN SYNC: components/Industries/industriesIndex.js is a small
+   standalone copy of each industry's title / heroDesc / slug used by the
+   home-page <Industries /> client section (it must NOT import this module,
+   or the whole ~44 KB file ships in the home-page JS chunk). When adding,
+   removing, reordering industries here — or editing title/heroDesc/slug —
+   update industriesIndex.js to match.
    ═══════════════════════════════════════════════════════════════════════ */
 
 export const INDUSTRIES = [

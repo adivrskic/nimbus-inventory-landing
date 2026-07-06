@@ -9,20 +9,18 @@ import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
-import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
+import CheckList from "@/components/shared/CheckList";
 import styles from "./CompareIndex.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function CompareIndexClient() {
+/* `competitors` arrives pre-trimmed from the server page
+   (app/compare/page.js): slug/name/category/heroDesc plus the first 3
+   quick-compare lines as `keyDifferences` — never the full compareData. */
+export default function CompareIndexClient({ competitors }) {
   /* All compare-index CTAs are migration conversations — visitors here
      are evaluating Nautilus against an existing tool. */
   const { openDemo } = useDemo();
-
-  const competitors = COMPARE_SLUGS.map((slug) => ({
-    slug,
-    ...COMPETITORS[slug],
-  }));
 
   const pageRef = useRef(null);
   const heroRef = useRef(null);
@@ -171,14 +169,11 @@ export default function CompareIndexClient() {
               <div className={styles.cardDivider} />
 
               <div className={styles.cardKeysLabel}>Key differences</div>
-              <ul className={styles.cardKeys}>
-                {c.quickCompare.Nautilus.slice(0, 3).map((point, j) => (
-                  <li key={j} className={styles.cardKey}>
-                    <span className={styles.cardKeyCheck}>✓</span>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
+              <CheckList
+                items={c.keyDifferences}
+                marker="check"
+                tone="strong"
+              />
 
               <div className={styles.cardFoot}>
                 <span className={styles.cardFootText}>

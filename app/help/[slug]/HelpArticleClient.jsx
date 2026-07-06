@@ -10,22 +10,12 @@ import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./HelpArticle.module.css";
-import { HELP_CATEGORIES } from "@/lib/helpData";
 
 const slugify = (s) =>
   s
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-
-/* Flatten + index articles for easy lookup + cross-category links */
-function findArticle(slug) {
-  for (const cat of HELP_CATEGORIES) {
-    const article = cat.articles.find((a) => a.slug === slug);
-    if (article) return { article, category: cat };
-  }
-  return null;
-}
 
 /* ── Feedback localStorage helpers ──
    - feedback:<resource> stores "yes" | "no" per-article so a returning
@@ -64,7 +54,11 @@ function getOrCreateSessionId() {
   }
 }
 
-export default function HelpArticleClient({ slug }) {
+/* `article` (the single matched article, full content blocks included)
+   and `category` (trimmed: title + article slug/title list) are resolved
+   server-side in app/help/[slug]/page.js so this client chunk never
+   bundles the full HELP_CATEGORIES data module. */
+export default function HelpArticleClient({ article, category }) {
   const contentRef = useRef(null);
   useResourceSectionAnimations(contentRef);
 
@@ -87,9 +81,7 @@ export default function HelpArticleClient({ slug }) {
   const [submitting, setSubmitting] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
 
-  const found = findArticle(slug);
-  const post = found?.article;
-  const category = found?.category;
+  const post = article;
 
   /* On mount, restore any prior vote from localStorage so the buttons
      don't reappear on reload. Per-article (so voting on one doesn't

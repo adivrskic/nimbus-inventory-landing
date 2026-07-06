@@ -30,6 +30,20 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
   const post = BLOG_POSTS.find((p) => p.slug === slug);
+
+  /* Related posts: same tag, excluding current, first 3 — computed here
+     (server) and trimmed to the fields the related-list UI renders, so
+     the client component never needs the full BLOG_POSTS module. */
+  const related = post
+    ? BLOG_POSTS.filter((p) => p.slug !== post.slug && p.tag === post.tag)
+        .slice(0, 3)
+        .map((r) => ({
+          slug: r.slug,
+          title: r.title,
+          date: r.date,
+          readTime: r.readTime,
+        }))
+    : [];
   const crumbs = [
     { name: "Home", url: "https://nautilusinventory.com" },
     { name: "Blog", url: "https://nautilusinventory.com/blog" },
@@ -51,7 +65,7 @@ export default async function BlogPostPage({ params }) {
         />
       )}
       <JsonLd data={breadcrumbSchema(crumbs)} />
-      <BlogClient slug={slug} />
+      <BlogClient post={post ?? null} related={related} />
     </>
   );
 }

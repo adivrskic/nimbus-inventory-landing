@@ -1,17 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { INDUSTRIES as INDUSTRY_DATA } from "@/components/IndustryPage/industryData";
+import { INDUSTRIES_INDEX } from "./industriesIndex";
 import useGlowCards from "@/lib/useGlowCards";
 import { usePageTransition } from "@/components/TransitionProvider/TransitionProvider";
 import { useReveal, useHeadlineReveal } from "@/lib/gsap";
 import SplitText from "@/components/shared/SplitText";
 import styles from "./Industries.module.css";
 
-const INDUSTRIES = INDUSTRY_DATA.map((i) => ({
-  title: i.title,
-  desc: i.heroDesc,
-  slug: i.slug,
-}));
+/* This is a home-page client section, so it deliberately imports the small
+   standalone industriesIndex.js (title/desc/slug only) instead of the full
+   components/IndustryPage/industryData.js — importing the full module here
+   would bundle ~44 KB of detail-page content into the home-page JS chunk.
+   The two files must be kept in sync (see the note in industriesIndex.js). */
+const INDUSTRIES = INDUSTRIES_INDEX;
 
 const H_LINES = [
   [

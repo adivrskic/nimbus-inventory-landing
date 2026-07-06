@@ -57,11 +57,34 @@ export default async function IndustryPage({ params }) {
      breadcrumb schema only — adding FAQ schema is net-new SEO surface. */
   const faqs = industry?.faqs ?? DEFAULT_INDUSTRY_FAQS;
 
+  /* Everything the client tree needs is resolved HERE (server) and passed
+     as props, so components/IndustryPage/IndustryPage.jsx no longer
+     imports the ~44 KB industryData.js module into the client chunk:
+     - industry: the single matched entry (full object)
+     - faqs: resolved with the same fallback that drives the JSON-LD above,
+       keeping the visible FAQ section in sync with the schema payload
+     - indexNum / totalIndustries: the "03 / 08" hero strip
+     - others: 3 cross-link industries, trimmed to the rendered fields */
+  const indexNum = industry
+    ? INDUSTRIES.findIndex((i) => i.slug === slug) + 1
+    : 0;
+  const others = industry
+    ? INDUSTRIES.filter((i) => i.slug !== slug)
+        .slice(0, 3)
+        .map((o) => ({ slug: o.slug, title: o.title, headline: o.headline }))
+    : [];
+
   return (
     <>
       <JsonLd data={breadcrumbSchema(crumbs)} />
       <JsonLd data={faqSchema(faqs)} />
-      <IndustryClient slug={slug} />
+      <IndustryClient
+        industry={industry ?? null}
+        faqs={faqs}
+        indexNum={indexNum}
+        totalIndustries={INDUSTRIES.length}
+        others={others}
+      />
     </>
   );
 }

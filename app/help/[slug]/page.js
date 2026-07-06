@@ -60,6 +60,21 @@ export default async function HelpArticlePage({ params }) {
   const found = findArticle(slug);
   const article = found?.article;
 
+  /* Only the matched article (full content) plus a trimmed view of its
+     category (title + article slug/title list for the "related" links)
+     cross the server→client boundary. The client component no longer
+     imports the ~40 KB HELP_CATEGORIES module, keeping it out of the
+     route's JS chunk + hydration payload. */
+  const category = found
+    ? {
+        title: found.category.title,
+        articles: found.category.articles.map((a) => ({
+          slug: a.slug,
+          title: a.title,
+        })),
+      }
+    : null;
+
   const crumbs = [
     { name: "Home", url: "https://nautilusinventory.com" },
     { name: "Help", url: "https://nautilusinventory.com/help" },
@@ -86,7 +101,7 @@ export default async function HelpArticlePage({ params }) {
           })}
         />
       )}
-      <HelpArticleClient slug={slug} />
+      <HelpArticleClient article={article ?? null} category={category} />
     </>
   );
 }
