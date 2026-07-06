@@ -13,13 +13,12 @@
   --nav-height: 72px;
   position: relative;
   z-index: 1;
-  background: linear-gradient(
-    180deg,
-    #000000 0%,
-    #051221 12%,
-    #051221 88%,
-    #000000 100%
-  );
+  /* Pure page black — identical to ProblemSolution above and
+     Integrations below. The chart-navy mid-ride tint lives on .stage,
+     driven by scroll progress in JS (black at entry/exit, navy in the
+     middle), so the section flows seamlessly out of and back into the
+     black sections around it. */
+  background: #000000;
 }
 
 .scrollSpace {

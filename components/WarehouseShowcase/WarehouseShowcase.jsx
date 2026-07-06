@@ -7,34 +7,37 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
 /* ═══════════════════════════════════════════════════════════════════════
    WarehouseShowcase — "THE CHART ROOM"
 
-   Your warehouse as a nautical chart that annotates itself. No 3D, no
-   isometric scene — a plotter draws a survey chart of the floor (2D
-   canvas, pure vector ink), and five scroll beats play out as chart
-   operations:
+   Your warehouse as a nautical chart that annotates itself (2D canvas,
+   pure vector ink), across five scroll beats:
 
-     01 PLOT      the chart draws itself — hull, racks, graticule,
-                  soundings (live stock counts) type in
-     02 FIX       a spoken query becomes a position fix — bearing lines
-                  triangulate the SKU, a fix mark inks at the bay
-     03 FRONTS    depletion fronts (isobar clusters) ink over three
-                  zones, 48 hours before landfall — PO drafted
-     04 COURSE    twelve picks become one plotted course; the route is
-                  traversed waypoint by waypoint
-     05 REVISION  overnight the chart re-issues itself — reslot arrows,
-                  soundings roll, a new edition stamp
+     01 PLOT      the chart draws itself — hull, racks, bay counts
+     02 FIX       a spoken query resolves to a bay: a guide path runs
+                  the aisles to it, the bay lights, a fix mark inks
+     03 FRONTS    three LOW bays (their printed counts are low from the
+                  start) get depletion isobars — PO drafted
+     04 COURSE    twelve picks, one serpentine course through the
+                  aisles; traversed waypoint by waypoint
+     05 REVISION  overnight the chart re-issues: picked bays' counts
+                  tick DOWN, the PO lands and the three front bays
+                  replenish, two reslot moves re-route stock
 
-   A chart accumulates ink: each beat's annotations REMAIN at reduced
-   opacity after their beat, so by REVISION the floor reads as a lived-in
-   working document, not a slideshow.
+   PHYSICAL RULES (this is a floor plan, not abstract art):
+   - Every path — fix guide, course, reslot — is Manhattan-routed
+     through aisles, the mid cross-aisle, and the perimeter corridors.
+     Nothing ever draws through a rack.
+   - Quantities are consistent: bay counts print inside their bays at
+     PLOT; the FIX label quotes the bay's actual count; FRONT bays are
+     visibly low before the front inks over them; REVISION decrements
+     exactly the picked bays and replenishes exactly the front bays.
 
-   Everything is drawn per-frame from (beat, local-t, time) — fully
-   scrubbable in both directions. The rAF parks when the section is
-   off-screen (IntersectionObserver resumes it); the animations-paused /
-   reduced-motion context freezes ambient time but scroll scrubbing
-   still redraws (direct manipulation).
+   Chart ink accumulates at 28% across beats; transient construction
+   notes (queries, stamps, labels) erase when the next beat starts.
+   rAF parks off-screen; paused/reduced-motion freezes ambient time
+   while scroll scrubbing still redraws. No three.js in this chunk.
 
-   Perf note: this removes three.js from the showcase chunk entirely —
-   the only WebGL left on the home page is the AI section terrain.
+   The stage background is scroll-driven: pure page black at entry and
+   exit, deep chart navy mid-ride — so the section flows out of and
+   back into the black sections around it.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const BEATS = [
@@ -57,21 +60,21 @@ const BEATS = [
     num: "03",
     label: "FRONTS",
     title: "Three stockouts, sighted 48 hours out.",
-    desc: "Depletion fronts inked before they make landfall — purchase orders already drafted.",
+    desc: "Depletion fronts inked over the low bays — purchase orders already drafted.",
   },
   {
     key: "course",
     num: "04",
     label: "COURSE",
     title: "Twelve picks. One plotted course.",
-    desc: "Shortest safe water between every pick — fourteen minutes handed back per wave.",
+    desc: "Aisle by aisle, shortest safe water — fourteen minutes handed back per wave.",
   },
   {
     key: "revision",
     num: "05",
     label: "REVISION",
     title: "The chart corrects itself overnight.",
-    desc: "Every shift ends with a new edition — reslots, counts, and contours, self-issued.",
+    desc: "Picks decremented, the PO received, two bays reslotted — a new edition, self-issued.",
   },
 ];
 
@@ -99,7 +102,9 @@ const HULL = [
   [96, 78],
 ];
 
-/* Rack banks: 8 columns × 2 banks of long vertical strips. */
+/* Rack banks: 8 columns × 2 banks, 3 bays per bank. Aisles run the
+   full height between columns; the mid gap (y 258–316) is the
+   cross-aisle; corridors ring the perimeter inside the hull. */
 const RACK_W = 34;
 const RACK_X = [200, 280, 360, 440, 520, 600, 680, 760];
 const BANKS = [
@@ -107,60 +112,153 @@ const BANKS = [
   [316, 470],
 ];
 const ZONES = ["A", "B", "C", "D", "E", "F", "G", "H"];
+const TOP_Y = 106; // top corridor centerline
+const BOT_Y = 500; // bottom corridor centerline
+const GAP_Y = 287; // mid cross-aisle centerline
 
-/* Soundings — live stock counts scattered through the aisles. */
-const SOUNDINGS = [];
-{
-  const aisleX = [166];
-  for (let i = 0; i < RACK_X.length - 1; i++)
-    aisleX.push((RACK_X[i] + RACK_W + RACK_X[i + 1]) / 2);
-  aisleX.push(846);
-  const rows = [160, 218, 348, 406, 462];
-  aisleX.forEach((x, i) =>
-    rows.forEach((y, j) => {
-      if ((i * 5 + j) % 3 === 0) return; // thin the field
-      SOUNDINGS.push({ x, y, v: ((i * 37 + j * 53) % 88) + 8 });
-    })
-  );
+function bayRect(col, bank, bay) {
+  const [y0, y1] = BANKS[bank];
+  const h = (y1 - y0) / 3;
+  return { x: RACK_X[col], y: y0 + bay * h, w: RACK_W, h };
 }
+function bayCenter(col, bank, bay) {
+  const r = bayRect(col, bank, bay);
+  return [r.x + r.w / 2, r.y + r.h / 2];
+}
+const bayKey = (c, b, k) => `${c}-${b}-${k}`;
 
-/* FIX beat — the queried SKU's bay. */
-const FIX = { x: 617, y: 176 };
+/* FIX beat — the queried SKU's bay (zone F, upper bank, middle bay),
+   reached from the aisle on its west face. Its count is 17 — the fix
+   label quotes it. */
+const FIX_BAY = { col: 5, bank: 0, bay: 1 };
+const FIX_AISLE_X = 577;
+const FIX_COUNT = 17;
+/* Guide path dock → bay, corridors and aisles only. */
+const GUIDE = [
+  [96, 196],
+  [148, 196],
+  [148, TOP_Y],
+  [FIX_AISLE_X, TOP_Y],
+  [FIX_AISLE_X, bayCenter(5, 0, 1)[1]],
+];
 
-/* FRONTS beat — three depletion zones. */
+/* FRONTS beat — three bays whose printed counts are LOW from the
+   start (9 / 6 / 11); the isobars ink over these exact bays, and the
+   REVISION beat replenishes them when the drafted PO lands. */
 const FRONTS = [
-  { x: 262, y: 196, r: 52, label: "SKU 2210 · T-41H" },
-  { x: 452, y: 398, r: 58, label: "SKU 0087 · T-38H" },
-  { x: 706, y: 402, r: 46, label: "SKU 5512 · T-46H" },
+  { col: 1, bank: 0, bay: 1, count: 9, restock: 48, label: "SKU 2210 · 9 LEFT · T-41H" },
+  { col: 4, bank: 1, bay: 1, count: 6, restock: 44, label: "SKU 0087 · 6 LEFT · T-38H" },
+  { col: 6, bank: 1, bay: 0, count: 11, restock: 41, label: "SKU 5512 · 11 LEFT · T-46H" },
 ];
 
-/* COURSE beat — twelve pick waypoints threading the aisles. */
-const WPTS = [
-  [104, 196],
-  [166, 168],
-  [166, 300],
-  [246, 340],
-  [326, 300],
-  [326, 430],
-  [412, 462],
-  [498, 398],
-  [578, 348],
-  [658, 288],
-  [738, 208],
-  [826, 152],
+/* COURSE beat — a serpentine through aisles 1/3/5/7: down the left
+   corridor, up aisle 1, across the top, down aisle 3, up aisle 5,
+   down aisle 7, out to pack-out bottom-right. Pick points sit ON the
+   route at the center-y of the bay they serve. */
+const ROUTE = [
+  [96, 196],
+  [148, 196],
+  [148, BOT_Y],
+  [257, BOT_Y],
+  [257, 393],
+  [257, 237],
+  [257, 150],
+  [257, TOP_Y],
+  [417, TOP_Y],
+  [417, 193],
+  [417, 342],
+  [417, 444],
+  [417, BOT_Y],
+  [577, BOT_Y],
+  [577, 444],
+  [577, 342],
+  [577, 150],
+  [577, TOP_Y],
+  [737, TOP_Y],
+  [737, 150],
+  [737, 237],
+  [737, 393],
+  [737, BOT_Y],
+  [846, BOT_Y],
+  [846, 452],
+];
+/* Which ROUTE indices are picks, and which bay each one serves.
+   REVISION decrements exactly these bays. */
+const PICKS = [
+  { i: 4, col: 1, bank: 1, bay: 1, take: 2 },
+  { i: 5, col: 0, bank: 0, bay: 2, take: 1 },
+  { i: 6, col: 1, bank: 0, bay: 0, take: 3 },
+  { i: 9, col: 3, bank: 0, bay: 1, take: 2 },
+  { i: 10, col: 2, bank: 1, bay: 0, take: 1 },
+  { i: 11, col: 3, bank: 1, bay: 2, take: 4 },
+  { i: 14, col: 4, bank: 1, bay: 2, take: 2 },
+  { i: 15, col: 5, bank: 1, bay: 0, take: 1 },
+  { i: 16, col: 4, bank: 0, bay: 0, take: 3 },
+  { i: 19, col: 7, bank: 0, bay: 0, take: 2 },
+  { i: 20, col: 6, bank: 0, bay: 2, take: 1 },
+  { i: 21, col: 7, bank: 1, bay: 1, take: 2 },
 ];
 
-/* REVISION beat — reslot moves (from → to). */
+/* REVISION beat — two reslot moves, Manhattan-routed (aisle → top
+   corridor / cross-aisle → aisle). Origin bay is erase-hatched, the
+   destination bay outlined gold. */
 const RESLOTS = [
-  { from: [297, 420], to: [617, 420], label: "RESLOT → F-2" },
-  { from: [777, 168], to: [377, 190], label: "RESLOT → C-1" },
+  {
+    from: { col: 2, bank: 0, bay: 0 },
+    to: { col: 6, bank: 0, bay: 0 },
+    label: "RESLOT → G-1",
+    labelAt: [657, TOP_Y - 12],
+    path: [
+      [360, 150],
+      [337, 150],
+      [337, TOP_Y],
+      [657, TOP_Y],
+      [657, 150],
+      [680, 150],
+    ],
+  },
+  {
+    from: { col: 5, bank: 0, bay: 2 },
+    to: { col: 2, bank: 1, bay: 2 },
+    label: "RESLOT → C-6",
+    labelAt: [497, GAP_Y - 12],
+    path: [
+      [634, 236],
+      [657, 236],
+      [657, GAP_Y],
+      [337, GAP_Y],
+      [337, 444],
+      [360, 444],
+    ],
+  },
 ];
+
+/* Bay counts: deterministic base values with explicit overrides so
+   every number the story quotes is the number printed on the chart. */
+const COUNT_OVERRIDES = { [bayKey(5, 0, 1)]: FIX_COUNT };
+for (const f of FRONTS) COUNT_OVERRIDES[bayKey(f.col, f.bank, f.bay)] = f.count;
+const baseCount = (c, b, k) =>
+  COUNT_OVERRIDES[bayKey(c, b, k)] ?? ((c * 29 + b * 17 + k * 41) % 83) + 9;
+/* Which bays print a count: alternate bays for legibility, plus every
+   bay the story touches (fix / fronts / picks / reslots). */
+const LABELED = new Set();
+for (let c = 0; c < 8; c++)
+  for (let b = 0; b < 2; b++)
+    for (let k = 0; k < 3; k++) if ((c + b + k) % 2 === 0) LABELED.add(bayKey(c, b, k));
+LABELED.add(bayKey(5, 0, 1));
+for (const f of FRONTS) LABELED.add(bayKey(f.col, f.bank, f.bay));
+for (const p of PICKS) LABELED.add(bayKey(p.col, p.bank, p.bay));
+for (const r of RESLOTS) {
+  LABELED.add(bayKey(r.from.col, r.from.bank, r.from.bay));
+  LABELED.add(bayKey(r.to.col, r.to.bank, r.to.bay));
+}
+const PICK_BY_BAY = new Map(PICKS.map((p) => [bayKey(p.col, p.bank, p.bay), p]));
+const FRONT_BY_BAY = new Map(FRONTS.map((f) => [bayKey(f.col, f.bank, f.bay), f]));
 
 /* ── Small math/drawing helpers ─────────────────────────────────────── */
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const ease = (v) => v * v * (3 - 2 * v);
-/* Local window: 0→1 across [a,b] of a beat's local t. */
 const win = (t, a, b) => ease(clamp01((t - a) / (b - a)));
 
 function polyLengths(pts) {
@@ -173,8 +271,9 @@ function polyLengths(pts) {
   return { lens, total };
 }
 const HULL_LEN = polyLengths(HULL);
+const ROUTE_LEN = polyLengths(ROUTE);
+const GUIDE_LEN = polyLengths(GUIDE);
 
-/* Point at fraction f along a polyline. */
 function pointAt(pts, { lens, total }, f) {
   const d = f * total;
   for (let i = 1; i < pts.length; i++) {
@@ -190,9 +289,18 @@ function pointAt(pts, { lens, total }, f) {
   return pts[pts.length - 1];
 }
 
+/* Scroll-driven ground color: black at the edges of the ride, chart
+   navy (#051221) in the middle — matches the black sections around. */
+const NAVY = [5, 18, 33];
+const groundColor = (p) => {
+  const k = ease(Math.min(clamp01(p / 0.12), clamp01((1 - p) / 0.12)));
+  return `rgb(${Math.round(NAVY[0] * k)}, ${Math.round(NAVY[1] * k)}, ${Math.round(NAVY[2] * k)})`;
+};
+
 export default function WarehouseShowcase({ onDemo }) {
   const sectionRef = useRef(null);
   const spaceRef = useRef(null);
+  const stageRef = useRef(null);
   const canvasRef = useRef(null);
   const revRef = useRef(null);
   const { paused } = useAnimationPaused();
@@ -235,12 +343,9 @@ export default function WarehouseShowcase({ onDemo }) {
     if (!canvas || !space) return;
     const ctx = canvas.getContext("2d");
 
-    /* next/font hashes family names — read the real stacks off the DOM
-       so canvas text matches the site's type. */
     const rootStyle = getComputedStyle(document.body);
     const MONO = rootStyle.getPropertyValue("--mono").trim() || "monospace";
 
-    /* Ink palette. */
     const INK = (a) => `rgba(214, 228, 240, ${a})`;
     const GOLD = (a) => `rgba(212, 168, 83, ${a})`;
     const RED = (a) => `rgba(201, 107, 94, ${a})`;
@@ -269,10 +374,10 @@ export default function WarehouseShowcase({ onDemo }) {
     resize();
     window.addEventListener("resize", resize);
 
-    const px = (n) => n * dpr; // crisp pixel sizes, independent of chart scale
-    const font = (size, family = MONO) => `${px(size)}px ${family}`;
+    const px = (n) => n * dpr;
+    const font = (size) => `${px(size)}px ${MONO}`;
 
-    /* ── primitive helpers (all in chart units via X()/Y()) ── */
+    /* ── primitives (chart units via X()/Y()) ── */
 
     const tracePoly = (pts, meta, f, width, stroke, dash) => {
       if (f <= 0) return;
@@ -298,15 +403,21 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    const rect = (x, y, w, h, f, width, stroke) => {
-      const pts = [
-        [x, y],
-        [x + w, y],
-        [x + w, y + h],
-        [x, y + h],
-        [x, y],
-      ];
-      tracePoly(pts, polyLengths(pts), f, width, stroke);
+    const rect = (x, y, w, h, f, width, stroke, fill) => {
+      if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fillRect(X(x), Y(y), w * sc, h * sc);
+      }
+      if (stroke) {
+        const pts = [
+          [x, y],
+          [x + w, y],
+          [x + w, y + h],
+          [x, y + h],
+          [x, y],
+        ];
+        tracePoly(pts, polyLengths(pts), f, width, stroke);
+      }
     };
 
     const circle = (x, y, r, stroke, width, fill) => {
@@ -346,14 +457,12 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    /* Typed text with a plotter cursor while incomplete. */
     const typed = (str, f, x, y, size, fillStyle, align = "left") => {
       const n = Math.round(str.length * clamp01(f));
       const s = str.slice(0, n) + (f < 1 && n < str.length ? "▏" : "");
       text(s, x, y, size, fillStyle, align, 0.6);
     };
 
-    /* Diagonal hatch inside a rect, clipped, progressive left→right. */
     const hatch = (x, y, w, h, f, stroke, gap = 7) => {
       if (f <= 0) return;
       ctx.save();
@@ -371,7 +480,6 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    /* A stamped annotation box (chart-office rubber stamp). */
     const stamp = (str, x, y, f, color, align = "left") => {
       if (f <= 0) return;
       ctx.save();
@@ -407,10 +515,10 @@ export default function WarehouseShowcase({ onDemo }) {
         const a = (i / steps) * endA;
         const wob =
           1 +
-          0.1 * Math.sin(a * 3 + seed * 7.3) +
-          0.06 * Math.sin(a * 5 + seed * 3.1);
+          0.09 * Math.sin(a * 3 + seed * 7.3) +
+          0.05 * Math.sin(a * 5 + seed * 3.1);
         const xx = cx + Math.cos(a) * r * wob;
-        const yy = cy + Math.sin(a) * r * wob * 0.78;
+        const yy = cy + Math.sin(a) * r * wob * 0.82;
         if (i === 0) ctx.moveTo(X(xx), Y(yy));
         else ctx.lineTo(X(xx), Y(yy));
       }
@@ -418,9 +526,25 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    /* ── static furniture layers ── */
+    /* Arrowhead at the end of a polyline. */
+    const arrowhead = (pts, color) => {
+      const [ax, ay] = pts[pts.length - 1];
+      const [bx2, by2] = pts[pts.length - 2];
+      const ang = Math.atan2(ay - by2, ax - bx2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = px(1.2);
+      ctx.beginPath();
+      ctx.moveTo(X(ax), Y(ay));
+      ctx.lineTo(X(ax - Math.cos(ang - 0.45) * 9), Y(ay - Math.sin(ang - 0.45) * 9));
+      ctx.moveTo(X(ax), Y(ay));
+      ctx.lineTo(X(ax - Math.cos(ang + 0.45) * 9), Y(ay - Math.sin(ang + 0.45) * 9));
+      ctx.stroke();
+    };
+
+    /* ── static furniture ── */
 
     const drawFrame = (a) => {
+      if (a <= 0) return;
       ctx.save();
       ctx.globalAlpha = a;
       ctx.strokeStyle = INK(0.35);
@@ -428,7 +552,6 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.strokeRect(X(30), Y(22), 940 * sc, 576 * sc);
       ctx.strokeStyle = INK(0.14);
       ctx.strokeRect(X(38), Y(30), 924 * sc, 560 * sc);
-      // graduation ticks along the outer frame
       ctx.strokeStyle = INK(0.3);
       ctx.beginPath();
       for (let gx = 60; gx < 970; gx += 25) {
@@ -450,6 +573,7 @@ export default function WarehouseShowcase({ onDemo }) {
     };
 
     const drawGraticule = (a) => {
+      if (a <= 0) return;
       ctx.save();
       ctx.globalAlpha = a;
       ctx.strokeStyle = INK(0.06);
@@ -488,15 +612,17 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
+    /* Scale bar lives OUTSIDE the hull (between hull and frame) so the
+       bottom corridor stays clear for the course. */
     const drawScaleBar = (a) => {
       if (a <= 0) return;
       ctx.save();
       ctx.globalAlpha = a;
-      line(620, 508, 780, 508, INK(0.45), 1);
+      line(620, 556, 780, 556, INK(0.45), 1);
       for (let i = 0; i <= 4; i++)
-        line(620 + i * 40, 504, 620 + i * 40, 512, INK(0.45), 1);
-      text("0", 620, 494, 8.5, INK(0.35), "center");
-      text("40 m", 780, 494, 8.5, INK(0.35), "center");
+        line(620 + i * 40, 552, 620 + i * 40, 560, INK(0.45), 1);
+      text("0", 620, 572, 8.5, INK(0.35), "center");
+      text("40 m", 780, 572, 8.5, INK(0.35), "center");
       ctx.restore();
     };
 
@@ -509,46 +635,67 @@ export default function WarehouseShowcase({ onDemo }) {
       if (f >= 0.999) {
         text("RECEIVING 01", 60, 152, 8.5, INK(0.4), "left");
         text("RECEIVING 02", 60, 300, 8.5, INK(0.4), "left");
+        text("PACK-OUT", 846, 478, 8.5, INK(0.4), "center");
       }
     };
 
-    const drawRacks = (t, learnT) => {
+    const drawRacks = (t, revT) => {
       RACK_X.forEach((rx, i) => {
         BANKS.forEach(([y0, y1], b) => {
           const idx = i * 2 + b;
           const f = win(t, 0.04 * idx, 0.04 * idx + 0.3);
           if (f <= 0) return;
           rect(rx, y0, RACK_W, y1 - y0, f, 1, INK(0.55));
-          hatch(rx, y0, RACK_W, y1 - y0, win(f, 0.5, 1), INK(0.13));
+          hatch(rx, y0, RACK_W, y1 - y0, win(f, 0.5, 1), INK(0.09));
+          /* Bay separators — each rack column is 3 bays per bank. */
+          if (f >= 1) {
+            const h = (y1 - y0) / 3;
+            line(rx, y0 + h, rx + RACK_W, y0 + h, INK(0.28), 0.75);
+            line(rx, y0 + 2 * h, rx + RACK_W, y0 + 2 * h, INK(0.28), 0.75);
+          }
         });
-        if (t > 0.85)
-          text(ZONES[i], rx + RACK_W / 2, 116, 9.5, INK(0.5), "center");
+        if (t > 0.85) text(ZONES[i], rx + RACK_W / 2, 118, 9.5, INK(0.5), "center");
       });
-      /* REVISION: erase-hatch the vacated bays. */
-      if (learnT > 0) {
+      /* REVISION: erase-hatch the reslot origin bays. */
+      if (revT > 0) {
         RESLOTS.forEach((r, i) => {
-          const f = win(learnT, 0.1 + i * 0.15, 0.45 + i * 0.15);
-          hatch(r.from[0] - 17, r.from[1] - 26, 34, 52, f, RED(0.4), 5);
+          const br = bayRect(r.from.col, r.from.bank, r.from.bay);
+          const f = win(revT, 0.1 + i * 0.15, 0.45 + i * 0.15);
+          hatch(br.x, br.y, br.w, br.h, f, RED(0.4), 5);
         });
       }
     };
 
-    const drawSoundings = (t, learnT) => {
-      SOUNDINGS.forEach((s, i) => {
-        const f = win(t, 0.55 + (i % 9) * 0.045, 0.72 + (i % 9) * 0.045);
-        if (f <= 0) return;
-        let v = s.v;
-        let col = INK(0.34 * f);
-        /* REVISION: counts along yesterday's course roll to new values. */
-        if (learnT > 0 && i % 4 === 0) {
-          const roll = win(learnT, 0.3, 0.7);
-          if (roll > 0.5) {
-            v = s.v + ((i * 11) % 17) - 8;
-            col = roll < 0.9 ? GOLD(0.7) : INK(0.4);
+    /* Bay counts — printed INSIDE their bays. REVISION rolls exactly
+       the picked bays down by their pick qty and the front bays up by
+       their restock qty (the PO landing). */
+    const drawCounts = (t, revT) => {
+      let li = 0;
+      for (let c = 0; c < 8; c++)
+        for (let b = 0; b < 2; b++)
+          for (let k = 0; k < 3; k++) {
+            const key = bayKey(c, b, k);
+            if (!LABELED.has(key)) continue;
+            li++;
+            const f = win(t, 0.5 + (li % 11) * 0.04, 0.68 + (li % 11) * 0.04);
+            if (f <= 0) continue;
+            let v = baseCount(c, b, k);
+            let col = INK(0.4 * f);
+            if (revT > 0) {
+              const roll = win(revT, 0.3, 0.7);
+              const pick = PICK_BY_BAY.get(key);
+              const front = FRONT_BY_BAY.get(key);
+              if (pick && roll > 0.5) {
+                v = v - pick.take;
+                col = roll < 0.9 ? GOLD(0.75) : INK(0.42);
+              } else if (front && roll > 0.5) {
+                v = v + front.restock;
+                col = roll < 0.95 ? GOLD(0.9) : INK(0.45);
+              }
+            }
+            const [cx, cy] = bayCenter(c, b, k);
+            text(String(v), cx, cy, 8, col, "center");
           }
-        }
-        text(String(v), s.x, s.y, 9.5, col, "center");
-      });
     };
 
     /* ── beat layers ── */
@@ -557,9 +704,11 @@ export default function WarehouseShowcase({ onDemo }) {
       if (t <= 0 || (a <= 0 && sa <= 0)) return;
       ctx.save();
 
-      /* Transient annotations (query, bearings, stamps) draw at sa —
-         they ERASE when the next beat starts, like construction lines
-         on a working chart. The fix mark itself is permanent ink (a). */
+      const [bx, by] = bayCenter(FIX_BAY.col, FIX_BAY.bank, FIX_BAY.bay);
+      const br = bayRect(FIX_BAY.col, FIX_BAY.bank, FIX_BAY.bay);
+      const mx = FIX_AISLE_X; // fix marker sits in the aisle, west face
+
+      /* Transient: query + guide path + answer label + stamp. */
       ctx.globalAlpha = sa;
       if (sa > 0) {
         typed(
@@ -571,68 +720,39 @@ export default function WarehouseShowcase({ onDemo }) {
           INK(0.75),
           "center"
         );
-
-        /* Bearing lines sweep in from chart landmarks. */
-        const bearings = [
-          { from: [862, 148], brg: "227°" },
-          { from: [96, 532], brg: "048°" },
-          { from: [96, 78], brg: "169°" },
-        ];
-        bearings.forEach((bl, i) => {
-          const f = win(t, 0.18 + i * 0.08, 0.42 + i * 0.08);
-          if (f <= 0) return;
-          const ex = bl.from[0] + (FIX.x - bl.from[0]) * f;
-          const ey = bl.from[1] + (FIX.y - bl.from[1]) * f;
-          line(bl.from[0], bl.from[1], ex, ey, INK(0.3), 0.9, [6, 4]);
-          if (f >= 1)
-            text(
-              bl.brg,
-              (bl.from[0] + FIX.x) / 2 + 12,
-              (bl.from[1] + FIX.y) / 2 - 8,
-              8.5,
-              INK(0.4)
-            );
-        });
-      }
-      ctx.globalAlpha = a;
-
-      const fixIn = win(t, 0.48, 0.6);
-      if (fixIn > 0 && a > 0) {
-        /* The fix: crosshair rings + time-driven ping. */
-        circle(FIX.x, FIX.y, 7 * fixIn, GOLD(0.95), 1.4);
-        circle(FIX.x, FIX.y, 12 * fixIn, GOLD(0.55), 1);
-        line(FIX.x - 18, FIX.y, FIX.x - 9, FIX.y, GOLD(0.9), 1.2);
-        line(FIX.x + 9, FIX.y, FIX.x + 18, FIX.y, GOLD(0.9), 1.2);
-        line(FIX.x, FIX.y - 18, FIX.x, FIX.y - 9, GOLD(0.9), 1.2);
-        line(FIX.x, FIX.y + 9, FIX.x, FIX.y + 18, GOLD(0.9), 1.2);
-        if (!pausedRef.current) {
-          const ping = (time * 0.55) % 1;
-          circle(FIX.x, FIX.y, 12 + ping * 34, GOLD(0.4 * (1 - ping)), 1);
-        }
-        /* Leader + label. */
-        /* Leader + answer label are transient (sa): they'd clutter the
-           racks once later beats take over. Runs down-left into open
-           aisle water — right of the fix sits the compass rose. */
-        const lf = win(t, 0.56, 0.75);
-        if (lf > 0 && sa > 0) {
-          ctx.globalAlpha = sa;
-          line(FIX.x, FIX.y + 20, FIX.x, FIX.y + 44, GOLD(0.5), 0.9);
-          /* Centered under the fix — stays inside the canvas at every
-             viewport width (a right/left-anchored label overflows the
-             chart edge once the chart shrinks on phones). */
+        /* Guide path: dock → corridors → aisle → bay. Aisles only. */
+        tracePoly(GUIDE, GUIDE_LEN, win(t, 0.2, 0.5), 1, INK(0.4), [6, 4]);
+        const lf = win(t, 0.62, 0.85);
+        if (lf > 0) {
           typed(
-            "SKU 4471-B · ZONE F · BAY 07 · LVL 2",
-            win(t, 0.6, 0.85),
-            FIX.x,
-            FIX.y + 56,
+            `SKU 4471-B · ZONE F · BAY 2 · ${FIX_COUNT} UNITS`,
+            lf,
+            mx,
+            GAP_Y,
             10,
             INK(0.85),
             "center"
           );
-          ctx.globalAlpha = a;
         }
-        ctx.globalAlpha = sa;
         stamp("FIX 0.4 S", 500, 96, win(t, 0.8, 0.95), GOLD(0.9), "center");
+      }
+
+      /* Permanent ink: the lit bay + the fix mark in the aisle. */
+      ctx.globalAlpha = a;
+      const fixIn = win(t, 0.48, 0.6);
+      if (fixIn > 0 && a > 0) {
+        rect(br.x, br.y, br.w, br.h, 1, 1.2, GOLD(0.85 * fixIn), GOLD(0.1 * fixIn));
+        circle(mx, by, 6 * fixIn, GOLD(0.95), 1.4);
+        line(mx - 14, by, mx - 7, by, GOLD(0.9), 1.2);
+        line(mx + 7, by, mx + 14, by, GOLD(0.9), 1.2);
+        line(mx, by - 14, mx, by - 7, GOLD(0.9), 1.2);
+        line(mx, by + 7, mx, by + 14, GOLD(0.9), 1.2);
+        /* Tick from the aisle marker to the bay face it points at. */
+        line(mx + 14, by, br.x, by, GOLD(0.6), 1);
+        if (!pausedRef.current) {
+          const ping = (time * 0.55) % 1;
+          circle(mx, by, 10 + ping * 30, GOLD(0.4 * (1 - ping)), 1);
+        }
       }
       ctx.restore();
     };
@@ -644,92 +764,72 @@ export default function WarehouseShowcase({ onDemo }) {
       FRONTS.forEach((fr, i) => {
         const f = win(t, i * 0.14, 0.42 + i * 0.14);
         if (f <= 0) return;
+        const br = bayRect(fr.col, fr.bank, fr.bay);
+        const [cx, cy] = bayCenter(fr.col, fr.bank, fr.bay);
+        /* The low bay itself: red outline + faint red fill. */
+        rect(br.x, br.y, br.w, br.h, 1, 1.1, RED(0.7 * f), RED(0.08 * f));
+        /* Tight isobars hugging the bay — a front centered on it. */
         for (let ring = 0; ring < 3; ring++) {
-          const rr = fr.r * (0.45 + ring * 0.3);
           isobar(
-            fr.x,
-            fr.y,
-            rr,
+            cx,
+            cy,
+            26 + ring * 11,
             i * 3 + ring,
             win(f, ring * 0.18, 0.7 + ring * 0.1),
-            RED(0.55 - ring * 0.13),
-            1.1 - ring * 0.15
+            RED(0.5 - ring * 0.12),
+            1.05 - ring * 0.15
           );
         }
-        const pulse = pausedRef.current
-          ? 0.6
-          : 0.45 + 0.3 * Math.sin(time * 2 + i * 2.1);
-        if (f > 0.5) circle(fr.x, fr.y, 2.6, null, 0, RED(pulse));
+        const pulse = pausedRef.current ? 0.6 : 0.45 + 0.3 * Math.sin(time * 2 + i * 2.1);
+        if (f > 0.5) circle(cx, cy, 2.4, null, 0, RED(pulse));
+        /* Label in the mid cross-aisle — open floor, never on a rack. */
         if (f > 0.75)
-          typed(
-            fr.label,
-            win(f, 0.75, 1),
-            fr.x,
-            fr.y - fr.r * 0.95 - 12,
-            9,
-            RED(0.8),
-            "center"
-          );
+          typed(fr.label, win(f, 0.75, 1), cx, fr.bank === 0 ? GAP_Y : BOT_Y + 14, 9, RED(0.8), "center");
       });
       ctx.globalAlpha = sa;
-      stamp(
-        "3 DEPLETION FRONTS · NEXT 48 H",
-        500,
-        56,
-        win(t, 0.55, 0.7),
-        RED(0.85),
-        "center"
-      );
-      stamp(
-        "DRAFT PO READY — 3 LINES",
-        500,
-        96,
-        win(t, 0.78, 0.92),
-        GOLD(0.9),
-        "center"
-      );
+      stamp("3 DEPLETION FRONTS · NEXT 48 H", 500, 56, win(t, 0.55, 0.7), RED(0.85), "center");
+      stamp("DRAFT PO READY — 3 LINES", 500, 96, win(t, 0.78, 0.92), GOLD(0.9), "center");
       ctx.restore();
     };
-
-    const WPT_META = polyLengths(WPTS);
 
     const drawCourse = (t, a, sa) => {
       if (t <= 0 || a <= 0) return;
       ctx.save();
       ctx.globalAlpha = a;
 
-      /* Plot phase — dashed legs + numbered waypoints appear in order. */
+      /* Plot phase — dashed legs through the aisles, numbered picks. */
       const plotF = win(t, 0, 0.5);
-      tracePoly(WPTS, WPT_META, plotF, 1, INK(0.4), [7, 5]);
-      WPTS.forEach(([wx, wy], i) => {
-        const wf = win(plotF, i / WPTS.length, (i + 0.6) / WPTS.length);
+      tracePoly(ROUTE, ROUTE_LEN, plotF, 1, INK(0.4), [7, 5]);
+      PICKS.forEach((p, n) => {
+        const [wx, wy] = ROUTE[p.i];
+        const wf = win(plotF * ROUTE_LEN.total, ROUTE_LEN.lens[p.i], ROUTE_LEN.lens[p.i] + 40);
         if (wf <= 0) return;
         circle(wx, wy, 5.5 * wf, INK(0.6), 1);
-        if (wf > 0.8) text(String(i + 1), wx, wy - 13, 8.5, INK(0.5), "center");
+        /* Tick from the aisle point to the bay face being picked. */
+        const br = bayRect(p.col, p.bank, p.bay);
+        const face = br.x + br.w / 2 > wx ? br.x : br.x + br.w;
+        line(wx + Math.sign(face - wx) * 6, wy, face, wy, INK(0.35), 0.9);
+        if (wf > 0.8)
+          text(String(n + 1), wx, wy - 13, 8.5, INK(0.5), "center");
       });
 
       /* Traverse phase — gold line consumes the plan, vessel marker. */
       const runF = win(t, 0.52, 0.95);
       if (runF > 0) {
-        tracePoly(WPTS, WPT_META, runF, 1.8, GOLD(0.9));
-        const [vx, vy] = pointAt(WPTS, WPT_META, runF);
+        tracePoly(ROUTE, ROUTE_LEN, runF, 1.8, GOLD(0.9));
+        const [vx, vy] = pointAt(ROUTE, ROUTE_LEN, runF);
         circle(vx, vy, 4, null, 0, GOLD(1));
         circle(vx, vy, 8, GOLD(0.45), 1);
-        WPTS.forEach(([wx, wy], i) => {
-          if (WPT_META.lens[i] <= runF * WPT_META.total)
+        PICKS.forEach((p) => {
+          if (ROUTE_LEN.lens[p.i] <= runF * ROUTE_LEN.total) {
+            const [wx, wy] = ROUTE[p.i];
             circle(wx, wy, 3, null, 0, GOLD(0.9));
+          }
         });
       }
 
       ctx.globalAlpha = sa;
-      stamp(
-        "COURSE · 12 WPT · 14 MIN SAVED",
-        500,
-        56,
-        win(t, 0.62, 0.78),
-        GOLD(0.9),
-        "center"
-      );
+      stamp("COURSE · 12 WPT · 14 MIN SAVED", 500, 56, win(t, 0.62, 0.78), GOLD(0.9), "center");
       ctx.restore();
     };
 
@@ -738,63 +838,34 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.save();
       ctx.globalAlpha = a;
 
-      /* Reslot arrows — dashed, with an arrowhead and destination glow. */
+      /* Reslot moves — Manhattan paths through aisles and corridors. */
       RESLOTS.forEach((r, i) => {
         const f = win(t, 0.06 + i * 0.16, 0.42 + i * 0.16);
         if (f <= 0) return;
-        const [fx, fy] = r.from;
-        const [tx, ty] = r.to;
-        const mx = (fx + tx) / 2;
-        const my = Math.min(fy, ty) - 46;
-        /* Quadratic arc sampled into a polyline for progressive draw. */
-        const pts = [];
-        for (let k = 0; k <= 24; k++) {
-          const u = k / 24;
-          const iu = 1 - u;
-          pts.push([
-            iu * iu * fx + 2 * iu * u * mx + u * u * tx,
-            iu * iu * fy + 2 * iu * u * my + u * u * ty,
-          ]);
-        }
-        tracePoly(pts, polyLengths(pts), f, 1.1, GOLD(0.65), [5, 4]);
+        const meta = polyLengths(r.path);
+        tracePoly(r.path, meta, f, 1.1, GOLD(0.65), [5, 4]);
         if (f >= 1) {
-          const [ax, ay] = pts[24];
-          const [bx2, by2] = pts[22];
-          const ang = Math.atan2(ay - by2, ax - bx2);
-          ctx.strokeStyle = GOLD(0.85);
-          ctx.lineWidth = px(1.2);
-          ctx.beginPath();
-          ctx.moveTo(X(ax), Y(ay));
-          ctx.lineTo(
-            X(ax - Math.cos(ang - 0.45) * 9),
-            Y(ay - Math.sin(ang - 0.45) * 9)
-          );
-          ctx.moveTo(X(ax), Y(ay));
-          ctx.lineTo(
-            X(ax - Math.cos(ang + 0.45) * 9),
-            Y(ay - Math.sin(ang + 0.45) * 9)
-          );
-          ctx.stroke();
-          rect(tx - 17, ty - 26, 34, 52, 1, 1.2, GOLD(0.7));
-          text(r.label, mx, my - 10, 9, GOLD(0.8), "center");
+          arrowhead(r.path, GOLD(0.85));
+          const tb = bayRect(r.to.col, r.to.bank, r.to.bay);
+          rect(tb.x, tb.y, tb.w, tb.h, 1, 1.2, GOLD(0.7));
+          text(r.label, r.labelAt[0], r.labelAt[1], 9, GOLD(0.8), "center");
         }
       });
 
-      /* A fresh contour inks around the fast-mover aisle. */
-      const cf = win(t, 0.45, 0.8);
-      isobar(497, 330, 90, 11, cf, GOLD(0.3), 1);
-      isobar(497, 330, 62, 12, win(t, 0.52, 0.85), GOLD(0.4), 1);
+      /* The PO lands: replenished front bays get healthy gold rings. */
+      const rf = win(t, 0.45, 0.8);
+      if (rf > 0) {
+        FRONTS.forEach((fr, i) => {
+          const [cx, cy] = bayCenter(fr.col, fr.bank, fr.bay);
+          isobar(cx, cy, 24, 20 + i, win(rf, i * 0.1, 0.7 + i * 0.1), GOLD(0.45), 1);
+          isobar(cx, cy, 33, 24 + i, win(rf, 0.15 + i * 0.1, 0.85 + i * 0.1), GOLD(0.3), 0.9);
+          /* +N tag sits in the aisle beside the bay, never on a rack. */
+          if (rf > 0.7)
+            text(`+${fr.restock}`, RACK_X[fr.col] - 8, cy, 8.5, GOLD(0.8), "right");
+        });
+      }
 
-      /* y=96 (not 56) — the demo CTA docks top-center on narrow
-         viewports during this beat; keep the stamp clear of it. */
-      stamp(
-        "NEW EDITION · REV 1,249 · SELF-ISSUED 03:00",
-        500,
-        96,
-        win(t, 0.6, 0.75),
-        INK(0.8),
-        "center"
-      );
+      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 96, win(t, 0.6, 0.75), INK(0.8), "center");
       ctx.restore();
     };
 
@@ -805,10 +876,11 @@ export default function WarehouseShowcase({ onDemo }) {
     let time = 0;
     let last = performance.now();
     let lastP = -1;
+    let lastGround = "";
 
     const frame = (now) => {
       if (!visibleRef.current) {
-        running = false; // park — resumed on re-entry
+        running = false;
         return;
       }
       rafId = requestAnimationFrame(frame);
@@ -824,6 +896,13 @@ export default function WarehouseShowcase({ onDemo }) {
       else if (Math.abs(p - lastP) < 0.0004 && lastP >= 0) return;
       lastP = p;
 
+      /* Ground flow: black at entry/exit, chart navy mid-ride. */
+      const g = groundColor(p);
+      if (g !== lastGround && stageRef.current) {
+        stageRef.current.style.backgroundColor = g;
+        lastGround = g;
+      }
+
       const f = Math.min(p * NB, NB - 0.0001);
       const mode = Math.floor(f);
       const local = f - mode;
@@ -836,14 +915,8 @@ export default function WarehouseShowcase({ onDemo }) {
         revRef.current.textContent =
           mode >= 4 && local > 0.65 ? "ED. 1,249" : "ED. 1,248";
 
-      /* Beat-layer intensities: current beat animates with its local t;
-         PAST beats stay inked at 28% (a chart accumulates); future = 0.
-         Beat 0's plot progress is locked at 1 once passed. */
       const tFor = (i) => (mode > i ? 1 : mode === i ? local : 0);
       const aFor = (i) => (mode > i ? 0.28 : mode === i ? 1 : 0);
-      /* Stamp/annotation alpha: full during the beat, erased across the
-         first fifth of the next beat, gone after — construction notes
-         don't accumulate the way chart ink does. */
       const saFor = (i) =>
         mode === i ? 1 : mode === i + 1 ? 1 - win(local, 0, 0.2) : 0;
 
@@ -856,7 +929,7 @@ export default function WarehouseShowcase({ onDemo }) {
       drawRacks(win(plotT, 0.18, 0.85), tFor(4));
       drawCompass(win(plotT, 0.5, 0.75), time);
       drawScaleBar(win(plotT, 0.55, 0.8));
-      drawSoundings(plotT, tFor(4));
+      drawCounts(plotT, tFor(4));
 
       drawFix(tFor(1), aFor(1), saFor(1), time);
       drawFronts(tFor(2), aFor(2), saFor(2), time);
@@ -890,7 +963,7 @@ export default function WarehouseShowcase({ onDemo }) {
       aria-label="A day on the floor, charted by Nautilus"
     >
       <div ref={spaceRef} className={styles.scrollSpace}>
-        <div className={styles.stage}>
+        <div ref={stageRef} className={styles.stage}>
           <canvas ref={canvasRef} className={styles.chart} aria-hidden="true" />
 
           {/* Title block — chart legend, bottom-left */}
