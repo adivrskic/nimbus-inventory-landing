@@ -17,7 +17,9 @@ import styles from "./CheckList.module.css";
                        dash   → muted "—" (a negative / competitor column)
                        square → small neutral square (e.g. honest-take)
      tone            "strong"|"default"|"muted"  — text color
-     size            "md"|"lg"            — type scale + row gap
+     size            "sm"|"md"|"lg"      — type scale + row gap. "sm" is the
+                       dense mono list (pricing tier features); md/lg are the
+                       display-font lists.
      initiallyHidden boolean             — start items at opacity:0 AND stamp
                        `data-list-item` so a host page's scroll-reveal can
                        fade them in (the host targets [data-list-item]); under
@@ -89,12 +91,11 @@ export default function CheckList({
 }) {
   if (!items.length) return null;
 
+  const sizeClass =
+    size === "sm" ? styles.sm : size === "lg" ? styles.lg : styles.md;
+
   return (
-    <ul
-      className={`${styles.list} ${
-        size === "lg" ? styles.lg : styles.md
-      } ${className}`}
-    >
+    <ul className={`${styles.list} ${sizeClass} ${className}`}>
       {items.map((item, i) => {
         const text = typeof item === "string" ? item : item.text;
         return (

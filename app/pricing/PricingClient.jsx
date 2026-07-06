@@ -6,7 +6,9 @@ import { prefersReducedMotion } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
-import Accordion from "@/components/shared/Accordion/Accordion";
+import Accordion from "@/components/shared/Accordion";
+import FeatureMatrix from "@/components/shared/FeatureMatrix";
+import CheckList from "@/components/shared/CheckList";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
@@ -129,20 +131,6 @@ const H_LINES = [
 const SUB_TEXT =
   "Two tiers. Flat per-warehouse pricing. No per-user fees, no surprises.";
 
-/* Icons — CheckIcon is used by the tier lists + the feature matrix. (The
-   FAQ's PlusIcon now lives inside the shared Accordion.) */
-const CheckIcon = ({ size = 12 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-    <path
-      d="M3.5 8.5L6.5 11.5L12.5 5"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 const fmt = (n) => n.toLocaleString("en-US");
 
 export default function PricingClient() {
@@ -150,7 +138,6 @@ export default function PricingClient() {
   const tierRefs = useRef([]);
   const tiersRef = useRef(null);
   const matrixSectionRef = useRef(null);
-  const matrixRowRefs = useRef([]);
   const faqSectionRef = useRef(null);
 
   /* Demo modal — global, mounted in app/layout.js. openDemo accepts an
@@ -196,11 +183,17 @@ export default function PricingClient() {
     const hero = heroRef.current;
     if (!hero) return;
 
-    /* The Accordion items live inside the shared component; grab them by
-       the stable data attribute it stamps on each item. */
+    /* The Accordion + FeatureMatrix items live inside their shared
+       components; grab them by the stable data attributes those components
+       stamp on each item/row. */
     const faqItems = faqSectionRef.current
       ? Array.from(
           faqSectionRef.current.querySelectorAll("[data-accordion-item]")
+        )
+      : [];
+    const matrixItems = matrixSectionRef.current
+      ? Array.from(
+          matrixSectionRef.current.querySelectorAll("[data-matrix-row]")
         )
       : [];
 
@@ -222,7 +215,7 @@ export default function PricingClient() {
         { opacity: 1, y: 0 }
       );
       gsap.set(tierRefs.current.filter(Boolean), { opacity: 1, y: 0 });
-      gsap.set(matrixRowRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+      if (matrixItems.length) gsap.set(matrixItems, { opacity: 1, y: 0 });
       if (faqItems.length) gsap.set(faqItems, { opacity: 1, y: 0 });
       return;
     }
@@ -299,10 +292,9 @@ export default function PricingClient() {
       "top 82%"
     );
 
-    /* Matrix rows */
-    const rows = matrixRowRefs.current.filter(Boolean);
+    /* Matrix rows — the shared FeatureMatrix's [data-matrix-row] elements. */
     gatedReveal(
-      rows,
+      matrixItems,
       { opacity: 0, y: 8 },
       { opacity: 1, y: 0, duration: 0.4, stagger: 0.035, ease: "power2.out" },
       matrixSectionRef.current,
@@ -512,16 +504,12 @@ export default function PricingClient() {
               <div className={styles.tierIncludesLabel}>
                 {tier.includesLabel}
               </div>
-              <ul className={styles.tierList}>
-                {tier.features.map((f, i) => (
-                  <li key={i} className={styles.tierItem}>
-                    <span className={styles.tierItemMark}>
-                      <CheckIcon size={12} />
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
+              <CheckList
+                items={tier.features}
+                marker="check"
+                tone="default"
+                size="sm"
+              />
             </div>
           </div>
         ))}
@@ -535,44 +523,19 @@ export default function PricingClient() {
           </h2>
         </div>
 
-        <div className={styles.matrix}>
-          <div className={styles.matrixHeader}>
-            <div className={styles.matrixHeaderCell}>Feature</div>
-            <div className={styles.matrixHeaderCell}>Pro</div>
-            <div className={styles.matrixHeaderCell}>Enterprise</div>
-          </div>
-          {MATRIX_ROWS.map((row, ri) => (
-            <div
-              key={ri}
-              ref={(el) => (matrixRowRefs.current[ri] = el)}
-              className={styles.matrixRow}
-            >
-              <div className={styles.matrixLabel}>{row.label}</div>
-              <div className={styles.matrixCell}>
-                {row.pro === true ? (
-                  <span className={styles.matrixCheck}>
-                    <CheckIcon size={14} />
-                  </span>
-                ) : row.pro === false ? (
-                  <span className={styles.matrixDash}>—</span>
-                ) : (
-                  row.pro
-                )}
-              </div>
-              <div className={styles.matrixCell}>
-                {row.enterprise === true ? (
-                  <span className={styles.matrixCheck}>
-                    <CheckIcon size={14} />
-                  </span>
-                ) : row.enterprise === false ? (
-                  <span className={styles.matrixDash}>—</span>
-                ) : (
-                  row.enterprise
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <FeatureMatrix
+          columns={[
+            { label: "Pro", tone: "default" },
+            { label: "Enterprise", tone: "default" },
+          ]}
+          rows={MATRIX_ROWS.map((row) => ({
+            feature: row.label,
+            values: [row.pro, row.enterprise],
+          }))}
+          headerRule="neutral"
+          columnLayout="even"
+          initiallyHidden
+        />
       </section>
 
       {/* ── FAQ — shared Accordion ── */}

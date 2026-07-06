@@ -39,7 +39,7 @@
   font-size: 10px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   margin-bottom: 56px;
   flex-wrap: wrap;
   opacity: 0;
@@ -47,7 +47,7 @@
 .heroIndexDot {
   width: 4px;
   height: 4px;
-  background: rgba(242, 240, 239, 0.25);
+  background: rgb(var(--mk-fg-rgb) / 0.25);
   flex-shrink: 0;
 }
 .heroIndexCategory {
@@ -129,7 +129,7 @@
   font-family: var(--display);
   font-size: 17px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 640px;
   margin: 0 0 48px;
   opacity: 0;
@@ -146,9 +146,9 @@
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.5px;
-  color: rgba(242, 240, 239, 0.7);
+  color: rgb(var(--mk-fg-rgb) / 0.7);
   text-decoration: none;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.2);
   padding: 8px 0;
   transition: color 0.2s, border-color 0.2s;
 }
@@ -213,7 +213,7 @@
   font-family: var(--display);
   font-size: 16px;
   line-height: 1.7;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 580px;
   margin: 0 0 56px;
   opacity: 0;
@@ -228,7 +228,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  border: 1px solid rgba(242, 240, 239, 0.08);
+  border: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   background: rgba(255, 255, 255, 0.012);
 }
 .quickCol {
@@ -247,7 +247,7 @@
   flex-direction: column;
   gap: 6px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   margin-bottom: 22px;
 }
 .quickColName {
@@ -269,7 +269,7 @@
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.45);
+  color: rgb(var(--mk-fg-rgb) / 0.45);
 }
 
 /* §01 list items — extracted to the shared <CheckList> (Nautilus column =
@@ -288,9 +288,9 @@
       ═══════════════════════════════════════════════════════════════════════ */
 .honestCard {
   padding: 36px 40px 40px;
-  border: 1px solid rgba(242, 240, 239, 0.12);
+  border: 1px solid rgb(var(--mk-fg-rgb) / 0.12);
   background: rgba(255, 255, 255, 0.018);
-  border-left: 2px solid rgba(242, 240, 239, 0.4);
+  border-left: 2px solid rgb(var(--mk-fg-rgb) / 0.4);
   opacity: 0;
 }
 .honestCardLabel {
@@ -298,7 +298,7 @@
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.85);
+  color: rgb(var(--mk-fg-rgb) / 0.85);
   margin-bottom: 24px;
   font-weight: 600;
 }
@@ -309,11 +309,11 @@
 }
 .honestCardFoot {
   padding-top: 24px;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
+  border-top: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   font-family: var(--display);
   font-size: 14px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   font-style: italic;
 }
 
@@ -397,14 +397,14 @@
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   flex: 1;
 }
 .crossCardArrow {
   margin-top: 16px;
   font-family: var(--mono);
   font-size: 16px;
-  color: rgba(242, 240, 239, 0.4);
+  color: rgb(var(--mk-fg-rgb) / 0.4);
   transition: color 0.2s, transform 0.25s;
 }
 /* Arrow-only hover affordance. The card-level hover (gold border-glow +
@@ -452,7 +452,7 @@
   font-family: var(--display);
   font-size: 16px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 620px;
   margin: 0 0 32px;
 }

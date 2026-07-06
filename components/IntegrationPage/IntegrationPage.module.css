@@ -5,8 +5,12 @@
    - Connection mark in hero (Nautilus x Partner — partnership signature)
    - Bidirectional data-flow diagram (glow-card)
    - Setup steps grid — glow-cards
-   - FAQ block
+   - FAQ block (now the shared <Accordion>)
    - Cross-link grid — glow-cards
+
+   Neutrals use the shared --mk-* marketing tokens (warm off-white) instead of
+   hardcoded rgba(242,240,239,…). The §01 features list is the shared
+   <NumberedList> (its former .features/.feature* rules were removed).
    =========================================================================== */
 
 .page {
@@ -32,7 +36,7 @@
   font-size: 10px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   margin-bottom: 56px;
   flex-wrap: wrap;
   opacity: 0;
@@ -40,7 +44,7 @@
 .heroIndexDot {
   width: 4px;
   height: 4px;
-  background: rgba(242, 240, 239, 0.25);
+  background: rgb(var(--mk-fg-rgb) / 0.25);
   flex-shrink: 0;
 }
 .heroIndexCategory {
@@ -99,10 +103,7 @@
   display: inline-block;
 }
 /* Per-letter entrance start shape (animates TO y:0%/rotateX:0 in the hero
-     timeline). Y travel reduced from translateY(100%) to translateY(35%) —
-     roughly a 65% cut — so letters rise a short, elegant distance instead of a
-     full line-height. 30%–50% is the usable range; rotateX(35deg) kept as the
-     brand signature (ease toward ~20deg if it still feels heavy). */
+       timeline). */
 .heroLetter {
   display: inline-block;
   opacity: 0;
@@ -119,7 +120,7 @@
   font-family: var(--display);
   font-size: 17px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 640px;
   margin: 0 0 48px;
   opacity: 0;
@@ -136,9 +137,9 @@
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.5px;
-  color: rgba(242, 240, 239, 0.7);
+  color: rgb(var(--mk-fg-rgb) / 0.7);
   text-decoration: none;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.2);
   padding: 8px 0;
   transition: color 0.2s, border-color 0.2s;
 }
@@ -148,8 +149,8 @@
 }
 
 /* ---------------------------------------------------------------------------
-           SECTIONS — same editorial numeral pattern as Industry
-     --------------------------------------------------------------------------- */
+             SECTIONS — same editorial numeral pattern as Industry
+       --------------------------------------------------------------------------- */
 .section {
   position: relative;
   max-width: 1400px;
@@ -204,81 +205,24 @@
   font-family: var(--display);
   font-size: 16px;
   line-height: 1.7;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 580px;
   margin: 0 0 56px;
   opacity: 0;
 }
 
-/* ---------------------------------------------------------------------------
-           FEATURES — list-style, unchanged
-     --------------------------------------------------------------------------- */
-.features {
-  display: flex;
-  flex-direction: column;
-}
-.feature {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 32px;
-  padding: 36px 0;
-  align-items: start;
-  opacity: 0;
-}
-
-.featureLeft {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding-top: 6px;
-}
-.featureNum {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--accent);
-}
-.featureMark {
-  width: 28px;
-  height: 1px;
-  background: rgb(var(--accent-rgb) / 0.5);
-}
-.featureRight {
-  min-width: 0;
-}
-.featureTitle {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
-  color: var(--white);
-  line-height: 1.25;
-  margin: 0 0 10px;
-}
-.featureDesc {
-  font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgba(242, 240, 239, 0.55);
-  margin: 0;
-  max-width: 540px;
-}
+/* §01 FEATURES — extracted to the shared <NumberedList> (borderless).
+     (Was .features / .feature / .featureLeft / .featureNum / .featureMark /
+     .featureRight / .featureTitle / .featureDesc here.) */
 
 /* ===========================================================================
-           DATA FLOW DIAGRAM — single glow-card containing the 3-col layout
-           ---------------------------------------------------------------------
-           .flowWrap is just the glow-cards container (no visual styling — it's
-           the ref target for useGlowCards). .flow is the single glow-card. The
-           3-column grid (Nautilus | connector | Partner) lives inside .flowInner
-           (= glow-card-content).
-     =========================================================================== */
+             DATA FLOW DIAGRAM — single glow-card containing the 3-col layout
+       =========================================================================== */
 .flowWrap {
   /* Just a layout passthrough for useGlowCards to bind to. */
 }
 .flow {
   position: relative;
-  /* border-radius: 20px; */
   overflow: hidden;
   opacity: 0;
 }
@@ -289,11 +233,11 @@
 }
 .flowNode {
   padding: 28px 32px;
-  border-right: 1px solid rgba(242, 240, 239, 0.08);
+  border-right: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
 }
 .flowNode:last-child {
   border-right: none;
-  border-left: 1px solid rgba(242, 240, 239, 0.08);
+  border-left: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
 }
 .flowNodeName {
   font-family: var(--display);
@@ -324,7 +268,7 @@
   padding-left: 18px;
   font-family: var(--mono);
   font-size: 12px;
-  color: rgba(242, 240, 239, 0.7);
+  color: rgb(var(--mk-fg-rgb) / 0.7);
   letter-spacing: -0.1px;
 }
 .flowNodeData li::before {
@@ -377,21 +321,18 @@
 }
 
 /* ===========================================================================
-           SETUP STEPS — glow-cards
-     =========================================================================== */
+             SETUP STEPS — glow-cards
+       =========================================================================== */
 .steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  /* removed: border-top, border-left (no more shared-border grid) */
 }
 .step {
   position: relative;
   opacity: 0;
 }
 .stepInner {
-  /* Globals' .glow-card-content provides bg + 1px-inset border peek.
-           DO NOT set height here. */
   padding: 28px 24px 32px;
   display: flex;
   flex-direction: column;
@@ -415,50 +356,20 @@
   font-family: var(--display);
   font-size: 13.5px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   margin: 0;
 }
 
 /* ---------------------------------------------------------------------------
-           STATS — massive numerals (column separators, not cards)
-     --------------------------------------------------------------------------- */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-}
-.stat {
-  padding: 40px 32px 40px 0;
-  border-right: 1px solid rgba(242, 240, 239, 0.08);
-  opacity: 0;
-}
-.stat:last-child {
-  border-right: none;
-  padding-right: 0;
-}
-.stat:not(:first-child) {
-  padding-left: 32px;
-}
-.statVal {
-  font-family: var(--display);
-  font-size: clamp(56px, 7vw, 96px);
-  font-weight: 700;
-  letter-spacing: -3px;
-  line-height: 0.95;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-.statLabel {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.55);
-}
+             STATS — extracted to the shared <StatGrid>.
+             (Was .stats / .stat / .statVal / .statLabel here.)
+       --------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------
-           FAQ — list-style, unchanged
-     --------------------------------------------------------------------------- */
+             FAQ — now the shared <Accordion>. (The former .faqList / .faq /
+             .faqQ / .faqA rules are unused and kept here only pending the
+             final dead-CSS cleanup.)
+       --------------------------------------------------------------------------- */
 .faqList {
   display: flex;
   flex-direction: column;
@@ -468,7 +379,7 @@
   opacity: 0;
 }
 .faq:last-child {
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.06);
 }
 .faqQ {
   font-family: var(--display);
@@ -482,14 +393,14 @@
   font-family: var(--display);
   font-size: 15px;
   line-height: 1.7;
-  color: rgba(242, 240, 239, 0.6);
+  color: rgb(var(--mk-fg-rgb) / 0.6);
   margin: 0;
   max-width: 700px;
 }
 
 /* ===========================================================================
-           CROSS-LINKS — glow-cards
-     =========================================================================== */
+             CROSS-LINKS — glow-cards
+       =========================================================================== */
 .crossLinks {
   max-width: 1200px;
   margin: 0 auto;
@@ -540,14 +451,14 @@
   font-family: var(--display);
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   flex: 1;
 }
 .crossCardArrow {
   margin-top: 16px;
   font-family: var(--mono);
   font-size: 16px;
-  color: rgba(242, 240, 239, 0.4);
+  color: rgb(var(--mk-fg-rgb) / 0.4);
   transition: color 0.2s, transform 0.25s;
 }
 .crossCard:hover .crossCardArrow {
@@ -556,8 +467,10 @@
 }
 
 /* ---------------------------------------------------------------------------
-           FINAL CTA
-     --------------------------------------------------------------------------- */
+             FINAL CTA — now the shared <FinalCTACard>. (The former .finalCTA*
+             rules are unused and kept here only pending the final dead-CSS
+             cleanup.)
+       --------------------------------------------------------------------------- */
 .finalCTA {
   max-width: 1200px;
   margin: 60px auto 100px;
@@ -592,7 +505,7 @@
   font-family: var(--display);
   font-size: 16px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 580px;
   margin: 0 0 32px;
 }
@@ -604,8 +517,8 @@
 }
 
 /* ---------------------------------------------------------------------------
-           NOT FOUND
-     --------------------------------------------------------------------------- */
+             NOT FOUND
+       --------------------------------------------------------------------------- */
 .notFound {
   display: flex;
   flex-direction: column;
@@ -641,8 +554,8 @@
 }
 
 /* ---------------------------------------------------------------------------
-           RESPONSIVE
-     --------------------------------------------------------------------------- */
+             RESPONSIVE
+       --------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 180px 1fr;
@@ -661,7 +574,7 @@
   }
   .flowNode {
     border-right: none;
-    border-bottom: 1px solid rgba(242, 240, 239, 0.08);
+    border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   }
   .flowNode:last-child {
     border-left: none;
@@ -701,29 +614,8 @@
     letter-spacing: -3px;
     margin-bottom: -20px;
   }
-  .feature {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  .featureLeft {
-    flex-direction: row;
-    align-items: center;
-    gap: 14px;
-  }
   .steps {
     grid-template-columns: 1fr;
-  }
-  .stats {
-    grid-template-columns: 1fr;
-  }
-  .stat,
-  .stat:not(:first-child) {
-    padding: 28px 0;
-    border-right: none;
-    border-bottom: 1px solid rgba(242, 240, 239, 0.08);
-  }
-  .stat:last-child {
-    border-bottom: none;
   }
   .crossLinks {
     padding: 60px 24px 40px;

@@ -8,9 +8,8 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import Accordion from "@/components/shared/Accordion/Accordion";
+import Accordion from "@/components/shared/Accordion";
 import { useDemo } from "@/lib/DemoContext";
-import { INDUSTRIES, DEFAULT_INDUSTRY_FAQS } from "./industryData";
 import styles from "./IndustryPage.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -39,12 +38,24 @@ const WORKFLOW = [
   },
 ];
 
-export default function IndustryPage({ slug }) {
+/* All data arrives as props resolved by the server page
+   (app/industry/[slug]/page.js): `industry` is the single matched entry,
+   `faqs` already carries the DEFAULT_INDUSTRY_FAQS fallback (matching the
+   FAQ JSON-LD), `indexNum`/`totalIndustries` feed the hero strip, and
+   `others` is the trimmed 3-entry cross-link list. This component must
+   NOT import industryData.js — it's a client component, and the import
+   would ship the whole ~44 KB module in the route's JS chunk. */
+export default function IndustryPage({
+  industry,
+  faqs,
+  indexNum,
+  totalIndustries,
+  others,
+}) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
      from context instead of expecting a prop the wrapper never passes. */
   const { openDemo } = useDemo();
 
-  const industry = INDUSTRIES.find((i) => i.slug === slug);
   const pageRef = useRef(null);
   const heroRef = useRef(null);
 
@@ -53,16 +64,6 @@ export default function IndustryPage({ slug }) {
      are scoped per-grid. */
   const workflowGlowRef = useGlowCards();
   const crossGlowRef = useGlowCards();
-
-  const indexNum = industry
-    ? INDUSTRIES.findIndex((i) => i.slug === slug) + 1
-    : 0;
-  const totalIndustries = INDUSTRIES.length;
-
-  /* 3 other industries to cross-link */
-  const others = industry
-    ? INDUSTRIES.filter((i) => i.slug !== slug).slice(0, 3)
-    : [];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -190,7 +191,7 @@ export default function IndustryPage({ slug }) {
       cancelled = true;
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, [slug, industry]);
+  }, [industry]);
 
   if (!industry) {
     return (
@@ -218,11 +219,10 @@ export default function IndustryPage({ slug }) {
      above only if the industry didn't ship its own. */
   const workflow = industry.workflow ?? WORKFLOW;
 
-  /* FAQ content. Same fallback pattern as workflow — per-industry FAQs
-     when present (which is the case for all 8 current industries),
-     DEFAULT_INDUSTRY_FAQS otherwise. The fallback also drives the FAQ
-     JSON-LD schema in app/industry/[slug]/page.js. */
-  const faqs = industry.faqs ?? DEFAULT_INDUSTRY_FAQS;
+  /* FAQ content arrives via the `faqs` prop, already resolved with the
+     DEFAULT_INDUSTRY_FAQS fallback by app/industry/[slug]/page.js — the
+     same value that drives the FAQ JSON-LD schema there, so the visible
+     section and the schema payload can't drift apart. */
 
   return (
     <div ref={pageRef} className={styles.page}>

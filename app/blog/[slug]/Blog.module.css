@@ -3,6 +3,8 @@
    Shell + reading typography in ResourceShell.module.css.
 
    Owns: post footer meta row, related posts list, not-found CTA.
+   Neutrals use the shared --mk-* marketing channel (warm off-white) instead
+   of hardcoded rgba(242,240,239,…).
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────
@@ -11,7 +13,7 @@
 .postFooter {
   margin-top: 48px;
   padding-top: 32px;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
+  border-top: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   /* Starts hidden; revealed on scroll by BlogClient alongside .related so
      these page-specific blocks animate in like the article above them. */
   opacity: 0;
@@ -31,7 +33,7 @@
   font-size: 9px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.35);
+  color: rgb(var(--mk-fg-rgb) / 0.35);
 }
 .postFooterValue {
   font-family: var(--mono);
@@ -46,7 +48,7 @@
 .related {
   margin-top: 64px;
   padding-top: 36px;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
+  border-top: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
   /* Revealed as one block (border + label + list together) on scroll — see
      the reveal effect in BlogClient. */
   opacity: 0;
@@ -69,7 +71,7 @@
   align-items: baseline;
   gap: 24px;
   padding: 18px 0;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.05);
+  border-bottom: 1px solid rgb(var(--mk-fg-rgb) / 0.05);
   text-decoration: none;
   transition: padding 0.2s;
 }
@@ -95,7 +97,7 @@
 .relatedItemMeta {
   font-family: var(--mono);
   font-size: 11px;
-  color: rgba(242, 240, 239, 0.35);
+  color: rgb(var(--mk-fg-rgb) / 0.35);
   flex-shrink: 0;
 }
 

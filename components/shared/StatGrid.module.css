@@ -1,0 +1,64 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   StatGrid — the "big number + small label" metrics row.
+   Consolidated from the near-identical .stats/.stat/.statVal/.statLabel
+   blocks that lived on /integration and /industry: a single row of gold
+   numerals separated by hairline rules, collapsing to a stacked list on
+   mobile. Column count comes from --stat-cols (set inline by the
+   component) so the mobile breakpoint can still override it.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(var(--stat-cols, 3), 1fr);
+  gap: 0;
+}
+
+.stat {
+  padding: 40px 32px 40px 0;
+  border-right: 1px solid rgb(var(--mk-fg-rgb, 242 240 239) / 0.08);
+}
+.stat:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+.stat:not(:first-child) {
+  padding-left: 32px;
+}
+
+/* Scroll-reveal start state — hosts fade [data-stat] nodes in. */
+.hidden {
+  opacity: 0;
+}
+
+.val {
+  font-family: var(--display);
+  font-size: clamp(56px, 7vw, 96px);
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 0.95;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgb(var(--mk-fg-rgb, 242 240 239) / 0.55);
+}
+
+@media (max-width: 768px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  .stat,
+  .stat:not(:first-child) {
+    padding: 28px 0;
+    border-right: none;
+    border-bottom: 1px solid rgb(var(--mk-fg-rgb, 242 240 239) / 0.08);
+  }
+  .stat:last-child {
+    border-bottom: none;
+  }
+}

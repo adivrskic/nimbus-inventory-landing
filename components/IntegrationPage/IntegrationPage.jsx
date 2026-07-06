@@ -6,7 +6,9 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import Accordion from "@/components/shared/Accordion/Accordion";
+import Accordion from "@/components/shared/Accordion";
+import NumberedList from "@/components/shared/NumberedList";
+import StatGrid from "@/components/shared/StatGrid";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import SplitText from "@/components/shared/SplitText";
@@ -228,7 +230,7 @@ export default function IntegrationPage({ slug }) {
     sections.forEach((sec) => {
       const num = sec.querySelector(`.${styles.sectionNum}`);
       const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.feature}, .${styles.flow}, .${styles.step}, .${styles.stat}, [data-accordion-item]`
+        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, [data-list-item], .${styles.flow}, .${styles.step}, [data-stat], [data-accordion-item]`
       );
 
       if (num) {
@@ -340,22 +342,7 @@ export default function IntegrationPage({ slug }) {
             you&apos;d otherwise be doing by hand.
           </p>
 
-          <div className={styles.features}>
-            {integration.features.map((f, i) => (
-              <div key={i} className={styles.feature}>
-                <div className={styles.featureLeft}>
-                  <span className={styles.featureNum}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className={styles.featureMark} />
-                </div>
-                <div className={styles.featureRight}>
-                  <h3 className={styles.featureTitle}>{f.title}</h3>
-                  <p className={styles.featureDesc}>{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <NumberedList items={integration.features} initiallyHidden />
         </div>
       </section>
 
@@ -463,14 +450,7 @@ export default function IntegrationPage({ slug }) {
             What the integration does, in numbers.
           </h2>
 
-          <div className={styles.stats}>
-            {integration.stats.map((s, i) => (
-              <div key={i} className={styles.stat}>
-                <div className={styles.statVal}>{s.val}</div>
-                <div className={styles.statLabel}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+          <StatGrid items={integration.stats} initiallyHidden />
         </div>
       </section>
 

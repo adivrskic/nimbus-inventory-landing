@@ -65,7 +65,7 @@
   font-family: var(--display);
   font-size: 18px;
   line-height: 1.65;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   max-width: 640px;
   margin: 0 0 48px;
   opacity: 0;
@@ -130,7 +130,7 @@
   font-weight: 500;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   cursor: pointer;
   transition: color 0.3s var(--ease-smooth);
 }
@@ -191,7 +191,7 @@
   overflow: hidden;
 }
 .tier + .tier {
-  border-left: 1px solid rgba(242, 240, 239, 0.06);
+  border-left: 1px solid rgb(var(--mk-fg-rgb) / 0.06);
 }
 
 /* Featured (Pro) — subtle gold gradient bleed from top */
@@ -211,7 +211,7 @@
   top: 0;
   left: 0;
   height: 2px;
-  background: rgba(242, 240, 239, 0.1);
+  background: rgb(var(--mk-fg-rgb) / 0.1);
   width: 40px;
   transition: width 0.5s var(--ease-smooth), background 0.3s;
   z-index: 1;
@@ -344,7 +344,7 @@
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 1px;
-  color: rgba(242, 240, 239, 0.35);
+  color: rgb(var(--mk-fg-rgb) / 0.35);
   margin-bottom: 32px;
   text-transform: uppercase;
 }
@@ -352,7 +352,7 @@
   font-family: var(--display);
   font-size: 15px;
   line-height: 1.7;
-  color: rgba(242, 240, 239, 0.55);
+  color: rgb(var(--mk-fg-rgb) / 0.55);
   margin-bottom: 40px;
   max-width: 340px;
   /* Fixed so both cards' price blocks (and everything below) start at the
@@ -380,7 +380,7 @@
   font-family: var(--display);
   font-size: 24px;
   font-weight: 600;
-  color: rgba(242, 240, 239, 0.3);
+  color: rgb(var(--mk-fg-rgb) / 0.3);
   text-decoration: line-through;
   margin-right: 8px;
   align-self: center;
@@ -402,7 +402,7 @@
 .priceCadence {
   font-family: var(--mono);
   font-size: 14px;
-  color: rgba(242, 240, 239, 0.5);
+  color: rgb(var(--mk-fg-rgb) / 0.5);
   margin-left: 6px;
   letter-spacing: 0.5px;
   align-self: flex-end;
@@ -422,7 +422,7 @@
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.4);
+  color: rgb(var(--mk-fg-rgb) / 0.4);
   margin-bottom: 6px;
   min-height: 14px;
 }
@@ -430,7 +430,7 @@
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.3px;
-  color: rgba(242, 240, 239, 0.3);
+  color: rgb(var(--mk-fg-rgb) / 0.3);
   min-height: 14px;
 }
 .priceSavings {
@@ -438,7 +438,7 @@
   font-weight: 700;
 }
 .priceMuted {
-  color: rgba(242, 240, 239, 0.3);
+  color: rgb(var(--mk-fg-rgb) / 0.3);
 }
 
 .ctaRow {
@@ -448,7 +448,7 @@
 /* Divider */
 .tierDivider {
   height: 1px;
-  background: rgba(242, 240, 239, 0.06);
+  background: rgb(var(--mk-fg-rgb) / 0.06);
   margin: 0 0 28px;
 }
 
@@ -457,37 +457,21 @@
   font-size: 9px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.35);
+  color: rgb(var(--mk-fg-rgb) / 0.35);
   margin-bottom: 20px;
 }
-.tierList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.tierItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 9px 0;
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
-  color: rgba(242, 240, 239, 0.7);
-}
-.tierItemMark {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 3px;
-}
+/* The feature list itself is the shared <CheckList> (size="sm" mono,
+   tone="default", gold check) — the former .tierList / .tierItem /
+   .tierItemMark rules were removed when it was extracted. */
 
 /* ─────────────────────────────────────────────────────
-   SIDE-BY-SIDE MATRIX
+   SIDE-BY-SIDE MATRIX  (section shell + heads)
+   ───────────────────────────────────────────────────────
+   The table itself is now the shared <FeatureMatrix> (passed
+   columnLayout="even" + headerRule="neutral"). Only the section
+   wrapper + the centered section heading live here now; the former
+   .matrix / .matrixRow / .matrixHeader* / .matrixCell / .matrixCheck /
+   .matrixDash rules were removed when the table was extracted.
 ───────────────────────────────────────────────────── */
 .matrixSection {
   max-width: 1400px;
@@ -512,78 +496,14 @@
   font-weight: 500;
 }
 
-.matrix {
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
-}
-.matrixRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  padding: 22px 28px;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
-  transition: background 0.25s;
-  position: relative;
-  opacity: 0;
-}
-.matrixRow::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--accent);
-  transform: scaleY(0);
-  transform-origin: center;
-  transition: transform 0.3s var(--ease-smooth);
-}
-.matrixRow:hover::before {
-  transform: scaleY(1);
-}
-.matrixRow:hover {
-  background: rgb(var(--accent-rgb) / 0.025);
-}
-.matrixHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  padding: 18px 28px;
-  border-bottom: 1px solid rgba(242, 240, 239, 0.08);
-  background: rgba(255, 255, 255, 0.01);
-}
-.matrixHeaderCell {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(242, 240, 239, 0.4);
-}
-.matrixHeaderCell:not(:first-child) {
-  text-align: center;
-  color: var(--white);
-}
-.matrixLabel {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: rgba(242, 240, 239, 0.65);
-}
-.matrixCell {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--white);
-  text-align: center;
-}
-.matrixCheck {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-}
-.matrixDash {
-  color: rgba(242, 240, 239, 0.2);
-  font-size: 14px;
-}
-
 /* ─────────────────────────────────────────────────────
-   FAQ
+   FAQ  (section shell + heading)
+   ───────────────────────────────────────────────────────
+   The list itself is now the shared <Accordion> (.faqList is still
+   passed to it as className for the 56px top margin + top border).
+   The former .faqItem / .faqHeader* / .faqQuestion / .faqIcon* /
+   .faqBody* / .faqAnswer rules were removed when the accordion was
+   extracted.
 ───────────────────────────────────────────────────── */
 .faqSection {
   max-width: 1400px;
@@ -592,145 +512,12 @@
 }
 .faqList {
   margin-top: 56px;
-  border-top: 1px solid rgba(242, 240, 239, 0.08);
-}
-.faqItem {
-  border-bottom: 1px solid rgba(242, 240, 239, 0.06);
-  opacity: 0;
-}
-.faqHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 26px 4px;
-  background: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  position: relative;
-}
-.faqHeader::before {
-  content: "";
-  position: absolute;
-  left: -16px;
-  top: 50%;
-  width: 6px;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.3s var(--ease-smooth);
-}
-.faqHeader:hover::before {
-  transform: scaleX(1);
-}
-.faqQuestion {
-  font-family: var(--display);
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--white);
-  letter-spacing: -0.3px;
-  transition: color 0.25s;
-}
-.faqHeader:hover .faqQuestion {
-  color: var(--accent);
-}
-.faqIcon {
-  flex-shrink: 0;
-  color: rgba(242, 240, 239, 0.4);
-  transition: transform 0.4s var(--ease-smooth), color 0.25s;
-  margin-left: 24px;
-}
-.faqIconOpen {
-  transform: rotate(45deg);
-  color: var(--accent);
-}
-.faqBody {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s var(--ease-smooth);
-}
-.faqBodyOpen {
-  max-height: 400px;
-}
-.faqAnswer {
-  font-family: var(--display);
-  font-size: 14px;
-  line-height: 1.8;
-  color: rgba(242, 240, 239, 0.55);
-  padding: 0 4px 28px;
+  border-top: 1px solid rgb(var(--mk-fg-rgb) / 0.08);
 }
 
-/* ─────────────────────────────────────────────────────
-   FINAL CTA
-───────────────────────────────────────────────────── */
-.finalCta {
-  position: relative;
-  padding: 140px 48px 180px;
-  text-align: center;
-  overflow: hidden;
-}
-.finalInner {
-  max-width: 720px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-.finalBracketTL {
-  position: absolute;
-  top: 80px;
-  left: 60px;
-  width: 0;
-  height: 0;
-  border-top: 2px solid var(--accent);
-  border-left: 2px solid var(--accent);
-  opacity: 0;
-  pointer-events: none;
-}
-.finalBracketBR {
-  position: absolute;
-  bottom: 80px;
-  right: 60px;
-  width: 0;
-  height: 0;
-  border-bottom: 2px solid var(--accent);
-  border-right: 2px solid var(--accent);
-  opacity: 0;
-  pointer-events: none;
-}
-.finalHeadline {
-  font-family: var(--display);
-  font-size: clamp(36px, 5vw, 64px);
-  font-weight: 700;
-  letter-spacing: -1.5px;
-  color: var(--white);
-  line-height: 1.1;
-  margin-bottom: 28px;
-}
-.finalHeadlineAccent {
-  color: var(--accent);
-  font-style: italic;
-  font-weight: 500;
-}
-.finalSub {
-  font-family: var(--display);
-  font-size: 16px;
-  line-height: 1.7;
-  color: rgba(242, 240, 239, 0.45);
-  margin: 0 auto 44px;
-  max-width: 520px;
-  opacity: 0;
-  transform: translateY(14px);
-}
-.finalCtas {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  opacity: 0;
-  transform: translateY(16px);
-}
+/* (The bottom CTA is the shared <FinalCTACard>; the old page-local
+   .finalCta / .finalInner / .finalBracket* / .finalHeadline* / .finalSub /
+   .finalCtas rules were unused and have been removed.) */
 
 /* ─────────────────────────────────────────────────────
    RESPONSIVE
@@ -757,7 +544,7 @@
   }
   .tier + .tier {
     border-left: none;
-    border-top: 1px solid rgba(242, 240, 239, 0.06);
+    border-top: 1px solid rgb(var(--mk-fg-rgb) / 0.06);
   }
   .tier {
     padding: 40px 24px 36px;
@@ -780,19 +567,8 @@
   .matrixSection {
     padding: 80px 24px 40px;
   }
-  .matrixRow,
-  .matrixHeader {
-    padding: 14px 16px;
-  }
-  .matrixLabel,
-  .matrixCell {
-    font-size: 11px;
-  }
   .faqSection {
     padding: 60px 24px;
-  }
-  .faqHeader::before {
-    display: none;
   }
   .finalCta {
     padding: 80px 24px 120px;
