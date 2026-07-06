@@ -234,6 +234,7 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
 export default function AISection() {
   const sectionRef = useRef(null);
   const spaceRef = useRef(null);
+  const stageRef = useRef(null);
   const hostRef = useRef(null);
   const gaugeFillRef = useRef(null);
   const { paused } = useAnimationPaused();
@@ -357,6 +358,16 @@ export default function AISection() {
       let last = performance.now();
       let lastProgress = -1;
 
+      /* Ground flow: the stage (and the shader's uBg, so the horizon
+         fog always dissolves into exactly the visible ground) eases
+         from page black at entry to ocean navy mid-ride and back to
+         black on exit — the section flows out of the black hero and
+         into the black Features section with no color band. */
+      const BLACK = new THREE.Color(0x000000);
+      const NAVY = new THREE.Color(COL.bg);
+      const ground = new THREE.Color();
+      let lastGround = "";
+
       const frame = (now) => {
         if (!visibleRef.current) {
           running = false; // park — IntersectionObserver resumes us
@@ -380,6 +391,19 @@ export default function AISection() {
         else if (Math.abs(p - lastProgress) < 0.0004 && lastProgress >= 0)
           return; // paused + no scroll movement → skip the redraw
         lastProgress = p;
+
+        const k = Math.min(
+          clamp01(p / 0.12),
+          clamp01((1 - p) / 0.12)
+        );
+        const ks = k * k * (3 - 2 * k);
+        ground.copy(BLACK).lerp(NAVY, ks);
+        uniforms.uBg.value.copy(ground);
+        const gCss = `#${ground.getHexString()}`;
+        if (gCss !== lastGround && stageRef.current) {
+          stageRef.current.style.backgroundColor = gCss;
+          lastGround = gCss;
+        }
 
         const f = Math.min(p * N, N - 0.0001);
         const idx = Math.floor(f);
@@ -455,7 +479,7 @@ export default function AISection() {
       aria-label="The Nautilus intelligence engine"
     >
       <div ref={spaceRef} className={styles.space}>
-        <div className={styles.stage}>
+        <div ref={stageRef} className={styles.stage}>
           <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
           <div className={styles.vignette} aria-hidden="true" />
 

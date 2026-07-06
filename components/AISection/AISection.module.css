@@ -14,13 +14,12 @@
 .section {
   position: relative;
   z-index: 1;
-  background: linear-gradient(
-    180deg,
-    #000000 0%,
-    #04101f 14%,
-    #04101f 86%,
-    #000000 100%
-  );
+  /* Pure page black — identical to the hero above and Features below.
+     The ocean-navy mid-ride tint lives on .stage, driven by scroll
+     progress in JS (black at entry/exit, navy in the middle), and the
+     terrain shader's uBg follows the same color so the horizon always
+     dissolves into exactly the visible ground. */
+  background: #000000;
 }
 
 .space {
