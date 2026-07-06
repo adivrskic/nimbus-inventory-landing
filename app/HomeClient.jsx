@@ -13,7 +13,8 @@ import { useDemo } from "@/lib/DemoContext";
    right height so deferring them doesn't introduce layout shift (CLS). */
 const AISection = dynamic(() => import("@/components/AISection/AISection"), {
   ssr: false,
-  loading: () => <div style={{ height: "100vh" }} aria-hidden="true" />,
+  // matches .space height so the page doesn't jump when it mounts
+  loading: () => <div style={{ height: "440vh" }} aria-hidden="true" />,
 });
 const WarehouseShowcase = dynamic(
   () => import("@/components/WarehouseShowcase/WarehouseShowcase"),

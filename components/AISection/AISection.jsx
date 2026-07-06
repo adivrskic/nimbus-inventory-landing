@@ -1,1442 +1,529 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useAnimationPaused } from "@/lib/AnimationContext";
-import {
-  generateScattered,
-  generateVoiceScene,
-  generateSpatialScene,
-  generateSearchScene,
-  generateChartScene,
-  offsetShape,
-  offsetShapeY,
-} from "@/lib/shapes";
-import { vertexShader, fragmentShader } from "@/lib/shaders";
 import styles from "./AISection.module.css";
+import { useAnimationPaused } from "@/lib/AnimationContext";
 
-/* Desktop particle budget. Mobile uses a reduced count chosen at init
-   (see COUNT inside the WebGL effect) so the per-frame physics loop —
-   which is O(particles) on the main thread — stays light on phones. */
-const PARTICLE_COUNT = 50000;
-const PARTICLE_COUNT_MOBILE = 22000;
-const OFFSET = 5.5;
-const TO_RAD = Math.PI / 180;
+/* ═══════════════════════════════════════════════════════════════════════
+   AISection — "SOUNDINGS"
 
-/* ── Particle alpha envelope (scroll-driven) ──────────────────────────
-   The cloud is invisible at the section's edges and only reaches full
-   strength through the middle, so (a) the hero above has time to clear
-   before particles fade in, and (b) the cloud clears out quickly before
-   the Features section scrolls up over the sticky canvas.
+   The intelligence engine rendered as living bathymetry: one continuous
+   ocean-floor terrain, drawn as a nautical contour chart, that RESHAPES
+   itself for each capability as you scroll. No particles, no icons —
+   the same seafloor becomes:
 
-   FADE_IN_*  — measured as firstBlock.top / viewportHeight. Large while
-                the section is entering from below, decreasing as you
-                scroll in. Hidden at/above _START, full at/below _END.
-   FADE_OUT_* — measured as lastBlock.bottom / viewportHeight. Large while
-                the last shape is still on screen, decreasing as it exits
-                upward. Full at/above _START, gone at/below _END.
-   These are eyeball-tuned starting points — adjust the IN pair to line
-   up with the hero's exit, the OUT pair to clear before Features. */
-const FADE_IN_START = 1.0; // first block's top still at the viewport bottom → hidden
-const FADE_IN_END = 0.6; // fully present just before the first shape forms
-const FADE_OUT_START = 1.15; // start clearing right after the last shape passes its peak
-const FADE_OUT_END = 0.5; // fully gone well before Features covers the canvas
+     01 VOICE     interfering acoustic ripple fields (three sources,
+                  breathing with a speech envelope)
+     02 SPATIAL   a rectilinear rack-city of plateaus — the warehouse
+                  as terrain
+     03 SEARCH    a single seamount spiking out of a calm floor, with
+                  a sonar ring travelling out from it
+     04 FORECAST  a swell building toward the horizon — near water is
+                  today, the far ridge is next week
 
-const SHAPE_GENERATORS = {
-  voice: generateVoiceScene,
-  spatial: generateSpatialScene,
-  search: generateSearchScene,
-  chart: generateChartScene,
-};
+   Rendering: ONE indexed plane mesh, one custom ShaderMaterial. The
+   vertex shader blends two procedural heightfields (uSceneA→uSceneB by
+   uBlend, driven by scroll); the fragment shader draws bathymetric
+   iso-lines (minor/major contours via fwidth-AA), a faint graticule,
+   and a horizon fog fade. Gold is reserved for contour crests.
 
-const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▓▒░<>/\\";
+   The DOM chrome is chart furniture: a HUD strip, a caption stack that
+   crossfades per beat, and a depth-gauge progress rail on the right
+   (buttons — keyboard jumpable).
 
-/* ─────────────────────────────────────────────────────────────────────
-   SECTIONS
+   Perf contract: rAF PARKS entirely when the section is off-screen and
+   is resumed by the IntersectionObserver; the animation-paused context
+   (which also covers prefers-reduced-motion) freezes ambient time but
+   still honours scroll scrubbing (direct manipulation, not autoplay).
+   ═══════════════════════════════════════════════════════════════════════ */
 
-   Shape rotation is now FIXED — uses params.rotX/Y/Z as a static
-   presentation pose. The rotXEnd/rotYEnd/rotZEnd fields are kept for
-   backward compatibility but are no longer applied. The scroll-driven
-   "rotation feel" now comes from the scattered field orbiting around
-   the shape's center (see animate loop).
-
-   offsetX/Y → offsetXEnd/Y is still interpolated — that drives the
-   shape's horizontal/vertical glide across the screen as you scroll
-   through its block, which is a separate cinematic effect.
-   ───────────────────────────────────────────────────────────────────── */
-const SECTIONS = [
+const BEATS = [
   {
     key: "voice",
-    shortName: "Voice",
-    side: "left",
-    gen: "voice",
-    desktop: {
-      rotX: -48,
-      rotY: -15,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.6,
-      rotXEnd: -48,
-      rotYEnd: -15,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    mobile: {
-      rotX: -32,
-      rotY: -10,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.55,
-      rotXEnd: -32,
-      rotYEnd: -10,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    badge: "Hands-free",
+    num: "01",
+    label: "VOICE",
+    hud: "ACOUSTIC FIELD · LISTENING",
     title: "Voice commands",
     desc: "Nautilus processes natural speech and executes warehouse actions hands-free.",
   },
   {
     key: "spatial",
-    shortName: "Spatial",
-    side: "right",
-    gen: "spatial",
-    desktop: {
-      /* Classic 3/4 isometric — shows three faces clearly, reads as
-         3D cube without dramatic top-down compression. */
-      rotX: 35,
-      rotY: 45,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.8,
-      rotXEnd: 35,
-      rotYEnd: 45,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    mobile: {
-      rotX: 25,
-      rotY: 35,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.65,
-      rotXEnd: 25,
-      rotYEnd: 35,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    badge: "Real-time",
+    num: "02",
+    label: "SPATIAL",
+    hud: "RACK TOPOGRAPHY · LIVE",
     title: "Spatial intelligence",
     desc: "A living model of your warehouse. Every section, bay, and level mapped in real time.",
   },
   {
     key: "search",
-    shortName: "Search",
-    side: "left",
-    gen: "search",
-    desktop: {
-      /* Eased from rotY -34 / rotZ -9 so the lens reads as a rounder
-         circle rather than a stretched ellipse — still angled enough
-         for depth. */
-      rotX: -12,
-      rotY: -24,
-      rotZ: -6,
-      offsetX: -1.25,
-      offsetY: 1,
-      scale: 0.6,
-      rotXEnd: -12,
-      rotYEnd: -24,
-      rotZEnd: -6,
-      offsetXEnd: -1.25,
-      offsetYEnd: 1,
-    },
-    mobile: {
-      rotX: -12,
-      rotY: -24,
-      rotZ: -6,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.55,
-      rotXEnd: -12,
-      rotYEnd: -24,
-      rotZEnd: -6,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    badge: "AI-powered",
+    num: "03",
+    label: "SEARCH",
+    hud: "SOUNDING · ONE RESULT",
     title: "Intelligent search",
     desc: "Ask anything in plain language. Searches products, locations, and history.",
   },
   {
-    key: "analytics",
-    shortName: "Analytics",
-    side: "right",
-    gen: "chart",
-    desktop: {
-      /* Leveled (rotZ 6 → 0) and eased (rotY 25 → 22) so the chart
-         sits flat and reads clean; slide killed (offsetXEnd 1 → 0.25). */
-      rotX: -2,
-      rotY: 22,
-      rotZ: 0,
-      offsetX: 0.25,
-      offsetY: 0,
-      scale: 0.7,
-      rotXEnd: -2,
-      rotYEnd: 22,
-      rotZEnd: 0,
-      offsetXEnd: 0.25,
-      offsetYEnd: 0,
-    },
-    mobile: {
-      rotX: -8,
-      rotY: 14,
-      rotZ: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.65,
-      rotXEnd: -8,
-      rotYEnd: 14,
-      rotZEnd: 0,
-      offsetXEnd: 0,
-      offsetYEnd: 0,
-    },
-    badge: "Forecasting",
+    key: "forecast",
+    num: "04",
+    label: "FORECAST",
+    hud: "SWELL MODEL · 14-DAY HORIZON",
     title: "Predictive analytics",
     desc: "Nautilus doesn't just report what happened — it forecasts what's next.",
   },
 ];
 
-/* Pulse-attribute registry. Maps a scene's `gen` key to the per-particle
-   phase buffer that scene's phase data is copied into during buildShape.
-   A scene with an entry here gets its pulse driven; scenes without one
-   render statically. Adding a new pulsing scene means: one entry here,
-   a matching buffer + geometry attribute + uniform below, and the
-   generator returning { positions, phases }. */
-const PULSE_BUFFER_NAMES = {
-  voice: "voice",
-  spatial: "spatial",
-  search: "search",
-  chart: "chart",
+const N = BEATS.length;
+
+/* Palette (kept in one place so the shader and CSS agree). Deep-ocean
+   navy ground, pale chart ink, brand gold only at contour crests. */
+const COL = {
+  bg: 0x04101f,
+  inkLow: 0x24425e,
+  inkHigh: 0xb9d0e2,
+  gold: 0xd4a853,
 };
 
-function smoothstep(x) {
-  const c = Math.max(0, Math.min(1, x));
-  return c * c * (3 - 2 * c);
-}
+const vertexShader = /* glsl */ `
+  uniform float uTime;
+  uniform float uSceneA;
+  uniform float uSceneB;
+  uniform float uBlend;
+  uniform float uReveal;
 
-/* Smootherstep — like smoothstep but with zero 1st AND 2nd derivatives
-   at both ends, for a gentler ease-in-out. Used to shape the
-   shape-to-shape morph blend so particles accelerate in and decelerate
-   out instead of crossing at a constant rate. The constant-rate linear
-   blend is what reads as a mechanical "wiggle" mid-transition — the
-   underdamped settle spring overshoots when the target arrives at full
-   speed. Easing the blend removes the speed at each end so particles
-   settle into a shape rather than slamming into it and bouncing. */
-function easeInOut(t) {
-  const c = Math.max(0, Math.min(1, t));
-  return c * c * c * (c * (c * 6 - 15) + 10);
-}
+  varying float vH;
+  varying vec3  vPos;
+  varying float vDist;
 
-function formationCurve(p) {
-  if (p <= 0.15 || p >= 0.85) return 0;
-  if (p < 0.4) return smoothstep((p - 0.15) / 0.25);
-  if (p <= 0.6) return 1;
-  return 1 - smoothstep((p - 0.6) / 0.25);
-}
-
-function animProgress(p) {
-  return Math.max(0, Math.min(1, (p - 0.15) / 0.7));
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   SCRAMBLE TEXT RENDERER
-
-   Renders one inline-block <span> per character so the RAF scramble loop
-   can drive each letter's textContent + opacity independently. This is
-   purely decorative — the real, readable copy is emitted alongside it as
-   an .srOnly node and this whole tree is wrapped in aria-hidden by the
-   caller, so screen readers and crawlers get clean text while sighted
-   users get the scramble-in effect.
-   ───────────────────────────────────────────────────────────────────── */
-function renderScramble(text, keyPrefix = "") {
-  const parts = text.split(/(\s+)/);
-  return parts.map((part, pi) => {
-    if (part === "") return null;
-    if (/^\s+$/.test(part)) {
-      return <span key={`${keyPrefix}-s${pi}`}> </span>;
-    }
-    return (
-      <span key={`${keyPrefix}-w${pi}`} className="word">
-        {[...part].map((c, ci) => (
-          <span key={ci} data-char={c} className={styles.scrambleChar}>
-            {"\u00A0"}
-          </span>
-        ))}
-      </span>
-    );
-  });
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   DEBUG PANEL — depth + motion + orbit  (dev-only; see `debug` gate below)
-   ═══════════════════════════════════════════════════════════════════════ */
-const DEPTH_DEFAULTS = {
-  near: 11,
-  far: 32,
-  alphaMin: 0.18,
-  perspective: 22,
-  blurExpand: 0.5,
-  blurSoftness: 0.45,
-};
-
-const MOTION_DEFAULTS = {
-  stiffness: 0.055,
-  damping: 0.78,
-  jitterAmp: 0.06,
-  jitterFreq: 0.4,
-  /* Orbit: scroll-driven rotation of the scattered field around the
-     active shape's center. Values are in radians, applied through a
-     full rotation matrix (not the small-angle approximation we used
-     for the old subtle parallax). 0.35 rad ≈ 20° yaw, 0.12 rad ≈ 7°
-     pitch — gives a strong "field orbits the static shape" feel. */
-  orbitYaw: 0.35,
-  orbitPitch: 0.12,
-};
-
-function DebugPanel({ uniformsRef, motionRef }) {
-  const [open, setOpen] = useState(true);
-  const [d, setD] = useState(DEPTH_DEFAULTS);
-  const [m, setM] = useState(MOTION_DEFAULTS);
-
-  const applyDepth = (key, val) => {
-    setD((prev) => ({ ...prev, [key]: val }));
-    const u = uniformsRef.current;
-    if (!u) return;
-    switch (key) {
-      case "near":
-        u.uDepthRange.value.x = val;
-        break;
-      case "far":
-        u.uDepthRange.value.y = val;
-        break;
-      case "alphaMin":
-        u.uDepthAlphaMin.value = val;
-        break;
-      case "perspective":
-        u.uPerspectiveScale.value = val;
-        break;
-      case "blurExpand":
-        u.uBlurExpand.value = val;
-        break;
-      case "blurSoftness":
-        u.uBlurSoftness.value = val;
-        break;
-    }
-  };
-
-  const applyMotion = (key, val) => {
-    setM((prev) => ({ ...prev, [key]: val }));
-    if (motionRef.current) motionRef.current[key] = val;
-  };
-
-  const reset = () => {
-    Object.entries(DEPTH_DEFAULTS).forEach(([k, v]) => applyDepth(k, v));
-    Object.entries(MOTION_DEFAULTS).forEach(([k, v]) => applyMotion(k, v));
-  };
-
-  const copyConfig = async () => {
-    const cfg =
-      `// ── Shader uniforms ──\n` +
-      `uDepthRange:       { value: new THREE.Vector2(${d.near.toFixed(
-        2
-      )}, ${d.far.toFixed(2)}) },\n` +
-      `uDepthAlphaMin:    { value: ${d.alphaMin.toFixed(3)} },\n` +
-      `uPerspectiveScale: { value: ${d.perspective.toFixed(2)} },\n` +
-      `uBlurExpand:       { value: ${d.blurExpand.toFixed(3)} },\n` +
-      `uBlurSoftness:     { value: ${d.blurSoftness.toFixed(3)} },\n\n` +
-      `// ── Motion defaults (motionRef) ──\n` +
-      `stiffness:  ${m.stiffness.toFixed(4)},\n` +
-      `damping:    ${m.damping.toFixed(3)},\n` +
-      `jitterAmp:  ${m.jitterAmp.toFixed(4)},\n` +
-      `jitterFreq: ${m.jitterFreq.toFixed(3)},\n` +
-      `orbitYaw:   ${m.orbitYaw.toFixed(4)},\n` +
-      `orbitPitch: ${m.orbitPitch.toFixed(4)},`;
-    try {
-      await navigator.clipboard.writeText(cfg);
-    } catch {
-      /* clipboard blocked — dev-only tool, nothing to surface */
-    }
-  };
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={styles.dbgToggle}
-      >
-        DEBUG
-      </button>
-    );
+  float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
   }
 
-  const depthSliders = [
-    ["Focus near", "near", 0, 30, 0.5, (n) => n.toFixed(1)],
-    ["Focus far", "far", 5, 60, 0.5, (n) => n.toFixed(1)],
-    ["Alpha floor", "alphaMin", 0, 1, 0.01, (n) => n.toFixed(2)],
-    ["Perspective", "perspective", 5, 40, 0.5, (n) => n.toFixed(1)],
-    ["Bokeh expand", "blurExpand", 0, 2, 0.01, (n) => n.toFixed(2)],
-    ["Edge softness", "blurSoftness", 0, 0.5, 0.01, (n) => n.toFixed(2)],
-  ];
+  /* 01 — acoustic interference: three ring-wave sources along a rough
+     line, each damped with radius, the whole field breathing slowly
+     like a speech envelope. */
+  float hVoice(vec2 p, float t) {
+    float h = 0.0;
+    float d0 = length(p - vec2(-34.0, 6.0));
+    float d1 = length(p - vec2(2.0, -10.0));
+    float d2 = length(p - vec2(40.0, 12.0));
+    h += sin(d0 * 0.40 - t * 1.5)        * exp(-d0 * 0.030) * 7.0;
+    h += sin(d1 * 0.46 - t * 1.9 + 1.7)  * exp(-d1 * 0.026) * 7.5;
+    h += sin(d2 * 0.36 - t * 1.3 + 3.1)  * exp(-d2 * 0.032) * 6.0;
+    h *= 0.72 + 0.28 * sin(t * 0.6);
+    return h + 1.5;
+  }
 
-  const motionSliders = [
-    ["Stiffness", "stiffness", 0.01, 0.2, 0.001, (n) => n.toFixed(3)],
-    ["Damping", "damping", 0, 0.95, 0.01, (n) => n.toFixed(2)],
-    ["Jitter amp", "jitterAmp", 0, 0.2, 0.001, (n) => n.toFixed(3)],
-    ["Jitter freq", "jitterFreq", 0.05, 1.5, 0.01, (n) => n.toFixed(2)],
-  ];
+  /* 02 — rack city: a staggered grid of flat-topped plateaus separated
+     by aisle channels; heights vary per block, with a barely-there
+     per-block breathing so it reads alive, not frozen. */
+  float hSpatial(vec2 p, float t) {
+    vec2 q = p + vec2(9.0, 12.0);
+    vec2 cell = vec2(18.0, 26.0);
+    vec2 g = floor(q / cell);
+    vec2 f = fract(q / cell) - 0.5;
+    float rx = smoothstep(0.40, 0.26, abs(f.x));
+    float rz = smoothstep(0.34, 0.22, abs(f.y));
+    float hgt = 4.0 + 7.0 * hash21(g);
+    float pulse = 1.0 + 0.05 * sin(t * 0.9 + hash21(g.yx) * 6.283);
+    float basin = 0.6 * sin(p.x * 0.05) * sin(p.y * 0.06);
+    return rx * rz * hgt * pulse + basin;
+  }
 
-  /* Field orbit sliders go up to ~57° (1.0 rad) and ~34° (0.6 rad).
-     Most of the visual punch happens in the 0.2–0.5 range. */
-  const orbitSliders = [
-    ["Orbit yaw (rad)", "orbitYaw", 0, 1.0, 0.005, (n) => n.toFixed(3)],
-    ["Orbit pitch (rad)", "orbitPitch", 0, 0.6, 0.005, (n) => n.toFixed(3)],
-  ];
+  /* 03 — the answer: a calm abyssal floor with ONE seamount, and a
+     sonar ring travelling outward from it. */
+  float hSearch(vec2 p, float t) {
+    vec2 tgt = vec2(24.0, -6.0);
+    float d = length(p - tgt);
+    float spike = exp(-d * d * 0.010) * 16.0;
+    float ring  = sin(d * 0.5 - t * 2.0) * exp(-d * 0.045) * 1.8;
+    float calm  = sin(p.x * 0.09 + t * 0.2) * cos(p.y * 0.08) * 0.7;
+    return calm + spike + ring;
+  }
 
-  return (
-    <div className={styles.dbgPanel}>
-      <div className={styles.dbgHead}>
-        <span className={styles.dbgTitle}>DEBUG</span>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className={styles.dbgClose}
-          aria-label="Close debug panel"
-        >
-          ×
-        </button>
-      </div>
+  /* 04 — forecast swell: amplitude grows with distance toward the
+     horizon (p.y maps to -z, i.e. far away). Near water is settled
+     history; the far ridgeline is the projected future. */
+  float hForecast(vec2 p, float t) {
+    float z01 = clamp((p.y + 80.0) / 160.0, 0.0, 1.0);
+    float amp = mix(0.6, 10.0, z01 * z01);
+    float h = sin(p.x * 0.10 + p.y * 0.05 + t * 0.45) * amp * 0.7;
+    h += sin(p.x * 0.21 - p.y * 0.11 - t * 0.3 + 1.3) * amp * 0.3;
+    return h + z01 * 5.0 - 1.0;
+  }
 
-      <div className={styles.dbgSectionHead}>Depth — focus band</div>
-      {depthSliders.slice(0, 2).map(([label, key, min, max, step, fmt]) => (
-        <Slider
-          key={key}
-          label={label}
-          value={d[key]}
-          onChange={(v) => applyDepth(key, v)}
-          min={min}
-          max={max}
-          step={step}
-          format={fmt}
-        />
-      ))}
+  float sceneH(vec2 p, float s, float t) {
+    if (s < 0.5) return hVoice(p, t);
+    if (s < 1.5) return hSpatial(p, t);
+    if (s < 2.5) return hSearch(p, t);
+    return hForecast(p, t);
+  }
 
-      <div className={styles.dbgSectionHead}>Atmosphere</div>
-      {depthSliders.slice(2, 3).map(([label, key, min, max, step, fmt]) => (
-        <Slider
-          key={key}
-          label={label}
-          value={d[key]}
-          onChange={(v) => applyDepth(key, v)}
-          min={min}
-          max={max}
-          step={step}
-          format={fmt}
-        />
-      ))}
+  void main() {
+    vec2 p = position.xy;
+    float h = mix(sceneH(p, uSceneA, uTime), sceneH(p, uSceneB, uTime), uBlend);
+    h *= uReveal;
 
-      <div className={styles.dbgSectionHead}>Perspective & blur</div>
-      {depthSliders.slice(3).map(([label, key, min, max, step, fmt]) => (
-        <Slider
-          key={key}
-          label={label}
-          value={d[key]}
-          onChange={(v) => applyDepth(key, v)}
-          min={min}
-          max={max}
-          step={step}
-          format={fmt}
-        />
-      ))}
+    /* Geometry is an unrotated XY plane; map it onto the ground here
+       (y-up, far edge at -z) so no mesh rotation bookkeeping exists. */
+    vec3 world = vec3(p.x, h, -p.y);
+    vH = h;
+    vPos = world;
 
-      <div className={styles.dbgSectionHead}>Motion</div>
-      {motionSliders.map(([label, key, min, max, step, fmt]) => (
-        <Slider
-          key={key}
-          label={label}
-          value={m[key]}
-          onChange={(v) => applyMotion(key, v)}
-          min={min}
-          max={max}
-          step={step}
-          format={fmt}
-        />
-      ))}
+    vec4 mv = modelViewMatrix * vec4(world, 1.0);
+    vDist = length(mv.xyz);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
 
-      <div className={styles.dbgSectionHead}>Field orbit</div>
-      {orbitSliders.map(([label, key, min, max, step, fmt]) => (
-        <Slider
-          key={key}
-          label={label}
-          value={m[key]}
-          onChange={(v) => applyMotion(key, v)}
-          min={min}
-          max={max}
-          step={step}
-          format={fmt}
-        />
-      ))}
+const fragmentShader = /* glsl */ `
+  precision highp float;
 
-      <div className={styles.dbgActions}>
-        <button type="button" onClick={reset} className={styles.dbgBtn}>
-          Reset
-        </button>
-        <button
-          type="button"
-          onClick={copyConfig}
-          className={`${styles.dbgBtn} ${styles.dbgBtnPrimary}`}
-        >
-          Copy config
-        </button>
-      </div>
-    </div>
-  );
-}
+  uniform vec3  uBg;
+  uniform vec3  uInkLow;
+  uniform vec3  uInkHigh;
+  uniform vec3  uGold;
+  uniform float uReveal;
+  uniform float uContour;   // iso-line density (lines per height unit)
 
-function Slider({ label, value, onChange, min, max, step, format }) {
-  return (
-    <div className={styles.dbgSlider}>
-      <div className={styles.dbgSliderHead}>
-        <span className={styles.dbgSliderLabel}>{label}</span>
-        <span className={styles.dbgSliderValue}>{format(value)}</span>
-      </div>
-      <input
-        type="range"
-        className={styles.dbgRange}
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-      />
-    </div>
-  );
-}
+  varying float vH;
+  varying vec3  vPos;
+  varying float vDist;
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-   ═══════════════════════════════════════════════════════════════════════ */
+  /* Distance to the nearest integer of v, resolved to a crisp AA line
+     via a width derived from screen-space derivatives. */
+  float isoLine(float v, float boost) {
+    float f = fract(v);
+    float d = min(f, 1.0 - f);
+    float w = fwidth(v) * boost + 0.012;
+    return 1.0 - smoothstep(0.0, w, d);
+  }
+
+  void main() {
+    float hn = clamp((vH + 9.0) / 26.0, 0.0, 1.0);
+
+    // Bathymetric contours: minor lines every unit, majors every 5th.
+    float minor = isoLine(vH * uContour, 1.4);
+    float major = isoLine(vH * uContour * 0.2, 1.6);
+
+    // Faint chart graticule on the ground plane.
+    float gx = isoLine(vPos.x * 0.045, 1.5);
+    float gz = isoLine(vPos.z * 0.045, 1.5);
+    float grat = max(gx, gz);
+
+    // Depth-tinted fill, barely lighter than the page ground.
+    vec3 col = mix(uBg * 1.25, uInkLow * 0.55, hn * 0.55);
+    col = mix(col, uInkLow, grat * 0.22);
+
+    // Contour ink: pale in the deeps, igniting to gold at the crests.
+    vec3 crest = mix(uInkHigh, uGold, smoothstep(0.52, 0.92, hn));
+    col = mix(col, mix(uInkLow, crest, 0.55), minor * 0.65);
+    col = mix(col, crest, major * 0.9);
+
+    // Horizon fog — dissolve into the section ground so the terrain
+    // has no visible far edge.
+    float fogF = smoothstep(85.0, 230.0, vDist);
+    col = mix(col, uBg, fogF);
+    float alpha = (1.0 - fogF) * uReveal;
+
+    gl_FragColor = vec4(col, alpha);
+  }
+`;
+
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+
 export default function AISection() {
-  const canvasRef = useRef(null);
   const sectionRef = useRef(null);
-  const cardRefs = useRef([]);
-  const blockRefs = useRef([]);
-  const formationsRef = useRef([]);
-
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [progress, setProgress] = useState(0);
-
-  const sectionVisibleRef = useRef(false);
-
+  const spaceRef = useRef(null);
+  const hostRef = useRef(null);
+  const gaugeFillRef = useRef(null);
   const { paused } = useAnimationPaused();
-  const pausedRef = useRef(false);
-  useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
-  /* prefers-reduced-motion gate for the *ambient* motion (jitter, field
-     orbit, pointer parallax). The scroll-driven formation itself is
-     user-initiated and stays on — we only suppress the autonomous churn
-     that motion-sensitive users shouldn't get. */
-  const reducedRef = useRef(false);
-  /* Desktop pointer parallax. pointerRef is the raw target (-1..1 from
-     viewport center); pointerSmoothRef is the eased value the animate
-     loop reads so the shape glides toward the cursor instead of snapping. */
-  const pointerRef = useRef({ x: 0, y: 0 });
-  const pointerSmoothRef = useRef({ x: 0, y: 0 });
+  const [active, setActive] = useState(0);
+  const activeRef = useRef(0);
 
-  const rebuildShapesRef = useRef(null);
-  const uniformsRef = useRef(null);
-  const motionRef = useRef({ ...MOTION_DEFAULTS });
+  const visibleRef = useRef(false);
+  const resumeRef = useRef(null);
 
-  const [debug, setDebug] = useState(false);
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-    setDebug(new URLSearchParams(window.location.search).has("debug"));
-  }, []);
-
-  /* Reduced-motion media query + desktop pointer tracking. Both write to
-     refs (no React state) so they never trigger a re-render; the WebGL
-     loop samples them each frame. */
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const applyMQ = () => {
-      reducedRef.current = mq.matches;
-      if (mq.matches) {
-        pointerRef.current.x = 0;
-        pointerRef.current.y = 0;
-      }
-    };
-    applyMQ();
-    mq.addEventListener?.("change", applyMQ);
-
-    const onPointer = (e) => {
-      if (reducedRef.current || window.innerWidth < 768) return;
-      pointerRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointerRef.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener("pointermove", onPointer, { passive: true });
-
-    return () => {
-      mq.removeEventListener?.("change", applyMQ);
-      window.removeEventListener("pointermove", onPointer);
-    };
-  }, []);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        sectionVisibleRef.current = entry.isIntersecting;
-      },
-      { rootMargin: "200px 0px" }
-    );
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollToBlock = useCallback((i) => {
-    blockRefs.current[i]?.scrollIntoView({
+  /* Jump the page so beat i sits at the start of its hold window. */
+  const jumpTo = useCallback((i) => {
+    const space = spaceRef.current;
+    if (!space) return;
+    const top = space.getBoundingClientRect().top + window.scrollY;
+    const range = space.offsetHeight - window.innerHeight;
+    window.scrollTo({
+      top: top + ((i + 0.04) / N) * range,
       behavior: "smooth",
-      block: "center",
     });
   }, []);
 
-  const CFG = {
-    smoothFormation: 0.18,
-    camZ: 16,
-    camZMobile: 22,
-  };
-
-  const stateRef = useRef({
-    activeShape: 0,
-    /* The shape we're morphing TOWARD during a transition. Equal to
-       activeShape when not transitioning. */
-    nextShape: 0,
-    /* 0..1 blend factor from activeShape to nextShape. 0 = fully on
-       active shape, 1 = fully on next shape. */
-    shapeBlend: 0,
-    formation: 0,
-    globalAlpha: 0,
-    shapeProgresses: [0, 0, 0, 0],
-    fadeOut: 0,
-    fadeIn: 0,
-  });
-
+  /* Off-screen parking: flip the visibility flag and wake the render
+     loop on re-entry. */
   useEffect(() => {
     const section = sectionRef.current;
-    const blocks = blockRefs.current.filter(Boolean);
     if (!section) return;
-
-    const vh = window.innerHeight;
-    const center = vh / 2;
-
-    const onScroll = () => {
-      const formations = [];
-      const shapeProgresses = [];
-
-      if (blocks.length > 1) {
-        const fTop =
-          blocks[0].getBoundingClientRect().top + blocks[0].offsetHeight * 0.5;
-        const lTop = blocks[blocks.length - 1].getBoundingClientRect().top;
-        setProgress(Math.max(0, Math.min(1, (center - fTop) / (lTop - fTop))));
-      }
-
-      for (let i = 0; i < blocks.length; i++) {
-        const r = blocks[i].getBoundingClientRect();
-        const total = vh + r.height;
-        const p = Math.max(0, Math.min(1, (vh - r.top) / total));
-        formations.push(formationCurve(p));
-        shapeProgresses.push(p);
-      }
-      /* Find the two blocks with highest formationCurve values.
-         The dominant becomes activeShape; the runner-up becomes
-         nextShape if it's significantly engaged (so the particles
-         morph TOWARD it instead of scattering through scattered). */
-      let max1 = 0,
-        max1Idx = 0,
-        max2 = 0,
-        max2Idx = 0;
-      for (let i = 0; i < formations.length; i++) {
-        if (formations[i] > max1) {
-          max2 = max1;
-          max2Idx = max1Idx;
-          max1 = formations[i];
-          max1Idx = i;
-        } else if (formations[i] > max2) {
-          max2 = formations[i];
-          max2Idx = i;
-        }
-      }
-
-      let activeShape = max1Idx;
-      let nextShape = max2Idx;
-      let shapeBlend = 0;
-      let formation = max1;
-
-      if (max1 > 0.1 && max2 > 0.1) {
-        /* Two blocks both have meaningful formation — we're mid-
-            transition. Blend between them by relative weight. Cap
-            the combined formation at 1 so particles stay fully
-            formed (no scatter dip) while morphing. */
-        const total = max1 + max2;
-        shapeBlend = max2 / total;
-        formation = Math.min(1, total);
-      } else if (max1 < 0.05) {
-        /* Both formations are near-zero — we're in the dead zone
-            BETWEEN two adjacent blocks (one just exited above 0.85,
-            the next hasn't reached 0.15 yet). Detect which two blocks
-            we're between by finding the rightmost passed block and
-            the next upcoming block, and morph between them on a
-            progress curve. Keep formation HIGH so particles stay
-            formed through the transition. */
-        let beforeIdx = -1,
-          afterIdx = -1;
-        for (let i = 0; i < shapeProgresses.length; i++) {
-          if (shapeProgresses[i] >= 0.85) beforeIdx = i;
-        }
-        for (let i = 0; i < shapeProgresses.length; i++) {
-          if (shapeProgresses[i] > 0 && shapeProgresses[i] <= 0.15) {
-            afterIdx = i;
-            break;
-          }
-        }
-        if (beforeIdx >= 0 && afterIdx > beforeIdx) {
-          activeShape = beforeIdx;
-          nextShape = afterIdx;
-          /* afterIdx's progress goes 0 → 0.15 during this window.
-              Map that to a 0..1 blend. */
-          shapeBlend = Math.min(1, shapeProgresses[afterIdx] / 0.15);
-          formation = 0.9;
-        }
-        /* If we couldn't find a between-blocks pair (we're above the
-            section or below it), leave formation at max1 (≈0) so
-            particles scatter naturally. */
-      }
-
-      stateRef.current.formation = formation;
-      stateRef.current.activeShape = activeShape;
-      stateRef.current.nextShape = nextShape;
-      stateRef.current.shapeBlend = shapeBlend;
-      stateRef.current.shapeProgresses = shapeProgresses;
-      formationsRef.current = formations;
-
-      /* Fade-in envelope — particles ramp from invisible to full as the
-         first block's top climbs from the viewport bottom upward, so the
-         hero above has time to clear before the cloud appears. Measured
-         as firstBlock.top / vh: ≈1 while the section is still entering,
-         decreasing as you scroll in. */
-      const firstBlock = blocks[0];
-      if (firstBlock) {
-        const topRatio = firstBlock.getBoundingClientRect().top / vh;
-        stateRef.current.fadeIn = Math.max(
-          0,
-          Math.min(
-            1,
-            (FADE_IN_START - topRatio) / (FADE_IN_START - FADE_IN_END)
-          )
-        );
-      }
-
-      /* Fade-out envelope — starts earlier and finishes sooner than the
-         old 0.6·vh→0 ramp so the cloud is gone before the Features
-         section scrolls up over the sticky canvas. Measured as
-         lastBlock.bottom / vh: large while the last shape is on screen,
-         decreasing as it exits upward. */
-      const lastBlock = blocks[blocks.length - 1];
-      if (lastBlock) {
-        const bottomRatio = lastBlock.getBoundingClientRect().bottom / vh;
-        stateRef.current.fadeOut = Math.max(
-          0,
-          Math.min(
-            1,
-            (FADE_OUT_START - bottomRatio) / (FADE_OUT_START - FADE_OUT_END)
-          )
-        );
-      }
-
-      if (max1 > 0.5) setActiveIdx(activeShape);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting;
+        if (entry.isIntersecting) resumeRef.current?.();
+      },
+      { rootMargin: "160px 0px" }
+    );
+    obs.observe(section);
+    return () => obs.disconnect();
   }, []);
 
+  /* WebGL terrain. */
   useEffect(() => {
-    let raf;
-    const REVEAL_END = 0.7;
-    const SCRAMBLE_WINDOW = 0.12;
-    const FRAME_DIVIDER = 4;
-    const MIN_OPACITY = 0.45;
-    let frame = 0;
+    let cleanup;
+    let cancelled = false;
 
-    const tick = () => {
-      frame++;
-      const reroll = frame % FRAME_DIVIDER === 0;
-      const cards = cardRefs.current;
-
-      for (let ci = 0; ci < cards.length; ci++) {
-        const card = cards[ci];
-        if (!card) continue;
-
-        const f = formationsRef.current[ci] ?? 0;
-        const sideBar = card.querySelector(`.${styles.sideBar}`);
-        if (sideBar) {
-          sideBar.style.opacity = String(f);
-          sideBar.style.pointerEvents = f > 0.5 ? "auto" : "none";
-        }
-
-        const chars = card.querySelectorAll(`.${styles.scrambleChar}`);
-        if (f <= 0) {
-          chars.forEach((ch) => {
-            ch.textContent = "\u00A0";
-            ch.style.opacity = "0";
-          });
-          continue;
-        }
-
-        const revealProgress = f / REVEAL_END;
-        const totalChars = chars.length;
-
-        for (let i = 0; i < totalChars; i++) {
-          const ch = chars[i];
-          const charProgress = i / Math.max(1, totalChars - 1);
-          const localProgress =
-            (revealProgress - charProgress) / SCRAMBLE_WINDOW + 0.5;
-          const c = Math.max(0, Math.min(1, localProgress));
-
-          if (c >= 1) {
-            ch.textContent = ch.dataset.char || "";
-            ch.style.opacity = "1";
-          } else if (c <= 0) {
-            ch.textContent = "\u00A0";
-            ch.style.opacity = "0";
-          } else {
-            if (reroll) {
-              ch.textContent =
-                MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
-            }
-            ch.style.opacity = String(MIN_OPACITY + (1 - MIN_OPACITY) * c);
-          }
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    /* Particle budget chosen once, from the initial viewport. The
-       physics loop below is O(COUNT) on the main thread every frame, so
-       a phone running 50k is the section's biggest INP risk — mobile
-       gets a lighter cloud. Every buffer + geometry attribute is sized
-       to COUNT so the count stays internally consistent; a later
-       mobile↔desktop resize re-poses the shapes at the same count. */
-    const COUNT =
-      window.innerWidth < 768 ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT;
-
-    let cleanup = () => {};
-    let frameId;
-
-    const init = async () => {
+    (async () => {
       const THREE = await import("three");
+      if (cancelled || !hostRef.current) return;
 
-      const renderer = new THREE.WebGLRenderer({
-        canvas,
-        alpha: true,
-        antialias: true,
-        powerPreference: "high-performance",
-      });
+      const host = hostRef.current;
+      const isMobile = window.innerWidth < 768;
+
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+        });
+      } catch {
+        return; // no WebGL — the CSS ground + DOM chrome stand alone
+      }
       renderer.setClearColor(0x000000, 0);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      host.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
-      scene.background = null;
+      const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 600);
+      const CAM = { x: 0, y: 30, z: 98 };
+      camera.position.set(CAM.x, CAM.y, CAM.z);
+      camera.lookAt(0, 2, -6);
 
-      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-      camera.position.set(0, 0, CFG.camZ);
-
-      let builtMode = window.innerWidth < 768 ? "mobile" : "desktop";
+      const geo = new THREE.PlaneGeometry(
+        260,
+        160,
+        isMobile ? 150 : 256,
+        isMobile ? 92 : 160
+      );
+      const uniforms = {
+        uTime: { value: 0 },
+        uSceneA: { value: 0 },
+        uSceneB: { value: 1 },
+        uBlend: { value: 0 },
+        uReveal: { value: 0 },
+        uContour: { value: 0.9 },
+        uBg: { value: new THREE.Color(COL.bg) },
+        uInkLow: { value: new THREE.Color(COL.inkLow) },
+        uInkHigh: { value: new THREE.Color(COL.inkHigh) },
+        uGold: { value: new THREE.Color(COL.gold) },
+      };
+      const mat = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms,
+        transparent: true,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
 
       const resize = () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const mobile = w < 768;
-        /* Cap DPR lower on mobile — at 50k→22k particles the fragment
-           cost of a 3× retina buffer is wasted on a section that reads
-           fine at 1.5×. */
-        renderer.setPixelRatio(
-          Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2)
-        );
+        const w = host.clientWidth || 1;
+        const h = host.clientHeight || 1;
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
-        camera.position.z = mobile ? CFG.camZMobile : CFG.camZ;
         camera.updateProjectionMatrix();
-
-        const nextMode = mobile ? "mobile" : "desktop";
-        if (nextMode !== builtMode) {
-          builtMode = nextMode;
-          rebuildShapesRef.current?.();
-        }
       };
       resize();
       window.addEventListener("resize", resize);
 
-      const scattered = generateScattered(COUNT);
-      const shapes = [null, null, null, null];
-
-      /* Per-scene per-particle phase buffers, written by each scene's
-         generator during buildShape and read by the shader to drive
-         that scene's pulse effect. Each pulsing scene gets its own
-         buffer so they never overwrite each other. All initialized to
-         -1 (== "no pulse") so a generator that hasn't been updated to
-         return phases degrades to no-op rather than misfiring. */
-      const phaseBuffers = {
-        voice: new Float32Array(COUNT),
-        spatial: new Float32Array(COUNT),
-        search: new Float32Array(COUNT),
-        chart: new Float32Array(COUNT),
+      /* Pointer parallax — small camera drift toward the cursor. */
+      const pointer = { x: 0, y: 0 };
+      const onPointer = (e) => {
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
       };
-      phaseBuffers.voice.fill(-1);
-      phaseBuffers.spatial.fill(-1);
-      phaseBuffers.search.fill(-1);
-      phaseBuffers.chart.fill(-1);
+      window.addEventListener("pointermove", onPointer, { passive: true });
 
-      /* Hoisted so rebuildShapes can reference it on resize-driven
-         rebuilds — geometry is created later in this init flow. */
-      let geometry;
+      let rafId = 0;
+      let running = false;
+      let t = 0;
+      let last = performance.now();
+      let lastProgress = -1;
 
-      const buildShape = (i, mode) => {
-        const sec = SECTIONS[i];
-        const params = sec[mode];
-        const fn = SHAPE_GENERATORS[sec.gen];
-
-        const result = fn(COUNT, 0, 0, 0);
-
-        /* Scenes that drive a shader pulse return { positions, phases };
-           other generators return a plain Float32Array. Normalize and
-           capture phases into the appropriate per-scene buffer. */
-        let pts;
-        if (result instanceof Float32Array) {
-          pts = result;
-        } else {
-          pts = result.positions;
-          const bufName = PULSE_BUFFER_NAMES[sec.gen];
-          if (result.phases && bufName && phaseBuffers[bufName]) {
-            phaseBuffers[bufName].set(result.phases);
-          }
+      const frame = (now) => {
+        if (!visibleRef.current) {
+          running = false; // park — IntersectionObserver resumes us
+          return;
         }
+        rafId = requestAnimationFrame(frame);
 
-        const mobile = mode === "mobile";
-        const mobileFactor = mobile ? 0.85 : 1;
-        const scale = params.scale * mobileFactor;
+        const dt = Math.min((now - last) / 1000, 0.05);
+        last = now;
 
-        if (scale !== 1) {
-          const out = new Float32Array(pts.length);
-          for (let j = 0; j < pts.length; j++) out[j] = pts[j] * scale;
-          pts = out;
+        /* Scroll → beat state. Read layout once per frame (cheap: one
+           getBoundingClientRect on the scroll space). */
+        const space = spaceRef.current;
+        if (!space) return;
+        const rect = space.getBoundingClientRect();
+        const range = space.offsetHeight - window.innerHeight;
+        const p = clamp01(range > 0 ? -rect.top / range : 0);
+
+        const frozen = pausedRef.current;
+        if (!frozen) t += dt;
+        else if (Math.abs(p - lastProgress) < 0.0004 && lastProgress >= 0)
+          return; // paused + no scroll movement → skip the redraw
+        lastProgress = p;
+
+        const f = Math.min(p * N, N - 0.0001);
+        const idx = Math.floor(f);
+        const local = f - idx;
+        uniforms.uSceneA.value = idx;
+        uniforms.uSceneB.value = Math.min(idx + 1, N - 1);
+        /* Hold each floor, then morph in the last quarter of the beat. */
+        const b = clamp01((local - 0.72) / 0.26);
+        uniforms.uBlend.value = b * b * (3 - 2 * b);
+        uniforms.uTime.value = t;
+        uniforms.uReveal.value = Math.min(
+          1,
+          uniforms.uReveal.value + dt * 0.8
+        );
+
+        /* DOM sync: active caption + depth-gauge fill. */
+        const domIdx = Math.min(N - 1, local > 0.86 ? idx + 1 : idx);
+        if (domIdx !== activeRef.current) {
+          activeRef.current = domIdx;
+          setActive(domIdx);
         }
+        if (gaugeFillRef.current)
+          gaugeFillRef.current.style.height = `${p * 100}%`;
 
-        return pts;
-      };
-
-      const rebuildShapes = () => {
-        const mode = window.innerWidth < 768 ? "mobile" : "desktop";
-        for (let i = 0; i < SECTIONS.length; i++)
-          shapes[i] = buildShape(i, mode);
-        /* On resize-driven rebuilds, mark every pulse attribute dirty
-           so freshly written phases reach the GPU on the next frame.
-           On the very first build (during init, before geometry is
-           created), this branch is a no-op and the attributes pick up
-           their respective buffers when they're set below. */
-        if (geometry) {
-          if (geometry.attributes.aPhase)
-            geometry.attributes.aPhase.needsUpdate = true;
-          if (geometry.attributes.aSpatialPhase)
-            geometry.attributes.aSpatialPhase.needsUpdate = true;
-          if (geometry.attributes.aSearchPhase)
-            geometry.attributes.aSearchPhase.needsUpdate = true;
-          if (geometry.attributes.aChartPhase)
-            geometry.attributes.aChartPhase.needsUpdate = true;
-        }
-      };
-      rebuildShapes();
-      rebuildShapesRef.current = rebuildShapes;
-
-      const physicsPos = new Float32Array(COUNT * 3);
-      for (let i = 0; i < COUNT * 3; i++) physicsPos[i] = scattered[i];
-      const currentPos = new Float32Array(COUNT * 3);
-      const physicsVel = new Float32Array(COUNT * 3);
-
-      geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(currentPos, 3)
-      );
-
-      const baseSizes = new Float32Array(COUNT);
-      const mobileInit = window.innerWidth < 768;
-      const sizeScale = mobileInit ? 1.6 : 1.25;
-      for (let i = 0; i < COUNT; i++) {
-        baseSizes[i] = (0.7 + Math.random() * 1.2) * sizeScale;
-      }
-      geometry.setAttribute("aSize", new THREE.BufferAttribute(baseSizes, 1));
-
-      /* Per-scene pulse attributes. Each holds the relevant per-particle
-         phase for that scene's pulse effect, populated by buildShape
-         during rebuildShapes above. The shader reads all four and gates
-         each by its respective uniform so non-active scenes contribute
-         zero pulse. */
-      geometry.setAttribute(
-        "aPhase",
-        new THREE.BufferAttribute(phaseBuffers.voice, 1)
-      );
-      geometry.setAttribute(
-        "aSpatialPhase",
-        new THREE.BufferAttribute(phaseBuffers.spatial, 1)
-      );
-      geometry.setAttribute(
-        "aSearchPhase",
-        new THREE.BufferAttribute(phaseBuffers.search, 1)
-      );
-      geometry.setAttribute(
-        "aChartPhase",
-        new THREE.BufferAttribute(phaseBuffers.chart, 1)
-      );
-
-      const seeds = new Float32Array(COUNT * 3);
-      for (let i = 0; i < COUNT * 3; i++) seeds[i] = Math.random();
-
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        transparent: true,
-        depthWrite: false,
-        uniforms: {
-          uColorMix: { value: 0 },
-          uAccentColor: { value: new THREE.Color(0xe7c074) },
-          uGlobalAlpha: { value: 0 },
-
-          uDepthRange: { value: new THREE.Vector2(11.0, 32.0) },
-          uDepthAlphaMin: { value: 0.18 },
-          uPerspectiveScale: { value: 22.0 },
-          uBlurExpand: { value: 0.5 },
-          uBlurSoftness: { value: 0.45 },
-
-          /* uTime is a shared shader clock driving all per-scene pulses.
-             Each pulse uniform gates its scene's effect on/off based on
-             how much of the current render is that scene (0 = no pulse,
-             1 = full pulse, in-between during transitions). */
-          uTime: { value: 0 },
-          uVoicePulse: { value: 0 },
-          uSpatialPulse: { value: 0 },
-          uSearchPulse: { value: 0 },
-          uChartPulse: { value: 0 },
-        },
-      });
-
-      uniformsRef.current = material.uniforms;
-
-      const points = new THREE.Points(geometry, material);
-      scene.add(points);
-
-      let sFormation = 0;
-      let sAlpha = 0;
-      let sColorMix = 0;
-
-      const TAU = Math.PI * 2;
-
-      /* Cached scene indices for the pulse-gate math in animate. Sourced
-         from SECTIONS rather than hardcoded so re-ordering sections
-         later won't silently break a pulse gate. */
-      const VOICE_IDX = SECTIONS.findIndex((s) => s.key === "voice");
-      const SPATIAL_IDX = SECTIONS.findIndex((s) => s.key === "spatial");
-      const SEARCH_IDX = SECTIONS.findIndex((s) => s.key === "search");
-      const CHART_IDX = SECTIONS.findIndex((s) => s.key === "analytics");
-
-      /* Returns how much of the current render comes from a given scene
-         index — 1 when it's the sole active shape, 0 when uninvolved,
-         blended during transitions. Used to gate each scene's pulse. */
-      const shareOf = (sceneIdx, s, blend, blendInv) => {
-        const a = s.activeShape === sceneIdx ? 1 : 0;
-        const b = s.nextShape === sceneIdx ? 1 : 0;
-        return a * blendInv + b * blend;
-      };
-
-      const animate = () => {
-        frameId = requestAnimationFrame(animate);
-
-        if (pausedRef.current || !sectionVisibleRef.current) return;
-
-        const t = performance.now() * 0.001;
-        const s = stateRef.current;
-        const reduced = reducedRef.current;
-
-        /* Ease the pointer toward its raw target so parallax glides. When
-           reduced-motion is on, the target is pinned to (0,0) so this
-           decays to center and contributes nothing. */
-        const ptT = pointerRef.current;
-        const ptS = pointerSmoothRef.current;
-        ptS.x += (ptT.x - ptS.x) * 0.05;
-        ptS.y += (ptT.y - ptS.y) * 0.05;
-
-        sFormation += (s.formation - sFormation) * CFG.smoothFormation;
-        sColorMix += (sFormation - sColorMix) * CFG.smoothFormation;
-
-        /* Alpha envelope: the base/formation curve sets how bright a
-           formed vs scattered cloud is, then BOTH scroll-driven
-           envelopes multiply in — fadeIn ramps the cloud up at the top
-           of the section (after the hero clears), (1 - fadeOut) ramps it
-           back down at the bottom (before Features overlaps). Either at
-           0 forces the cloud fully invisible regardless of formation. */
-        const fadeOut = s.fadeOut || 0;
-        const fadeIn = s.fadeIn ?? 1;
-        const baseAlpha = 0.4;
-        const targetAlpha =
-          (baseAlpha + (1 - baseAlpha) * sFormation) * (1 - fadeOut) * fadeIn;
-        sAlpha += (targetAlpha - sAlpha) * CFG.smoothFormation;
-
-        const shapeA = shapes[s.activeShape];
-        const shapeB = shapes[s.nextShape];
-        if (!shapeA) return;
-
-        /* Ease the raw scroll-driven blend with smootherstep so the
-           morph accelerates in and decelerates out rather than crossing
-           at a constant rate. The linear blend is what reads as a
-           mechanical "wiggle" mid-transition — the settle spring
-           overshoots when particles arrive at full speed. Easing removes
-           the speed at each end so they ease into a shape and ease out
-           of it. Applied once here so position, rotation, offset, and
-           the pulse gates all share the eased value. When not
-           transitioning shapeBlend = 0, easeInOut(0) = 0, and shapeB ===
-           shapeA, so the blend math no-ops cleanly. */
-        const blend = easeInOut(s.shapeBlend);
-        const blendInv = 1 - blend;
-
-        const scrollP = s.shapeProgresses[s.activeShape] ?? 0.5;
-        const animP = animProgress(scrollP);
-
-        const mode = window.innerWidth < 768 ? "mobile" : "desktop";
-        const secA = SECTIONS[s.activeShape];
-        const secB = SECTIONS[s.nextShape] || secA;
-        const paramsA = secA[mode];
-        const paramsB = secB[mode];
-
-        /* Shape rotation: blend the A and B section's rot params so
-           the orientation morphs smoothly as the shape morphs. */
-        const rotXDeg = paramsA.rotX * blendInv + paramsB.rotX * blend;
-        const rotYDeg = paramsA.rotY * blendInv + paramsB.rotY * blend;
-        const rotZDeg = paramsA.rotZ * blendInv + paramsB.rotZ * blend;
-
-        const mot = motionRef.current;
-
-        /* Pointer parallax: the formed shape tilts a few degrees toward
-           the cursor. Scaled by sFormation so it only expresses on a
-           formed shape (a scattered cloud shouldn't swivel), and zeroed
-           under reduced-motion. Added in radians on top of the section's
-           static pose before the rotation matrix is built. */
-        const tilt = reduced ? 0 : sFormation * 0.1;
-        const rotX = rotXDeg * TO_RAD + ptS.y * tilt;
-        const rotY = rotYDeg * TO_RAD + ptS.x * tilt;
-        const rotZ = rotZDeg * TO_RAD;
-
-        const cX = Math.cos(rotX),
-          sX = Math.sin(rotX);
-        const cY = Math.cos(rotY),
-          sY = Math.sin(rotY);
-        const cZ = Math.cos(rotZ),
-          sZ = Math.sin(rotZ);
-
-        const mobile = mode === "mobile";
-        /* Blend the LEFT/RIGHT offset between active and next sections
-             so the shape glides across the centerline during transitions
-             instead of teleporting. */
-        const defaultXA = mobile ? 0 : secA.side === "left" ? OFFSET : -OFFSET;
-        const defaultXB = mobile ? 0 : secB.side === "left" ? OFFSET : -OFFSET;
-        const defaultX = defaultXA * blendInv + defaultXB * blend;
-        const defaultY = mobile ? -3.5 : 0;
-
-        /* Offset still interpolates start→end within each block — but
-             we also blend between the active and next section's offset
-             curves so transitions read continuously. */
-        const offXA =
-          defaultX +
-          paramsA.offsetX +
-          (paramsA.offsetXEnd - paramsA.offsetX) * animP;
-        const offYA =
-          defaultY +
-          paramsA.offsetY +
-          (paramsA.offsetYEnd - paramsA.offsetY) * animP;
-        const offXB =
-          defaultX +
-          paramsB.offsetX +
-          (paramsB.offsetXEnd - paramsB.offsetX) * animP;
-        const offYB =
-          defaultY +
-          paramsB.offsetY +
-          (paramsB.offsetYEnd - paramsB.offsetY) * animP;
-        const offX = offXA * blendInv + offXB * blend;
-        const offY = offYA * blendInv + offYB * blend;
-
-        const k = mot.stiffness;
-        const damp = mot.damping;
-        /* Jitter amplitude + field-orbit are the ambient motion — both
-           suppressed under reduced-motion (jb = 0 makes the jitter term
-           vanish; yaw/pitch = 0 freezes the orbit). */
-        const jb = reduced ? 0 : mot.jitterAmp;
-        const jf = mot.jitterFreq;
-
-        /* Field orbit — REVIVED. The scattered field rotates around the
-           active shape's center, scaled by sFormation so a loose cloud
-           between blocks doesn't tumble around a point (that scaling is
-           what stops the old jerky "rotate around nothing" read). As a
-           shape forms (sFormation → 1) the orbit eases back to full
-           strength via motionRef.orbitYaw/orbitPitch, delivering the
-           intended "field orbits the static shape" effect. Previously
-           hardcoded to 0, so none of this expressed at all. */
-        const orbitT = (animP - 0.5) * 2 * sFormation;
-        const yaw = reduced ? 0 : orbitT * mot.orbitYaw;
-        const pitch = reduced ? 0 : orbitT * mot.orbitPitch;
-        const cosY = Math.cos(yaw);
-        const sinY = Math.sin(yaw);
-        const cosP = Math.cos(pitch);
-        const sinP = Math.sin(pitch);
-
-        for (let i = 0; i < COUNT; i++) {
-          const i3 = i * 3;
-
-          /* Blend the particle's target position between shape A and
-             shape B. When blend = 0 this is just shapeA[i3] etc.
-             (no-op for the typical mid-block case). When blend > 0
-             the particle interpolates between its A-position and its
-             B-position along the eased blend. Spring physics below
-             smooths the actual movement so it doesn't snap. */
-          let px = shapeA[i3] * blendInv + shapeB[i3] * blend;
-          let py = shapeA[i3 + 1] * blendInv + shapeB[i3 + 1] * blend;
-          let pz = shapeA[i3 + 2] * blendInv + shapeB[i3 + 2] * blend;
-
-          /* Rotate shape — fixed pose (+ pointer tilt) every frame */
-          const py1 = py * cX - pz * sX;
-          const pz1 = py * sX + pz * cX;
-          py = py1;
-          pz = pz1;
-
-          const px1 = px * cY + pz * sY;
-          const pz2 = -px * sY + pz * cY;
-          px = px1;
-          pz = pz2;
-
-          const px2 = px * cZ - py * sZ;
-          const py2 = px * sZ + py * cZ;
-          px = px2;
-          py = py2;
-
-          const formedX = px + offX;
-          const formedY = py + offY;
-          const formedZ = pz;
-
-          /* ── Apply orbit to the scattered position ──
-             1. Translate so the shape's world position is the origin
-             2. Rotate (yaw around Y axis, then pitch around X axis)
-             3. Translate back */
-          const xRel = scattered[i3] - offX;
-          const yRel = scattered[i3 + 1] - offY;
-          const zRel = scattered[i3 + 2];
-
-          /* Yaw (around Y) */
-          const xY = xRel * cosY + zRel * sinY;
-          const zY = -xRel * sinY + zRel * cosY;
-          /* Pitch (around X) */
-          const yP = yRel * cosP - zY * sinP;
-          const zP = yRel * sinP + zY * cosP;
-
-          const sx = xY + offX;
-          const sy = yP + offY;
-          const sz = zP;
-
-          const targetX = sx * (1 - sFormation) + formedX * sFormation;
-          const targetY = sy * (1 - sFormation) + formedY * sFormation;
-          const targetZ = sz * (1 - sFormation) + formedZ * sFormation;
-
-          const dx = targetX - physicsPos[i3];
-          const dy = targetY - physicsPos[i3 + 1];
-          const dz = targetZ - physicsPos[i3 + 2];
-
-          physicsVel[i3] = physicsVel[i3] * damp + dx * k;
-          physicsVel[i3 + 1] = physicsVel[i3 + 1] * damp + dy * k;
-          physicsVel[i3 + 2] = physicsVel[i3 + 2] * damp + dz * k;
-
-          physicsPos[i3] += physicsVel[i3];
-          physicsPos[i3 + 1] += physicsVel[i3 + 1];
-          physicsPos[i3 + 2] += physicsVel[i3 + 2];
-
-          const s1 = seeds[i3];
-          const s2 = seeds[i3 + 1];
-          const s3 = seeds[i3 + 2];
-
-          const fScale = jf * (0.7 + s3 * 0.6);
-          const tA = t * fScale + s1 * TAU;
-          const tB = t * fScale * 1.618 + s2 * TAU + 1.7;
-          const tC = t * fScale * 0.611 + s3 * TAU + 3.1;
-
-          const ampScale = 0.55 + (1 - sFormation) * 0.75;
-          const amp = jb * (0.5 + s3 * 0.9) * ampScale;
-
-          const jx = Math.sin(tB) - Math.cos(tC) * 0.6;
-          const jy = Math.sin(tC) - Math.cos(tA) * 0.6;
-          const jz = Math.sin(tA) - Math.cos(tB) * 0.4;
-
-          currentPos[i3] = physicsPos[i3] + jx * amp;
-          currentPos[i3 + 1] = physicsPos[i3 + 1] + jy * amp;
-          currentPos[i3 + 2] = physicsPos[i3 + 2] + jz * amp * 0.7;
-        }
-
-        geometry.attributes.position.needsUpdate = true;
-        material.uniforms.uColorMix.value = sColorMix;
-        material.uniforms.uGlobalAlpha.value = sAlpha;
-
-        /* Drive per-scene pulses. uTime is a shared monotonic clock;
-           each pulse gate is its scene's share of the current render
-           × sFormation so pulses ramp up alongside the shape's
-           formation rather than appearing flatly at full strength.
-           Uses the eased blend so the glow cross-fade matches the
-           eased shape morph. */
-        material.uniforms.uTime.value = t;
-        material.uniforms.uVoicePulse.value =
-          shareOf(VOICE_IDX, s, blend, blendInv) * sFormation;
-        material.uniforms.uSpatialPulse.value =
-          shareOf(SPATIAL_IDX, s, blend, blendInv) * sFormation;
-        material.uniforms.uSearchPulse.value =
-          shareOf(SEARCH_IDX, s, blend, blendInv) * sFormation;
-        material.uniforms.uChartPulse.value =
-          shareOf(CHART_IDX, s, blend, blendInv) * sFormation;
+        /* Camera drift: pointer parallax + a slow breathing bob. */
+        const px = frozen ? 0 : pointer.x;
+        const py = frozen ? 0 : pointer.y;
+        camera.position.x += (CAM.x + px * 6 - camera.position.x) * 0.04;
+        camera.position.y +=
+          (CAM.y - py * 3 + (frozen ? 0 : Math.sin(t * 0.3) * 0.8) -
+            camera.position.y) *
+          0.04;
+        camera.lookAt(0, 2, -6);
 
         renderer.render(scene, camera);
       };
 
-      animate();
+      const start = () => {
+        if (running) return;
+        running = true;
+        last = performance.now();
+        rafId = requestAnimationFrame(frame);
+      };
+      resumeRef.current = start;
+      start();
 
       cleanup = () => {
+        cancelAnimationFrame(rafId);
+        resumeRef.current = null;
         window.removeEventListener("resize", resize);
-        rebuildShapesRef.current = null;
-        uniformsRef.current = null;
-        geometry.dispose();
-        material.dispose();
+        window.removeEventListener("pointermove", onPointer);
+        geo.dispose();
+        mat.dispose();
         renderer.dispose();
+        if (renderer.domElement.parentNode === host)
+          host.removeChild(renderer.domElement);
       };
-    };
+    })();
 
-    init();
     return () => {
-      if (frameId) cancelAnimationFrame(frameId);
-      cleanup();
+      cancelled = true;
+      cleanup?.();
     };
   }, []);
 
+  const beat = BEATS[active];
+
   return (
-    <section ref={sectionRef} id="ai-engine" className={styles.section}>
-      {/* Real section landmark for screen readers + crawlers. The visible
-          headings below are decorative scramble spans (aria-hidden), so
-          this is what conveys the section's purpose in the a11y tree. */}
-      <h2 className={styles.srOnly}>Inside the Nautilus AI engine</h2>
+    <section
+      ref={sectionRef}
+      id="ai-engine"
+      className={styles.section}
+      aria-label="The Nautilus intelligence engine"
+    >
+      <div ref={spaceRef} className={styles.space}>
+        <div className={styles.stage}>
+          <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
+          <div className={styles.vignette} aria-hidden="true" />
 
-      <div className={styles.canvasWrap}>
-        <canvas ref={canvasRef} aria-hidden="true" />
-      </div>
+          {/* HUD strip — chart-instrument header */}
+          <div className={styles.hud}>
+            <span className={styles.hudLive}>
+              <span className={styles.hudDot} />
+              THE INTELLIGENCE ENGINE
+            </span>
+            <span className={styles.hudReadout} key={beat.key}>
+              {beat.hud}
+            </span>
+          </div>
 
-      <div className={styles.textWrap}>
-        <div className={styles.cardLayer}>
-          <div className={styles.cardLayerInner}>
-            {SECTIONS.map((sec, i) => (
-              <div
-                key={sec.key}
-                ref={(el) => (cardRefs.current[i] = el)}
-                className={`${styles.cardEditorial} ${
-                  sec.side === "right" ? styles.cardEditorialRight : ""
-                }`}
-              >
-                <div className={styles.sideBar}>
-                  <div className={styles.sideTrack} />
-                  <div
-                    className={styles.sideFill}
-                    style={{ height: `${progress * 100}%` }}
-                  />
-                  {SECTIONS.map((s, idx) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => scrollToBlock(idx)}
-                      className={`${styles.sideTick} ${
-                        idx / (SECTIONS.length - 1) <= progress + 0.001
-                          ? styles.sideTickFilled
-                          : ""
-                      } ${activeIdx === idx ? styles.sideTickCurrent : ""}`}
-                      style={{ top: `${(idx / (SECTIONS.length - 1)) * 100}%` }}
-                      aria-label={`Jump to ${s.shortName}`}
-                    />
-                  ))}
+          {/* Caption stack — one layer per beat, crossfaded */}
+          <div className={styles.caption}>
+            <div className={styles.eyebrow}>
+              <span className={styles.eyebrowIndex}>
+                {beat.num} <em>/ 0{N}</em>
+              </span>
+              <span className={styles.eyebrowRule} aria-hidden="true" />
+              <span className={styles.eyebrowLabel}>{beat.label}</span>
+            </div>
+            <div className={styles.titles}>
+              {BEATS.map((b, i) => (
+                <div
+                  key={b.key}
+                  className={`${styles.titleLayer} ${
+                    i === active
+                      ? styles.titleActive
+                      : i < active
+                        ? styles.titleAbove
+                        : styles.titleBelow
+                  }`}
+                  aria-hidden={i !== active}
+                >
+                  <h3 className={styles.title}>{b.title}</h3>
+                  <p className={styles.desc}>{b.desc}</p>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                {/* Each heading carries the real text in an .srOnly node
-                    (read by SR / indexed by crawlers) plus the decorative
-                    scramble tree wrapped in aria-hidden. */}
-                <div className={styles.cardEyebrow}>
-                  <span className={styles.srOnly}>{sec.badge}</span>
-                  <span aria-hidden="true">
-                    {renderScramble(sec.badge, `${sec.key}-eyebrow`)}
-                  </span>
-                </div>
-                <h3 className={styles.cardTitle}>
-                  <span className={styles.srOnly}>{sec.title}</span>
-                  <span aria-hidden="true">
-                    {renderScramble(sec.title, `${sec.key}-title`)}
-                  </span>
-                </h3>
-                <p className={styles.cardDesc}>
-                  <span className={styles.srOnly}>{sec.desc}</span>
-                  <span aria-hidden="true">
-                    {renderScramble(sec.desc, `${sec.key}-desc`)}
-                  </span>
-                </p>
-              </div>
-            ))}
+          {/* Depth gauge — progress + beat jump */}
+          <div className={styles.gauge} aria-label="Capabilities">
+            <div className={styles.gaugeTrack} aria-hidden="true">
+              <div ref={gaugeFillRef} className={styles.gaugeFill} />
+            </div>
+            <div className={styles.gaugeStops}>
+              {BEATS.map((b, i) => (
+                <button
+                  key={b.key}
+                  type="button"
+                  className={`${styles.gaugeStop} ${
+                    i === active ? styles.gaugeStopActive : ""
+                  }`}
+                  aria-label={`${b.title} (${b.num} of 0${N})`}
+                  aria-current={i === active ? "true" : undefined}
+                  onClick={() => jumpTo(i)}
+                >
+                  <span className={styles.gaugeNum}>{b.num}</span>
+                  <span className={styles.gaugeTick} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-
-        {SECTIONS.map((sec, i) => (
-          <div
-            key={sec.key}
-            ref={(el) => (blockRefs.current[i] = el)}
-            className={styles.block}
-          />
-        ))}
-
-        <div className={styles.trailingSpacer} />
       </div>
-
-      {debug && <DebugPanel uniformsRef={uniformsRef} motionRef={motionRef} />}
     </section>
   );
 }
