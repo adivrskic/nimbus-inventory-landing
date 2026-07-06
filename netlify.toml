@@ -99,3 +99,19 @@
   from = "/blog/buildright-supply-case-study"
   to = "/blog"
   status = 301
+
+# ─────────────────────────────────────────────────────────────────────────
+# Cache headers for self-hosted static media. These files are fingerprint-
+# by-rename (change the filename when the content changes), so they can be
+# cached forever. Next.js's own /_next/static/* assets already get
+# immutable headers from the Netlify Next plugin.
+# ─────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/hero-loop.mp4"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/hero-poster.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

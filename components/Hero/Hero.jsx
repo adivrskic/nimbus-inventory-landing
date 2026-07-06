@@ -254,16 +254,21 @@ export default function Hero({ onDemo }) {
   return (
     <section ref={sectionRef} className={styles.hero}>
       <div ref={videoBgRef} className={styles.videoBg}>
+        {/* Self-hosted 1080p loop (~3.4 MB, audio stripped — it always
+            plays muted) + self-hosted poster, replacing the original
+            46 MB 4K source and the third-party Unsplash poster that sat
+            on the LCP path. The clip renders as dimmed/blurred background
+            atmosphere, so 1080p CRF30 is visually lossless here. */}
         <video
           ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
-          poster="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1920&q=85"
+          poster="/hero-poster.webp"
           className={styles.video}
         >
-          <source src="/video.mp4" type="video/mp4" />
+          <source src="/hero-loop.mp4" type="video/mp4" />
         </video>
         <div className={styles.overlay} />
       </div>
