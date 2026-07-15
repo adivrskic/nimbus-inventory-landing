@@ -153,9 +153,7 @@
   font-weight: 700;
   line-height: 0.85;
   letter-spacing: -8px;
-  color: transparent;
-  -webkit-text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
-  text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
+  color: var(--accent);
   user-select: none;
   position: sticky;
   top: 100px;
