@@ -13,12 +13,11 @@
   --nav-height: 72px;
   position: relative;
   z-index: 1;
-  /* Pure page black — identical to ProblemSolution above and
-     Integrations below. The chart-navy mid-ride tint lives on .stage,
-     driven by scroll progress in JS (black at entry/exit, navy in the
-     middle), so the section flows seamlessly out of and back into the
-     black sections around it. */
-  background: #000000;
+  /* Chart-paper navy — held for the whole ride (matches the AI
+     section's constant deep-ocean ground). The JS ground only fades
+     the .stage to page black (#000, Integrations' --dark) over the
+     final stretch so the chart hands off into the section below. */
+  background: #051221;
 }
 
 .scrollSpace {
@@ -37,6 +36,9 @@
   top: var(--nav-height);
   height: calc(100vh - var(--nav-height));
   overflow: hidden;
+  /* Initial paint before the first rAF frame writes the JS ground —
+     same navy, so there's no black flash at mount. */
+  background: #051221;
 }
 
 .chart {

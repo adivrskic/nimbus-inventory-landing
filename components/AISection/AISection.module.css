@@ -5,21 +5,20 @@
    - .space sets the scroll length (100vh per beat × 4 + exit room);
      .stage pins for the whole ride. No negative margins — the section
      hands off cleanly to Features below.
-   - The section ground is a deep-ocean navy that fades from and back to
-     the page black, so the hero (black) → ocean → Features (black)
-     progression reads as descending and resurfacing.
+   - The section ground is a constant deep-ocean navy (#04101f) — the
+     section owns its color edge-to-edge instead of fading from/back to
+     the page black.
    - All chrome is chart furniture: mono HUD, caption stack, depth gauge.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .section {
   position: relative;
   z-index: 1;
-  /* Pure page black — identical to the hero above and Features below.
-     The ocean-navy mid-ride tint lives on .stage, driven by scroll
-     progress in JS (black at entry/exit, navy in the middle), and the
-     terrain shader's uBg follows the same color so the horizon always
-     dissolves into exactly the visible ground. */
-  background: #000000;
+  /* Constant deep-ocean navy — the section holds its own ground color
+     for the whole ride (no black↔navy scroll flow). Must match COL.bg
+     in AISection.jsx: the terrain shader's uBg is the same color so
+     the horizon fog dissolves into exactly the visible ground. */
+  background: #04101f;
 }
 
 .space {
@@ -32,6 +31,8 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
+  /* Same constant navy as .section / COL.bg. */
+  background: #04101f;
 }
 
 .canvasHost {

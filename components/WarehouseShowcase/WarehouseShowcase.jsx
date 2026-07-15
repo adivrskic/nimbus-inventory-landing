@@ -35,9 +35,9 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
    rAF parks off-screen; paused/reduced-motion freezes ambient time
    while scroll scrubbing still redraws. No three.js in this chunk.
 
-   The stage background is scroll-driven: pure page black at entry and
-   exit, deep chart navy mid-ride — so the section flows out of and
-   back into the black sections around it.
+   The stage background is constant chart navy for the whole ride and
+   fades to page black only over the final stretch, handing off into
+   the (black) section below.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const BEATS = [
@@ -295,11 +295,14 @@ function pointAt(pts, { lens, total }, f) {
   return pts[pts.length - 1];
 }
 
-/* Scroll-driven ground color: black at the edges of the ride, chart
-   navy (#051221) in the middle — matches the black sections around. */
+/* Ground color: constant chart navy (#051221 — the same deep-ocean
+   family as the AI section) for the whole ride, with ONE fade at the
+   very end down to page black (#000, Integrations' --dark background)
+   so the chart hands off into the section below it. No entry fade —
+   the chart opens on its own paper color. */
 const NAVY = [5, 18, 33];
 const groundColor = (p) => {
-  const k = ease(Math.min(clamp01(p / 0.12), clamp01((1 - p) / 0.12)));
+  const k = ease(clamp01((1 - p) / 0.1));
   return `rgb(${Math.round(NAVY[0] * k)}, ${Math.round(NAVY[1] * k)}, ${Math.round(NAVY[2] * k)})`;
 };
 
@@ -908,7 +911,7 @@ export default function WarehouseShowcase({ onDemo }) {
       else if (Math.abs(p - lastP) < 0.0004 && lastP >= 0) return;
       lastP = p;
 
-      /* Ground flow: black at entry/exit, chart navy mid-ride. */
+      /* Ground: constant navy; fades to black only at the exit. */
       const g = groundColor(p);
       if (g !== lastGround && stageRef.current) {
         stageRef.current.style.backgroundColor = g;
