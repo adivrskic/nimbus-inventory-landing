@@ -42,84 +42,92 @@ export default function CompareIndexClient({ competitors }) {
     window.scrollTo(0, 0);
     if (!heroRef.current || !pageRef.current) return;
 
-    /* Reduced motion: jump hero + grid straight to visible, skip the
-       choreography. SplitText keeps the sr-only flat headline. */
-    if (prefersReducedMotion()) {
-      gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-      });
-      gsap.set(
-        pageRef.current.querySelectorAll(
-          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.card}`
-        ),
-        { opacity: 1, y: 0 }
-      );
-      return;
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    /* Eyebrow */
-    tl.fromTo(
-      `.${styles.heroEyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0
-    );
-
-    /* Per-letter title — starts just as the eyebrow lands. */
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
-      ">-0.05"
-    );
-
-    /* Subtitle — anchored to the END of the title stagger. */
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      ">-0.2"
-    );
-
-    /* ── Gate the grid reveal behind the hero intro ── */
+    /* Hoisted so the effect cleanup can reach it from outside the gsap
+       context callback. */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      if (!trigger) return;
-      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
-      });
-    };
 
-    /* Competitor cards — same stagger/feel as the Industry cross-link grid. */
-    const grid = pageRef.current.querySelector(`.${styles.grid}`);
-    gatedReveal(
-      `.${styles.card}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
-      grid,
-      "top 80%"
-    );
+    const ctx = gsap.context(() => {
+      /* Reduced motion: jump hero + grid straight to visible, skip the
+         choreography. SplitText keeps the sr-only flat headline. */
+      if (prefersReducedMotion()) {
+        gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+        });
+        gsap.set(
+          pageRef.current.querySelectorAll(
+            `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.card}`
+          ),
+          { opacity: 1, y: 0 }
+        );
+        return;
+      }
+
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      /* Eyebrow */
+      tl.fromTo(
+        `.${styles.heroEyebrow}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        0
+      );
+
+      /* Per-letter title — starts just as the eyebrow lands. */
+      const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+      tl.to(
+        letters,
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        ">-0.05"
+      );
+
+      /* Subtitle — anchored to the END of the title stagger. */
+      tl.fromTo(
+        `.${styles.heroSub}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.55 },
+        ">-0.2"
+      );
+
+      /* ── Gate the grid reveal behind the hero intro ── */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
+      });
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        if (!trigger) return;
+        const tween = gsap.fromTo(targets, fromVars, {
+          ...toVars,
+          paused: true,
+        });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
+
+      /* Competitor cards — same stagger/feel as the Industry cross-link grid. */
+      const grid = pageRef.current.querySelector(`.${styles.grid}`);
+      gatedReveal(
+        `.${styles.card}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        grid,
+        "clamp(top 80%)"
+      );
+    });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, []);
 

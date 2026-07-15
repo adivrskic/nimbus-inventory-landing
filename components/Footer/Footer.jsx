@@ -69,7 +69,9 @@ export default function Footer() {
   useEffect(() => {
     const footer = footerRef.current;
     const tl = gsap.timeline({
-      scrollTrigger: { trigger: footer, start: "top 80%" },
+      /* clamp() — the footer is always at the very bottom, so an
+         unclamped start can sit below max-scroll and never fire. */
+      scrollTrigger: { trigger: footer, start: "clamp(top 80%)" },
       defaults: { ease: "power3.out" },
     });
     tl.to(brandRef.current, { opacity: 1, y: 0, duration: 0.5 });
@@ -78,7 +80,13 @@ export default function Footer() {
       tl.to(col, { opacity: 1, y: 0, duration: 0.4 }, `-=${0.3}`);
     });
     tl.to(bottomRef.current, { opacity: 1, duration: 0.4 }, "-=0.2");
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    /* Kill ONLY this timeline's trigger — killing getAll() nuked every
+       other component's reveal triggers whenever the footer unmounted
+       mid page-transition, leaving sections stuck at opacity 0. */
+    return () => {
+      tl.scrollTrigger?.kill();
+      tl.kill();
+    };
   }, []);
 
   useEffect(() => {

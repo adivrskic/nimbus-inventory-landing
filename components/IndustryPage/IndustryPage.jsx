@@ -69,127 +69,142 @@ export default function IndustryPage({
     window.scrollTo(0, 0);
     if (!industry || !heroRef.current) return;
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    /* Hero intro reads strictly top-to-bottom: index strip -> title letters
-       -> subtitle -> CTAs. Each step is anchored to the END of the previous
-       one (">" with a small negative offset for a gentle overlap) instead of
-       a fixed start time, so the lower elements never resolve before the
-       per-letter title does. Order holds regardless of headline length. */
-
-    /* Index strip (top of the hero) */
-    tl.fromTo(
-      `.${styles.heroIndex}`,
-      { opacity: 0, y: -8 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0
-    );
-
-    /* Per-letter title — starts just as the index lands. */
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
-      ">-0.05"
-    );
-
-    /* Subtitle — anchored to the END of the title stagger. */
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      ">-0.2"
-    );
-
-    /* CTAs — follow the subtitle. */
-    tl.fromTo(
-      `.${styles.heroCTA}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      ">-0.15"
-    );
-
-    /* ── Gate the scroll reveals behind the hero intro ──────────────────
-       The header intro above plays on mount; the section reveals below are
-       scroll-triggered. Without a gate, any section near enough to the top
-       to satisfy its trigger on initial load animates in immediately —
-       racing (and finishing before) the header. So: a reveal that fires on
-       initial load is QUEUED and released the moment the intro completes; a
-       section scrolled to later plays immediately, exactly as before.
-       Below-fold content is never delayed artificially — only the
-       initial-viewport race is removed. */
+    /* Hoisted above the gsap.context — referenced by both the intro
+       timeline's onComplete (inside) and the cleanup closure (outside). */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    /* Build a paused reveal tween + a once-only trigger that plays it through
-       the intro gate. Mirrors the original fromTo vars exactly. */
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
-      });
-    };
 
-    /* Sections — each section's content fades up, the big numeral scales-and-
-       fades. The FAQ items are now the shared Accordion's
-       [data-accordion-item] elements (they previously used inline styles and
-       didn't animate at all — now they reveal with their section). */
-    if (!pageRef.current) return;
-    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
-    sections.forEach((sec) => {
-      const num = sec.querySelector(`.${styles.sectionNum}`);
-      const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.pair}, .${styles.workflowStep}, .${styles.stat}, .${styles.quote}, [data-accordion-item]`
+    /* Scope all GSAP work to a context. ctx.revert() on cleanup tears down
+       ONLY the tweens/ScrollTriggers created here — the previous
+       ScrollTrigger.getAll().forEach((t) => t.kill()) killed triggers owned
+       by still-mounted siblings (FinalCTACard, Footer) when this effect
+       re-ran on an industry change — and restores elements to their
+       CSS-declared initial state so the intro replays cleanly for the new
+       content. */
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      /* Hero intro reads strictly top-to-bottom: index strip -> title letters
+         -> subtitle -> CTAs. Each step is anchored to the END of the previous
+         one (">" with a small negative offset for a gentle overlap) instead of
+         a fixed start time, so the lower elements never resolve before the
+         per-letter title does. Order holds regardless of headline length. */
+
+      /* Index strip (top of the hero) */
+      tl.fromTo(
+        `.${styles.heroIndex}`,
+        { opacity: 0, y: -8 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        0
       );
 
-      if (num) {
-        gatedReveal(
-          num,
-          { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
-          sec,
-          "top 80%"
-        );
-      }
-      if (content.length > 0) {
-        gatedReveal(
-          content,
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.55,
-            stagger: 0.07,
-            ease: "power3.out",
-          },
-          sec,
-          "top 78%"
-        );
-      }
-    });
+      /* Per-letter title — starts just as the index lands. */
+      const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+      tl.to(
+        letters,
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        ">-0.05"
+      );
 
-    /* Cross-link cards */
-    gatedReveal(
-      `.${styles.crossCard}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
-      `.${styles.crossLinks}`,
-      "top 80%"
-    );
+      /* Subtitle — anchored to the END of the title stagger. */
+      tl.fromTo(
+        `.${styles.heroSub}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.55 },
+        ">-0.2"
+      );
+
+      /* CTAs — follow the subtitle. */
+      tl.fromTo(
+        `.${styles.heroCTA}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        ">-0.15"
+      );
+
+      /* ── Gate the scroll reveals behind the hero intro ──────────────────
+         The header intro above plays on mount; the section reveals below are
+         scroll-triggered. Without a gate, any section near enough to the top
+         to satisfy its trigger on initial load animates in immediately —
+         racing (and finishing before) the header. So: a reveal that fires on
+         initial load is QUEUED and released the moment the intro completes; a
+         section scrolled to later plays immediately, exactly as before.
+         Below-fold content is never delayed artificially — only the
+         initial-viewport race is removed. */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
+      });
+      /* Build a paused reveal tween + a once-only trigger that plays it
+         through the intro gate. Mirrors the original fromTo vars exactly. */
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        const tween = gsap.fromTo(targets, fromVars, {
+          ...toVars,
+          paused: true,
+        });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
+
+      /* Sections — each section's content fades up, the big numeral scales-
+         and-fades. The FAQ items are now the shared Accordion's
+         [data-accordion-item] elements (they previously used inline styles and
+         didn't animate at all — now they reveal with their section). */
+      if (!pageRef.current) return;
+      const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
+      sections.forEach((sec) => {
+        const num = sec.querySelector(`.${styles.sectionNum}`);
+        const content = sec.querySelectorAll(
+          `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.pair}, .${styles.workflowStep}, .${styles.stat}, .${styles.quote}, [data-accordion-item]`
+        );
+
+        if (num) {
+          gatedReveal(
+            num,
+            { opacity: 0, x: -20 },
+            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            sec,
+            "clamp(top 80%)"
+          );
+        }
+        if (content.length > 0) {
+          gatedReveal(
+            content,
+            { opacity: 0, y: 16 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.55,
+              stagger: 0.07,
+              ease: "power3.out",
+            },
+            sec,
+            "clamp(top 78%)"
+          );
+        }
+      });
+
+      /* Cross-link cards */
+      gatedReveal(
+        `.${styles.crossCard}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        `.${styles.crossLinks}`,
+        "clamp(top 80%)"
+      );
+    });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, [industry]);
 

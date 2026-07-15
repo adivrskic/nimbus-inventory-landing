@@ -37,6 +37,13 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
    still honours scroll scrubbing (direct manipulation, not autoplay).
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Each beat carries its own visual signature so the four capabilities
+   read as four distinct instruments, not one terrain with four names:
+   - accent: the crest/chrome ink (hex + CSS string, blended on scroll)
+   - contour: iso-line density (tight = architectural, sparse = calm)
+   - cam / look: camera framing preset (blended with the terrain morph)
+   All three interpolate through the same uBlend window as the
+   heightfield, so shape, color, line-weight and viewpoint move as one. */
 const BEATS = [
   {
     key: "voice",
@@ -45,6 +52,10 @@ const BEATS = [
     hud: "ACOUSTIC FIELD · LISTENING",
     title: "Voice commands",
     desc: "Nautilus processes natural speech and executes warehouse actions hands-free.",
+    accent: 0x7fc9e4, // acoustic ice-blue
+    contour: 0.9,
+    cam: { x: 0, y: 30, z: 98 }, // wide, level — watching ripples arrive
+    look: { x: 0, y: 2, z: -6 },
   },
   {
     key: "spatial",
@@ -53,6 +64,10 @@ const BEATS = [
     hud: "RACK TOPOGRAPHY · LIVE",
     title: "Spatial intelligence",
     desc: "A living model of your warehouse. Every section, bay, and level mapped in real time.",
+    accent: 0xd4a853, // brand gold — the warehouse beat
+    contour: 1.35,
+    cam: { x: -10, y: 54, z: 72 }, // high survey angle over the rack city
+    look: { x: 0, y: 0, z: -16 },
   },
   {
     key: "search",
@@ -61,6 +76,10 @@ const BEATS = [
     hud: "SOUNDING · ONE RESULT",
     title: "Intelligent search",
     desc: "Ask anything in plain language. Searches products, locations, and history.",
+    accent: 0x8fe3b0, // sonar green
+    contour: 0.65,
+    cam: { x: 12, y: 22, z: 86 }, // low drift toward the lone seamount
+    look: { x: 18, y: 5, z: 2 },
   },
   {
     key: "forecast",
@@ -69,18 +88,22 @@ const BEATS = [
     hud: "SWELL MODEL · 14-DAY HORIZON",
     title: "Predictive analytics",
     desc: "Nautilus doesn't just report what happened — it forecasts what's next.",
+    accent: 0xe09a5f, // storm-warning amber
+    contour: 1.1,
+    cam: { x: 0, y: 13, z: 106 }, // down at the waterline, facing the swell
+    look: { x: 0, y: 9, z: -44 },
   },
 ];
 
 const N = BEATS.length;
 
 /* Palette (kept in one place so the shader and CSS agree). Deep-ocean
-   navy ground, pale chart ink, brand gold only at contour crests. */
+   navy ground, pale chart ink; the crest color is per-beat (see BEATS,
+   surfaced to CSS as --beat-accent on the stage). */
 const COL = {
   bg: 0x04101f,
   inkLow: 0x24425e,
   inkHigh: 0xb9d0e2,
-  gold: 0xd4a853,
 };
 
 const vertexShader = /* glsl */ `
@@ -181,7 +204,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3  uBg;
   uniform vec3  uInkLow;
   uniform vec3  uInkHigh;
-  uniform vec3  uGold;
+  uniform vec3  uAccent;    // per-beat crest ink, blended JS-side on scroll
   uniform float uReveal;
   uniform float uContour;   // iso-line density (lines per height unit)
 
@@ -214,8 +237,10 @@ const fragmentShader = /* glsl */ `
     vec3 col = mix(uBg * 1.25, uInkLow * 0.55, hn * 0.55);
     col = mix(col, uInkLow, grat * 0.22);
 
-    // Contour ink: pale in the deeps, igniting to gold at the crests.
-    vec3 crest = mix(uInkHigh, uGold, smoothstep(0.52, 0.92, hn));
+    // Contour ink: pale in the deeps, igniting to the beat accent at
+    // the crests — ice for voice, gold for spatial, sonar green for
+    // search, storm amber for forecast.
+    vec3 crest = mix(uInkHigh, uAccent, smoothstep(0.52, 0.92, hn));
     col = mix(col, mix(uInkLow, crest, 0.55), minor * 0.65);
     col = mix(col, crest, major * 0.9);
 
@@ -303,9 +328,18 @@ export default function AISection() {
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 600);
-      const CAM = { x: 0, y: 30, z: 98 };
-      camera.position.set(CAM.x, CAM.y, CAM.z);
-      camera.lookAt(0, 2, -6);
+      camera.position.set(BEATS[0].cam.x, BEATS[0].cam.y, BEATS[0].cam.z);
+      const look = new THREE.Vector3(
+        BEATS[0].look.x,
+        BEATS[0].look.y,
+        BEATS[0].look.z
+      );
+      camera.lookAt(look);
+
+      /* Per-beat blend sources, built once. */
+      const ACCENTS = BEATS.map((b) => new THREE.Color(b.accent));
+      const lookT = new THREE.Vector3();
+      let lastAccent = "";
 
       const geo = new THREE.PlaneGeometry(
         260,
@@ -319,11 +353,11 @@ export default function AISection() {
         uSceneB: { value: 1 },
         uBlend: { value: 0 },
         uReveal: { value: 0 },
-        uContour: { value: 0.9 },
+        uContour: { value: BEATS[0].contour },
         uBg: { value: new THREE.Color(COL.bg) },
         uInkLow: { value: new THREE.Color(COL.inkLow) },
         uInkHigh: { value: new THREE.Color(COL.inkHigh) },
-        uGold: { value: new THREE.Color(COL.gold) },
+        uAccent: { value: new THREE.Color(BEATS[0].accent) },
       };
       const mat = new THREE.ShaderMaterial({
         vertexShader,
@@ -408,12 +442,28 @@ export default function AISection() {
         const f = Math.min(p * N, N - 0.0001);
         const idx = Math.floor(f);
         const local = f - idx;
+        const nidx = Math.min(idx + 1, N - 1);
         uniforms.uSceneA.value = idx;
-        uniforms.uSceneB.value = Math.min(idx + 1, N - 1);
+        uniforms.uSceneB.value = nidx;
         /* Hold each floor, then morph in the last quarter of the beat. */
         const b = clamp01((local - 0.72) / 0.26);
-        uniforms.uBlend.value = b * b * (3 - 2 * b);
+        const eb = b * b * (3 - 2 * b);
+        uniforms.uBlend.value = eb;
         uniforms.uTime.value = t;
+
+        /* Beat signature: accent ink + contour density ride the same
+           morph window as the terrain, so color and line-weight arrive
+           WITH the new floor, not before or after it. */
+        const beatA = BEATS[idx];
+        const beatB = BEATS[nidx];
+        uniforms.uAccent.value.copy(ACCENTS[idx]).lerp(ACCENTS[nidx], eb);
+        uniforms.uContour.value =
+          beatA.contour + (beatB.contour - beatA.contour) * eb;
+        const aCss = `#${uniforms.uAccent.value.getHexString()}`;
+        if (aCss !== lastAccent && stageRef.current) {
+          stageRef.current.style.setProperty("--beat-accent", aCss);
+          lastAccent = aCss;
+        }
         uniforms.uReveal.value = Math.min(
           1,
           uniforms.uReveal.value + dt * 0.8
@@ -428,15 +478,28 @@ export default function AISection() {
         if (gaugeFillRef.current)
           gaugeFillRef.current.style.height = `${p * 100}%`;
 
-        /* Camera drift: pointer parallax + a slow breathing bob. */
+        /* Camera: per-beat framing preset (blended through the morph)
+           + pointer parallax + a slow breathing bob. The same 0.04
+           damping that used to smooth the parallax now also carries the
+           beat-to-beat reframing, so viewpoint changes feel piloted. */
         const px = frozen ? 0 : pointer.x;
         const py = frozen ? 0 : pointer.y;
-        camera.position.x += (CAM.x + px * 6 - camera.position.x) * 0.04;
+        const cx = beatA.cam.x + (beatB.cam.x - beatA.cam.x) * eb;
+        const cy = beatA.cam.y + (beatB.cam.y - beatA.cam.y) * eb;
+        const cz = beatA.cam.z + (beatB.cam.z - beatA.cam.z) * eb;
+        camera.position.x += (cx + px * 6 - camera.position.x) * 0.04;
         camera.position.y +=
-          (CAM.y - py * 3 + (frozen ? 0 : Math.sin(t * 0.3) * 0.8) -
+          (cy - py * 3 + (frozen ? 0 : Math.sin(t * 0.3) * 0.8) -
             camera.position.y) *
           0.04;
-        camera.lookAt(0, 2, -6);
+        camera.position.z += (cz - camera.position.z) * 0.04;
+        lookT.set(
+          beatA.look.x + (beatB.look.x - beatA.look.x) * eb,
+          beatA.look.y + (beatB.look.y - beatA.look.y) * eb,
+          beatA.look.z + (beatB.look.z - beatA.look.z) * eb
+        );
+        look.lerp(lookT, 0.04);
+        camera.lookAt(look);
 
         renderer.render(scene, camera);
       };

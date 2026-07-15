@@ -197,125 +197,130 @@ export default function PricingClient() {
         )
       : [];
 
-    /* Reduced motion: skip the intro choreography and jump every animated
-       element straight to its final, visible state. Without this, the hero
-       letters + every scroll reveal would still animate for users who
-       asked the OS for reduced motion. SplitText already renders an
-       sr-only flat headline, so screen readers are unaffected either way. */
-    if (prefersReducedMotion()) {
-      gsap.set(hero.querySelectorAll(`.${styles.headLetter}`), {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-      });
-      gsap.set(
-        hero.querySelectorAll(
-          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.toggleWrap}`
-        ),
-        { opacity: 1, y: 0 }
-      );
-      gsap.set(tierRefs.current.filter(Boolean), { opacity: 1, y: 0 });
-      if (matrixItems.length) gsap.set(matrixItems, { opacity: 1, y: 0 });
-      if (faqItems.length) gsap.set(faqItems, { opacity: 1, y: 0 });
-      return;
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    /* Eyebrow */
-    tl.fromTo(
-      `.${styles.heroEyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.45 },
-      0
-    );
-
-    /* Per-letter headline — starts just as the eyebrow lands. */
-    const hLetters = hero.querySelectorAll(`.${styles.headLetter}`);
-    tl.to(
-      hLetters,
-      {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-        duration: 0.7,
-        stagger: 0.016,
-        ease: "power4.out",
-      },
-      ">-0.05"
-    );
-
-    /* Sub — anchored to the END of the headline stagger. */
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      ">-0.2"
-    );
-
-    /* Billing toggle — follows the subtitle. */
-    tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, ">-0.15");
-
-    /* ── Gate the scroll reveals behind the hero intro ── */
+    /* Hoisted so the effect cleanup can reach it from outside the gsap
+       context callback. */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    /* Build a paused reveal tween + a once-only trigger that plays it
-       through the intro gate. Mirrors the original fromTo vars exactly. */
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      if (!trigger) return;
-      const list = Array.isArray(targets) ? targets.filter(Boolean) : targets;
-      if (Array.isArray(list) && list.length === 0) return;
-      const tween = gsap.fromTo(list, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
+
+    const ctx = gsap.context(() => {
+      /* Reduced motion: skip the intro choreography and jump every animated
+         element straight to its final, visible state. Without this, the hero
+         letters + every scroll reveal would still animate for users who
+         asked the OS for reduced motion. SplitText already renders an
+         sr-only flat headline, so screen readers are unaffected either way. */
+      if (prefersReducedMotion()) {
+        gsap.set(hero.querySelectorAll(`.${styles.headLetter}`), {
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+        });
+        gsap.set(
+          hero.querySelectorAll(
+            `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.toggleWrap}`
+          ),
+          { opacity: 1, y: 0 }
+        );
+        gsap.set(tierRefs.current.filter(Boolean), { opacity: 1, y: 0 });
+        if (matrixItems.length) gsap.set(matrixItems, { opacity: 1, y: 0 });
+        if (faqItems.length) gsap.set(faqItems, { opacity: 1, y: 0 });
+        return;
+      }
+
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      /* Eyebrow */
+      tl.fromTo(
+        `.${styles.heroEyebrow}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.45 },
+        0
+      );
+
+      /* Per-letter headline — starts just as the eyebrow lands. */
+      const hLetters = hero.querySelectorAll(`.${styles.headLetter}`);
+      tl.to(
+        hLetters,
+        {
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+          duration: 0.7,
+          stagger: 0.016,
+          ease: "power4.out",
+        },
+        ">-0.05"
+      );
+
+      /* Sub — anchored to the END of the headline stagger. */
+      tl.fromTo(
+        `.${styles.heroSub}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.55 },
+        ">-0.2"
+      );
+
+      /* Billing toggle — follows the subtitle. */
+      tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, ">-0.15");
+
+      /* ── Gate the scroll reveals behind the hero intro ── */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
       });
-    };
+      /* Build a paused reveal tween + a once-only trigger that plays it
+         through the intro gate. Mirrors the original fromTo vars exactly. */
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        if (!trigger) return;
+        const list = Array.isArray(targets) ? targets.filter(Boolean) : targets;
+        if (Array.isArray(list) && list.length === 0) return;
+        const tween = gsap.fromTo(list, fromVars, { ...toVars, paused: true });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
 
-    /* Tier cards */
-    const tiers = tierRefs.current.filter(Boolean);
-    gatedReveal(
-      tiers,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease: "power3.out" },
-      tiers[0],
-      "top 82%"
-    );
+      /* Tier cards */
+      const tiers = tierRefs.current.filter(Boolean);
+      gatedReveal(
+        tiers,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease: "power3.out" },
+        tiers[0],
+        "clamp(top 82%)"
+      );
 
-    /* Matrix rows — the shared FeatureMatrix's [data-matrix-row] elements. */
-    gatedReveal(
-      matrixItems,
-      { opacity: 0, y: 8 },
-      { opacity: 1, y: 0, duration: 0.4, stagger: 0.035, ease: "power2.out" },
-      matrixSectionRef.current,
-      "top 75%"
-    );
+      /* Matrix rows — the shared FeatureMatrix's [data-matrix-row] elements. */
+      gatedReveal(
+        matrixItems,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.035, ease: "power2.out" },
+        matrixSectionRef.current,
+        "clamp(top 75%)"
+      );
 
-    /* FAQ items — the shared Accordion's [data-accordion-item] elements. */
-    gatedReveal(
-      faqItems,
-      { opacity: 0, y: 10 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power3.out" },
-      faqSectionRef.current,
-      "top 78%"
-    );
+      /* FAQ items — the shared Accordion's [data-accordion-item] elements. */
+      gatedReveal(
+        faqItems,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power3.out" },
+        faqSectionRef.current,
+        "clamp(top 78%)"
+      );
 
-    /* The bottom CTA is <FinalCTACard>, which owns its own scroll-in
-       reveal + gold wipe — no page-level timeline needed here. */
+      /* The bottom CTA is <FinalCTACard>, which owns its own scroll-in
+         reveal + gold wipe — no page-level timeline needed here. */
+    });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, []);
 

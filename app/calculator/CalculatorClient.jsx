@@ -302,135 +302,148 @@ export default function CalculatorClient() {
     window.scrollTo(0, 0);
     if (!heroRef.current) return;
 
-    /* Reduced motion: skip the intro choreography and jump every animated
-       element straight to its final, visible state. Without this, hero
-       letters + section reveals would still animate on load for users who
-       asked the OS for reduced motion. SplitText already renders an sr-only
-       flat headline, so screen readers are unaffected either way. */
-    if (prefersReducedMotion()) {
-      gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
-        opacity: 1,
-        y: "0%",
-        rotateX: 0,
-      });
-      gsap.set(
-        heroRef.current.querySelectorAll(
-          `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.story}`
-        ),
-        { opacity: 1, y: 0 }
-      );
-      if (pageRef.current) {
-        gsap.set(
-          pageRef.current.querySelectorAll(
-            `.${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
-          ),
-          { opacity: 1, x: 0, y: 0 }
-        );
-      }
-      return;
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    /* Eyebrow */
-    tl.fromTo(
-      `.${styles.heroEyebrow}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0
-    );
-
-    /* Per-letter title — starts just as the eyebrow lands. */
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
-      ">-0.05"
-    );
-
-    /* Subtitle — anchored to the END of the title stagger. */
-    tl.fromTo(
-      `.${styles.heroSub}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55 },
-      ">-0.2"
-    );
-
-    /* Editable story block — follows the subtitle. */
-    tl.fromTo(
-      `.${styles.story}`,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.7 },
-      ">-0.15"
-    );
-
-    /* ── Gate the scroll reveals behind the hero intro ── */
+    /* Hoisted so the intro timeline's onComplete (inside the context
+       callback) and the effect cleanup below share the same flag. */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    /* Build a paused reveal tween + a once-only trigger that plays it
-       through the intro gate. Mirrors the original fromTo vars exactly. */
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      if (!trigger) return;
-      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
-      });
-    };
 
-    /* Section reveals — content fades up, the big numeral scales-and-fades */
-    if (!pageRef.current) {
-      return () => {
-        cancelled = true;
-        ScrollTrigger.getAll().forEach((t) => t.kill());
-      };
-    }
-    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
-    sections.forEach((sec) => {
-      const num = sec.querySelector(`.${styles.sectionNum}`);
-      const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
+    /* Scope all GSAP work to this effect. gsap.context() records every
+       tween, timeline, and ScrollTrigger created inside the callback, so
+       ctx.revert() on unmount tears down ONLY this page's instances. The
+       previous cleanup — ScrollTrigger.getAll().forEach((t) => t.kill()) —
+       killed every ScrollTrigger on the page, including ones owned by
+       still-mounted components (FinalCTACard, Footer), leaving them stuck
+       at opacity 0. No scope argument on purpose: selector strings keep
+       resolving against the document exactly as before. */
+    const ctx = gsap.context(() => {
+      /* Reduced motion: skip the intro choreography and jump every animated
+         element straight to its final, visible state. Without this, hero
+         letters + section reveals would still animate on load for users who
+         asked the OS for reduced motion. SplitText already renders an sr-only
+         flat headline, so screen readers are unaffected either way. */
+      if (prefersReducedMotion()) {
+        gsap.set(heroRef.current.querySelectorAll(`.${styles.heroLetter}`), {
+          opacity: 1,
+          y: "0%",
+          rotateX: 0,
+        });
+        gsap.set(
+          heroRef.current.querySelectorAll(
+            `.${styles.heroEyebrow}, .${styles.heroSub}, .${styles.story}`
+          ),
+          { opacity: 1, y: 0 }
+        );
+        if (pageRef.current) {
+          gsap.set(
+            pageRef.current.querySelectorAll(
+              `.${styles.sectionNum}, .${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
+            ),
+            { opacity: 1, x: 0, y: 0 }
+          );
+        }
+        return;
+      }
+
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      /* Eyebrow */
+      tl.fromTo(
+        `.${styles.heroEyebrow}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        0
       );
 
-      if (num) {
-        gatedReveal(
-          num,
-          { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
-          sec,
-          "top 80%"
+      /* Per-letter title — starts just as the eyebrow lands. */
+      const letters = heroRef.current.querySelectorAll(
+        `.${styles.heroLetter}`
+      );
+      tl.to(
+        letters,
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        ">-0.05"
+      );
+
+      /* Subtitle — anchored to the END of the title stagger. */
+      tl.fromTo(
+        `.${styles.heroSub}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.55 },
+        ">-0.2"
+      );
+
+      /* Editable story block — follows the subtitle. */
+      tl.fromTo(
+        `.${styles.story}`,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.7 },
+        ">-0.15"
+      );
+
+      /* ── Gate the scroll reveals behind the hero intro ── */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
+      });
+      /* Build a paused reveal tween + a once-only trigger that plays it
+         through the intro gate. Mirrors the original fromTo vars exactly. */
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        if (!trigger) return;
+        const tween = gsap.fromTo(targets, fromVars, {
+          ...toVars,
+          paused: true,
+        });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
+
+      /* Section reveals — content fades up, the big numeral scales-and-fades */
+      if (!pageRef.current) return;
+      const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
+      sections.forEach((sec) => {
+        const num = sec.querySelector(`.${styles.sectionNum}`);
+        const content = sec.querySelectorAll(
+          `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, .${styles.breakdownRow}, .${styles.assumption}, .${styles.totalBar}`
         );
-      }
-      if (content.length > 0) {
-        gatedReveal(
-          content,
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.55,
-            stagger: 0.07,
-            ease: "power3.out",
-          },
-          sec,
-          "top 78%"
-        );
-      }
+
+        if (num) {
+          gatedReveal(
+            num,
+            { opacity: 0, x: -20 },
+            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            sec,
+            "clamp(top 80%)"
+          );
+        }
+        if (content.length > 0) {
+          gatedReveal(
+            content,
+            { opacity: 0, y: 16 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.55,
+              stagger: 0.07,
+              ease: "power3.out",
+            },
+            sec,
+            "clamp(top 78%)"
+          );
+        }
+      });
     });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, []);
 

@@ -58,116 +58,134 @@ export default function LegalPage({ slug }) {
     window.scrollTo(0, 0);
     if (!page || !headerRef.current) return;
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    /* Seal — decorative ring in the top-right of the header. CSS
-       starts it at opacity: 0; fade in to ~0.3 (it's just texture). */
-    tl.to(`.${styles.seal}`, { opacity: 0.3, duration: 0.5 }, 0);
-
-    /* Doc-meta block (Document / Last updated / Effective / Jurisdiction). */
-    tl.to(`.${styles.docMeta}`, { opacity: 1, duration: 0.5 }, 0.05);
-
-    const letters = headerRef.current.querySelectorAll(`.${styles.headLetter}`);
-    if (letters.length) {
-      tl.to(
-        letters,
-        {
-          opacity: 1,
-          y: "0%",
-          rotateX: 0,
-          duration: 0.7,
-          stagger: 0.022,
-        },
-        0.2
-      );
-    }
-
-    /* From the title down, the header reads strictly top-to-bottom: title
-       letters → recital → gold rule, each anchored to the END of the step
-       above it (">" with a small negative offset for a gentle overlap) so the
-       recital never settles before the per-letter title finishes. The seal +
-       docMeta above keep their original timing. */
-
-    /* Recital — italic preamble below the title. */
-    tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.5 }, ">-0.15");
-
-    /* Gold rule under the header — scales in from the left.
-       CSS leaves it at opacity: 0.6 for the no-JS state, so we
-       fromTo from (scaleX:0, opacity:0) into (scaleX:1, opacity:0.6). */
-    tl.fromTo(
-      `.${styles.rule}`,
-      { scaleX: 0, opacity: 0 },
-      { scaleX: 1, opacity: 0.6, duration: 0.6 },
-      ">-0.1"
-    );
-
-    /* ── Gate the scroll reveals behind the header intro ────────────────
-       The header intro above plays on mount; the section + signature reveals
-       below are scroll-triggered. Without a gate, any section near enough to
-       the top to satisfy its trigger on initial load animates in immediately,
-       racing (and finishing before) the header. So: a reveal that fires on
-       initial load is QUEUED and released the moment the intro completes; a
-       section scrolled to later plays immediately, exactly as before.
-       Below-fold content is never delayed artificially. */
+    /* Hoisted above the gsap.context — referenced by both the intro
+       timeline's onComplete (inside) and the cleanup closure (outside). */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
-      });
-    };
 
-    /* Section reveals on scroll — each section's parts (gutter
-       § marker, heading, body prose, marginalia summary) stagger in
-       as the section enters the viewport. */
-    if (shellRef.current) {
-      const sections = shellRef.current.querySelectorAll(`.${styles.section}`);
-      sections.forEach((sec) => {
-        const els = sec.querySelectorAll(
-          `.${styles.sectionGutter}, .${styles.sectionHeading}, .${styles.sectionBody}, .${styles.marginalia}`
-        );
-        if (els.length) {
-          gatedReveal(
-            els,
-            { opacity: 0, y: 14 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.55,
-              stagger: 0.06,
-              ease: "power3.out",
-            },
-            sec,
-            "top 82%"
-          );
-        }
-      });
+    /* Scope all GSAP work to a context. ctx.revert() on cleanup tears down
+       ONLY the tweens/ScrollTriggers created here — the previous
+       ScrollTrigger.getAll().forEach((t) => t.kill()) killed triggers owned
+       by still-mounted siblings (e.g. the Footer) when this effect re-ran on
+       a slug change — and restores elements to their CSS-declared initial
+       state so the intro replays cleanly for the new document. */
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-      /* Signature block at the end. */
-      gatedReveal(
-        `.${styles.signature}`,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
-        `.${styles.signature}`,
-        "top 85%"
+      /* Seal — decorative ring in the top-right of the header. CSS
+         starts it at opacity: 0; fade in to ~0.3 (it's just texture). */
+      tl.to(`.${styles.seal}`, { opacity: 0.3, duration: 0.5 }, 0);
+
+      /* Doc-meta block (Document / Last updated / Effective / Jurisdiction). */
+      tl.to(`.${styles.docMeta}`, { opacity: 1, duration: 0.5 }, 0.05);
+
+      const letters = headerRef.current.querySelectorAll(
+        `.${styles.headLetter}`
       );
-    }
+      if (letters.length) {
+        tl.to(
+          letters,
+          {
+            opacity: 1,
+            y: "0%",
+            rotateX: 0,
+            duration: 0.7,
+            stagger: 0.022,
+          },
+          0.2
+        );
+      }
+
+      /* From the title down, the header reads strictly top-to-bottom: title
+         letters → recital → gold rule, each anchored to the END of the step
+         above it (">" with a small negative offset for a gentle overlap) so
+         the recital never settles before the per-letter title finishes. The
+         seal + docMeta above keep their original timing. */
+
+      /* Recital — italic preamble below the title. */
+      tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.5 }, ">-0.15");
+
+      /* Gold rule under the header — scales in from the left.
+         CSS leaves it at opacity: 0.6 for the no-JS state, so we
+         fromTo from (scaleX:0, opacity:0) into (scaleX:1, opacity:0.6). */
+      tl.fromTo(
+        `.${styles.rule}`,
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 0.6, duration: 0.6 },
+        ">-0.1"
+      );
+
+      /* ── Gate the scroll reveals behind the header intro ────────────────
+         The header intro above plays on mount; the section + signature reveals
+         below are scroll-triggered. Without a gate, any section near enough to
+         the top to satisfy its trigger on initial load animates in
+         immediately, racing (and finishing before) the header. So: a reveal
+         that fires on initial load is QUEUED and released the moment the intro
+         completes; a section scrolled to later plays immediately, exactly as
+         before. Below-fold content is never delayed artificially. */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
+      });
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        const tween = gsap.fromTo(targets, fromVars, {
+          ...toVars,
+          paused: true,
+        });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
+
+      /* Section reveals on scroll — each section's parts (gutter
+         § marker, heading, body prose, marginalia summary) stagger in
+         as the section enters the viewport. */
+      if (shellRef.current) {
+        const sections = shellRef.current.querySelectorAll(
+          `.${styles.section}`
+        );
+        sections.forEach((sec) => {
+          const els = sec.querySelectorAll(
+            `.${styles.sectionGutter}, .${styles.sectionHeading}, .${styles.sectionBody}, .${styles.marginalia}`
+          );
+          if (els.length) {
+            gatedReveal(
+              els,
+              { opacity: 0, y: 14 },
+              {
+                opacity: 1,
+                y: 0,
+                duration: 0.55,
+                stagger: 0.06,
+                ease: "power3.out",
+              },
+              sec,
+              "clamp(top 82%)"
+            );
+          }
+        });
+
+        /* Signature block at the end. */
+        gatedReveal(
+          `.${styles.signature}`,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          `.${styles.signature}`,
+          "clamp(top 85%)"
+        );
+      }
+    });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, [slug, page]);
 

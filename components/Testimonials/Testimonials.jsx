@@ -111,7 +111,7 @@ export default function Testimonials() {
           duration: 0.55,
           stagger: 0.08,
           ease: "power3.out",
-          scrollTrigger: { trigger: rootRef.current, start: "top 78%" },
+          scrollTrigger: { trigger: rootRef.current, start: "clamp(top 78%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);
@@ -128,7 +128,7 @@ export default function Testimonials() {
           y: 0,
           duration: 0.7,
           ease: "power3.out",
-          scrollTrigger: { trigger: featured, start: "top 80%" },
+          scrollTrigger: { trigger: featured, start: "clamp(top 80%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);
@@ -146,7 +146,7 @@ export default function Testimonials() {
           duration: 0.55,
           stagger: 0.07,
           ease: "power3.out",
-          scrollTrigger: { trigger: cards[0], start: "top 82%" },
+          scrollTrigger: { trigger: cards[0], start: "clamp(top 82%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);

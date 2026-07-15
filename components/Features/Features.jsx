@@ -323,58 +323,43 @@ function resetVisual(rowEl) {
   const svg = rowEl.querySelector(".feat-svg");
   if (!svg) return;
   gsap.killTweensOf(svg.querySelectorAll("*"));
-  gsap.set(
-    svg.querySelectorAll(
-      ".feat-beam,.feat-glow,.feat-result,.feat-result-line1,.feat-result-line2,.feat-result-line3,.feat-result-check,.feat-result-tick,.feat-conf-bg,.feat-conf"
-    ),
+  /* Each feature row's SVG only contains its own subset of the .feat-*
+     classes, so most selectors below miss on any given row. Skip empty
+     matches — gsap.set on an empty NodeList logs a "target not found"
+     warning (hundreds per mount across six rows). */
+  const set = (sel, vars) => {
+    const nodes = svg.querySelectorAll(sel);
+    if (nodes.length) gsap.set(nodes, vars);
+  };
+  set(
+    ".feat-beam,.feat-glow,.feat-result,.feat-result-line1,.feat-result-line2,.feat-result-line3,.feat-result-check,.feat-result-tick,.feat-conf-bg,.feat-conf",
     { opacity: 0 }
   );
-  gsap.set(svg.querySelectorAll(".feat-conf"), { attr: { width: 0 } });
-  gsap.set(svg.querySelectorAll(".feat-heat,.feat-cursor,.feat-ping"), {
-    opacity: 0,
-  });
-  gsap.set(svg.querySelectorAll(".feat-cursor"), { attr: { cx: 60, cy: 50 } });
-  gsap.set(svg.querySelectorAll(".feat-ping"), { attr: { r: 4 } });
-  gsap.set(svg.querySelectorAll(".feat-zone"), { clearProps: "fill,stroke" });
-  gsap.set(svg.querySelectorAll(".feat-zlabel"), { clearProps: "fill" });
+  set(".feat-conf", { attr: { width: 0 } });
+  set(".feat-heat,.feat-cursor,.feat-ping", { opacity: 0 });
+  set(".feat-cursor", { attr: { cx: 60, cy: 50 } });
+  set(".feat-ping", { attr: { r: 4 } });
+  set(".feat-zone", { clearProps: "fill,stroke" });
+  set(".feat-zlabel", { clearProps: "fill" });
   const h = [30, 52, 42, 72, 48, 64, 36, 80, 56, 68];
   svg.querySelectorAll(".feat-bar").forEach((b, i) => {
     const hh = h[i] * 0.4;
     gsap.set(b, { attr: { height: hh, y: 180 - hh } });
   });
-  gsap.set(svg.querySelectorAll(".feat-bar-accent"), { attr: { height: 0 } });
-  gsap.set(svg.querySelectorAll(".feat-trend-accent"), {
-    strokeDashoffset: 400,
+  set(".feat-bar-accent", { attr: { height: 0 } });
+  set(".feat-trend-accent", { strokeDashoffset: 400, opacity: 0 });
+  set(".feat-peak,.feat-peak-ring,.feat-alert,.feat-alert-text", {
     opacity: 0,
   });
-  gsap.set(
-    svg.querySelectorAll(
-      ".feat-peak,.feat-peak-ring,.feat-alert,.feat-alert-text"
-    ),
-    { opacity: 0 }
-  );
-  gsap.set(svg.querySelectorAll(".feat-peak-ring"), { attr: { r: 4 } });
-  gsap.set(svg.querySelectorAll(".feat-sweep"), {
-    attr: { width: 0 },
-    opacity: 0,
-  });
-  gsap.set(svg.querySelectorAll(".feat-select,.feat-row-hl"), { opacity: 0 });
-  gsap.set(svg.querySelectorAll(".feat-sprog,.feat-oprog"), {
-    attr: { width: 0 },
-  });
-  gsap.set(svg.querySelectorAll(".feat-stick,.feat-opct"), { opacity: 0 });
-  gsap.set(svg.querySelectorAll(".feat-tag,.feat-tag-t"), {
-    opacity: 0,
-    y: 0,
-    scale: 1,
-  });
-  gsap.set(svg.querySelectorAll(".feat-conn,.feat-verify-beam"), {
-    opacity: 0,
-  });
-  gsap.set(svg.querySelectorAll(".feat-label-group"), { y: 0 });
-  gsap.set(svg.querySelectorAll(".feat-printer-light"), {
-    fill: "rgba(0,0,0,0.06)",
-  });
+  set(".feat-peak-ring", { attr: { r: 4 } });
+  set(".feat-sweep", { attr: { width: 0 }, opacity: 0 });
+  set(".feat-select,.feat-row-hl", { opacity: 0 });
+  set(".feat-sprog,.feat-oprog", { attr: { width: 0 } });
+  set(".feat-stick,.feat-opct", { opacity: 0 });
+  set(".feat-tag,.feat-tag-t", { opacity: 0, y: 0, scale: 1 });
+  set(".feat-conn,.feat-verify-beam", { opacity: 0 });
+  set(".feat-label-group", { y: 0 });
+  set(".feat-printer-light", { fill: "rgba(0,0,0,0.06)" });
 }
 
 export default function Features() {
@@ -403,7 +388,7 @@ export default function Features() {
         duration: 0.8,
         stagger: 0.1,
         ease: "power3.out",
-        scrollTrigger: { trigger: headerRef.current, start: "top 85%" },
+        scrollTrigger: { trigger: headerRef.current, start: "clamp(top 85%)" },
       });
 
       const rows = rowRefs.current.filter(Boolean);
@@ -414,7 +399,7 @@ export default function Features() {
           y: 0,
           duration: 0.5,
           ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "top 80%" },
+          scrollTrigger: { trigger: row, start: "clamp(top 80%)" },
         });
       });
 

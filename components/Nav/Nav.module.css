@@ -120,6 +120,9 @@
   text-decoration: none;
   padding: 4px 8px;
   transition: color 0.3s;
+  /* Multi-word labels ("AI Engine") must never wrap to two lines when
+     the centered link row tightens at mid widths. */
+  white-space: nowrap;
 }
 .links a:hover {
   color: var(--white);

@@ -154,7 +154,11 @@ const FRONTS = [
 /* COURSE beat — a serpentine through aisles 1/3/5/7: down the left
    corridor, up aisle 1, across the top, down aisle 3, up aisle 5,
    down aisle 7, out to pack-out bottom-right. Pick points sit ON the
-   route at the center-y of the bay they serve. */
+   route at the center-y of the bay they serve.
+   Verified shortest: every aisle has picks in both halves, so each
+   needs a full traversal (4×394) + three 160-unit crossovers; this
+   parity (up-first from the dock) totals 2678 units vs 2762 for the
+   down-first serpentine — no legal Manhattan route beats it. */
 const ROUTE = [
   [96, 196],
   [148, 196],
@@ -221,11 +225,13 @@ const RESLOTS = [
     from: { col: 5, bank: 0, bay: 2 },
     to: { col: 2, bank: 1, bay: 2 },
     label: "RESLOT → C-6",
-    labelAt: [497, GAP_Y - 12],
+    labelAt: [457, GAP_Y - 12],
+    /* Exits the bay's WEST face (aisle x577) — 494 units vs 574 via the
+       east aisle; the destination is west, so never route east first. */
     path: [
-      [634, 236],
-      [657, 236],
-      [657, GAP_Y],
+      [600, 236],
+      [577, 236],
+      [577, GAP_Y],
       [337, GAP_Y],
       [337, 444],
       [360, 444],
@@ -782,9 +788,15 @@ export default function WarehouseShowcase({ onDemo }) {
         }
         const pulse = pausedRef.current ? 0.6 : 0.45 + 0.3 * Math.sin(time * 2 + i * 2.1);
         if (f > 0.5) circle(cx, cy, 2.4, null, 0, RED(pulse));
-        /* Label in the mid cross-aisle — open floor, never on a rack. */
+        /* Label on open floor, never on a rack: bank-0 bays label in the
+           mid cross-aisle; lower-bank bays label under the bottom
+           corridor — EXCEPT a lower bank's top bay (bay 0), which labels
+           in the cross-aisle just above it. That also keeps the two
+           lower-bank fronts (cols 4 and 6) from printing on the same
+           line and colliding at narrow stage widths. */
+        const ly = fr.bank === 0 || fr.bay === 0 ? GAP_Y : BOT_Y + 14;
         if (f > 0.75)
-          typed(fr.label, win(f, 0.75, 1), cx, fr.bank === 0 ? GAP_Y : BOT_Y + 14, 9, RED(0.8), "center");
+          typed(fr.label, win(f, 0.75, 1), cx, ly, 9, RED(0.8), "center");
       });
       ctx.globalAlpha = sa;
       stamp("3 DEPLETION FRONTS · NEXT 48 H", 500, 56, win(t, 0.55, 0.7), RED(0.85), "center");

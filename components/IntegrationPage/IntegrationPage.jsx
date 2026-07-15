@@ -133,143 +133,157 @@ export default function IntegrationPage({ slug }) {
     window.scrollTo(0, 0);
     if (!integration || !heroRef.current) return;
 
-    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-    tl.fromTo(
-      `.${styles.heroIndex}`,
-      { opacity: 0, y: -8 },
-      { opacity: 1, y: 0, duration: 0.4 },
-      0
-    );
-
-    /* Connection mark — Nautilus + ×/connector + Partner — staggered in.
-       These three sit on one row, so they keep their own left-to-right
-       choreography (brand → connector pop → partner) at fixed times. */
-    tl.fromTo(
-      `.${styles.markBrand}`,
-      { opacity: 0, x: -20 },
-      { opacity: 1, x: 0, duration: 0.6 },
-      0.15
-    );
-    tl.fromTo(
-      `.${styles.markConnector}`,
-      { opacity: 0, scale: 0.5, rotate: -30 },
-      { opacity: 1, scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" },
-      0.35
-    );
-    tl.fromTo(
-      `.${styles.markPartner}`,
-      { opacity: 0, x: 20 },
-      { opacity: 1, x: 0, duration: 0.6 },
-      0.45
-    );
-
-    /* From here the hero reads strictly top-to-bottom: tagline → description
-       → CTA, each anchored to the END of the step above it (">" with a small
-       negative offset for a gentle overlap) so the lower elements never
-       resolve before the per-letter tagline does. */
-
-    /* Per-letter tagline — begins as the connection mark lands. */
-    const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
-    tl.to(
-      letters,
-      { opacity: 1, y: "0%", rotateX: 0, duration: 0.65, stagger: 0.018 },
-      ">-0.1"
-    );
-
-    /* Description — anchored to the END of the tagline. */
-    tl.fromTo(
-      `.${styles.heroDesc}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      ">-0.2"
-    );
-
-    /* CTA — follows the description. */
-    tl.fromTo(
-      `.${styles.heroCTA}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5 },
-      ">-0.15"
-    );
-
-    /* ── Gate the scroll reveals behind the hero intro ──────────────────
-       The header intro above plays on mount; the section reveals below are
-       scroll-triggered. Without a gate, any section near enough to the top
-       to satisfy its trigger on initial load animates in immediately —
-       racing (and finishing before) the header. So: a reveal that fires on
-       initial load is QUEUED and released the moment the intro completes; a
-       section scrolled to later plays immediately, exactly as before.
-       Below-fold content is never delayed artificially — only the
-       initial-viewport race is removed. */
+    /* Hoisted above the gsap.context — referenced by both the intro
+       timeline's onComplete (inside) and the cleanup closure (outside). */
     let cancelled = false;
-    let introDone = false;
-    const queued = [];
-    const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
-    tl.eventCallback("onComplete", () => {
-      if (cancelled) return;
-      introDone = true;
-      queued.forEach((fn) => fn());
-      queued.length = 0;
-    });
-    const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
-      const tween = gsap.fromTo(targets, fromVars, { ...toVars, paused: true });
-      ScrollTrigger.create({
-        trigger,
-        start,
-        once: true,
-        onEnter: () => runWhenIntroDone(() => tween.play()),
-      });
-    };
 
-    /* Sections — same numbered editorial pattern as Industry. The FAQ items
-       are now the shared Accordion's [data-accordion-item] elements (was
-       `.faq`), so they ride the same section reveal. */
-    if (!pageRef.current) return;
-    const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
-    sections.forEach((sec) => {
-      const num = sec.querySelector(`.${styles.sectionNum}`);
-      const content = sec.querySelectorAll(
-        `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, [data-list-item], .${styles.flow}, .${styles.step}, [data-stat], [data-accordion-item]`
+    /* Scope all GSAP work to a context. ctx.revert() on cleanup tears down
+       ONLY the tweens/ScrollTriggers created here — the previous
+       ScrollTrigger.getAll().forEach((t) => t.kill()) killed triggers owned
+       by still-mounted siblings (FinalCTACard, Footer) when this effect
+       re-ran on a slug change — and restores elements to their CSS-declared
+       initial state so the intro replays cleanly for the new content. */
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      tl.fromTo(
+        `.${styles.heroIndex}`,
+        { opacity: 0, y: -8 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        0
       );
 
-      if (num) {
-        gatedReveal(
-          num,
-          { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
-          sec,
-          "top 80%"
-        );
-      }
-      if (content.length > 0) {
-        gatedReveal(
-          content,
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.55,
-            stagger: 0.06,
-            ease: "power3.out",
-          },
-          sec,
-          "top 78%"
-        );
-      }
-    });
+      /* Connection mark — Nautilus + ×/connector + Partner — staggered in.
+         These three sit on one row, so they keep their own left-to-right
+         choreography (brand → connector pop → partner) at fixed times. */
+      tl.fromTo(
+        `.${styles.markBrand}`,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.6 },
+        0.15
+      );
+      tl.fromTo(
+        `.${styles.markConnector}`,
+        { opacity: 0, scale: 0.5, rotate: -30 },
+        { opacity: 1, scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" },
+        0.35
+      );
+      tl.fromTo(
+        `.${styles.markPartner}`,
+        { opacity: 0, x: 20 },
+        { opacity: 1, x: 0, duration: 0.6 },
+        0.45
+      );
 
-    gatedReveal(
-      `.${styles.crossCard}`,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
-      `.${styles.crossLinks}`,
-      "top 80%"
-    );
+      /* From here the hero reads strictly top-to-bottom: tagline → description
+         → CTA, each anchored to the END of the step above it (">" with a small
+         negative offset for a gentle overlap) so the lower elements never
+         resolve before the per-letter tagline does. */
+
+      /* Per-letter tagline — begins as the connection mark lands. */
+      const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
+      tl.to(
+        letters,
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.65, stagger: 0.018 },
+        ">-0.1"
+      );
+
+      /* Description — anchored to the END of the tagline. */
+      tl.fromTo(
+        `.${styles.heroDesc}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        ">-0.2"
+      );
+
+      /* CTA — follows the description. */
+      tl.fromTo(
+        `.${styles.heroCTA}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        ">-0.15"
+      );
+
+      /* ── Gate the scroll reveals behind the hero intro ──────────────────
+         The header intro above plays on mount; the section reveals below are
+         scroll-triggered. Without a gate, any section near enough to the top
+         to satisfy its trigger on initial load animates in immediately —
+         racing (and finishing before) the header. So: a reveal that fires on
+         initial load is QUEUED and released the moment the intro completes; a
+         section scrolled to later plays immediately, exactly as before.
+         Below-fold content is never delayed artificially — only the
+         initial-viewport race is removed. */
+      let introDone = false;
+      const queued = [];
+      const runWhenIntroDone = (fn) => (introDone ? fn() : queued.push(fn));
+      tl.eventCallback("onComplete", () => {
+        if (cancelled) return;
+        introDone = true;
+        queued.forEach((fn) => fn());
+        queued.length = 0;
+      });
+      const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        const tween = gsap.fromTo(targets, fromVars, {
+          ...toVars,
+          paused: true,
+        });
+        ScrollTrigger.create({
+          trigger,
+          start,
+          once: true,
+          onEnter: () => runWhenIntroDone(() => tween.play()),
+        });
+      };
+
+      /* Sections — same numbered editorial pattern as Industry. The FAQ items
+         are now the shared Accordion's [data-accordion-item] elements (was
+         `.faq`), so they ride the same section reveal. */
+      if (!pageRef.current) return;
+      const sections = pageRef.current.querySelectorAll(`.${styles.section}`);
+      sections.forEach((sec) => {
+        const num = sec.querySelector(`.${styles.sectionNum}`);
+        const content = sec.querySelectorAll(
+          `.${styles.sectionLabel}, .${styles.sectionTitle}, .${styles.sectionDesc}, [data-list-item], .${styles.flow}, .${styles.step}, [data-stat], [data-accordion-item]`
+        );
+
+        if (num) {
+          gatedReveal(
+            num,
+            { opacity: 0, x: -20 },
+            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            sec,
+            "clamp(top 80%)"
+          );
+        }
+        if (content.length > 0) {
+          gatedReveal(
+            content,
+            { opacity: 0, y: 16 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.55,
+              stagger: 0.06,
+              ease: "power3.out",
+            },
+            sec,
+            "clamp(top 78%)"
+          );
+        }
+      });
+
+      gatedReveal(
+        `.${styles.crossCard}`,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        `.${styles.crossLinks}`,
+        "clamp(top 80%)"
+      );
+    });
 
     return () => {
       cancelled = true;
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
     };
   }, [slug, integration]);
 

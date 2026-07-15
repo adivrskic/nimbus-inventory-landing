@@ -111,9 +111,7 @@ export default function ProblemSolution({ onDemo }) {
 
     if (prefersReducedMotion()) {
       gsap.set(
-        section.querySelectorAll(
-          `.${styles.eyebrow}, .${styles.col}, .${styles.ctaRow}`
-        ),
+        section.querySelectorAll(`.${styles.col}, .${styles.ctaRow}`),
         { opacity: 1, y: 0 }
       );
       return;
@@ -128,22 +126,15 @@ export default function ProblemSolution({ onDemo }) {
       },
     });
 
-    /* Eyebrow first. */
-    tl.fromTo(
-      `.${styles.eyebrow}`,
-      { opacity: 0, y: DISTANCE.sm },
-      { opacity: 1, y: 0, duration: DURATION.fast },
-      0
-    );
-
-    /* Cards — anchored to the eyebrow's tail with a gentle overlap, then
-       staggered. Slightly longer duration than the eyebrow/CTA so the
-       card rise reads as the centerpiece of the sequence. */
+    /* Cards — staggered rise; the centerpiece of the sequence. (The
+       old leading eyebrow tween targeted an element this section no
+       longer renders — it only produced GSAP "target not found"
+       warnings.) */
     tl.fromTo(
       `.${styles.col}`,
       { opacity: 0, y: DISTANCE.sm },
       { opacity: 1, y: 0, duration: DURATION.base, stagger: STAGGER.base },
-      ">-0.1"
+      0
     );
 
     /* CTA — follows the last card. */

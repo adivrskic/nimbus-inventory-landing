@@ -101,8 +101,11 @@ export default function FinalCTACard({
           ease: EASE.scrub,
           scrollTrigger: {
             trigger: scope,
-            start: "top 75%",
-            end: "top 25%",
+            /* clamp() — this card closes most marketing pages, so its
+               unclamped wipe range can fall below max-scroll and leave
+               the wipe stuck partially open. */
+            start: "clamp(top 75%)",
+            end: "clamp(top 25%)",
             scrub: SCRUB,
           },
         }
