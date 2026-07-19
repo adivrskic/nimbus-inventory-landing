@@ -385,10 +385,10 @@ export default function Features() {
       gsap.to(headerRef.current.children, {
         y: 0,
         opacity: 1,
-        duration: 0.8,
-        stagger: 0.1,
+        duration: 0.55,
+        stagger: 0.06,
         ease: "power3.out",
-        scrollTrigger: { trigger: headerRef.current, start: "clamp(top 85%)" },
+        scrollTrigger: { trigger: headerRef.current, start: "clamp(top 92%)" },
       });
 
       const rows = rowRefs.current.filter(Boolean);
@@ -397,9 +397,9 @@ export default function Features() {
         gsap.to(row, {
           opacity: 1,
           y: 0,
-          duration: 0.5,
+          duration: 0.4,
           ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "clamp(top 80%)" },
+          scrollTrigger: { trigger: row, start: "clamp(top 90%)" },
         });
       });
 

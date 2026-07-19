@@ -103,9 +103,10 @@ export default function FinalCTACard({
             trigger: scope,
             /* clamp() — this card closes most marketing pages, so its
                unclamped wipe range can fall below max-scroll and leave
-               the wipe stuck partially open. */
-            start: "clamp(top 75%)",
-            end: "clamp(top 25%)",
+               the wipe stuck partially open. Range starts near the fold
+               and resolves by mid-viewport so the gold lands early. */
+            start: "clamp(top 92%)",
+            end: "clamp(top 45%)",
             scrub: SCRUB,
           },
         }

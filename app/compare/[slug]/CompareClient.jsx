@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -38,22 +39,14 @@ export default function CompareClient({ competitor, others }) {
        Reset scroll on slug change. (Load-bearing — see original notes.)
 
        Lenis owns the scroll position globally (window.__lenis). A plain
-       window.scrollTo() gets snapped back by Lenis's RAF loop, so we use
-       lenis.scrollTo(immediate+force) which updates both the browser and
-       Lenis's internal state. The double-call (sync + rAF) covers the case
+       window.scrollTo() gets snapped back by Lenis's RAF loop, so the
+       shared resetScroll() helper goes through lenis.scrollTo
+       (immediate+force), which updates both the browser and Lenis's
+       internal state. The double-call (sync + rAF) covers the case
        where the transition overlay finishes fading after the new component
-       mounts. Kept inline so it runs BEFORE the ScrollTrigger.refresh()
-       below — triggers must be measured at scroll=0.
+       mounts. Runs BEFORE the ScrollTrigger.refresh() below — triggers
+       must be measured at scroll=0.
     ─────────────────────────────────────────────────────────────────── */
-    const resetScroll = () => {
-      if (typeof window === "undefined") return;
-      const lenis = window.__lenis;
-      if (lenis) {
-        lenis.scrollTo(0, { immediate: true, force: true });
-      } else {
-        window.scrollTo(0, 0);
-      }
-    };
     resetScroll();
     const rafId = requestAnimationFrame(resetScroll);
 
@@ -94,25 +87,25 @@ export default function CompareClient({ competitor, others }) {
       tl.fromTo(
         `.${styles.heroIndex}`,
         { opacity: 0, y: -8 },
-        { opacity: 1, y: 0, duration: 0.4 },
+        { opacity: 1, y: 0, duration: 0.3 },
         0
       );
       tl.fromTo(
         `.${styles.markBrand}`,
         { opacity: 0, x: -20 },
-        { opacity: 1, x: 0, duration: 0.55 },
+        { opacity: 1, x: 0, duration: 0.42 },
         ">-0.1"
       );
       tl.fromTo(
         `.${styles.markVs}`,
         { opacity: 0, scale: 0.6 },
-        { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
         ">-0.25"
       );
       tl.fromTo(
         `.${styles.markCompetitor}`,
         { opacity: 0, x: 20 },
-        { opacity: 1, x: 0, duration: 0.55 },
+        { opacity: 1, x: 0, duration: 0.42 },
         ">-0.2"
       );
 
@@ -120,20 +113,20 @@ export default function CompareClient({ competitor, others }) {
       const letters = pageRef.current.querySelectorAll(`.${styles.heroLetter}`);
       tl.to(
         letters,
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.55, stagger: 0.018 },
         ">-0.1"
       );
 
       tl.fromTo(
         `.${styles.heroDesc}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.55 },
+        { opacity: 1, y: 0, duration: 0.42 },
         ">-0.2"
       );
       tl.fromTo(
         `.${styles.heroCTA}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5 },
+        { opacity: 1, y: 0, duration: 0.4 },
         ">-0.15"
       );
 
@@ -183,24 +176,24 @@ export default function CompareClient({ competitor, others }) {
           gatedReveal(
             num,
             { opacity: 0, x: -20 },
-            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
             sec,
-            "clamp(top 80%)"
+            "clamp(top 90%)"
           );
         }
         if (content.length > 0) {
           gatedReveal(
             content,
-            { opacity: 0, y: 16 },
+            { opacity: 0, y: 12 },
             {
               opacity: 1,
               y: 0,
-              duration: 0.55,
-              stagger: 0.07,
+              duration: 0.42,
+              stagger: 0.05,
               ease: "power3.out",
             },
             sec,
-            "clamp(top 78%)"
+            "clamp(top 90%)"
           );
         }
       });
@@ -211,9 +204,9 @@ export default function CompareClient({ competitor, others }) {
         gatedReveal(
           `.${styles.crossCard}`,
           { opacity: 0, y: 14 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power3.out" },
           crossLinks,
-          "clamp(top 80%)"
+          "clamp(top 90%)"
         );
       }
 

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
@@ -39,7 +40,7 @@ export default function CompareIndexClient({ competitors }) {
      if the grid is scrolled to later it plays immediately. Removes the
      initial-viewport race without delaying below-fold content. */
   useEffect(() => {
-    window.scrollTo(0, 0);
+    resetScroll();
     if (!heroRef.current || !pageRef.current) return;
 
     /* Hoisted so the effect cleanup can reach it from outside the gsap
@@ -70,7 +71,7 @@ export default function CompareIndexClient({ competitors }) {
       tl.fromTo(
         `.${styles.heroEyebrow}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.4 },
+        { opacity: 1, y: 0, duration: 0.3 },
         0
       );
 
@@ -78,7 +79,7 @@ export default function CompareIndexClient({ competitors }) {
       const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
       tl.to(
         letters,
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.55, stagger: 0.018 },
         ">-0.05"
       );
 
@@ -86,7 +87,7 @@ export default function CompareIndexClient({ competitors }) {
       tl.fromTo(
         `.${styles.heroSub}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.55 },
+        { opacity: 1, y: 0, duration: 0.42 },
         ">-0.2"
       );
 
@@ -119,9 +120,9 @@ export default function CompareIndexClient({ competitors }) {
       gatedReveal(
         `.${styles.card}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power3.out" },
         grid,
-        "clamp(top 80%)"
+        "clamp(top 90%)"
       );
     });
 

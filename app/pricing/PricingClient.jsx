@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
@@ -179,7 +180,7 @@ export default function PricingClient() {
      completes; a section scrolled to later plays immediately. The FAQ
      items are the shared Accordion's `[data-accordion-item]` elements. */
   useEffect(() => {
-    window.scrollTo(0, 0);
+    resetScroll();
     const hero = heroRef.current;
     if (!hero) return;
 
@@ -231,7 +232,7 @@ export default function PricingClient() {
       tl.fromTo(
         `.${styles.heroEyebrow}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.45 },
+        { opacity: 1, y: 0, duration: 0.32 },
         0
       );
 
@@ -243,7 +244,7 @@ export default function PricingClient() {
           opacity: 1,
           y: "0%",
           rotateX: 0,
-          duration: 0.7,
+          duration: 0.5,
           stagger: 0.016,
           ease: "power4.out",
         },
@@ -254,12 +255,12 @@ export default function PricingClient() {
       tl.fromTo(
         `.${styles.heroSub}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.55 },
+        { opacity: 1, y: 0, duration: 0.42 },
         ">-0.2"
       );
 
       /* Billing toggle — follows the subtitle. */
-      tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.5 }, ">-0.15");
+      tl.to(`.${styles.toggleWrap}`, { opacity: 1, duration: 0.4 }, ">-0.15");
 
       /* ── Gate the scroll reveals behind the hero intro ── */
       let introDone = false;
@@ -290,10 +291,10 @@ export default function PricingClient() {
       const tiers = tierRefs.current.filter(Boolean);
       gatedReveal(
         tiers,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease: "power3.out" },
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: "power3.out" },
         tiers[0],
-        "clamp(top 82%)"
+        "clamp(top 90%)"
       );
 
       /* Matrix rows — the shared FeatureMatrix's [data-matrix-row] elements. */
@@ -302,16 +303,16 @@ export default function PricingClient() {
         { opacity: 0, y: 8 },
         { opacity: 1, y: 0, duration: 0.4, stagger: 0.035, ease: "power2.out" },
         matrixSectionRef.current,
-        "clamp(top 75%)"
+        "clamp(top 90%)"
       );
 
       /* FAQ items — the shared Accordion's [data-accordion-item] elements. */
       gatedReveal(
         faqItems,
         { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power3.out" },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power3.out" },
         faqSectionRef.current,
-        "clamp(top 78%)"
+        "clamp(top 90%)"
       );
 
       /* The bottom CTA is <FinalCTACard>, which owns its own scroll-in

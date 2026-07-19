@@ -11,6 +11,7 @@ import NumberedList from "@/components/shared/NumberedList";
 import StatGrid from "@/components/shared/StatGrid";
 import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
+import { resetScroll } from "@/lib/resetScroll";
 import SplitText from "@/components/shared/SplitText";
 import { INTEGRATIONS, DEFAULT_INTEGRATION_FAQS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
@@ -130,7 +131,7 @@ export default function IntegrationPage({ slug }) {
     : DEFAULT_INTEGRATION_FAQS;
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    resetScroll();
     if (!integration || !heroRef.current) return;
 
     /* Hoisted above the gsap.context — referenced by both the intro
@@ -149,7 +150,7 @@ export default function IntegrationPage({ slug }) {
       tl.fromTo(
         `.${styles.heroIndex}`,
         { opacity: 0, y: -8 },
-        { opacity: 1, y: 0, duration: 0.4 },
+        { opacity: 1, y: 0, duration: 0.3 },
         0
       );
 
@@ -159,19 +160,19 @@ export default function IntegrationPage({ slug }) {
       tl.fromTo(
         `.${styles.markBrand}`,
         { opacity: 0, x: -20 },
-        { opacity: 1, x: 0, duration: 0.6 },
+        { opacity: 1, x: 0, duration: 0.45 },
         0.15
       );
       tl.fromTo(
         `.${styles.markConnector}`,
         { opacity: 0, scale: 0.5, rotate: -30 },
-        { opacity: 1, scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" },
+        { opacity: 1, scale: 1, rotate: 0, duration: 0.4, ease: "back.out(2)" },
         0.35
       );
       tl.fromTo(
         `.${styles.markPartner}`,
         { opacity: 0, x: 20 },
-        { opacity: 1, x: 0, duration: 0.6 },
+        { opacity: 1, x: 0, duration: 0.45 },
         0.45
       );
 
@@ -184,7 +185,7 @@ export default function IntegrationPage({ slug }) {
       const letters = heroRef.current.querySelectorAll(`.${styles.heroLetter}`);
       tl.to(
         letters,
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.65, stagger: 0.018 },
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.48, stagger: 0.018 },
         ">-0.1"
       );
 
@@ -192,7 +193,7 @@ export default function IntegrationPage({ slug }) {
       tl.fromTo(
         `.${styles.heroDesc}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5 },
+        { opacity: 1, y: 0, duration: 0.4 },
         ">-0.2"
       );
 
@@ -200,7 +201,7 @@ export default function IntegrationPage({ slug }) {
       tl.fromTo(
         `.${styles.heroCTA}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5 },
+        { opacity: 1, y: 0, duration: 0.4 },
         ">-0.15"
       );
 
@@ -250,24 +251,24 @@ export default function IntegrationPage({ slug }) {
           gatedReveal(
             num,
             { opacity: 0, x: -20 },
-            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
             sec,
-            "clamp(top 80%)"
+            "clamp(top 90%)"
           );
         }
         if (content.length > 0) {
           gatedReveal(
             content,
-            { opacity: 0, y: 16 },
+            { opacity: 0, y: 12 },
             {
               opacity: 1,
               y: 0,
-              duration: 0.55,
+              duration: 0.42,
               stagger: 0.06,
               ease: "power3.out",
             },
             sec,
-            "clamp(top 78%)"
+            "clamp(top 90%)"
           );
         }
       });
@@ -275,9 +276,9 @@ export default function IntegrationPage({ slug }) {
       gatedReveal(
         `.${styles.crossCard}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power3.out" },
         `.${styles.crossLinks}`,
-        "clamp(top 80%)"
+        "clamp(top 90%)"
       );
     });
 

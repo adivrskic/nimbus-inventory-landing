@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/Footer/Footer";
 import SplitText from "@/components/shared/SplitText";
+import { resetScroll } from "@/lib/resetScroll";
 
 import { LEGAL_PAGES } from "./legalData";
 import styles from "./LegalPage.module.css";
@@ -55,7 +56,7 @@ export default function LegalPage({ slug }) {
   const headerRef = useRef(null);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    resetScroll();
     if (!page || !headerRef.current) return;
 
     /* Hoisted above the gsap.context — referenced by both the intro
@@ -73,10 +74,10 @@ export default function LegalPage({ slug }) {
 
       /* Seal — decorative ring in the top-right of the header. CSS
          starts it at opacity: 0; fade in to ~0.3 (it's just texture). */
-      tl.to(`.${styles.seal}`, { opacity: 0.3, duration: 0.5 }, 0);
+      tl.to(`.${styles.seal}`, { opacity: 0.3, duration: 0.4 }, 0);
 
       /* Doc-meta block (Document / Last updated / Effective / Jurisdiction). */
-      tl.to(`.${styles.docMeta}`, { opacity: 1, duration: 0.5 }, 0.05);
+      tl.to(`.${styles.docMeta}`, { opacity: 1, duration: 0.4 }, 0.05);
 
       const letters = headerRef.current.querySelectorAll(
         `.${styles.headLetter}`
@@ -88,7 +89,7 @@ export default function LegalPage({ slug }) {
             opacity: 1,
             y: "0%",
             rotateX: 0,
-            duration: 0.7,
+            duration: 0.5,
             stagger: 0.022,
           },
           0.2
@@ -102,7 +103,7 @@ export default function LegalPage({ slug }) {
          seal + docMeta above keep their original timing. */
 
       /* Recital — italic preamble below the title. */
-      tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.5 }, ">-0.15");
+      tl.to(`.${styles.recital}`, { opacity: 1, duration: 0.4 }, ">-0.15");
 
       /* Gold rule under the header — scales in from the left.
          CSS leaves it at opacity: 0.6 for the no-JS state, so we
@@ -110,7 +111,7 @@ export default function LegalPage({ slug }) {
       tl.fromTo(
         `.${styles.rule}`,
         { scaleX: 0, opacity: 0 },
-        { scaleX: 1, opacity: 0.6, duration: 0.6 },
+        { scaleX: 1, opacity: 0.6, duration: 0.45 },
         ">-0.1"
       );
 
@@ -162,12 +163,12 @@ export default function LegalPage({ slug }) {
               {
                 opacity: 1,
                 y: 0,
-                duration: 0.55,
+                duration: 0.42,
                 stagger: 0.06,
                 ease: "power3.out",
               },
               sec,
-              "clamp(top 82%)"
+              "clamp(top 90%)"
             );
           }
         });
@@ -175,10 +176,10 @@ export default function LegalPage({ slug }) {
         /* Signature block at the end. */
         gatedReveal(
           `.${styles.signature}`,
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
           `.${styles.signature}`,
-          "clamp(top 85%)"
+          "clamp(top 90%)"
         );
       }
     });

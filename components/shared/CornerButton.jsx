@@ -11,6 +11,9 @@ export default function CornerButton({
   loading = false,
   className = "",
   ariaLabel,
+  href,
+  target,
+  rel,
 }) {
   const isDisabled = disabled || loading;
   const cls = [
@@ -22,6 +25,23 @@ export default function CornerButton({
   ]
     .filter(Boolean)
     .join(" ");
+
+  /* Link form — same treatment, real anchor semantics (external links,
+     store badges). Loading/disabled don't apply to navigation. */
+  if (href) {
+    return (
+      <a
+        className={cls}
+        href={href}
+        target={target}
+        rel={rel}
+        aria-label={ariaLabel}
+        onClick={onClick}
+      >
+        <span className={styles.label}>{children}</span>
+      </a>
+    );
+  }
 
   return (
     <button

@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import gsap from "gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import styles from "./TransitionProvider.module.css";
 
 const TransitionContext = createContext(null);
@@ -126,7 +127,7 @@ export default function TransitionProvider({ children }) {
           return;
         }
         router.push(basePath);
-        window.scrollTo(0, 0);
+        resetScroll();
         if (hash) {
           /* Wait for the new page to render before resolving the hash.
              The delay matches the non-RM branch so behavior is
@@ -179,7 +180,10 @@ export default function TransitionProvider({ children }) {
 
       tl.call(() => {
         router.push(basePath);
-        window.scrollTo(0, 0);
+        /* Lenis-aware — a bare window.scrollTo here left Lenis's
+           internal position at the OLD page's offset, so the new page
+           visibly rubber-banded from mid-scroll back to the top. */
+        resetScroll();
         /* Scroll to hash after the new page renders */
         if (hash) {
           setTimeout(() => {

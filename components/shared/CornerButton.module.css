@@ -20,6 +20,8 @@
   border-radius: 0;
   overflow: visible;
   transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s;
+  /* Anchor form (href prop) — keep the button look. */
+  text-decoration: none;
 }
 
 .label {

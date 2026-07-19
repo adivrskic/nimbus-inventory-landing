@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import CornerButton from "@/components/shared/CornerButton";
@@ -299,7 +300,7 @@ export default function CalculatorClient() {
      before. This removes the initial-viewport race without artificially
      delaying below-fold content. */
   useEffect(() => {
-    window.scrollTo(0, 0);
+    resetScroll();
     if (!heroRef.current) return;
 
     /* Hoisted so the intro timeline's onComplete (inside the context
@@ -349,7 +350,7 @@ export default function CalculatorClient() {
       tl.fromTo(
         `.${styles.heroEyebrow}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.4 },
+        { opacity: 1, y: 0, duration: 0.3 },
         0
       );
 
@@ -359,7 +360,7 @@ export default function CalculatorClient() {
       );
       tl.to(
         letters,
-        { opacity: 1, y: "0%", rotateX: 0, duration: 0.75, stagger: 0.018 },
+        { opacity: 1, y: "0%", rotateX: 0, duration: 0.55, stagger: 0.018 },
         ">-0.05"
       );
 
@@ -367,15 +368,15 @@ export default function CalculatorClient() {
       tl.fromTo(
         `.${styles.heroSub}`,
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, duration: 0.55 },
+        { opacity: 1, y: 0, duration: 0.42 },
         ">-0.2"
       );
 
       /* Editable story block — follows the subtitle. */
       tl.fromTo(
         `.${styles.story}`,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.7 },
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5 },
         ">-0.15"
       );
 
@@ -418,24 +419,24 @@ export default function CalculatorClient() {
           gatedReveal(
             num,
             { opacity: 0, x: -20 },
-            { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" },
+            { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
             sec,
-            "clamp(top 80%)"
+            "clamp(top 90%)"
           );
         }
         if (content.length > 0) {
           gatedReveal(
             content,
-            { opacity: 0, y: 16 },
+            { opacity: 0, y: 12 },
             {
               opacity: 1,
               y: 0,
-              duration: 0.55,
-              stagger: 0.07,
+              duration: 0.42,
+              stagger: 0.05,
               ease: "power3.out",
             },
             sec,
-            "clamp(top 78%)"
+            "clamp(top 90%)"
           );
         }
       });

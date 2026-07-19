@@ -104,14 +104,14 @@ export default function Testimonials() {
     if (headerEls.length > 0) {
       const t = gsap.fromTo(
         headerEls,
-        { opacity: 0, y: 14 },
+        { opacity: 0, y: 12 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.55,
-          stagger: 0.08,
+          duration: 0.42,
+          stagger: 0.06,
           ease: "power3.out",
-          scrollTrigger: { trigger: rootRef.current, start: "clamp(top 78%)" },
+          scrollTrigger: { trigger: rootRef.current, start: "clamp(top 90%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);
@@ -122,13 +122,13 @@ export default function Testimonials() {
     if (featured) {
       const t = gsap.fromTo(
         featured,
-        { opacity: 0, y: 20 },
+        { opacity: 0, y: 14 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.7,
+          duration: 0.5,
           ease: "power3.out",
-          scrollTrigger: { trigger: featured, start: "clamp(top 80%)" },
+          scrollTrigger: { trigger: featured, start: "clamp(top 90%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);
@@ -139,14 +139,14 @@ export default function Testimonials() {
     if (cards.length > 0) {
       const t = gsap.fromTo(
         cards,
-        { opacity: 0, y: 16 },
+        { opacity: 0, y: 12 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.55,
-          stagger: 0.07,
+          duration: 0.42,
+          stagger: 0.05,
           ease: "power3.out",
-          scrollTrigger: { trigger: cards[0], start: "clamp(top 82%)" },
+          scrollTrigger: { trigger: cards[0], start: "clamp(top 90%)" },
         }
       );
       if (t.scrollTrigger) triggers.push(t.scrollTrigger);

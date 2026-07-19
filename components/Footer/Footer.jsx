@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Logo from "@/components/shared/Logo";
+import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import styles from "./Footer.module.css";
 
@@ -71,15 +72,15 @@ export default function Footer() {
     const tl = gsap.timeline({
       /* clamp() — the footer is always at the very bottom, so an
          unclamped start can sit below max-scroll and never fire. */
-      scrollTrigger: { trigger: footer, start: "clamp(top 80%)" },
+      scrollTrigger: { trigger: footer, start: "clamp(top 92%)" },
       defaults: { ease: "power3.out" },
     });
-    tl.to(brandRef.current, { opacity: 1, y: 0, duration: 0.5 });
+    tl.to(brandRef.current, { opacity: 1, y: 0, duration: 0.4 });
     colRefs.current.forEach((col) => {
       if (!col) return;
-      tl.to(col, { opacity: 1, y: 0, duration: 0.4 }, `-=${0.3}`);
+      tl.to(col, { opacity: 1, y: 0, duration: 0.32 }, `-=${0.24}`);
     });
-    tl.to(bottomRef.current, { opacity: 1, duration: 0.4 }, "-=0.2");
+    tl.to(bottomRef.current, { opacity: 1, duration: 0.32 }, "-=0.16");
     /* Kill ONLY this timeline's trigger — killing getAll() nuked every
        other component's reveal triggers whenever the footer unmounted
        mid page-transition, leaving sections stuck at opacity 0. */
@@ -228,22 +229,24 @@ export default function Footer() {
               AI-powered warehouse intelligence for modern operations teams.
             </p>
             <div className={styles.badges}>
-              <a
+              <CornerButton
+                variant="ghost"
                 href="https://apps.apple.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.badge}
               >
                 App Store
-              </a>
-              <a
+              </CornerButton>
+              <CornerButton
+                variant="ghost"
                 href="https://play.google.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.badge}
               >
                 Google Play
-              </a>
+              </CornerButton>
             </div>
           </div>
           {COLUMNS.map((col, i) => (

@@ -9,6 +9,7 @@ import {
   DISTANCE,
 } from "@/lib/gsap";
 import Logo from "@/components/shared/Logo";
+import CornerButton from "@/components/shared/CornerButton";
 import { validateDemo, EMAIL_RE } from "@/lib/validation";
 import styles from "./DemoModal.module.css";
 
@@ -1139,28 +1140,23 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                   </div>
                 ) : null}
 
-                <button
+                <CornerButton
                   type="submit"
+                  variant="primary"
+                  loading={isSubmitting}
                   className={styles.submitBtn}
-                  disabled={isSubmitting}
-                  aria-busy={isSubmitting ? "true" : "false"}
                 >
-                  <span className={styles.submitBtnLabel}>
-                    {isSubmitting ? (
-                      <>
-                        <span className={styles.spinner} aria-hidden="true" />
-                        Sending…
-                      </>
-                    ) : (
-                      <>
-                        Send request
-                        <span className={styles.submitArrow} aria-hidden="true">
-                          <ArrowIcon />
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </button>
+                  {isSubmitting ? (
+                    "Sending…"
+                  ) : (
+                    <>
+                      Send request
+                      <span className={styles.submitArrow} aria-hidden="true">
+                        <ArrowIcon />
+                      </span>
+                    </>
+                  )}
+                </CornerButton>
               </form>
             </div>
           </>
