@@ -341,12 +341,20 @@ export function useResourceSectionAnimations(containerRef) {
           );
         });
 
-        ScrollTrigger.create({
+        /* clamp() pins an in-view section's start to 0, and at scrollY 0
+           the trigger sits exactly ON its start (progress 0) — onEnter
+           never fires until a real scroll. Compare scroll() >= start at
+           creation and on refresh and release directly. */
+        const releaseCascade = () => introGate.whenDone(() => masterTl.play());
+        const st = ScrollTrigger.create({
           trigger: sections[0],
           start: TRIGGER.section,
           once: true,
-          onEnter: () => introGate.whenDone(() => masterTl.play()),
+          onEnter: releaseCascade,
+          onRefresh: (self) =>
+            self.scroll() >= self.start && releaseCascade(),
         });
+        if (st.scroll() >= st.start) releaseCascade();
       });
     }, containerRef);
 
@@ -435,13 +443,20 @@ export function useResourceBrowseAnimations(containerRef, options = {}) {
         }
 
         /* Trigger on the head when present (it sits above the list) so the
-           whole block is gated as a unit; fall back to the first item. */
-        ScrollTrigger.create({
+           whole block is gated as a unit; fall back to the first item.
+           Same boundary handling as the section cascade above: an
+           in-view trigger clamps its start to 0 and never fires onEnter
+           at scrollY 0 — release directly when scroll() >= start. */
+        const releaseBrowse = () => introGate.whenDone(() => tl.play());
+        const st = ScrollTrigger.create({
           trigger: head || items[0],
           start: TRIGGER.reveal,
           once: true,
-          onEnter: () => introGate.whenDone(() => tl.play()),
+          onEnter: releaseBrowse,
+          onRefresh: (self) =>
+            self.scroll() >= self.start && releaseBrowse(),
         });
+        if (st.scroll() >= st.start) releaseBrowse();
       });
     }, containerRef);
 

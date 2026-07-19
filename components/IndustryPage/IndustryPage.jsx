@@ -143,16 +143,27 @@ export default function IndustryPage({
       /* Build a paused reveal tween + a once-only trigger that plays it
          through the intro gate. Mirrors the original fromTo vars exactly. */
       const gatedReveal = (targets, fromVars, toVars, trigger, start) => {
+        if (!trigger) return;
         const tween = gsap.fromTo(targets, fromVars, {
           ...toVars,
           paused: true,
         });
-        ScrollTrigger.create({
+        const release = () => runWhenIntroDone(() => tween.play());
+        /* onEnter never fires for a trigger that is ALREADY in range when it
+           is created or refreshed (ScrollTrigger adopts the state silently) —
+           elements in view on load sat hidden until the first scroll. clamp()
+           pins an in-view element's start to 0, and at scrollY 0 the trigger
+           sits exactly ON its start (progress 0) — so compare scroll() >= start
+           at creation and on every refresh and release directly.
+           tween.play() is idempotent, so a later onEnter is harmless. */
+        const st = ScrollTrigger.create({
           trigger,
           start,
           once: true,
-          onEnter: () => runWhenIntroDone(() => tween.play()),
+          onEnter: release,
+          onRefresh: (self) => self.scroll() >= self.start && release(),
         });
+        if (st.scroll() >= st.start) release();
       };
 
       /* Sections — each section's content fades up, the big numeral scales-
