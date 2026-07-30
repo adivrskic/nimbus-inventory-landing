@@ -880,7 +880,12 @@ export default function WarehouseShowcase({ onDemo }) {
         });
       }
 
-      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 96, win(t, 0.6, 0.75), INK(0.8), "center");
+      /* y=56, not 96: the wide edition stamp centered at x=500 spans
+         past x=657, which is exactly where RESLOT → G-1 prints on the
+         top corridor — at y=96 the two overlapped into unreadable
+         mush. y=56 is the free band between the chart frame and the
+         hull that the other beats' first stamp uses. */
+      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 56, win(t, 0.6, 0.75), INK(0.8), "center");
       ctx.restore();
     };
 
