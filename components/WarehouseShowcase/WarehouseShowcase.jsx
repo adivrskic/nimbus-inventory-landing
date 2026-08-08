@@ -67,7 +67,15 @@ const BEATS = [
     num: "04",
     label: "COURSE",
     title: "Twelve picks. One plotted course.",
-    desc: "Aisle by aisle, shortest safe water — fourteen minutes handed back per wave.",
+    /* 201 m and 286 m are measured off this drawing, not invented: the
+       plotted serpentine is 2,678 chart units and the textbook "return
+       heuristic" baseline for the same twelve picks (enter each aisle from
+       the cross-aisle, walk to the deepest pick, come back out) is 3,816 —
+       a 29.8% reduction at 7.5 cm/unit. The old copy claimed "fourteen
+       minutes handed back per wave", which would have meant a 54% cut on
+       an ~12-minute wave: more than double the site's own published
+       "20% shorter routes", and impossible on a floor this size. */
+    desc: "Aisle by aisle, shortest safe water — 201 metres instead of 286.",
   },
   {
     key: "revision",
@@ -622,7 +630,18 @@ export default function WarehouseShowcase({ onDemo }) {
     };
 
     /* Scale bar lives OUTSIDE the hull (between hull and frame) so the
-       bottom corridor stays clear for the course. */
+       bottom corridor stays clear for the course.
+
+       SCALE IS LOAD-BEARING — don't retune it casually. 160 units = 12 m,
+       i.e. 1 unit = 7.5 cm, which is what makes the racking physically
+       honest:
+         bay width   43.3 u = 3.25 m  (real pallet bay 2.7–3.6 m)
+         rack depth  34   u = 2.55 m  (double-deep rack ≈ 2.4–2.7 m)
+         aisle clear 46   u = 3.45 m  (reach/counterbalance 2.7–4.3 m)
+         building   842×454 u = 63×34 m ≈ 23,200 sq ft
+       It previously read 40 m, which made every bay 10.8 m wide and every
+       aisle 11.5 m — a warehouse no forklift has ever seen. The COURSE
+       distance claim is derived from this scale too (see BEATS). */
     const drawScaleBar = (a) => {
       if (a <= 0) return;
       ctx.save();
@@ -631,7 +650,7 @@ export default function WarehouseShowcase({ onDemo }) {
       for (let i = 0; i <= 4; i++)
         line(620 + i * 40, 552, 620 + i * 40, 560, INK(0.45), 1);
       text("0", 620, 572, 8.5, INK(0.35), "center");
-      text("40 m", 780, 572, 8.5, INK(0.35), "center");
+      text("12 m", 780, 572, 8.5, INK(0.35), "center");
       ctx.restore();
     };
 
@@ -844,7 +863,7 @@ export default function WarehouseShowcase({ onDemo }) {
       }
 
       ctx.globalAlpha = sa;
-      stamp("COURSE · 12 WPT · 14 MIN SAVED", 500, 56, win(t, 0.62, 0.78), GOLD(0.9), "center");
+      stamp("COURSE · 12 WPT · 30% SHORTER", 500, 56, win(t, 0.62, 0.78), GOLD(0.9), "center");
       ctx.restore();
     };
 

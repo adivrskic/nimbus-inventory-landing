@@ -25,6 +25,7 @@
   position: relative;
 }
 
+
 @media (max-width: 768px) {
   .scrollSpace {
     height: 260vh;
