@@ -392,10 +392,17 @@ export default function AISection() {
       let last = performance.now();
       let lastProgress = -1;
 
-      /* Ground: constant ocean navy for the whole ride (set in CSS on
-         .stage; uBg initialized to the same color, so the horizon fog
-         always dissolves into exactly the visible ground). No scroll-
-         driven black↔navy flow — the section holds its own color. */
+      /* Edge blending. The navy ground and the vignette both fade out
+         across the first/last EDGE_FADE of the ride, so at the section
+         boundaries the page's own ocean gradient shows through and the
+         seam disappears. Deliberately narrow — the section still reads
+         as solid navy for ~88% of the scroll, which is what we want;
+         only the hand-off is soft. (Fading to a hardcoded black was the
+         earlier mistake: the neighbouring sections aren't black, they
+         sit on a document-wide gradient, so any fixed colour is wrong
+         at one end or the other.) */
+      const EDGE_FADE = 0.06;
+      let lastStageOpacity = -1;
 
       const frame = (now) => {
         if (!visibleRef.current) {
@@ -420,6 +427,16 @@ export default function AISection() {
         else if (Math.abs(p - lastProgress) < 0.0004 && lastProgress >= 0)
           return; // paused + no scroll movement → skip the redraw
         lastProgress = p;
+
+        /* Stage opacity ramp — 0 at both extremes, 1 across the body of the
+           ride, smoothstepped so there's no visible knee. */
+        const eK = clamp01(Math.min(p / EDGE_FADE, (1 - p) / EDGE_FADE));
+        const stageOpacity = eK * eK * (3 - 2 * eK);
+        if (Math.abs(stageOpacity - lastStageOpacity) > 0.002) {
+          lastStageOpacity = stageOpacity;
+          if (stageRef.current)
+            stageRef.current.style.opacity = stageOpacity.toFixed(3);
+        }
 
         const f = Math.min(p * N, N - 0.0001);
         const idx = Math.floor(f);

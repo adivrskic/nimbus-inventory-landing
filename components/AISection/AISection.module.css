@@ -14,11 +14,11 @@
 .section {
   position: relative;
   z-index: 1;
-  /* Constant deep-ocean navy — the section holds its own ground color
-     for the whole ride (no black↔navy scroll flow). Must match COL.bg
-     in AISection.jsx: the terrain shader's uBg is the same color so
-     the horizon fog dissolves into exactly the visible ground. */
-  background: #04101f;
+  /* Transparent so the document-wide ocean gradient on <html> shows
+     through at the section's edges. The navy lives on .ground below,
+     whose opacity is ramped by scroll — that's what makes the seams
+     with the hero above and Features below disappear. */
+  background: transparent;
 }
 
 .space {
@@ -26,13 +26,24 @@
   position: relative;
 }
 
+/* The stage carries the navy ground AND everything drawn on it, and its
+   opacity is ramped to 0 across the first/last few percent of the ride
+   (EDGE_FADE in AISection.jsx).
+   ───────────────────────────────────────────────────────────────────────
+   Fading the whole stage — not just a background layer — is what makes the
+   seams vanish. The terrain is opaque in the near field, so a background
+   fade alone still left a hard edge where the dark terrain met the lighter
+   page gradient below. At the extremes the stage is fully transparent, so
+   the boundary isn't a colour *match* with the neighbouring sections; it is
+   literally the same pixels, and nothing can drift out of sync as the page
+   gradient or the neighbours change. */
 .stage {
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: hidden;
-  /* Same constant navy as .section / COL.bg. */
   background: #04101f;
+  will-change: opacity;
 }
 
 .canvasHost {
