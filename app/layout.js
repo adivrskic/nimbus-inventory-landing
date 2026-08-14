@@ -10,6 +10,7 @@ import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import PageviewTracker from "@/components/Analytics/PageviewTracker";
 import SkipLink from "@/components/SkipLink/SkipLink";
 import RouteAnnouncer from "@/components/RouteAnnouncer/RouteAnnouncer";
+import RevealGuarantee from "@/components/RevealGuarantee/RevealGuarantee";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 import "./globals.ocean-theme.css";
@@ -213,6 +214,9 @@ export default function RootLayout({ children }) {
                 >
                   {children}
                 </main>
+                {/* Safety net: nothing in the viewport is ever left
+                    invisible if a scroll reveal fails to fire. */}
+                <RevealGuarantee />
                 <ChatProvider />
               </DemoHost>
             </TransitionProvider>

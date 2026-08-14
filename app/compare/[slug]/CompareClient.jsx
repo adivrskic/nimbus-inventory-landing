@@ -234,7 +234,7 @@ export default function CompareClient({ competitor, others }) {
   if (!competitor) {
     return (
       <div className={styles.page}>
-        <Nav />
+        {/* No <Nav /> — app/layout.js renders one for every route. */}
         <div className={styles.notFound}>
           <div className={styles.notFoundLabel}>404</div>
           <h1>Comparison not found.</h1>
@@ -256,7 +256,8 @@ export default function CompareClient({ competitor, others }) {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      <Nav />
+      {/* No <Nav /> — app/layout.js renders one for every route; a second
+          duplicated the landmark and every nav link in the tab order. */}
 
       {/* ── HERO ── */}
       <section className={styles.hero}>

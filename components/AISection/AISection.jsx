@@ -541,7 +541,10 @@ export default function AISection() {
       aria-label="The Nautilus intelligence engine"
     >
       <div ref={spaceRef} className={styles.space}>
-        <div ref={stageRef} className={styles.stage}>
+        {/* data-reveal-exempt: this stage is *meant* to sit at opacity 0
+            at the section's edges (see EDGE_FADE) — RevealGuarantee must
+            not "rescue" it. */}
+        <div ref={stageRef} className={styles.stage} data-reveal-exempt>
           <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
           <div className={styles.vignette} aria-hidden="true" />
 

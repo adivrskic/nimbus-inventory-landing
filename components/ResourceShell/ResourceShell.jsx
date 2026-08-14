@@ -229,7 +229,11 @@ export default function ResourceShell({
 
   return (
     <div ref={rootRef} className={styles.page}>
-      <Nav onDemo={onDemo} />
+      {/* No <Nav /> here — app/layout.js already renders one for every
+          route. Mounting a second put a duplicate navigation landmark and
+          a duplicate set of mega-menu panels inside <main>, doubling every
+          nav link in the tab order. (IndustriesIndexClient and
+          IntegrationsIndexClient carry the same warning.) */}
 
       {topStrip && (
         <div className={styles.topStrip}>

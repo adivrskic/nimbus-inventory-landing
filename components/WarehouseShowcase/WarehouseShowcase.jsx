@@ -1002,7 +1002,9 @@ export default function WarehouseShowcase({ onDemo }) {
       aria-label="A day on the floor, charted by Nautilus"
     >
       <div ref={spaceRef} className={styles.scrollSpace}>
-        <div ref={stageRef} className={styles.stage}>
+        {/* data-reveal-exempt: beat captions cross-fade through opacity 0
+            by design, and the stage fades out on exit — not stuck content. */}
+        <div ref={stageRef} className={styles.stage} data-reveal-exempt>
           <canvas ref={canvasRef} className={styles.chart} aria-hidden="true" />
 
           {/* Title block — chart legend, bottom-left */}
