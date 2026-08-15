@@ -252,7 +252,11 @@ export default function Hero({ onDemo }) {
   });
 
   return (
-    <section ref={sectionRef} className={styles.hero}>
+    /* data-reveal-exempt: the hero pins behind the entire page and
+       dissolves itself to opacity 0 on scroll. That 0 is its correct
+       resting state, so RevealGuarantee must never "fix" it — doing so
+       leaves the banner painted behind every later section. */
+    <section ref={sectionRef} className={styles.hero} data-reveal-exempt>
       <div ref={videoBgRef} className={styles.videoBg}>
         {/* Self-hosted 1080p loop (~3.4 MB, audio stripped — it always
             plays muted) + self-hosted poster, replacing the original

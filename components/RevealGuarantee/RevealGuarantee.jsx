@@ -131,6 +131,22 @@ function isAnimating(el) {
   }
 }
 
+/* Scroll-SCRUBBED opacity is a completely different animal from a reveal:
+   the value is bound to scroll position, and sitting at 0 is a legitimate
+   resting state, not a failure. The hero is the reason this exists — it
+   pins behind the whole page and dissolves itself to 0 as you scroll past
+   it. "Rescuing" it forced the banner back to full opacity, where it then
+   showed through every section with a transparent background. */
+function isScrubDriven(el) {
+  try {
+    return gsap
+      .getTweensOf(el)
+      .some((t) => t.scrollTrigger && t.scrollTrigger.vars?.scrub);
+  } catch {
+    return false;
+  }
+}
+
 function reveal(el) {
   el.style.setProperty("opacity", "1", "important");
   if (getComputedStyle(el).visibility === "hidden")
@@ -173,6 +189,7 @@ export default function RevealGuarantee() {
           const stuck = first.filter((el) => {
             if (!el.isConnected) return false;
             if (isAnimating(el)) return false; // mid-flight, leave it
+            if (isScrubDriven(el)) return false; // scroll-bound, 0 is valid
             const cs = getComputedStyle(el);
             return cs.opacity === "0" || cs.visibility === "hidden";
           });
