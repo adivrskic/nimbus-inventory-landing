@@ -64,7 +64,6 @@ const STATS = [
 export default function Hero({ onDemo }) {
   const videoRef = useRef(null);
   const videoBgRef = useRef(null);
-  const scrollDimRef = useRef(null);
   const contentRef = useRef(null);
   const ctasRef = useRef(null);
   const sideRef = useRef(null);
@@ -276,7 +275,6 @@ export default function Hero({ onDemo }) {
         </video>
         <div className={styles.overlay} />
       </div>
-      <div ref={scrollDimRef} className={styles.scrollDim} />
 
       <div ref={contentRef} className={styles.content}>
         <h1 className={styles.headline}>

@@ -6,8 +6,9 @@
       so the html gradient shows through.
    2. .overlay — was a hardcoded `linear-gradient(rgba(0,0,0,X)...)`
       black scrim. Now reads `var(--hero-overlay)` from the ocean theme.
-   3. .scrollDim — `background: var(--black)` still works in v4+ since
-      --black is now solid #02060f. Behavior identical.
+
+   The section dims on scroll by animating its OWN opacity to 0 (see the
+   scrubbed timeline in Hero.jsx) — there is no separate dimming layer.
 
    Responsive line handling (orphan/widow fix):
    - The headline letters are inline-block (for the clip-reveal), which
@@ -53,14 +54,6 @@
   position: absolute;
   inset: 0;
   background: var(--hero-overlay);
-}
-.scrollDim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: var(--black);
-  opacity: 0;
-  pointer-events: none;
 }
 .content {
   position: relative;
