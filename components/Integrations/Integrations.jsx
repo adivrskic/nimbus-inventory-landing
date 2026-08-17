@@ -85,7 +85,10 @@ const DESC_LINES = [
   "No rip-and-replace. Just plug in.",
 ];
 
-export default function Integrations() {
+/* `as` sets the heading level — h2 as one section of the home page, h1 at
+   /integration where the section is the whole page. Without it that route
+   shipped with no <h1>. */
+export default function Integrations({ as: Heading = "h2" }) {
   const glowRef = useGlowCards();
 
   /* All animation for this section lives in one scoped context. useGsap gives
@@ -211,7 +214,7 @@ export default function Integrations() {
   return (
     <section ref={sectionRef} id="integrations" className={styles.section}>
       <div className={styles.header}>
-        <h2 className="heading-lg">
+        <Heading className="heading-lg">
           <SplitText
             tokens={H_LINES}
             classNames={{
@@ -221,7 +224,7 @@ export default function Integrations() {
               space: styles.headSpace,
             }}
           />
-        </h2>
+        </Heading>
         <div className={styles.headerDesc}>
           <SplitText
             lines={DESC_LINES}

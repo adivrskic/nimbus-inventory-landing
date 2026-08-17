@@ -256,7 +256,9 @@ export default function LegalPage({ slug }) {
             Each section's children are independently animated by
             the useEffect via querySelectorAll, so adding/removing
             sections at the data layer doesn't need code changes here. */}
-        <main className={styles.docBody}>
+        {/* <article>, not <main> — layout.js owns the page's single
+            <main>; nesting one is invalid HTML. */}
+        <article className={styles.docBody}>
           {page.sections.map((sec, i) => (
             <section key={i} id={`section-${i + 1}`} className={styles.section}>
               <aside className={styles.sectionGutter}>
@@ -280,7 +282,7 @@ export default function LegalPage({ slug }) {
               )}
             </section>
           ))}
-        </main>
+        </article>
 
         {/* ── SIGNATURE BLOCK ──────────────────────────────────────
             CSS uses an explicit 3-column grid (80 / 1fr / 1fr) and

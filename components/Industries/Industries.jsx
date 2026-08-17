@@ -25,7 +25,10 @@ const H_LINES = [
   ],
 ];
 
-export default function Industries() {
+/* `as` sets the heading level. On the home page this is one section among
+   many and the hero owns the <h1>, so h2 is right. At /industry the section
+   IS the page, and without this the route shipped with no <h1> at all. */
+export default function Industries({ as: Heading = "h2" }) {
   const [active, setActive] = useState(null);
   const isMobileRef = useRef(false);
   const navigateTo = usePageTransition();
@@ -64,7 +67,7 @@ export default function Industries() {
   return (
     <section ref={revealScope} id="industries" className={styles.section}>
       <div ref={headScope} className={styles.header}>
-        <h2 className="heading-lg">
+        <Heading className="heading-lg">
           <SplitText
             tokens={H_LINES}
             classNames={{
@@ -74,7 +77,7 @@ export default function Industries() {
               space: styles.headSpace,
             }}
           />
-        </h2>
+        </Heading>
       </div>
 
       <div className={styles.listWrap}>

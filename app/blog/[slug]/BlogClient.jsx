@@ -160,7 +160,10 @@ export default function BlogClient({ post, related }) {
   const hasTOC = sections.length > 0;
 
   const content = (
-    <main ref={contentRef} className={shellStyles.content}>
+    /* <article>, not <main>: app/layout.js already wraps every route
+       in <main id="main-content">, and nesting <main> is invalid HTML
+       (one per document). This is the article body. */
+    <article ref={contentRef} className={shellStyles.content}>
       {grouped.map((group) => (
         <section key={group.id} id={group.id} className={shellStyles.section}>
           {group.heading && <h2 className={shellStyles.h2}>{group.heading}</h2>}
@@ -204,7 +207,7 @@ export default function BlogClient({ post, related }) {
           </div>
         </div>
       )}
-    </main>
+    </article>
   );
 
   return (

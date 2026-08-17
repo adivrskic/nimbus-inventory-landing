@@ -290,7 +290,9 @@ export default function AskClient({ userEmail, userName } = {}) {
 
   return (
     <>
-      <main className={styles.main}>
+      {/* div, not <main> — layout.js already provides the page's
+          single <main id="main-content">. */}
+      <div className={styles.main}>
         <div className={styles.column}>
           {/* Compact floating header — conversation only. Rises in over the
               top fade band; no solid plate because the scroll mask erases
@@ -406,7 +408,7 @@ export default function AskClient({ userEmail, userName } = {}) {
             {announceText}
           </div>
         </div>
-      </main>
+      </div>
       <Footer />
     </>
   );

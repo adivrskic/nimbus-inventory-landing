@@ -24,7 +24,9 @@ import Integrations from "@/components/Integrations/Integrations";
 export default function IntegrationsIndexClient() {
   return (
     <>
-      <Integrations />
+      {/* as="h1": the section is the whole page here, so its heading is
+          the document's h1 — it stays an h2 on the home page. */}
+      <Integrations as="h1" />
       <Footer />
     </>
   );

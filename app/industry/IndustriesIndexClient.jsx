@@ -19,7 +19,10 @@ import Industries from "@/components/Industries/Industries";
 export default function IndustriesIndexClient() {
   return (
     <>
-      <Industries />
+      {/* as="h1": here the section is the whole page, so its heading is
+          the document's h1 — on the home page it stays an h2 under the
+          hero's h1. */}
+      <Industries as="h1" />
       <Footer />
     </>
   );
