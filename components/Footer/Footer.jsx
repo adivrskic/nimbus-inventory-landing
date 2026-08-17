@@ -227,15 +227,24 @@ export default function Footer() {
             <p className={styles.brandDesc}>
               AI-powered warehouse intelligence for modern operations teams.
             </p>
-            {/* App Store / Google Play badges removed until the mobile app
-                is actually listed. They pointed at https://apps.apple.com
-                and https://play.google.com — the stores' own homepages —
-                so a prospect clicking "App Store" landed on Apple's front
-                page rather than a listing, which reads as a broken link.
-                To restore: re-add two ghost CornerButtons with
-                className={styles.badge} inside a div.badges, pointing at
-                the real listing URLs. The .badges/.badge styles are still
-                in Footer.module.css. */}
+            {/* Coming-soon state — the mobile app isn't listed yet. These
+                are plain <span>s, not links or buttons: there is nowhere to
+                navigate, and a control that does nothing when clicked is
+                worse than no control. They previously pointed at
+                apps.apple.com / play.google.com — the stores' own
+                homepages — which read as a broken link.
+                When the apps ship: swap each span for a ghost
+                <CornerButton href="…" target="_blank" rel="noopener
+                noreferrer" className={styles.badge}> (re-add the import),
+                drop .badgeNote, and remove the dashed-border/dim rules
+                from .badge in Footer.module.css. */}
+            <div className={styles.badges}>
+              <span className={styles.badgeNote}>Mobile apps — coming soon</span>
+              <div className={styles.badgeRow}>
+                <span className={styles.badge}>App Store</span>
+                <span className={styles.badge}>Google Play</span>
+              </div>
+            </div>
           </div>
           {COLUMNS.map((col, i) => (
             <div

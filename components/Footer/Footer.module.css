@@ -49,17 +49,42 @@
   max-width: 260px;
   font-weight: 400;
 }
+/* Store badges — an unpublished-app "coming soon" state.
+   ───────────────────────────────────────────────────────────────────────
+   These are deliberately NOT links or buttons. The apps aren't listed
+   yet, so there is nowhere to send anyone; the previous version pointed
+   at the stores' own homepages, which read as a broken link. They are
+   plain text styled to look inert — dashed border, low contrast, default
+   cursor — with the note above carrying the actual message, so the state
+   is conveyed by text rather than by styling alone. */
 .badges {
-  display: flex;
-  gap: 10px;
   margin-top: 24px;
 }
-/* Store badges are CornerButtons (ghost) — this class only compacts
-   them for the footer; the shared component carries the look. */
+.badgeNote {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.32);
+  margin-bottom: 10px;
+}
+.badgeRow {
+  display: flex;
+  gap: 10px;
+}
 .badge {
   padding: 11px 0;
   width: 128px;
+  text-align: center;
+  border: 1px dashed rgba(242, 240, 239, 0.13);
+  font-family: var(--mono);
   font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.26);
+  cursor: default;
+  user-select: none;
 }
 .col {
   opacity: 0;
