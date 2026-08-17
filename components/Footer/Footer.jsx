@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Logo from "@/components/shared/Logo";
-import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import styles from "./Footer.module.css";
 
@@ -228,26 +227,15 @@ export default function Footer() {
             <p className={styles.brandDesc}>
               AI-powered warehouse intelligence for modern operations teams.
             </p>
-            <div className={styles.badges}>
-              <CornerButton
-                variant="ghost"
-                href="https://apps.apple.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.badge}
-              >
-                App Store
-              </CornerButton>
-              <CornerButton
-                variant="ghost"
-                href="https://play.google.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.badge}
-              >
-                Google Play
-              </CornerButton>
-            </div>
+            {/* App Store / Google Play badges removed until the mobile app
+                is actually listed. They pointed at https://apps.apple.com
+                and https://play.google.com — the stores' own homepages —
+                so a prospect clicking "App Store" landed on Apple's front
+                page rather than a listing, which reads as a broken link.
+                To restore: re-add two ghost CornerButtons with
+                className={styles.badge} inside a div.badges, pointing at
+                the real listing URLs. The .badges/.badge styles are still
+                in Footer.module.css. */}
           </div>
           {COLUMNS.map((col, i) => (
             <div

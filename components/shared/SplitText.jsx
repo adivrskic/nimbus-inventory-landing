@@ -62,7 +62,7 @@ import { useMemo } from "react";
       />
 
    3) tokens — full control, useful when each word has its own accent
-      flag (Pricing, ProblemSolution, FinalCTA, Industries…)
+      flag (Pricing, ProblemSolution, Industries, Integrations…)
       <SplitText
         tokens={[
           [{ t: "Built", a: false }, { t: "for", a: false }],
