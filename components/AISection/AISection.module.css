@@ -96,10 +96,17 @@
   color: rgba(185, 208, 226, 0.55);
 }
 
+/* This is the section's <h2> wearing HUD type — reset the heading
+   defaults so it inherits the strip's mono 10px caps. */
 .hudLive {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: uppercase;
 }
 
 .hudDot {

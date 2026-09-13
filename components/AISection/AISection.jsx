@@ -300,13 +300,25 @@ export default function AISection() {
     return () => obs.disconnect();
   }, []);
 
-  /* WebGL terrain. */
+  /* WebGL terrain — loaded on the first scroll, not on mount.
+     three.js is ~730 KB of script. Importing it on mount made every home
+     visit download, parse and run it during the initial load (with this
+     component's setup, ~0.9 s of main-thread time in Lighthouse's throttled
+     mobile run) even for visitors who never scroll past the hero. This
+     section sits directly under the hero, so starting on the first scroll
+     still lands it before the stage is on screen; uReveal fades the terrain
+     in whenever it arrives, and the navy ground + DOM chrome stand on their
+     own until then. webpackExports trims the chunk to the classes used
+     below instead of the whole library. */
   useEffect(() => {
     let cleanup;
     let cancelled = false;
 
-    (async () => {
-      const THREE = await import("three");
+    const init = async () => {
+      const THREE = await import(
+        /* webpackExports: ["Color", "Mesh", "PerspectiveCamera", "PlaneGeometry", "Scene", "ShaderMaterial", "Vector3", "WebGLRenderer"] */
+        "three"
+      );
       if (cancelled || !hostRef.current) return;
 
       const host = hostRef.current;
@@ -523,10 +535,26 @@ export default function AISection() {
         if (renderer.domElement.parentNode === host)
           host.removeChild(renderer.domElement);
       };
-    })();
+    };
+
+    let started = false;
+    const onScroll = () => {
+      if (window.scrollY > 0) go();
+    };
+    const go = () => {
+      if (started) return;
+      started = true;
+      window.removeEventListener("scroll", onScroll);
+      init();
+    };
+    /* A restored or hash-linked load can arrive already scrolled, with no
+       scroll event still to come — start straight away. */
+    if (window.scrollY > 0) go();
+    else window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       cancelled = true;
+      window.removeEventListener("scroll", onScroll);
       cleanup?.();
     };
   }, []);
@@ -548,12 +576,14 @@ export default function AISection() {
           <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
           <div className={styles.vignette} aria-hidden="true" />
 
-          {/* HUD strip — chart-instrument header */}
+          {/* HUD strip — chart-instrument header. The live label is the
+              section's h2; without one, the beat titles below were h3s
+              sitting straight under the hero's h1. */}
           <div className={styles.hud}>
-            <span className={styles.hudLive}>
+            <h2 className={styles.hudLive}>
               <span className={styles.hudDot} />
-              THE INTELLIGENCE ENGINE
-            </span>
+              The intelligence engine
+            </h2>
             <span className={styles.hudReadout} key={beat.key}>
               {beat.hud}
             </span>
