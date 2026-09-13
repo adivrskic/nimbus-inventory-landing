@@ -371,8 +371,20 @@ export default function WarehouseShowcase({ onDemo }) {
     let sc = 1;
     let ox = 0;
     let oy = 0;
+    /* Compact layout, for stages where the chart gets small (phones, short
+       landscape windows). The chart's type is a fixed CSS size, so below
+       ~0.66 CSS px per chart unit it stops fitting the floor plan: stacked
+       stamps overprinted each other and ran off the frame, and the long bay
+       labels printed over one another. In compact mode the stamps and the
+       spoken query move to a band above the chart, and the per-bay
+       annotations that can't fit are left out — the caption carries them. */
+    let compact = false;
+    const STAMP_BAND = 72; // CSS px reserved above the chart in compact mode
     const X = (x) => ox + x * sc;
     const Y = (y) => oy + y * sc;
+    /* Band slot centers in device px: slot 0 sits just above the chart
+       frame, slot 1 above that. */
+    const bandY = (slot) => Y(22) - px(22) - slot * px(32);
 
     const resize = () => {
       const stage = canvas.parentElement;
@@ -383,10 +395,15 @@ export default function WarehouseShowcase({ onDemo }) {
       canvas.height = Math.round(h * dpr);
       /* Fit the chart into the stage's top ~78% — the bottom band is
          reserved for the DOM caption so ink and type never collide. */
-      const fit = Math.min((w * dpr) / U.w, (h * dpr * 0.78) / U.h) * 0.94;
-      sc = fit;
+      const fitFor = (band) =>
+        Math.min((w * dpr) / U.w, ((h - band) * dpr * 0.78) / U.h) * 0.94;
+      compact = fitFor(0) / dpr < 0.66;
+      /* Portrait phones already have the band's worth of empty stage above
+         the chart; short stages give up a little scale for it. */
+      const band = compact ? STAMP_BAND : 0;
+      sc = fitFor(band);
       ox = (w * dpr - U.w * sc) / 2;
-      oy = (h * dpr * 0.8 - U.h * sc) / 2;
+      oy = band * dpr + ((h - band) * dpr * 0.8 - U.h * sc) / 2;
     };
     resize();
     window.addEventListener("resize", resize);
@@ -463,21 +480,42 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    const text = (str, x, y, size, fillStyle, align = "left", ls = 0) => {
+    /* `slot` (optional) names a compact-mode band slot: in compact layout
+       the string is drawn centered in that band above the chart instead of
+       at its chart position (see bandY). */
+    const text = (str, x, y, size, fillStyle, align = "left", ls = 0, slot) => {
+      const banded = compact && slot !== undefined;
       ctx.save();
       ctx.font = font(size);
       ctx.fillStyle = fillStyle;
-      ctx.textAlign = align;
+      ctx.textAlign = banded ? "center" : align;
       ctx.textBaseline = "middle";
       if (ls) ctx.letterSpacing = `${px(ls)}px`;
-      ctx.fillText(str, X(x), Y(y));
+      ctx.fillText(
+        str,
+        banded ? canvas.width / 2 : X(x),
+        banded ? bandY(slot) : Y(y)
+      );
       ctx.restore();
     };
 
-    const typed = (str, f, x, y, size, fillStyle, align = "left") => {
+    /* Largest size ≤ `size` at which `str` fits the canvas with a margin.
+       Measured on the full string, so typed text doesn't resize as it types. */
+    const fitSize = (str, size, ls) => {
+      ctx.save();
+      ctx.font = font(size);
+      ctx.letterSpacing = `${px(ls)}px`;
+      const wpx = ctx.measureText(str).width;
+      ctx.restore();
+      const max = canvas.width - px(32);
+      return wpx > max ? size * (max / wpx) : size;
+    };
+
+    const typed = (str, f, x, y, size, fillStyle, align = "left", slot) => {
       const n = Math.round(str.length * clamp01(f));
       const s = str.slice(0, n) + (f < 1 && n < str.length ? "▏" : "");
-      text(s, x, y, size, fillStyle, align, 0.6);
+      const sz = compact && slot !== undefined ? fitSize(str, size, 0.6) : size;
+      text(s, x, y, sz, fillStyle, align, 0.6, slot);
     };
 
     const hatch = (x, y, w, h, f, stroke, gap = 7) => {
@@ -497,24 +535,35 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.restore();
     };
 
-    const stamp = (str, x, y, f, color, align = "left") => {
+    const stamp = (str, x, y, f, color, align = "left", slot) => {
       if (f <= 0) return;
+      const banded = compact && slot !== undefined;
       ctx.save();
       ctx.globalAlpha *= Math.min(1, f * 2);
-      ctx.font = font(10.5);
-      const wpx = ctx.measureText(str).width + px(18);
+      /* Letter spacing has to be set BEFORE measuring. It used to be applied
+         after measureText, so every box came out 1.2px per character short
+         and the text ran past its right edge ("30% SHO|RTER"). */
+      let size = 10.5;
+      ctx.font = font(size);
+      ctx.letterSpacing = `${px(1.2)}px`;
+      let wpx = ctx.measureText(str).width + px(18);
+      const maxW = canvas.width - px(24);
+      if (wpx > maxW) {
+        size *= maxW / wpx;
+        ctx.font = font(size);
+        wpx = ctx.measureText(str).width + px(18);
+      }
       const hpx = px(24);
-      let bx = X(x);
-      if (align === "right") bx -= wpx;
-      if (align === "center") bx -= wpx / 2;
-      const by = Y(y) - hpx / 2;
+      let bx = banded ? canvas.width / 2 : X(x);
+      if (banded || align === "center") bx -= wpx / 2;
+      else if (align === "right") bx -= wpx;
+      const by = (banded ? bandY(slot) : Y(y)) - hpx / 2;
       ctx.strokeStyle = color;
       ctx.lineWidth = px(1);
       ctx.strokeRect(bx, by, wpx, hpx);
       ctx.fillStyle = color;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.letterSpacing = `${px(1.2)}px`;
       ctx.fillText(str, bx + px(9), by + hpx / 2 + px(0.5));
       ctx.restore();
     };
@@ -660,7 +709,9 @@ export default function WarehouseShowcase({ onDemo }) {
         const [hx, hy] = pointAt(HULL, HULL_LEN, f);
         circle(hx, hy, 3, null, 0, GOLD(0.9)); // the plotter pen
       }
-      if (f >= 0.999) {
+      /* Compact: the dock labels run into zone A's bay counts and PACK-OUT
+         sits on the course's final leg, so the notches go unlabeled. */
+      if (f >= 0.999 && !compact) {
         text("RECEIVING 01", 60, 152, 8.5, INK(0.4), "left");
         text("RECEIVING 02", 60, 300, 8.5, INK(0.4), "left");
         text("PACK-OUT", 846, 478, 8.5, INK(0.4), "center");
@@ -746,7 +797,8 @@ export default function WarehouseShowcase({ onDemo }) {
           56,
           11,
           INK(0.75),
-          "center"
+          "center",
+          1 // compact: the band's upper slot, above the stamp
         );
         /* Guide path: dock → corridors → aisle → bay. Aisles only. */
         tracePoly(GUIDE, GUIDE_LEN, win(t, 0.2, 0.5), 1, INK(0.4), [6, 4]);
@@ -762,7 +814,7 @@ export default function WarehouseShowcase({ onDemo }) {
             "center"
           );
         }
-        stamp("FIX 0.4 S", 500, 96, win(t, 0.8, 0.95), GOLD(0.9), "center");
+        stamp("FIX 0.4 S", 500, 96, win(t, 0.8, 0.95), GOLD(0.9), "center", 0);
       }
 
       /* Permanent ink: the lit bay + the fix mark in the aisle. */
@@ -817,12 +869,14 @@ export default function WarehouseShowcase({ onDemo }) {
            lower-bank fronts (cols 4 and 6) from printing on the same
            line and colliding at narrow stage widths. */
         const ly = fr.bank === 0 || fr.bay === 0 ? GAP_Y : BOT_Y + 14;
-        if (f > 0.75)
+        /* Compact: at phone scale these ~150px labels overprint each other
+           across the cross-aisle; the stamps and caption carry the story. */
+        if (f > 0.75 && !compact)
           typed(fr.label, win(f, 0.75, 1), cx, ly, 9, RED(0.8), "center");
       });
       ctx.globalAlpha = sa;
-      stamp("3 DEPLETION FRONTS · NEXT 48 H", 500, 56, win(t, 0.55, 0.7), RED(0.85), "center");
-      stamp("DRAFT PO READY — 3 LINES", 500, 96, win(t, 0.78, 0.92), GOLD(0.9), "center");
+      stamp("3 DEPLETION FRONTS · NEXT 48 H", 500, 56, win(t, 0.55, 0.7), RED(0.85), "center", 1);
+      stamp("DRAFT PO READY — 3 LINES", 500, 96, win(t, 0.78, 0.92), GOLD(0.9), "center", 0);
       ctx.restore();
     };
 
@@ -843,7 +897,8 @@ export default function WarehouseShowcase({ onDemo }) {
         const br = bayRect(p.col, p.bank, p.bay);
         const face = br.x + br.w / 2 > wx ? br.x : br.x + br.w;
         line(wx + Math.sign(face - wx) * 6, wy, face, wy, INK(0.35), 0.9);
-        if (wf > 0.8)
+        /* Compact: waypoint numbers land on the bay counts beside them. */
+        if (wf > 0.8 && !compact)
           text(String(n + 1), wx, wy - 13, 8.5, INK(0.5), "center");
       });
 
@@ -863,7 +918,7 @@ export default function WarehouseShowcase({ onDemo }) {
       }
 
       ctx.globalAlpha = sa;
-      stamp("COURSE · 12 WPT · 30% SHORTER", 500, 56, win(t, 0.62, 0.78), GOLD(0.9), "center");
+      stamp("COURSE · 12 WPT · 30% SHORTER", 500, 56, win(t, 0.62, 0.78), GOLD(0.9), "center", 0);
       ctx.restore();
     };
 
@@ -882,7 +937,10 @@ export default function WarehouseShowcase({ onDemo }) {
           arrowhead(r.path, GOLD(0.85));
           const tb = bayRect(r.to.col, r.to.bank, r.to.bay);
           rect(tb.x, tb.y, tb.w, tb.h, 1, 1.2, GOLD(0.7));
-          text(r.label, r.labelAt[0], r.labelAt[1], 9, GOLD(0.8), "center");
+          /* Compact: no room on the corridors for the label; the arrow and
+             gold outline still show the move. */
+          if (!compact)
+            text(r.label, r.labelAt[0], r.labelAt[1], 9, GOLD(0.8), "center");
         }
       });
 
@@ -893,8 +951,10 @@ export default function WarehouseShowcase({ onDemo }) {
           const [cx, cy] = bayCenter(fr.col, fr.bank, fr.bay);
           isobar(cx, cy, 24, 20 + i, win(rf, i * 0.1, 0.7 + i * 0.1), GOLD(0.45), 1);
           isobar(cx, cy, 33, 24 + i, win(rf, 0.15 + i * 0.1, 0.85 + i * 0.1), GOLD(0.3), 0.9);
-          /* +N tag sits in the aisle beside the bay, never on a rack. */
-          if (rf > 0.7)
+          /* +N tag sits in the aisle beside the bay, never on a rack. At
+             compact scale the aisle is too narrow for it; the bay's count
+             still rolls up in gold. */
+          if (rf > 0.7 && !compact)
             text(`+${fr.restock}`, RACK_X[fr.col] - 8, cy, 8.5, GOLD(0.8), "right");
         });
       }
@@ -904,7 +964,7 @@ export default function WarehouseShowcase({ onDemo }) {
          top corridor — at y=96 the two overlapped into unreadable
          mush. y=56 is the free band between the chart frame and the
          hull that the other beats' first stamp uses. */
-      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 56, win(t, 0.6, 0.75), INK(0.8), "center");
+      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 56, win(t, 0.6, 0.75), INK(0.8), "center", 0);
       ctx.restore();
     };
 
@@ -999,8 +1059,14 @@ export default function WarehouseShowcase({ onDemo }) {
       ref={sectionRef}
       id="warehouse"
       className={styles.section}
-      aria-label="A day on the floor, charted by Nautilus"
+      aria-labelledby="warehouse-heading"
     >
+      {/* Screen-reader-only because the visible title block is hidden
+          under 900px. Without it the section had no heading of its own
+          above its h3 beat titles. */}
+      <h2 id="warehouse-heading" className={styles.srOnly}>
+        A day on the floor, charted by Nautilus
+      </h2>
       <div ref={spaceRef} className={styles.scrollSpace}>
         {/* data-reveal-exempt: beat captions cross-fade through opacity 0
             by design, and the stage fades out on exit — not stuck content. */}
@@ -1061,7 +1127,7 @@ export default function WarehouseShowcase({ onDemo }) {
           <button
             type="button"
             className={`${styles.cta} ${active === NB - 1 ? styles.ctaOn : ""}`}
-            onClick={onDemo}
+            onClick={() => onDemo?.(undefined, { source: "chart_room" })}
             tabIndex={active === NB - 1 ? 0 : -1}
           >
             Chart your own floor — book a demo

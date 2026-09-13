@@ -20,6 +20,19 @@
   background: #051221;
 }
 
+/* Section heading, screen-reader only (see WarehouseShowcase.jsx). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .scrollSpace {
   height: 380vh;
   position: relative;
@@ -221,14 +234,18 @@
   .titleBlock {
     display: none;
   }
+  /* Centered with insets + auto margins rather than right:50% and a
+     translate. An absolutely positioned box shrinks to fit the space its
+     offsets leave, so right:50% squeezed the label into half the stage and
+     it wrapped to three lines on phones. */
   .cta {
-    right: 50%;
-    transform: translate(50%, 10px);
+    left: 16px;
+    right: 16px;
+    width: fit-content;
+    margin: 0 auto;
     bottom: auto;
     top: clamp(16px, 4vh, 40px);
-  }
-  .ctaOn {
-    transform: translate(50%, 0);
+    text-align: center;
   }
 }
 
