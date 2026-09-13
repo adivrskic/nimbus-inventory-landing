@@ -349,7 +349,11 @@ export default function IntegrationPage({ slug }) {
         <p className={styles.heroDesc}>{integration.desc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={openDemo}>Talk to our team</CornerButton>
+          <CornerButton
+            onClick={() => openDemo(undefined, { source: "integration_page" })}
+          >
+            Talk to our team
+          </CornerButton>
         </div>
       </section>
 

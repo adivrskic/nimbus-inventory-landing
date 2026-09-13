@@ -11,6 +11,7 @@ import {
 import Logo from "@/components/shared/Logo";
 import CornerButton from "@/components/shared/CornerButton";
 import { validateDemo, EMAIL_RE } from "@/lib/validation";
+import { track, trackLead, trackLeadError } from "@/lib/analytics";
 import styles from "./DemoModal.module.css";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -392,7 +393,7 @@ const INITIAL_FORM = {
 /* ═══════════════════════════════════════════════════════════════════════
    COMPONENT
    ═══════════════════════════════════════════════════════════════════════ */
-export default function DemoModal({ isOpen, onClose, initialTopic }) {
+export default function DemoModal({ isOpen, onClose, initialTopic, source }) {
   const backdropRef = useRef(null);
   const panelRef = useRef(null);
   const leftColRef = useRef(null);
@@ -464,6 +465,10 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
       const validationErrors = validateDemo(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
+        trackLeadError({
+          leadType: "demo",
+          reason: `invalid:${Object.keys(validationErrors).join(",")}`,
+        });
         const firstErr = Object.keys(validationErrors)[0];
         const el = document.getElementById(`demo-${firstErr}`);
         if (el) el.focus({ preventScroll: true });
@@ -480,6 +485,9 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
             ...form,
             topic: topicKey,
             topicLabel: topic.emailLabel,
+            /* The API stores source_url with the submission; this form
+               just never sent it. */
+            source_url: window.location.pathname,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -489,7 +497,18 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
             data.error || "Could not send your request. Please try again."
           );
           setStatus("error");
+          trackLeadError({ leadType: "demo", reason: `http_${res.status}` });
           return;
+        }
+        /* The site's primary GA4 conversion. A filled honeypot is a bot
+           the API silently dropped, so it doesn't count. */
+        if (!form.website) {
+          trackLead({
+            leadType: "demo",
+            topic: topicKey,
+            submissionId: data.submissionId,
+            source,
+          });
         }
         setStatus("success");
       } catch (err) {
@@ -498,9 +517,10 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
           "Network error. Please check your connection and try again."
         );
         setStatus("error");
+        trackLeadError({ leadType: "demo", reason: "network" });
       }
     },
-    [form, status, topicKey, topic.emailLabel]
+    [form, status, topicKey, topic.emailLabel, source]
   );
 
   /* ── Mount/unmount + open/close animations ────────────────────────
@@ -845,6 +865,13 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.calendlyBtn}
+                  onClick={() =>
+                    track("calendly_click", {
+                      surface: "demo_success",
+                      topic: topicKey,
+                      cta_source: source || "unknown",
+                    })
+                  }
                   data-success-item
                 >
                   Book a time directly
@@ -968,6 +995,13 @@ export default function DemoModal({ isOpen, onClose, initialTopic }) {
                   rel="noopener noreferrer"
                   className={`${styles.calendlyCard} ${styles.topicSwap}`}
                   key={`cal-${topicKey}`}
+                  onClick={() =>
+                    track("calendly_click", {
+                      surface: "demo_modal",
+                      topic: topicKey,
+                      cta_source: source || "unknown",
+                    })
+                  }
                 >
                   <span className={styles.calendlyCardIcon}>
                     <CalendarIcon />

@@ -283,7 +283,11 @@ export default function IndustryPage({
         <p className={styles.heroSub}>{industry.heroDesc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={openDemo}>Talk to our team</CornerButton>
+          <CornerButton
+            onClick={() => openDemo(undefined, { source: "industry_page" })}
+          >
+            Talk to our team
+          </CornerButton>
           <TransitionLink href="/pricing" className={styles.heroSecondary}>
             See pricing →
           </TransitionLink>

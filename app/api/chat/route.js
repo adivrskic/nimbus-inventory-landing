@@ -546,6 +546,10 @@ export async function POST(request) {
               });
             } else if (call.name === "get_calendly_link") {
               send("calendly", { url: result.url, topic: result.topic });
+            } else if (call.name === "capture_lead" && result?.ok) {
+              /* The lead is already saved; this only lets the client fire
+                 the chat's GA4 conversion (generate_lead). */
+              send("lead", { intent: call.input?.intent || null });
             } else if (call.name === "propose_cta") {
               send("cta", result);
               await supabase.from("chat_events").insert({

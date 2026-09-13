@@ -294,7 +294,7 @@ export default function CompareClient({ competitor, others }) {
         <p className={styles.heroDesc}>{competitor.heroDesc}</p>
 
         <div className={styles.heroCTA}>
-          <CornerButton onClick={() => openDemo("migration")}>
+          <CornerButton onClick={() => openDemo("migration", { source: "compare_page" })}>
             See a live comparison
           </CornerButton>
           <TransitionLink href="/pricing" className={styles.heroSecondary}>
@@ -465,7 +465,7 @@ export default function CompareClient({ competitor, others }) {
         title="Let's show you Nautilus running on your data."
         desc={`A 30-minute call with a Nautilus engineer. We'll walk through your current ${competitor.name} setup and show how each piece would work in Nautilus — including the migration path.`}
         primaryAction={{
-          onClick: () => openDemo("migration"),
+          onClick: () => openDemo("migration", { source: "compare_page" }),
           label: "Book the demo",
         }}
         secondaryAction={{

@@ -217,7 +217,7 @@ export default function CompareIndexClient({ competitors }) {
         title="We'll run the comparison live."
         desc="Tell us what you're evaluating against. We'll put together a tailored side-by-side using your real requirements and walk you through it in 30 minutes."
         primaryAction={{
-          onClick: () => openDemo("migration"),
+          onClick: () => openDemo("migration", { source: "compare_index" }),
           label: "Book a comparison call",
         }}
         secondaryAction={{

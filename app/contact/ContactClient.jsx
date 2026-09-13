@@ -8,6 +8,7 @@ import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
 import { validateContact } from "@/lib/validation";
+import { trackLead, trackLeadError } from "@/lib/analytics";
 import styles from "./Contact.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -257,6 +258,10 @@ export default function ContactClient() {
       const validationErrors = validateContact(form);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
+        trackLeadError({
+          leadType: "contact",
+          reason: `invalid:${Object.keys(validationErrors).join(",")}`,
+        });
         return;
       }
 
@@ -282,7 +287,17 @@ export default function ContactClient() {
             data.error || "Could not send your message. Please try again."
           );
           setStatus("error");
+          trackLeadError({ leadType: "contact", reason: `http_${res.status}` });
           return;
+        }
+        /* The GA4 conversion. A filled honeypot is a bot the API has
+           silently dropped — don't count those. */
+        if (!form.website) {
+          trackLead({
+            leadType: "contact",
+            topic: form.usage || undefined,
+            submissionId: data.submissionId,
+          });
         }
         /* Success path also wipes form data + errors so if the user
            clicks "Send another" the form starts clean. handleReset

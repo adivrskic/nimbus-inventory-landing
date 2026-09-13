@@ -17,6 +17,8 @@
 //                            as a book_call CTA card — see the calendly note)
 //   - chat_rate_limit_hit    on 429 response
 //   - chat_reset             in reset()
+//   - generate_lead          in handleEvent when a `lead` event arrives
+//                            (capture_lead saved the visitor's email)
 //
 // `surface` ('drawer'|'ask_page') is passed in via the optional `surface`
 // option on send() / reset() so the hook itself stays surface-agnostic
@@ -26,7 +28,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { track } from "@/lib/analytics";
+import { track, trackLead } from "@/lib/analytics";
 
 const STORAGE_KEY = "Nautilus_chat_conv_id";
 
@@ -242,6 +244,10 @@ export function useChatStream({ userEmail, userName } = {}) {
           reason: "User asked to book time.",
         });
       }
+    } else if (type === "lead") {
+      /* capture_lead saved the visitor's email server-side — the chat's
+         GA4 conversion, counted alongside the demo and contact forms. */
+      trackLead({ leadType: "chat", topic: payload?.intent });
     } else if (type === "error") {
       setMessages((prev) =>
         prev.map((m) =>
