@@ -578,3 +578,23 @@
     display: none;
   }
 }
+
+/* Secondary "Or request a demo" link beside a tier's primary CTA (Pro
+   leads with the free trial). */
+.tierSecondaryCta {
+  margin-left: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.6);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(242, 240, 239, 0.2);
+  padding: 6px 0;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s;
+}
+.tierSecondaryCta:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}

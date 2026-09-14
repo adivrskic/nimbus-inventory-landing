@@ -649,3 +649,90 @@
 .mobileFooterLink:active {
   color: var(--accent);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+           TRIAL + DEMO CTAs
+           ───────────────────────────────────────────────────────────────────────
+           "Start free trial" is an <a> to the app's signup and reuses .cta.
+           The demo request becomes an outline secondary that only shows
+           where both buttons fit: the link row is absolutely centered, so
+           below ~1360px a second button would run into it.
+           ═══════════════════════════════════════════════════════════════════════ */
+.ctaGhost {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  background: transparent;
+  padding: 8px 16px;
+  border: 1px solid rgba(242, 240, 239, 0.25);
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s;
+}
+.ctaGhost:hover {
+  border-color: var(--accent-bright);
+  color: var(--accent-bright);
+}
+@media (max-width: 1359px) {
+  .ctaGhost {
+    display: none;
+  }
+}
+
+/* The mobile trial CTA is a link, so it needs block layout the button
+   version got for free. */
+.mobileCta {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.mobileCtaSecondary {
+  margin-top: 12px;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--white);
+  background: transparent;
+  padding: 15px 0;
+  border: 1px solid rgba(242, 240, 239, 0.25);
+  border-radius: 0;
+  cursor: pointer;
+}
+.mobileCtaSecondary:active {
+  border-color: var(--accent-bright);
+  color: var(--accent-bright);
+}
+
+/* ── Fitting the bar ───────────────────────────────────────────────────
+   With Pricing in the bar and Start free trial as the CTA, six links stop
+   fitting between the logo and the CTA below ~1130px, and at 769-900px
+   even four ran into the logo and under the CTA. The in-page anchors
+   (AI Engine, Features) give way first; below 900px the hamburger takes
+   over, instead of at 768px. Appended last so these win over the base
+   rules above without raising specificity. */
+@media (max-width: 1180px) {
+  .links .linkAnchor {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .links,
+  .megaWrap,
+  .scrim {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+}
+/* Between the breakpoints the bar is still 72px tall, not 60px. */
+@media (min-width: 769px) and (max-width: 900px) {
+  .mobileMenu {
+    top: 72px;
+  }
+}

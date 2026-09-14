@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useAnimationPaused } from "@/lib/AnimationContext";
 import { useDemo } from "@/lib/DemoContext";
+import { track } from "@/lib/analytics";
+import { signupUrl } from "@/lib/site";
 import gsap from "gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
@@ -109,6 +111,11 @@ const MORE_GROUPS = [
         desc: "Estimate your annual savings",
         href: "/calculator",
       },
+      {
+        title: "Floor plan review",
+        desc: "Send your layout, get notes back",
+        href: "/floor-plan",
+      },
       { title: "Compare", desc: "Nautilus vs alternatives", href: "/compare" },
     ],
   },
@@ -156,8 +163,8 @@ const MORE_GROUPS = [
    mirrors the desktop More mega menu since mobile can't fan out the same way. */
 const EXTRA_LINKS = [
   { text: "Ask Nautilus", href: "/ask" },
-  { text: "Pricing", href: "/pricing" },
   { text: "ROI Calculator", href: "/calculator" },
+  { text: "Floor plan review", href: "/floor-plan" },
   { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
@@ -290,13 +297,28 @@ function MobileMenu({ open, links, onClose, onDemo }) {
           ))}
         </div>
 
-        <button
-          data-cta=""
-          className={styles.mobileCta}
-          onClick={() => onDemo(undefined, { source: "nav" })}
-        >
-          Request a Demo
-        </button>
+        {/* Trial first: it's the self-serve path, and the demo request
+            stays as the secondary. One data-cta wrapper so the menu
+            timeline animates both buttons in together. */}
+        <div data-cta="">
+          <a
+            href={signupUrl("nav_mobile")}
+            className={styles.mobileCta}
+            onClick={() => {
+              track("start_trial_click", { cta_source: "nav_mobile" });
+              onClose();
+            }}
+          >
+            Start free trial
+          </a>
+          <button
+            type="button"
+            className={styles.mobileCtaSecondary}
+            onClick={() => onDemo(undefined, { source: "nav_mobile" })}
+          >
+            Request a demo
+          </button>
+        </div>
 
         <div data-footer="" className={styles.mobileFooter}>
           <a
@@ -471,7 +493,11 @@ export default function Nav({ onDemo, dark }) {
     { text: "Features", href: "/#features" },
     { text: "Integrations", href: "/integration", mega: "integrations" },
     { text: "Industries", href: "/industry", mega: "industries" },
-    { text: "More", href: "/pricing", mega: "more" },
+    { text: "Pricing", href: "/pricing" },
+    /* Was "More" linking to /pricing. Pricing is top-level now, and "More"
+       was the non-descriptive link text Lighthouse's SEO audit flagged. The
+       mega key stays "more" — it names the panel, not the label. */
+    { text: "Resources", href: "/help", mega: "more" },
   ];
 
   return (
@@ -538,7 +564,7 @@ export default function Nav({ onDemo, dark }) {
               <TransitionLink
                 key={l.text}
                 href={l.href}
-                className="bracket-hover bracket-hover--sm"
+                className={`bracket-hover bracket-hover--sm ${l.href.startsWith("/#") ? styles.linkAnchor : ""}`}
               >
                 {l.text}
               </TransitionLink>
@@ -577,11 +603,19 @@ export default function Nav({ onDemo, dark }) {
               </svg>
             )}
           </button> */}
-          <button
+          <a
+            href={signupUrl("nav")}
             className={`bracket-hover ${styles.cta} hide-mobile`}
-            onClick={fireDemo}
+            onClick={() => track("start_trial_click", { cta_source: "nav" })}
           >
-            Request a Demo
+            Start free trial
+          </a>
+          <button
+            type="button"
+            className={`bracket-hover ${styles.ctaGhost} hide-mobile`}
+            onClick={() => fireDemo(undefined, { source: "nav" })}
+          >
+            Book a demo
           </button>
 
           {/* Hamburger */}
@@ -609,9 +643,9 @@ export default function Nav({ onDemo, dark }) {
         open={mobileOpen}
         links={links.filter((l) => l.mega !== "more")}
         onClose={() => setMobileOpen(false)}
-        onDemo={() => {
+        onDemo={(topic, opts) => {
           setMobileOpen(false);
-          fireDemo();
+          fireDemo(topic, opts);
         }}
       />
 

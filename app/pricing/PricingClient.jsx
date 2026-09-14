@@ -13,6 +13,8 @@ import CheckList from "@/components/shared/CheckList";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
+import { signupUrl } from "@/lib/site";
+import { PRICING_FAQS } from "./pricingFaqs";
 import styles from "./Pricing.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -25,30 +27,35 @@ const PRICING = {
   },
 };
 
-/* Each tier carries a `topic` that's passed to openDemo() when its CTA
+/* Each tier carries a `topic` that's passed to openDemo() when its demo CTA
    fires. The modal uses that to preselect the chip, drive the Calendly
-   utm_content param, and label the lead email. */
+   utm_content param, and label the lead email. Pro leads with the
+   self-serve trial (`ctaHref`); its demo request drops to a secondary link.
+
+   Features list only what exists. Uptime SLAs, SSO / SAML, "SOC 2 + HIPAA
+   reports" and voice commands were listed here and none of them do. */
 const TIERS = [
   {
     key: "pro",
     number: "01",
     name: "Pro",
     label: "For single warehouses",
-    desc: "Everything you need to run one warehouse — AI scanning, voice commands, every integration, and predictive alerts.",
+    desc: "Everything you need to run one warehouse — scanning, plain-English search, demand forecasts, every integration, and alerts.",
     featured: true,
-    cta: "Request a Demo",
+    cta: "Start 7-day free trial",
+    ctaHref: signupUrl("pricing_tier_pro"),
     ctaVariant: "primary",
+    secondaryCta: "Or request a demo",
     topic: "demo",
     includesLabel: "Includes",
     features: [
       "1 warehouse",
       "Unlimited active scanner users",
       "Up to 50,000 SKUs",
-      "AI scanning + voice commands",
+      "Plain-English search + demand forecasting",
       "All 18 integrations",
       "Standard analytics & alerts",
       "Email support · 24h response",
-      "99.9% uptime SLA",
     ],
   },
   {
@@ -56,7 +63,7 @@ const TIERS = [
     number: "02",
     name: "Enterprise",
     label: "For multi-site operations",
-    desc: "Multi-warehouse orchestration, dedicated success management, and compliance-grade controls for operations at scale.",
+    desc: "Multi-warehouse orchestration, dedicated success management, and custom roles for operations at scale.",
     featured: false,
     cta: "Talk to Sales",
     ctaVariant: "ghost",
@@ -68,11 +75,8 @@ const TIERS = [
       "Spatial Intelligence",
       "Multi-warehouse orchestration",
       "Custom API integrations",
-      "SSO / SAML",
       "Dedicated success manager",
       "24/7 priority support · 1h response",
-      "99.99% uptime SLA",
-      "SOC 2 + HIPAA reports",
     ],
   },
 ];
@@ -81,41 +85,17 @@ const MATRIX_ROWS = [
   { label: "Warehouses included", pro: "1", enterprise: "Unlimited" },
   { label: "SKUs", pro: "50,000", enterprise: "Unlimited" },
   { label: "Active scanner users", pro: "Unlimited", enterprise: "Unlimited" },
-  { label: "AI scanning & voice", pro: true, enterprise: true },
+  { label: "AI search & forecasting", pro: true, enterprise: true },
   { label: "Spatial Intelligence", pro: false, enterprise: true },
   { label: "Multi-warehouse orchestration", pro: false, enterprise: true },
   { label: "API access", pro: "Read-only", enterprise: "Full" },
   { label: "Support response", pro: "Email · 24h", enterprise: "24/7 · 1h" },
-  { label: "Uptime SLA", pro: "99.9%", enterprise: "99.99%" },
-  { label: "SSO / SAML", pro: false, enterprise: true },
 ];
 
-const FAQS = [
-  {
-    q: "What counts as a warehouse?",
-    a: "A warehouse is any physical facility with its own inventory, location codes, and team. Multiple buildings on the same site managed as one logical operation count as one warehouse. Separate facilities with separate stock count as separate warehouses.",
-  },
-  {
-    q: "Can I switch between plans?",
-    a: "Yes. Upgrade from Pro to Enterprise at any time — the change takes effect immediately and you'll only be billed for the difference for the remainder of your current cycle. Downgrades take effect at the start of your next billing period.",
-  },
-  {
-    q: "Is there a free trial?",
-    a: "Pro includes a 14-day free trial — no credit card required. Enterprise customers get a tailored proof-of-concept period, typically 30 days, with hands-on support from our team.",
-  },
-  {
-    q: "What happens if I exceed plan limits?",
-    a: "Nothing breaks. We'll reach out as you approach limits and discuss options — usually that's a conversation about whether Enterprise fits your growth. We never suddenly cut off scanning or operations.",
-  },
-  {
-    q: "Do you offer non-profit or educational discounts?",
-    a: "Yes. 501(c)(3) non-profits and accredited educational institutions get 30% off Pro and Enterprise. Contact sales with documentation to apply the discount.",
-  },
-  {
-    q: "Can I pay by invoice?",
-    a: "Annual Pro plans and all Enterprise contracts can be paid by invoice with net-30 terms. Monthly Pro is credit card only.",
-  },
-];
+/* The FAQ lives in ./pricingFaqs.js — page.js builds the FAQPage JSON-LD
+   from the same array. This file used to keep its own copy, which had
+   already drifted (it still said 14-day trial). */
+const FAQS = PRICING_FAQS;
 
 /* Headline content */
 const H_LINES = [
@@ -505,14 +485,39 @@ export default function PricingClient() {
               </div>
 
               <div className={styles.ctaRow}>
-                <CornerButton
-                  variant={tier.ctaVariant}
-                  onClick={() =>
-                    openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
-                  }
-                >
-                  {tier.cta}
-                </CornerButton>
+                {tier.ctaHref ? (
+                  <CornerButton
+                    variant={tier.ctaVariant}
+                    href={tier.ctaHref}
+                    onClick={() =>
+                      track("start_trial_click", {
+                        cta_source: `pricing_tier_${tier.key}`,
+                      })
+                    }
+                  >
+                    {tier.cta}
+                  </CornerButton>
+                ) : (
+                  <CornerButton
+                    variant={tier.ctaVariant}
+                    onClick={() =>
+                      openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
+                    }
+                  >
+                    {tier.cta}
+                  </CornerButton>
+                )}
+                {tier.secondaryCta && (
+                  <button
+                    type="button"
+                    className={styles.tierSecondaryCta}
+                    onClick={() =>
+                      openDemo(tier.topic, { source: `pricing_tier_${tier.key}` })
+                    }
+                  >
+                    {tier.secondaryCta}
+                  </button>
+                )}
               </div>
 
               <div className={styles.tierDivider} />

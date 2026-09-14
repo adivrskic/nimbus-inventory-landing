@@ -23,7 +23,7 @@ export const PRICING_FAQS = [
   },
   {
     q: "Is there a free trial?",
-    a: "Pro includes a 14-day free trial — no credit card required. Enterprise customers get a tailored proof-of-concept period, typically 30 days, with hands-on support from our team.",
+    a: "Yes. Pro comes with a 7-day free trial — no credit card required. Sign up at app.nautilusinventory.com and you get the full product for the week. Enterprise customers get a tailored proof-of-concept period, typically 30 days, with hands-on support from our team.",
   },
   {
     q: "What happens if I exceed plan limits?",

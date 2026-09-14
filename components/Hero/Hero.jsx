@@ -4,6 +4,8 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
 import { gsap, useGsap, DURATION, EASE, STAGGER } from "@/lib/gsap";
+import { track } from "@/lib/analytics";
+import { signupUrl } from "@/lib/site";
 import styles from "./Hero.module.css";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -55,11 +57,17 @@ const DESC_LINES = [
   "learns your operation and optimizes it in real time.",
 ];
 
+/* The side column states facts, not performance claims. It used to count
+   up to "<200ms AI scan speed", "99.9% uptime SLA" and "70% faster counts",
+   none of which had anything measured behind them. Entries with `end`
+   still count up; entries with `text` just fade in with their block. */
 const STATS = [
-  { end: 200, prefix: "<", suffix: "ms", label: "AI scan speed" },
-  { end: 99.9, prefix: "", suffix: "%", label: "Uptime SLA", decimals: 1 },
-  { end: 70, prefix: "", suffix: "%", label: "Faster counts" },
+  { end: 7, prefix: "", suffix: "-day", label: "Free trial" },
+  { text: "No card", label: "Needed to start" },
+  { text: "Sample data", label: "Ready at signup" },
 ];
+
+const statText = (stat, v) => stat.text ?? `${stat.prefix}${v}${stat.suffix}`;
 
 export default function Hero({ onDemo }) {
   const videoRef = useRef(null);
@@ -71,14 +79,43 @@ export default function Hero({ onDemo }) {
   const valRefs = useRef([]);
   const { paused } = useAnimationPaused();
 
+  /* The 3.4 MB loop only loads where it's seen large. On phones, and for
+     Save-Data visitors, the poster stays up as a still: the clip is dimmed
+     background atmosphere, and a first visit on cellular shouldn't spend
+     megabytes on it. Declared before the pause effect so the source is in
+     place by the time that effect first runs. */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const wide = window.matchMedia("(min-width: 769px)").matches;
+    const saveData = navigator.connection?.saveData === true;
+    if (!wide || saveData) return;
+    v.src = "/hero-loop.mp4";
+    v.play().catch(() => {});
+  }, []);
+
   /* Video play/pause follows the in-app animation toggle. Not a GSAP
      animation — left as a plain effect. */
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !v.src) return;
     if (paused) v.pause();
     else v.play().catch(() => {});
   }, [paused]);
+
+  /* "See it in action" lands just inside the intelligence engine below —
+     10% into its scroll, past the stage's edge fade, where the first beat
+     is fully drawn. Through Lenis when it's running (a native smooth scroll
+     fights Lenis's own position), a plain smooth scroll otherwise. */
+  const scrollToEngine = () => {
+    const space = document.querySelector("#ai-engine > div");
+    if (!space) return;
+    const top = space.getBoundingClientRect().top + window.scrollY;
+    const y = top + 0.1 * Math.max(0, space.offsetHeight - window.innerHeight);
+    const lenis = window.__lenis;
+    if (lenis) lenis.scrollTo(y, { duration: 1.4 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   /* Intro timeline + count-ups + scroll parallax, scoped to the section.
      Cleanup is ctx.revert() (was a global ScrollTrigger.getAll().kill()).
@@ -88,7 +125,7 @@ export default function Hero({ onDemo }) {
      only the opacity dissolves remain (a fade is not vestibular motion, and
      the hero still needs to clear out so AISection can take over). */
   const sectionRef = useGsap(({ reduced, q, scope }) => {
-    if (videoRef.current) videoRef.current.play().catch(() => {});
+    if (videoRef.current?.src) videoRef.current.play().catch(() => {});
 
     const hLetters = q(`.${styles.letter}`);
     const dLetters = q(`.${styles.descLetter}`);
@@ -106,7 +143,7 @@ export default function Hero({ onDemo }) {
           const v = stat.decimals
             ? stat.end.toFixed(stat.decimals)
             : Math.round(stat.end);
-          valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
+          valEl.textContent = statText(stat, v);
         }
       });
     } else {
@@ -160,11 +197,14 @@ export default function Hero({ onDemo }) {
         ">-0.45"
       );
 
-      /* CTAs. */
+      /* CTAs — start with the description rather than after it. The letter
+         wash takes about a second, and on a throttled phone the primary
+         button (the hero's largest text block, so its LCP element) used to
+         appear only once the wash had finished. */
       master.to(
         ctasRef.current,
         { opacity: 1, y: 0, duration: DURATION.base, ease: EASE.out },
-        ">-0.2"
+        "<0.15"
       );
 
       /* Stats column. A label pinned just before the end of the CTA beat
@@ -185,6 +225,8 @@ export default function Hero({ onDemo }) {
           at
         );
 
+        /* Text entries have nothing to count. */
+        if (stat.text) return;
         const counter = { val: 0 };
         const valEl = valRefs.current[i];
         master.to(
@@ -197,7 +239,7 @@ export default function Hero({ onDemo }) {
               const v = stat.decimals
                 ? counter.val.toFixed(stat.decimals)
                 : Math.round(counter.val);
-              valEl.textContent = `${stat.prefix}${v}${stat.suffix}`;
+              valEl.textContent = statText(stat, v);
             },
           },
           at
@@ -261,18 +303,18 @@ export default function Hero({ onDemo }) {
             plays muted) + self-hosted poster, replacing the original
             46 MB 4K source and the third-party Unsplash poster that sat
             on the LCP path. The clip renders as dimmed/blurred background
-            atmosphere, so 1080p CRF30 is visually lossless here. */}
+            atmosphere, so 1080p CRF30 is visually lossless here. Its
+            source is attached by the first effect above, wide screens
+            only. */}
         <video
           ref={videoRef}
-          autoPlay
           muted
           loop
           playsInline
+          preload="none"
           poster="/hero-poster.webp"
           className={styles.video}
-        >
-          <source src="/hero-loop.mp4" type="video/mp4" />
-        </video>
+        />
         <div className={styles.overlay} />
       </div>
 
@@ -304,20 +346,26 @@ export default function Hero({ onDemo }) {
         <div ref={ctasRef} className={styles.ctas}>
           <CornerButton
             variant="primary"
-            onClick={() => onDemo(undefined, { source: "hero" })}
+            href={signupUrl("hero")}
+            onClick={() => track("start_trial_click", { cta_source: "hero" })}
           >
-            Request a Demo
+            Start free trial
           </CornerButton>
           <CornerButton
             variant="ghost"
-            onClick={() => {
-              document
-                .getElementById("warehouse")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
+            onClick={() => onDemo(undefined, { source: "hero" })}
           >
-            Watch Overview
+            Request a demo
           </CornerButton>
+          <button
+            type="button"
+            className={styles.tourLink}
+            onClick={scrollToEngine}
+          >
+            See it in action <span aria-hidden="true">↓</span>
+          </button>
+          {/* Phones only — the stats column that says this is hidden there. */}
+          <p className={styles.trialNote}>7-day free trial · No credit card</p>
         </div>
       </div>
 
@@ -336,7 +384,7 @@ export default function Hero({ onDemo }) {
               ref={(el) => (valRefs.current[i] = el)}
               className={styles.dataVal}
             >
-              {stat.prefix}0{stat.suffix}
+              {statText(stat, 0)}
             </div>
             <div className={styles.dataLabel}>{stat.label}</div>
           </div>
