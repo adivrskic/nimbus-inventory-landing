@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Logo from "@/components/shared/Logo";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import NotifyForm from "./NotifyForm";
 import styles from "./Footer.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -25,6 +26,7 @@ const COLUMNS = [
       { text: "Pricing", href: "/pricing" },
       { text: "ROI Calculator", href: "/calculator" },
       { text: "Compare", href: "/compare" },
+      { text: "Floor plan review", href: "/floor-plan" },
     ],
   },
   {
@@ -244,6 +246,7 @@ export default function Footer() {
                 <span className={styles.badge}>App Store</span>
                 <span className={styles.badge}>Google Play</span>
               </div>
+              <NotifyForm />
             </div>
           </div>
           {COLUMNS.map((col, i) => (

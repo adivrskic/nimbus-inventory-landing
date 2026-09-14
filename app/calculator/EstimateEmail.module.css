@@ -1,0 +1,113 @@
+/* "Email me this estimate" — sits under the calculator's total bar. Form
+   styling follows the contact page: sharp corners, hairline borders, mono
+   labels, gold focus. */
+
+.form {
+  margin-top: 32px;
+  max-width: 520px;
+}
+.label {
+  display: block;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.row {
+  display: flex;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(242, 240, 239, 0.1);
+  border-right: none;
+  border-radius: 0;
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.25s;
+}
+.input::placeholder {
+  color: rgba(242, 240, 239, 0.3);
+}
+.input:focus {
+  border-color: var(--accent);
+}
+.button {
+  padding: 13px 22px;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--white);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s;
+}
+.button:hover:not(:disabled) {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+}
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.note {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 240, 239, 0.4);
+}
+.error {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 120, 120, 0.85);
+}
+.done {
+  margin-top: 32px;
+  max-width: 520px;
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(242, 240, 239, 0.75);
+}
+.done strong {
+  color: var(--white);
+}
+.doneDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 10px;
+  background: #22c55e;
+  vertical-align: middle;
+}
+.again {
+  display: block;
+  margin-top: 10px;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

@@ -9,6 +9,8 @@ import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
 import CornerButton from "@/components/shared/CornerButton";
 import SplitText from "@/components/shared/SplitText";
 import { useDemo } from "@/lib/DemoContext";
+import { RANGES, calculate } from "@/lib/roi";
+import EstimateEmail from "./EstimateEmail";
 import { track } from "@/lib/analytics";
 import styles from "./calculator-client.module.css";
 
@@ -59,57 +61,9 @@ function useAnimatedNumber(target, duration = 500) {
   return display;
 }
 
-/* ─────────────────────────────────────────────────────
-   INPUT RANGES + DEFAULTS
-───────────────────────────────────────────────────── */
-const RANGES = {
-  size: { min: 1000, max: 500000, default: 35000 },
-  pickers: { min: 1, max: 250, default: 20 },
-  accuracy: { min: 70, max: 99, default: 92 },
-  wage: { min: 12, max: 60, default: 22 },
-};
-
+/* Input ranges and the ROI math live in lib/roi.js, shared with
+   /api/estimate so an emailed estimate matches the page exactly. */
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-/* ─────────────────────────────────────────────────────
-   ROI MATH
-───────────────────────────────────────────────────── */
-function calculate({ size, pickers, accuracy, wage }) {
-  /* Picking time saved — assume 600hrs/yr of pick activity per picker,
-     optimized routes cut that by 20%. */
-  const pickingSavings = pickers * 600 * 0.2 * wage;
-
-  /* Error reduction — at lower accuracy, more errors. Each error costs
-     ~6% of order value. Assume ~2 orders/sqft/year at ~$180 avg. */
-  const errorRate = (100 - accuracy) / 100;
-  const annualOrders = size * 2;
-  const errorSavings = annualOrders * 180 * 0.06 * (errorRate * 0.7);
-
-  /* Shrinkage / inventory accuracy — baseline ~$1.50/sqft/year,
-     Nautilus cuts 60%. */
-  const shrinkageSavings = size * 1.5 * 0.6;
-
-  /* Cycle counting — saves ~40hrs/yr per picker through continuous
-     counting. */
-  const cycleCountSavings = pickers * 40 * wage;
-
-  const total =
-    pickingSavings + errorSavings + shrinkageSavings + cycleCountSavings;
-
-  /* "Current loss" framing — assume some inefficiency persists, so the
-     current annual cost is ~1.4x what Nautilus recovers. Used in the
-     headline "you're losing" line. */
-  const currentLoss = total * 1.4;
-
-  return {
-    pickingSavings,
-    errorSavings,
-    shrinkageSavings,
-    cycleCountSavings,
-    total,
-    currentLoss,
-  };
-}
 
 /* ─────────────────────────────────────────────────────
    INLINE EDITABLE NUMBER COMPONENT
@@ -462,21 +416,21 @@ export default function CalculatorClient() {
     {
       num: "01",
       label: "Picking time saved",
-      desc: "Optimized pick routes run about 20% shorter than manual paths",
+      desc: "Assumes pick routes about 20% shorter than manual paths",
       value: computed.pickingSavings,
       animValue: animPicking,
     },
     {
       num: "02",
       label: "Error reduction",
-      desc: "70% fewer pick and ship errors",
+      desc: "Assumes 70% fewer pick and ship errors",
       value: computed.errorSavings,
       animValue: animError,
     },
     {
       num: "03",
       label: "Inventory accuracy",
-      desc: "60% less shrinkage and fewer stockouts",
+      desc: "Assumes 60% less recoverable shrinkage",
       value: computed.shrinkageSavings,
       animValue: animShrinkage,
     },
@@ -508,7 +462,7 @@ export default function CalculatorClient() {
         </h1>
         <p className={styles.heroSub}>
           Every number in the paragraph below is editable. Click one, type a new
-          value, and the estimate recalculates as you type. No signup, no email.
+          value, and the estimate recalculates as you type. No signup needed.
         </p>
       </section>
 
@@ -548,17 +502,17 @@ export default function CalculatorClient() {
             prefix="$"
             suffix="/hr"
           />{" "}
-          average labor. That setup costs about{" "}
+          average labor. By this model, that setup loses about{" "}
           <span className={styles.storyLoss}>{formatDollars(animLoss)}</span> a
           year in errors, rework, and slow picking.
         </p>
 
         <p className={styles.storyTextSecondary}>
-          Nautilus typically recovers about{" "}
+          Under these assumptions, Nautilus could recover about{" "}
           <span className={styles.storySavings}>
             {formatDollars(animTotal)}
           </span>{" "}
-          of that in year one. Similar amounts every year after.
+          of that in year one.
         </p>
 
         <div className={styles.storyControls}>
@@ -611,9 +565,11 @@ export default function CalculatorClient() {
           </div>
 
           <div className={styles.totalBar}>
-            <div className={styles.totalLabel}>Total year-one savings</div>
+            <div className={styles.totalLabel}>Estimated year-one savings</div>
             <div className={styles.totalValue}>{formatDollars(animTotal)}</div>
           </div>
+
+          <EstimateEmail inputs={{ size, pickers, accuracy, wage }} />
         </div>
       </section>
 
@@ -626,9 +582,9 @@ export default function CalculatorClient() {
           <div className={styles.sectionLabel}>How the math works</div>
           <h2 className={styles.sectionTitle}>The assumptions.</h2>
           <p className={styles.sectionDesc}>
-            Conservative averages from customer data and published WMS
-            benchmarks. Your numbers will vary. For a precise estimate, book a
-            call and we run the model on your real data.
+            Illustrative assumptions, not measured Nautilus results. Treat
+            the output as a rough estimate, and book a call if you want to
+            walk through the model with your real numbers.
           </p>
 
           <dl className={styles.assumptions}>

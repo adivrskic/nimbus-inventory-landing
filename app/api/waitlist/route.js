@@ -1,7 +1,10 @@
 // ──────────────────────────────────────────────────────────────────────────
 // app/api/waitlist/route.js
 // ──────────────────────────────────────────────────────────────────────────
-// POST /api/waitlist — handles API early-access waitlist signups.
+// POST /api/waitlist — waitlist signups. `list` picks which one: "api" (API
+// early access, the default for older clients) or "mobile_apps" (the
+// notify-me form under the footer's coming-soon store badges). Unknown
+// values fall back to "api".
 //
 // Passes meta (source_url, user_agent, ip_hash) through to
 // sendWaitlistEmail so the form_submissions row has full context. Email
@@ -11,10 +14,12 @@
 // IP reading + hashing come from the shared lib/ipHash.js.
 //
 // NOTE: rateLimit is now async (durable Supabase-backed limiter) — awaited.
+// It uses its own namespace so a notify-me signup never eats into the demo
+// and contact forms' allowance.
 // ──────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
-import { validateWaitlist } from "@/lib/validation";
+import { validateWaitlist, WAITLIST_LISTS } from "@/lib/validation";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIp } from "@/lib/ipHash";
 import { cap, FIELD_CAPS } from "@/lib/site";
@@ -25,7 +30,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   const ip = getClientIp(req);
-  const limit = await rateLimit(ip);
+  const limit = await rateLimit(ip, { namespace: "waitlist" });
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, error: "Too many requests. Please try again later." },
@@ -51,8 +56,13 @@ export async function POST(req) {
     return NextResponse.json({ ok: true });
   }
 
+  const list = Object.hasOwn(WAITLIST_LISTS, String(body?.list))
+    ? String(body.list)
+    : "api";
   const form = {
     email: String(body?.email || "").trim(),
+    list,
+    listLabel: WAITLIST_LISTS[list],
   };
   const errors = validateWaitlist(form);
   if (Object.keys(errors).length > 0) {
@@ -63,7 +73,10 @@ export async function POST(req) {
   }
 
   const meta = {
-    sourceUrl: cap(body?.source_url || "/api-docs", FIELD_CAPS.url),
+    sourceUrl: cap(
+      body?.source_url || (list === "api" ? "/api-docs" : "/"),
+      FIELD_CAPS.url
+    ),
     userAgent: cap(req.headers.get("user-agent") || "", FIELD_CAPS.userAgent),
     ipHash: hashIp(ip),
   };

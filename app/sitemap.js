@@ -100,6 +100,12 @@ export default function sitemap() {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    {
+      url: `${SITE_URL}/floor-plan`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
   ];
 
   const integrations = Object.keys(INTEGRATIONS).map((slug) => ({

@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   FLOOR PLAN REVIEW — additions to the contact page's form system
+   ───────────────────────────────────────────────────────────────────────
+   FloorPlanClient uses app/contact/Contact.module.css for the page, hero,
+   fields and success card. This file only adds what that form doesn't
+   have: the review checklist, the file picker, and the demo fallback.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.lookFor {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.lookFor li {
+  position: relative;
+  padding-left: 22px;
+}
+.lookFor li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.8em;
+  width: 10px;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* The real input stays in the tab order (focus lands on it and the label
+   shows the focus ring via :focus-within) but is visually replaced by the
+   drop zone. */
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 26px 20px;
+  border: 1px dashed rgba(242, 240, 239, 0.18);
+  background: rgba(255, 255, 255, 0.012);
+  cursor: pointer;
+  transition: border-color 0.25s, background 0.25s;
+}
+.drop:hover,
+.drop:focus-within,
+.dropActive {
+  border-color: var(--accent);
+  background: rgb(var(--accent-rgb) / 0.03);
+}
+.dropHasFile {
+  border-style: solid;
+  border-color: rgb(var(--accent-rgb) / 0.45);
+}
+.dropError {
+  border-color: rgba(255, 100, 100, 0.45);
+}
+.dropTitle {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+.dropHint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(242, 240, 239, 0.4);
+}
+
+.alt {
+  margin: 40px 0 0;
+  font-family: var(--display);
+  font-size: 14px;
+  color: rgba(242, 240, 239, 0.5);
+}
+.altLink {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.3);
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+.altLink:hover {
+  border-bottom-color: var(--accent);
+}
