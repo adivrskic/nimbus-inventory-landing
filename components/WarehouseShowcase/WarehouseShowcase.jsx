@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./WarehouseShowcase.module.css";
 import { useAnimationPaused } from "@/lib/AnimationContext";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import { track } from "@/lib/analytics";
 
 /* ═══════════════════════════════════════════════════════════════════════
    WarehouseShowcase — "THE CHART ROOM"
@@ -11,7 +13,7 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
    pure vector ink), across five scroll beats:
 
      01 PLOT      the chart draws itself — hull, racks, bay counts
-     02 FIX       a spoken query resolves to a bay: a guide path runs
+     02 FIX       a plain-English query resolves to a bay: a guide path runs
                   the aisles to it, the bay lights, a fix mark inks
      03 FRONTS    three LOW bays (their printed counts are low from the
                   start) get depletion isobars — PO drafted
@@ -53,7 +55,9 @@ const BEATS = [
     num: "02",
     label: "FIX",
     title: "“Where's the spare blade for 4471?”",
-    desc: "Spoken aloud on the floor. A position fix in four tenths of a second.",
+    /* Typed, not spoken: plain-English search is real, voice commands
+       aren't — and "four tenths of a second" was a speed nobody measured. */
+    desc: "Asked in plain English. The bay, the count, and the way there.",
   },
   {
     key: "fronts",
@@ -320,6 +324,8 @@ export default function WarehouseShowcase({ onDemo }) {
   const stageRef = useRef(null);
   const canvasRef = useRef(null);
   const revRef = useRef(null);
+  const captionRef = useRef(null);
+  const skipRef = useRef(null);
   const { paused } = useAnimationPaused();
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -338,6 +344,18 @@ export default function WarehouseShowcase({ onDemo }) {
       top: top + ((i + 0.05) / NB) * range,
       behavior: "smooth",
     });
+  }, []);
+
+  /* Skip past this long pinned sequence to Integrations. Through Lenis
+     when it's running — a native smooth scroll fights its position. */
+  const skipPast = useCallback(() => {
+    const target = document.getElementById("integrations");
+    if (!target) return;
+    const y = target.getBoundingClientRect().top + window.scrollY;
+    track("section_skip", { section: "chart_room" });
+    const lenis = window.__lenis;
+    if (lenis) lenis.scrollTo(y, { duration: 1.2 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
@@ -368,45 +386,187 @@ export default function WarehouseShowcase({ onDemo }) {
     const RED = (a) => `rgba(201, 107, 94, ${a})`;
 
     let dpr = 1;
-    let sc = 1;
+    let sc = 1; // device px per chart unit this frame, camera zoom included
     let ox = 0;
     let oy = 0;
     /* Compact layout, for stages where the chart gets small (phones, short
        landscape windows). The chart's type is a fixed CSS size, so below
        ~0.66 CSS px per chart unit it stops fitting the floor plan: stacked
        stamps overprinted each other and ran off the frame, and the long bay
-       labels printed over one another. In compact mode the stamps and the
-       spoken query move to a band above the chart, and the per-bay
+       labels printed over one another. In compact mode the stamps, the query
+       and its answer move to a band outside the chart, and the per-bay
        annotations that can't fit are left out — the caption carries them. */
     let compact = false;
     const STAMP_BAND = 72; // CSS px reserved above the chart in compact mode
     const X = (x) => ox + x * sc;
     const Y = (y) => oy + y * sc;
-    /* Band slot centers in device px: slot 0 sits just above the chart
-       frame, slot 1 above that. */
-    const bandY = (slot) => Y(22) - px(22) - slot * px(32);
+
+    /* Layout, in CSS px, measured from the DOM chrome instead of assumed.
+       The chart used to take "the top 78%" of the stage, and on short
+       windows the caption sat on the racks.
+       - stacked (default): the chart fills what the caption's real box
+         leaves above it, under the compact band and clear of Skip.
+       - side: short, wide stages (a phone on its side, a laptop with a
+         short window) move the caption and the band into a right-hand
+         column (.stage[data-layout="side"]); stacked, the chart was a sliver.
+       - camera: a stacked chart that runs out of width first (portrait
+         phones and tablets) leaves height unused, so it zooms in to fill it
+         for FIX, FRONTS and COURSE — see camAt(). */
+    let areaLeft = 0;
+    let areaTop = 0;
+    let areaW = 1;
+    let areaH = 1;
+    let sc0 = 1; // CSS px per chart unit at zoom 1
+    let camOn = false;
+    let zFix = 1; // camera zoom per beat (see resize)
+    let zFronts = 1;
+    let zCourse = 1;
+    /* Small compact stages put the final-beat CTA in the stamp band; REVISION
+       then leaves its edition stamp out. */
+    let ctaInBand = false;
+    let bandCX = 0;
+    let bandW = 0;
+    const bandSlotY = [0, 0]; // slot 0 nearest the chart, slot 1 beyond it
+    /* Set whenever the canvas is resized (which clears it), so a paused,
+       unscrolled chart still gets redrawn. */
+    let dirty = true;
+    const bandY = (slot) => bandSlotY[slot] * dpr;
+
+    const fit = (aw, ah) =>
+      Math.max(0.01, Math.min(aw / U.w, ah / U.h) * 0.94);
 
     const resize = () => {
       const stage = canvas.parentElement;
+      const cap = captionRef.current;
+      const skip = skipRef.current;
+      const cta = stage.querySelector("[data-chart-cta]");
       const w = stage.clientWidth;
       const h = stage.clientHeight;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
-      /* Fit the chart into the stage's top ~78% — the bottom band is
-         reserved for the DOM caption so ink and type never collide. */
-      const fitFor = (band) =>
-        Math.min((w * dpr) / U.w, ((h - band) * dpr * 0.78) / U.h) * 0.94;
-      compact = fitFor(0) / dpr < 0.66;
-      /* Portrait phones already have the band's worth of empty stage above
-         the chart; short stages give up a little scale for it. */
-      const band = compact ? STAMP_BAND : 0;
-      sc = fitFor(band);
-      ox = (w * dpr - U.w * sc) / 2;
-      oy = band * dpr + ((h - band) * dpr * 0.8 - U.h * sc) / 2;
+      dirty = true;
+      if (!w || !h) return;
+
+      const setLayout = (name) => {
+        if (stage.dataset.layout !== name) stage.dataset.layout = name;
+      };
+      const bottomOf = (el) => (el ? el.offsetTop + el.offsetHeight : 0);
+      const GAP = 12;
+
+      /* Stacked: everything above the caption's box. */
+      setLayout("stacked");
+      const capTop = cap ? cap.offsetTop : h * 0.78;
+      stage.style.setProperty("--cap-h", `${Math.round(h - capTop)}px`);
+      const stackH = capTop - GAP;
+      const skipUp = !!skip && skip.offsetTop < h / 2;
+      let top = 0;
+      let s = fit(w, stackH);
+      if (skipUp && w / 2 + 470 * s > skip.offsetLeft - 6) {
+        top = bottomOf(skip) + 6; // the frame would run under Skip
+        s = fit(w, stackH - top);
+      }
+      const stackCompact = s < 0.66;
+      if (stackCompact) {
+        top = Math.max(top, STAMP_BAND);
+        if (skipUp && skip.offsetLeft < w / 2 + 180)
+          top = Math.max(top, bottomOf(skip) + 72); // band's upper slot too
+        /* The final-beat CTA shares the top edge on wide stages; only slot 0
+           (the edition stamp) is in use on that beat. */
+        if (cta && cta.offsetTop < h / 2 && cta.offsetLeft < w / 2 + 180)
+          top = Math.max(top, bottomOf(cta) + 40);
+        s = fit(w, stackH - top);
+      }
+
+      /* Side: only where stacking costs the chart a quarter of its size. */
+      if (cap && h < 640 && w > h * 1.45) {
+        setLayout("side");
+        const colLeft = cap.offsetLeft;
+        const ss = fit(colLeft - GAP - 8, h - 16);
+        if (ss > s * 1.25) {
+          sc0 = ss;
+          compact = ss < 0.66;
+          areaLeft = 8;
+          areaTop = 8;
+          areaW = colLeft - GAP - 8;
+          areaH = h - 16;
+          camOn = false;
+          ctaInBand = false;
+          delete stage.dataset.band;
+          bandCX = colLeft + cap.offsetWidth / 2;
+          bandW = cap.offsetWidth;
+          const bt = Math.max(bottomOf(skip), bottomOf(cta)) + 6;
+          bandSlotY[1] = bt + 12;
+          bandSlotY[0] = bt + 44;
+          return;
+        }
+        setLayout("stacked");
+      }
+
+      sc0 = s;
+      compact = stackCompact;
+      areaLeft = 0;
+      areaTop = top;
+      areaW = w;
+      areaH = stackH - top;
+      bandCX = w / 2;
+      bandW = w;
+      bandSlotY[0] = top - 22;
+      bandSlotY[1] = top - 54;
+      /* Camera zooms fill the height with the frame (576 units) while
+         keeping each beat's subject in view: FIX's dock-to-bay run needs 600
+         units across, the FRONTS 560, and COURSE, which follows the picker,
+         500. */
+      const zFill = areaH / (576 * s);
+      const zoomFor = (units) => Math.min(zFill, w / (units * s));
+      camOn = w / U.w < areaH / U.h && zoomFor(600) >= 1.12;
+      zFix = camOn ? zoomFor(600) : 1;
+      zFronts = camOn ? zoomFor(560) : 1;
+      zCourse = camOn ? zoomFor(500) : 1;
+
+      /* Without a camera to open a gap under the chart at REVISION, a small
+         compact stage has no room for the CTA above the caption (it sat on
+         the chart), so it takes the stamp band (CSS: data-band). */
+      const below = (areaH - U.h * s) / 2 + 22 * s;
+      ctaInBand = false;
+      if (compact && !camOn && below < 40 && cta) {
+        stage.dataset.band = "cta";
+        stage.style.setProperty("--band-cta-top", `${Math.max(6, top - 57)}px`);
+        ctaInBand = cta.offsetTop < top; // only where the CSS moved it
+      }
+      if (!ctaInBand) delete stage.dataset.band;
     };
+
+    /* Camera: [view-center x in chart units, zoom] as a pure function of
+       scroll, so scrubbing back retraces it. In over PLOT's last quarter
+       onto the FIX run (dock to bay F-2, x 96–634), across to the FRONTS
+       (232–762 with their isobars), back out while COURSE's plan is plotted
+       end to end, in again riding with the vessel, and out for REVISION's
+       new edition. */
+    const camAt = (p) => {
+      if (!camOn) return [U.w / 2, 1];
+      const f = p * NB;
+      const k = (a, b) => ease(clamp01((f - a) / (b - a)));
+      const z =
+        1 +
+        (zFix - 1) * k(0.75, 1.1) +
+        (zFronts - zFix) * k(1.85, 2.15) -
+        (zFronts - 1) * k(2.9, 3.1) +
+        (zCourse - 1) * (k(3.45, 3.7) - k(3.92, 4.25));
+      const x =
+        f < 3.3
+          ? 365 + (497 - 365) * k(1.85, 2.15)
+          : pointAt(ROUTE, ROUTE_LEN, win(clamp01(f - 3), 0.52, 0.95))[0];
+      const half = areaW / 2 / (sc0 * z);
+      if (half >= U.w / 2) return [U.w / 2, z];
+      return [Math.min(Math.max(x, half), U.w - half), z];
+    };
+
     resize();
-    window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas.parentElement);
+    let alive = true;
+    document.fonts?.ready.then(() => alive && resize());
 
     const px = (n) => n * dpr;
     const font = (size) => `${px(size)}px ${MONO}`;
@@ -493,7 +653,7 @@ export default function WarehouseShowcase({ onDemo }) {
       if (ls) ctx.letterSpacing = `${px(ls)}px`;
       ctx.fillText(
         str,
-        banded ? canvas.width / 2 : X(x),
+        banded ? bandCX * dpr : X(x),
         banded ? bandY(slot) : Y(y)
       );
       ctx.restore();
@@ -507,7 +667,7 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.letterSpacing = `${px(ls)}px`;
       const wpx = ctx.measureText(str).width;
       ctx.restore();
-      const max = canvas.width - px(32);
+      const max = px(bandW - 32);
       return wpx > max ? size * (max / wpx) : size;
     };
 
@@ -547,14 +707,14 @@ export default function WarehouseShowcase({ onDemo }) {
       ctx.font = font(size);
       ctx.letterSpacing = `${px(1.2)}px`;
       let wpx = ctx.measureText(str).width + px(18);
-      const maxW = canvas.width - px(24);
+      const maxW = banded ? px(bandW - 24) : canvas.width - px(24);
       if (wpx > maxW) {
         size *= maxW / wpx;
         ctx.font = font(size);
         wpx = ctx.measureText(str).width + px(18);
       }
       const hpx = px(24);
-      let bx = banded ? canvas.width / 2 : X(x);
+      let bx = banded ? bandCX * dpr : X(x);
       if (banded || align === "center") bx -= wpx / 2;
       else if (align === "right") bx -= wpx;
       const by = (banded ? bandY(slot) : Y(y)) - hpx / 2;
@@ -790,19 +950,22 @@ export default function WarehouseShowcase({ onDemo }) {
       /* Transient: query + guide path + answer label + stamp. */
       ctx.globalAlpha = sa;
       if (sa > 0) {
-        typed(
-          "Q: “WHERE'S THE SPARE BLADE FOR UNIT 4471?”",
-          win(t, 0, 0.22),
-          500,
-          56,
-          11,
-          INK(0.75),
-          "center",
-          1 // compact: the band's upper slot, above the stamp
-        );
+        const lf = win(t, 0.62, 0.85);
+        /* Compact: the answer takes over the query's band slot. Printed on
+           the floor it ran past the stage edge once the camera zoomed in. */
+        if (!compact || lf <= 0)
+          typed(
+            "Q: “WHERE'S THE SPARE BLADE FOR UNIT 4471?”",
+            win(t, 0, 0.22),
+            500,
+            56,
+            11,
+            INK(0.75),
+            "center",
+            1 // compact: the band's upper slot, above the stamp
+          );
         /* Guide path: dock → corridors → aisle → bay. Aisles only. */
         tracePoly(GUIDE, GUIDE_LEN, win(t, 0.2, 0.5), 1, INK(0.4), [6, 4]);
-        const lf = win(t, 0.62, 0.85);
         if (lf > 0) {
           typed(
             `SKU 4471-B · ZONE F · BAY 2 · ${FIX_COUNT} UNITS`,
@@ -811,10 +974,11 @@ export default function WarehouseShowcase({ onDemo }) {
             GAP_Y,
             10,
             INK(0.85),
-            "center"
+            "center",
+            compact ? 1 : undefined
           );
         }
-        stamp("FIX 0.4 S", 500, 96, win(t, 0.8, 0.95), GOLD(0.9), "center", 0);
+        stamp("FIX · BAY F-2", 500, 96, win(t, 0.8, 0.95), GOLD(0.9), "center", 0);
       }
 
       /* Permanent ink: the lit bay + the fix mark in the aisle. */
@@ -964,7 +1128,8 @@ export default function WarehouseShowcase({ onDemo }) {
          top corridor — at y=96 the two overlapped into unreadable
          mush. y=56 is the free band between the chart frame and the
          hull that the other beats' first stamp uses. */
-      stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 56, win(t, 0.6, 0.75), INK(0.8), "center", 0);
+      if (!ctaInBand)
+        stamp("NEW EDITION · REV 1,249 · SELF-ISSUED 03:00", 500, 56, win(t, 0.6, 0.75), INK(0.8), "center", 0);
       ctx.restore();
     };
 
@@ -992,15 +1157,24 @@ export default function WarehouseShowcase({ onDemo }) {
       const p = clamp01(range > 0 ? -rect2.top / range : 0);
 
       if (!pausedRef.current) time += dt;
-      else if (Math.abs(p - lastP) < 0.0004 && lastP >= 0) return;
+      else if (!dirty && Math.abs(p - lastP) < 0.0004 && lastP >= 0) return;
       lastP = p;
+      dirty = false;
 
-      /* Ground: constant navy; fades to black only at the exit. */
+      /* Ground: constant navy; fades to black only at the exit. The section
+         follows the stage, or the strip under a small-viewport-height stage
+         would stay navy while the stage goes black. */
       const g = groundColor(p);
       if (g !== lastGround && stageRef.current) {
         stageRef.current.style.backgroundColor = g;
+        if (sectionRef.current) sectionRef.current.style.backgroundColor = g;
         lastGround = g;
       }
+
+      const [camX, camZ] = camAt(p);
+      sc = sc0 * camZ * dpr;
+      ox = (areaLeft + areaW / 2) * dpr - camX * sc;
+      oy = (areaTop + areaH / 2) * dpr - (U.h / 2) * sc;
 
       const f = Math.min(p * NB, NB - 0.0001);
       const mode = Math.floor(f);
@@ -1046,9 +1220,10 @@ export default function WarehouseShowcase({ onDemo }) {
     start();
 
     return () => {
+      alive = false;
       cancelAnimationFrame(rafId);
       resumeRef.current = null;
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
     };
   }, []);
 
@@ -1073,6 +1248,18 @@ export default function WarehouseShowcase({ onDemo }) {
         <div ref={stageRef} className={styles.stage} data-reveal-exempt>
           <canvas ref={canvasRef} className={styles.chart} aria-hidden="true" />
 
+          {/* Skip — hidden on the last beat, which is nearly the end anyway;
+              in the side layout the CTA takes its spot. */}
+          <button
+            ref={skipRef}
+            type="button"
+            className={`${styles.skip} ${active === NB - 1 ? styles.skipHidden : ""}`}
+            onClick={skipPast}
+            tabIndex={active === NB - 1 ? -1 : 0}
+          >
+            Skip <span aria-hidden="true">↓</span>
+          </button>
+
           {/* Title block — chart legend, bottom-left */}
           <div className={styles.titleBlock}>
             <div className={styles.tbName}>NAUTILUS · CHART ROOM</div>
@@ -1085,7 +1272,7 @@ export default function WarehouseShowcase({ onDemo }) {
           </div>
 
           {/* Beat caption — bottom center */}
-          <div className={styles.caption}>
+          <div ref={captionRef} className={styles.caption}>
             <div className={styles.capLabel} key={beat.key}>
               {beat.num} — {beat.label}
             </div>
@@ -1123,16 +1310,20 @@ export default function WarehouseShowcase({ onDemo }) {
             </div>
           </div>
 
-          {/* CTA — surfaces on the final beat */}
-          <button
-            type="button"
+          {/* CTA — surfaces on the final beat, and leads to the free floor
+              plan review: the real version of what this sequence shows. */}
+          <TransitionLink
+            data-chart-cta=""
+            href="/floor-plan"
             className={`${styles.cta} ${active === NB - 1 ? styles.ctaOn : ""}`}
-            onClick={() => onDemo?.(undefined, { source: "chart_room" })}
+            onClick={() => track("floor_plan_cta_click", { cta_source: "chart_room" })}
             tabIndex={active === NB - 1 ? 0 : -1}
+            aria-hidden={active === NB - 1 ? undefined : "true"}
           >
-            Chart your own floor — book a demo
-            <span aria-hidden="true"> →</span>
-          </button>
+            Chart your own floor — free review
+            {/* Non-breaking, so a wrap never leaves the arrow on its own line. */}
+            <span aria-hidden="true">{" →"}</span>
+          </TransitionLink>
         </div>
       </div>
     </section>

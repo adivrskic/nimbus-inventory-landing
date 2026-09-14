@@ -49,6 +49,9 @@
   position: sticky;
   top: var(--nav-height);
   height: calc(100vh - var(--nav-height));
+  /* Small viewport height where supported: at 100vh a phone's browser
+     toolbar covered the bottom of the stage, caption and ticks included. */
+  height: calc(100svh - var(--nav-height));
   overflow: hidden;
   /* Initial paint before the first rAF frame writes the JS ground —
      same navy, so there's no black flash at mount. */
@@ -194,18 +197,29 @@
 
 /* ── CTA (final beat) ──────────────────────────────────────────────── */
 
+/* Top right, in Skip's place (Skip hides on this beat). At the bottom right
+   it sat under the site-wide chat launcher, and at 1280–1400px widths on the
+   caption's description. Two lines wide, so it clears the chart frame at
+   common desktop widths; where it does cross the frame, its fill (the
+   stage's JS ground, inherited, plus a gold tint) covers the lines. */
 .cta {
   position: absolute;
+  top: clamp(14px, 3vh, 28px);
   right: clamp(20px, 4vw, 56px);
-  bottom: clamp(20px, 4.5vh, 44px);
+  max-width: 236px;
   font-family: var(--mono);
   font-size: 11px;
+  line-height: 1.6;
   letter-spacing: 1.6px;
   text-transform: uppercase;
   color: var(--accent);
-  background: rgba(212, 168, 83, 0.06);
+  background-color: inherit;
+  background-image: linear-gradient(
+    rgba(212, 168, 83, 0.08),
+    rgba(212, 168, 83, 0.08)
+  );
   border: 1px solid rgb(var(--accent-rgb) / 0.45);
-  padding: 13px 20px;
+  padding: 11px 18px;
   cursor: pointer;
   opacity: 0;
   transform: translateY(10px);
@@ -221,7 +235,10 @@
   pointer-events: auto;
 }
 .cta:hover {
-  background: rgba(212, 168, 83, 0.14);
+  background-image: linear-gradient(
+    rgba(212, 168, 83, 0.16),
+    rgba(212, 168, 83, 0.16)
+  );
 }
 .cta:focus-visible {
   outline: 2px solid var(--accent);
@@ -238,13 +255,17 @@
      translate. An absolutely positioned box shrinks to fit the space its
      offsets leave, so right:50% squeezed the label into half the stage and
      it wrapped to three lines on phones. */
+  /* Just above the caption. --cap-h is the caption's measured height plus
+     its bottom offset, set by resize() in WarehouseShowcase.jsx. At the top
+     of the stage it sat on the band of stamps. */
   .cta {
     left: 16px;
     right: 16px;
+    top: auto;
     width: fit-content;
+    max-width: calc(100% - 32px);
     margin: 0 auto;
-    bottom: auto;
-    top: clamp(16px, 4vh, 40px);
+    bottom: calc(var(--cap-h, 190px) + 10px);
     text-align: center;
   }
 }
@@ -259,4 +280,111 @@
   .caption {
     bottom: 18px;
   }
+}
+
+/* The final-beat CTA is a link now (to /floor-plan), not a button. */
+.cta {
+  text-decoration: none;
+}
+
+/* ── Skip (top right of the stage) ─────────────────────────────────── */
+.skip {
+  position: absolute;
+  top: clamp(14px, 3vh, 28px);
+  right: clamp(20px, 4vw, 56px);
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(185, 208, 226, 0.6);
+  background: rgba(5, 18, 33, 0.6);
+  border: 1px solid rgba(214, 228, 240, 0.18);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition:
+    color 0.25s,
+    border-color 0.25s,
+    opacity 0.3s;
+}
+.skip:hover {
+  color: #edf3f8;
+  border-color: var(--accent);
+}
+.skip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.skipHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Phones: Skip moves down to the left end of the chapter-ticks row, so the
+   stamp band above the chart can start near the top of the stage. Left,
+   because the site-wide chat launcher owns the bottom-right corner. */
+@media (max-width: 640px) {
+  .skip {
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    right: auto;
+    padding: 4px 9px;
+  }
+}
+@media (max-width: 360px) {
+  .ticks {
+    gap: 6px;
+  }
+}
+
+/* Small phones with no room between chart and caption: the CTA takes the
+   stamp band above the chart instead (resize() sets data-band and
+   --band-cta-top). */
+@media (max-width: 900px) {
+  .stage[data-band="cta"] .cta {
+    top: var(--band-cta-top, 16px);
+    bottom: auto;
+  }
+}
+
+/* ── Side layout (short landscape stages) ─────────────────────────────
+   Chosen by resize() when a caption stacked under the chart would leave
+   the chart a sliver: the caption and the stamp band take a column on the
+   right, with Skip (and the final-beat CTA in its place) at its top. */
+.stage[data-layout="side"] .caption {
+  left: auto;
+  right: clamp(12px, 3vw, 32px);
+  bottom: clamp(10px, 4vh, 24px);
+  transform: none;
+  width: min(340px, 40%);
+}
+.stage[data-layout="side"] .capLabel,
+.stage[data-layout="side"] .titleBlock {
+  display: none;
+}
+.stage[data-layout="side"] .capTitles {
+  min-height: 118px;
+}
+.stage[data-layout="side"] .capTitle {
+  font-size: 19px;
+}
+.stage[data-layout="side"] .capDesc {
+  font-size: 13px;
+}
+.stage[data-layout="side"] .ticks {
+  margin-top: 12px;
+}
+.stage[data-layout="side"] .skip,
+.stage[data-layout="side"] .cta {
+  top: clamp(10px, 3vh, 20px);
+  right: clamp(12px, 3vw, 32px);
+  bottom: auto;
+  left: auto;
+  margin: 0;
+}
+.stage[data-layout="side"] .cta {
+  width: auto;
+  max-width: min(340px, 40%);
+  letter-spacing: 1.2px; /* one line in a 340px column */
 }
