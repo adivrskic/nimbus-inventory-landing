@@ -35,7 +35,7 @@ const SETUP_STEPS = [
   {
     num: "03",
     title: "Sync",
-    desc: "Enable bidirectional sync. Changes in either system reflect in the other within 30 seconds.",
+    desc: "Turn sync on. Changes made in either system carry over to the other automatically.",
   },
   {
     num: "04",
@@ -414,7 +414,8 @@ export default function IntegrationPage({ slug }) {
                       <span className={styles.flowArrowLine} />
                       <span className={styles.flowArrowHead}>▶</span>
                     </div>
-                    <div className={styles.flowLatency}>{"<"} 30s</div>
+                    {/* Was "< 30s", a sync latency nobody had measured. */}
+                    <div className={styles.flowLatency}>Auto-sync</div>
                     <div className={styles.flowArrowLeft}>
                       <span className={styles.flowArrowHead}>◀</span>
                       <span className={styles.flowArrowLine} />
@@ -450,8 +451,7 @@ export default function IntegrationPage({ slug }) {
           <div className={styles.sectionLabel}>Setup</div>
           <h2 className={styles.sectionTitle}>Four steps to live.</h2>
           <p className={styles.sectionDesc}>
-            Under 10 minutes for most teams. The full health check takes longer
-            but doesn&apos;t block sync.
+            The same four steps whichever platform you connect.
           </p>
 
           <div ref={stepsGlowRef} className={`${styles.steps} glow-cards`}>

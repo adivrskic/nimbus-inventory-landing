@@ -56,8 +56,8 @@ export const INTEGRATIONS = {
     ],
     stats: [
       { val: "2-way", label: "Sync" },
-      { val: "<30s", label: "Latency" },
-      { val: "99.9%", label: "Uptime" },
+      { val: "Auto", label: "COGS posting" },
+      { val: "Queued", label: "If QuickBooks is down" },
     ],
     flow: {
       fromNautilus: [
@@ -189,7 +189,7 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "Is this a good fit for pure service businesses with little inventory?",
-        a: "Probably not. FreshBooks itself works well for service-only businesses without Nautilus. The integration becomes worth setting up when at least 20-30% of your invoices include physical products you ship from a warehouse.",
+        a: "Probably not. FreshBooks itself works well for service-only businesses without Nautilus. The integration becomes worth setting up when a meaningful share of your invoices include physical products you ship from a warehouse.",
       },
       {
         q: "How does this handle the FreshBooks Lite plan?",
@@ -197,11 +197,11 @@ export const INTEGRATIONS = {
       },
       {
         q: "Can I track inventory across multiple FreshBooks accounts?",
-        a: "Yes. Most accounting firms managing multiple clients install one Nautilus warehouse per FreshBooks account. Bookkeepers can switch between them through Nautilus admin without re-authenticating each time.",
+        a: "Yes. Accounting firms managing multiple clients can install one Nautilus warehouse per FreshBooks account. Bookkeepers can switch between them through Nautilus admin without re-authenticating each time.",
       },
       {
         q: "What if I don't want every warehouse event hitting FreshBooks?",
-        a: "Configure event filters during setup. Most customers exclude internal transfers (which don't affect COGS), cycle count adjustments under a threshold, and zero-cost product moves. Filters are per-event-type, not per-product.",
+        a: "Configure event filters during setup. Common exclusions are internal transfers (which don't affect COGS), cycle count adjustments under a threshold, and zero-cost product moves. Filters are per-event-type, not per-product.",
       },
     ],
   },
@@ -253,7 +253,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "Do we need an SAP-certified consultant for setup?",
-        a: "Not for the standard integration. Nautilus handles the connector and field mapping during a 60-minute setup call with your SAP admin. Custom workflows (multi-database scenarios, custom DocEntry numbering) may benefit from involving your SAP partner, but the baseline integration is self-service.",
+        a: "Not for the standard integration. Nautilus handles the connector and field mapping during a setup call with your SAP admin. Custom workflows (multi-database scenarios, custom DocEntry numbering) may benefit from involving your SAP partner, but the baseline integration is self-service.",
       },
       {
         q: "How does this handle SAP Business One multi-database setups?",
@@ -270,7 +270,7 @@ export const INTEGRATIONS = {
     title: "NetSuite",
     category: "Accounting & ERP",
     tagline: "Warehouse execution layer for NetSuite.",
-    desc: "Nautilus acts as the warehouse execution system for NetSuite ERP. Scanning, putaway, picking, and counting happen in Nautilus on iOS and Android; the resulting transactions sync back to NetSuite's inventory and financial modules through SuiteTalk.",
+    desc: "Nautilus acts as the warehouse execution system for NetSuite ERP. Scanning, putaway, picking, and counting happen in Nautilus, in any modern browser on desktop, tablet, or phone; the resulting transactions sync back to NetSuite's inventory and financial modules through SuiteTalk.",
     features: [
       {
         title: "SuiteTalk integration",
@@ -309,7 +309,7 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "Does this require NetSuite WMS, or do we get warehouse features through Nautilus?",
-        a: "You get warehouse features through Nautilus. NetSuite WMS isn't required, and most of our NetSuite customers don't license it. Nautilus replaces the NetSuite WMS layer with a more modern mobile-first execution layer that posts the same transaction types back into NetSuite.",
+        a: "You get warehouse features through Nautilus. NetSuite WMS isn't required. Nautilus replaces the NetSuite WMS layer with a more modern mobile-first execution layer that posts the same transaction types back into NetSuite.",
       },
       {
         q: "How are multi-subsidiary structures handled?",
@@ -317,11 +317,11 @@ export const INTEGRATIONS = {
       },
       {
         q: "What about NetSuite's per-API-call rate limits?",
-        a: "NetSuite limits SuiteTalk to roughly 25 concurrent connections per account. Nautilus batches non-time-critical transactions (cycle count results, batch transfers) and uses a small persistent connection pool for real-time events. We have not had a customer hit the rate limit in practice.",
+        a: "NetSuite caps how many concurrent SuiteTalk connections each account can use. Nautilus batches non-time-critical transactions (cycle count results, batch transfers) and uses a small persistent connection pool for real-time events.",
       },
       {
         q: "Can Nautilus and an existing SuiteApp coexist?",
-        a: "Yes, with one caveat. If you have a SuiteApp that posts to the same transaction types Nautilus posts to (another warehouse SuiteApp, for example), one of them needs to be the source of truth. Most customers turn off the other SuiteApp's posting and let Nautilus drive.",
+        a: "Yes, with one caveat. If you have a SuiteApp that posts to the same transaction types Nautilus posts to (another warehouse SuiteApp, for example), one of them needs to be the source of truth. We recommend turning off the other SuiteApp's posting and letting Nautilus drive.",
       },
     ],
   },
@@ -348,7 +348,7 @@ export const INTEGRATIONS = {
     stats: [
       { val: "2 platforms", label: "Support" },
       { val: "Auto", label: "Adjustments" },
-      { val: "<1min", label: "Sync" },
+      { val: "Dimension", label: "Mapping" },
     ],
     flow: {
       fromNautilus: [
@@ -372,7 +372,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What's the migration path from Sage 50 to Sage Intacct?",
-        a: "Run them in parallel during the migration window. Nautilus dual-writes to both for the cutover period, then we switch the source of truth. We've helped a half dozen customers through this migration; it adds about a week to a Sage Intacct go-live, no more.",
+        a: "Run them in parallel during the migration window. Nautilus dual-writes to both for the cutover period, then we switch the source of truth.",
       },
       {
         q: "Does this handle Sage 50's password-protected company files?",
@@ -380,7 +380,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What about Sage Business Cloud Accounting (the small-business product)?",
-        a: "Not supported as a first-party integration today. Sage Business Cloud Accounting has a different API surface than Sage Intacct. Customers on that product use Zapier as a bridge, with the tradeoff of slower sync (15-minute intervals).",
+        a: "Not supported as a first-party integration today. Sage Business Cloud Accounting has a different API surface than Sage Intacct. Teams on that product can use Zapier as a bridge, with the tradeoff of slower sync (15-minute intervals).",
       },
     ],
   },
@@ -396,8 +396,8 @@ export const INTEGRATIONS = {
     desc: "Every sale on your Shopify store decrements warehouse stock the moment the order is placed. Nautilus prevents overselling across all Shopify channels (online store, POS, Markets, B2B) and routes orders into pick workflows automatically.",
     features: [
       {
-        title: "Stock sync under 5 seconds",
-        desc: "Shopify inventory levels reflect warehouse scans within 5 seconds, end-to-end. Verified during peak Black Friday traffic at multiple customers.",
+        title: "Real-time stock sync",
+        desc: "Shopify inventory levels reflect warehouse scans within seconds, end-to-end.",
       },
       {
         title: "Multi-location aware",
@@ -409,8 +409,8 @@ export const INTEGRATIONS = {
       },
     ],
     stats: [
-      { val: "<5s", label: "Sync" },
-      { val: "0%", label: "Oversells" },
+      { val: "Real-time", label: "Sync" },
+      { val: "Multi", label: "Location" },
       { val: "Auto", label: "Fulfillment" },
     ],
     flow: {
@@ -436,11 +436,11 @@ export const INTEGRATIONS = {
       },
       {
         q: "How does Nautilus handle Shopify's eventual-consistency inventory model?",
-        a: "Shopify can take up to 60 seconds to propagate inventory changes across regions. Nautilus tracks the canonical state internally and reconciles against Shopify's view every 30 seconds. If a sale beats a sync, the oversell-prevention rule blocks the second sale of the last unit.",
+        a: "Shopify can take time to propagate inventory changes across regions. Nautilus tracks the canonical state internally and reconciles against Shopify's view every 30 seconds. If a sale beats a sync, the oversell-prevention rule blocks the second sale of the last unit.",
       },
       {
         q: "Can this handle high-volume flash sales?",
-        a: "Yes, with one recommendation: pre-warm before the sale. For a flash sale expecting 1,000+ orders/minute, a 24-hour pre-sale stock freeze where Nautilus locks the inventory level and we coordinate the burst load is best. Smaller flashes (around 100/minute) need no pre-coordination.",
+        a: "Yes, with one recommendation: pre-warm before the sale. For a very large flash sale, a 24-hour pre-sale stock freeze where Nautilus locks the inventory level and we coordinate the burst load is best. Smaller flashes need no pre-coordination.",
       },
       {
         q: "What about Shopify Markets and multi-currency?",
@@ -465,7 +465,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Webhook-driven",
-        desc: "WooCommerce webhooks fire on every order and inventory event. Nautilus subscribes to the events it needs and ignores the rest. Push, not poll, so storefront stock reflects warehouse reality within a second or two.",
+        desc: "WooCommerce webhooks fire on every order and inventory event. Nautilus subscribes to the events it needs and ignores the rest. Push, not poll, so storefront stock reflects warehouse reality within seconds.",
       },
     ],
     stats: [
@@ -490,7 +490,7 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "Does this work with major WooCommerce inventory plugins (ATUM, WPC Inventory)?",
-        a: "Generally yes, but with caveats. If you have a plugin actively managing inventory in WooCommerce, you need to decide which is the source of truth. Most customers disable the plugin's inventory management and let Nautilus drive. We have tested compatibility with ATUM (Nautilus as source of truth) and WPC Inventory (read-only).",
+        a: "Generally yes, but with caveats. If you have a plugin actively managing inventory in WooCommerce, you need to decide which is the source of truth. We recommend disabling the plugin's inventory management and letting Nautilus drive. We have tested compatibility with ATUM (Nautilus as source of truth) and WPC Inventory (read-only).",
       },
       {
         q: "What's the hosting requirement?",
@@ -502,7 +502,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "Can this handle high-volume WooCommerce stores?",
-        a: "Yes, with the caveat that WooCommerce's database performance is the bottleneck at very high volume, not our integration. We've run successfully at 200+ orders/minute on Bedrock plus managed MySQL. Stores running default WP hosting cap out earlier.",
+        a: "Yes, with the caveat that WooCommerce's database performance is the bottleneck at very high volume, not our integration. Stores running default WP hosting hit that ceiling sooner.",
       },
     ],
   },
@@ -557,7 +557,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What's the latency for FBA inventory updates?",
-        a: "Amazon's FBA inventory API has variable latency, typically 1 to 4 hours. Nautilus polls every 30 minutes and reconciles to the canonical state. For real-time accuracy on FBA-only items, you're limited by Amazon's API; for FBM and warehouse stock, sync is real-time.",
+        a: "Amazon's FBA inventory API has variable latency. Nautilus polls every 30 minutes and reconciles to the canonical state. For real-time accuracy on FBA-only items, you're limited by Amazon's API; for FBM and warehouse stock, sync is real-time.",
       },
       {
         q: "How are AGL (Amazon Global Logistics) shipments tracked?",
@@ -573,8 +573,8 @@ export const INTEGRATIONS = {
     desc: "Every sale on your Square POS adjusts warehouse stock in real time. Nautilus bridges Square's point-of-sale catalog and your warehouse inventory for retailers with physical locations, mixed online/in-store, or pop-up operations.",
     features: [
       {
-        title: "POS sync under 5 seconds",
-        desc: "Square POS sales hit warehouse counts within 5 seconds. Useful for retailers running busy storefronts where overselling between morning and afternoon shifts is a real risk.",
+        title: "Real-time POS sync",
+        desc: "Square POS sales hit warehouse counts within seconds. Useful for retailers running busy storefronts where overselling between morning and afternoon shifts is a real risk.",
       },
       {
         title: "Bidirectional catalog",
@@ -586,7 +586,7 @@ export const INTEGRATIONS = {
       },
     ],
     stats: [
-      { val: "<5s", label: "POS sync" },
+      { val: "Real-time", label: "POS sync" },
       { val: "Bi-dir", label: "Catalog" },
       { val: "Multi-loc", label: "Support" },
     ],
@@ -640,7 +640,7 @@ export const INTEGRATIONS = {
       },
       {
         title: "Bulk operations",
-        desc: "Process hundreds of orders through batch picking and packing workflows. The picker carries one tote, picks from optimized routes across many orders, and packs by order at the end. Throughput roughly doubles per picker.",
+        desc: "Process hundreds of orders through batch picking and packing workflows. The picker carries one tote, picks from optimized routes across many orders, and packs by order at the end.",
       },
     ],
     stats: [
@@ -679,7 +679,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "How does the order routing logic actually work?",
-        a: "The router scores each candidate warehouse against four factors: stock availability for the order's items, carrier zone to the customer, warehouse capacity (current pick queue depth), and warehouse hours. The highest-scoring warehouse gets the order. The scoring weights are configurable; most customers use the defaults.",
+        a: "The router scores each candidate warehouse against four factors: stock availability for the order's items, carrier zone to the customer, warehouse capacity (current pick queue depth), and warehouse hours. The highest-scoring warehouse gets the order. The scoring weights are configurable.",
       },
     ],
   },
@@ -731,7 +731,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What about Lightspeed Restaurant K-Series and L-Series?",
-        a: "K-Series (formerly iKentoo) is fully supported. L-Series (formerly Lightspeed Restaurant POS) is supported for inventory sync but doesn't expose detailed sales analytics through its API; you'll see SKU-level sales but not menu-engineering data. Most restaurants find this is enough.",
+        a: "K-Series (formerly iKentoo) is fully supported. L-Series (formerly Lightspeed Restaurant POS) is supported for inventory sync but doesn't expose detailed sales analytics through its API; you'll see SKU-level sales but not menu-engineering data.",
       },
       {
         q: "How are Lightspeed Loyalty and gift cards handled?",
@@ -793,7 +793,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What about ShipStation v3 (the new API)?",
-        a: "ShipStation v3 is supported. The integration auto-detects which API version your account uses. v3 is faster on label requests (under 800ms typical vs. about 1.5s on v2) but the integration experience is otherwise the same.",
+        a: "ShipStation v3 is supported. The integration auto-detects which API version your account uses. v3 is faster on label requests, but the integration experience is otherwise the same.",
       },
       {
         q: "Can I trigger label creation before pick is complete?",
@@ -814,7 +814,7 @@ export const INTEGRATIONS = {
     features: [
       {
         title: "Pre-negotiated discounts",
-        desc: "Shippo's carrier discounts apply automatically. USPS Commercial Plus, UPS Daily Pickup, and DHL Express rates are all discounted off standard. Most customers save 10-30% on small package shipping out of the gate.",
+        desc: "Shippo's carrier discounts apply automatically. USPS Commercial Plus, UPS Daily Pickup, and DHL Express rates are all discounted off standard.",
       },
       {
         title: "50+ carriers",
@@ -859,7 +859,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What's the rate-quote latency?",
-        a: "Typically 200 to 600ms per quote. For high-throughput operations doing batch picking, quotes happen in parallel and don't bottleneck pick-to-pack flow. We've never seen a customer's pack throughput limited by rate quote speed.",
+        a: "Quotes come back from Shippo in real time. For high-throughput operations doing batch picking, quotes happen in parallel and don't bottleneck pick-to-pack flow.",
       },
     ],
   },
@@ -915,7 +915,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "What about EasyPost's Smart Rate feature?",
-        a: "Supported. Smart Rate predicts delivery date confidence per carrier and service. Nautilus's order routing can factor Smart Rate confidence into carrier selection ('pick the cheapest carrier with > 80% confidence of delivering by Wednesday'). Most customers leave it off; those who turn it on tend to keep it on.",
+        a: "Supported. Smart Rate predicts delivery date confidence per carrier and service. Nautilus's order routing can factor Smart Rate confidence into carrier selection ('pick the cheapest carrier with > 80% confidence of delivering by Wednesday').",
       },
       {
         q: "Does this support Latin America carriers (Correios, Estafeta)?",
@@ -966,15 +966,15 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "Do I need a FedEx Developer account?",
-        a: "Yes, for direct integration. Sign up for FedEx Developer Portal access, generate your API credentials, and paste them into Nautilus during setup. The whole process takes about 30 minutes. Customers without a FedEx account can use FedEx through ShipStation or Shippo instead.",
+        a: "Yes, for direct integration. Sign up for FedEx Developer Portal access, generate your API credentials, and paste them into Nautilus during setup. Customers without a FedEx account can use FedEx through ShipStation or Shippo instead.",
       },
       {
         q: "How does this compare to using FedEx through ShipStation?",
-        a: "Direct integration is faster (one less network hop, label generation is typically 200ms vs. 800ms through ShipStation). It also uses your negotiated rates directly without ShipStation's small per-label fee. The tradeoff is that ShipStation provides a richer UI for shipping team workflows; direct FedEx integration is best when label printing is mostly automated and humans rarely look at the shipping interface.",
+        a: "Direct integration is faster (one less network hop). It also uses your negotiated rates directly without ShipStation's small per-label fee. The tradeoff is that ShipStation provides a richer UI for shipping team workflows; direct FedEx integration is best when label printing is mostly automated and humans rarely look at the shipping interface.",
       },
       {
         q: "What about FedEx Office printing?",
-        a: "Not currently integrated. FedEx Office (the retail printing service) has a separate API focused on print jobs rather than shipping. We've had a few customers ask for it; on the roadmap but not committed for any specific quarter.",
+        a: "Not currently integrated. FedEx Office (the retail printing service) has a separate API focused on print jobs rather than shipping. It's on the roadmap but not committed for any specific quarter.",
       },
       {
         q: "Can I use FedEx International Priority for high-value international shipments?",
@@ -1025,15 +1025,15 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "Do I need a UPS account?",
-        a: "Yes. The UPS Developer API requires a UPS account number and shipper account. Customers without one can use UPS through ShipStation or Shippo instead. The UPS account signup process is straightforward but takes about a week for approval; plan accordingly.",
+        a: "Yes. The UPS Developer API requires a UPS account number and shipper account. Customers without one can use UPS through ShipStation or Shippo instead. The UPS account signup process is straightforward but approval isn't instant; plan accordingly.",
       },
       {
         q: "What's the difference between UPS Ground and UPS Ground Saver (SurePost)?",
-        a: "UPS Ground is end-to-end UPS delivery. UPS Ground Saver hands the last mile to USPS, which is typically a day slower and 10-20% cheaper. We have customers using both: Ground for higher-value items, Saver for low-margin items where the delivery date is less critical.",
+        a: "UPS Ground is end-to-end UPS delivery. UPS Ground Saver hands the last mile to USPS, which is typically slower and cheaper. A common split is Ground for higher-value items and Saver for low-margin items where the delivery date is less critical.",
       },
       {
         q: "Can I use UPS Worldship workflows alongside Nautilus?",
-        a: "Yes, but with one rule: pick one tool to be the label generator. Most customers move all label generation into Nautilus and retire UPS Worldship for that account. If you have non-Nautilus shipments (internal transfers shipped through UPS), Worldship can handle those separately without conflicting.",
+        a: "Yes, but with one rule: pick one tool to be the label generator. We recommend moving all label generation into Nautilus and retiring UPS Worldship for that account. If you have non-Nautilus shipments (internal transfers shipped through UPS), Worldship can handle those separately without conflicting.",
       },
       {
         q: "How does this handle UPS surcharge management (peak season, residential, fuel)?",
@@ -1085,7 +1085,7 @@ export const INTEGRATIONS = {
     faqs: [
       {
         q: "DHL Express vs. DHL eCommerce: which should I use?",
-        a: "DHL Express is time-definite international air freight, typically 2-5 days door to door, premium pricing. DHL eCommerce is postal-style parcel, typically 7-14 days, much cheaper. Use Express for high-value or urgent international; use eCommerce for low-margin direct-to-consumer.",
+        a: "DHL Express is time-definite international air freight with premium pricing. DHL eCommerce is postal-style parcel: slower, and much cheaper. Use Express for high-value or urgent international; use eCommerce for low-margin direct-to-consumer.",
       },
       {
         q: "What's the customs paperwork process?",
@@ -1093,7 +1093,7 @@ export const INTEGRATIONS = {
       },
       {
         q: "How are returns handled internationally?",
-        a: "Returns from international destinations are complex enough that we don't auto-generate return labels by default. The integration supports manual return label creation through the DHL API, but customers typically use a regional return aggregator (in the destination country) and surface that return option through their customer-service interface. Returns post back to Nautilus when the package is scanned at your warehouse.",
+        a: "Returns from international destinations are complex enough that we don't auto-generate return labels by default. The integration supports manual return label creation through the DHL API, but we recommend a regional return aggregator (in the destination country), surfaced through your customer-service interface. Returns post back to Nautilus when the package is scanned at your warehouse.",
       },
       {
         q: "Does this support DHL Parcel (the European parcel network)?",
@@ -1117,7 +1117,7 @@ export const INTEGRATIONS = {
 export const DEFAULT_INTEGRATION_FAQS = [
   {
     q: "How long does setup take?",
-    a: "Most customers are syncing in under 10 minutes. Enterprise environments with custom field mappings can take 30 minutes to an hour.",
+    a: "Standard connections are quick to set up. Enterprise environments with custom field mappings take longer.",
   },
   {
     q: "What if a sync fails?",
@@ -1125,10 +1125,10 @@ export const DEFAULT_INTEGRATION_FAQS = [
   },
   {
     q: "Can I limit what syncs?",
-    a: "Yes. Granular controls let you sync specific products, locations, or even specific fields. Most customers start with everything on and tighten over time.",
+    a: "Yes. Granular controls let you sync specific products, locations, or even specific fields. You can start with everything on and tighten over time.",
   },
   {
     q: "Is the integration included in all plans?",
-    a: "This integration is included in Pro and Enterprise. Free plans can install but with limits on sync frequency.",
+    a: "Yes. Integrations are included in both Pro and Enterprise, with no add-on fee.",
   },
 ];

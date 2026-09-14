@@ -5,6 +5,10 @@ import JsonLd, {
   breadcrumbSchema,
 } from "@/components/SEO/JsonLd";
 
+/* Only the slugs in lib/blogData.js exist. Without this, a removed or
+   mistyped slug rendered a Not Found page with a 200 instead of a 404. */
+export const dynamicParams = false;
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const post = BLOG_POSTS.find((p) => p.slug === slug);

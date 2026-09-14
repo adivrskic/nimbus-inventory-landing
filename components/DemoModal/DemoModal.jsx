@@ -336,7 +336,7 @@ const TOPICS = [
     emailLabel: "Enterprise pricing",
     agenda: [
       "Per-warehouse pricing for your footprint",
-      "SSO, roles, and admin controls",
+      "Roles, permissions, and admin controls",
       "Dedicated CSM & onboarding",
       "Contract terms & security review",
     ],

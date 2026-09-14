@@ -5,6 +5,10 @@ import JsonLd, {
   helpArticleSchema,
 } from "@/components/SEO/JsonLd";
 
+/* Only the slugs in lib/helpData.js exist. Without this, a removed or
+   mistyped slug rendered a Not Found page with a 200 instead of a 404. */
+export const dynamicParams = false;
+
 function findArticle(slug) {
   for (const cat of HELP_CATEGORIES) {
     const article = cat.articles.find((a) => a.slug === slug);

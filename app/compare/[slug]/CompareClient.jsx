@@ -385,13 +385,16 @@ export default function CompareClient({ competitor, others }) {
           03
         </div>
         <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>Why teams switch</div>
+          {/* Framed as differences, not testimony: this used to cite
+              "onboarding conversations with customers migrating off" each
+              competitor, and there haven't been any to cite. */}
+          <div className={styles.sectionLabel}>Key differences</div>
           <h2 className={styles.sectionTitle}>
-            Common reasons teams move from {competitor.name}.
+            Where Nautilus differs from {competitor.name}.
           </h2>
           <p className={styles.sectionDesc}>
-            The four patterns we hear most in onboarding conversations with
-            customers migrating off {competitor.name}.
+            The differences worth weighing if you&apos;re thinking about moving
+            off {competitor.name}.
           </p>
 
           <NumberedList items={competitor.reasons} divided initiallyHidden />

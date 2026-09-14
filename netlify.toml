@@ -44,9 +44,21 @@
   to = "/blog/smarter-cycle-counting"
   status = 301
 
+# The voice-commands post was removed (Sept 2026): Nautilus has no voice
+# feature. Its old slug and its predecessor both go to the index.
 [[redirects]]
   from = "/blog/ai-voice-commands"
-  to = "/blog/voice-commands-hands-free"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/blog/voice-commands-hands-free"
+  to = "/blog"
+  status = 301
+
+[[redirects]]
+  from = "/help/voice-commands-reference"
+  to = "/help"
   status = 301
 
 [[redirects]]

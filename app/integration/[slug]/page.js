@@ -5,6 +5,10 @@ import {
 } from "@/components/IntegrationPage/integrationData";
 import JsonLd, { breadcrumbSchema, faqSchema } from "@/components/SEO/JsonLd";
 
+/* Only the slugs in integrationData.js exist. Without this, a removed or
+   mistyped slug rendered a Not Found page with a 200 instead of a 404. */
+export const dynamicParams = false;
+
 /* The per-integration FAQ block now lives on each integration in
    integrationData.js as `faqs`. DEFAULT_INTEGRATION_FAQS is the fallback
    for any integration that omits its own. This file is the consumer side

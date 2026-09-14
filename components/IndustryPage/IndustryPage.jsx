@@ -394,10 +394,14 @@ export default function IndustryPage({
           03
         </div>
         <div className={styles.sectionContent}>
-          <div className={styles.sectionLabel}>By the numbers</div>
-          <h2 className={styles.sectionTitle}>What customers see.</h2>
+          {/* These cells are capability phrases, not results. The section
+              used to promise "averages across customers in their first 12
+              months" over invented percentages; there are no customers to
+              average yet. */}
+          <div className={styles.sectionLabel}>At a glance</div>
+          <h2 className={styles.sectionTitle}>What Nautilus covers.</h2>
           <p className={styles.sectionDesc}>
-            Averages across {industry.title} customers in their first 12 months.
+            The short version for {industry.title}.
           </p>
 
           <div className={styles.stats}>

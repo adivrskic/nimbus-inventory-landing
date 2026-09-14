@@ -5,8 +5,12 @@ const TITLES = {
   privacy: "Privacy Policy",
   terms: "Terms of Service",
   security: "Security",
-  status: "System Status",
 };
+
+/* Only the slugs in LEGAL_PAGES exist. Without this, any other slug — the
+   removed /legal/status page included — rendered LegalPage's "not found"
+   view with a 200 status; now it's a real 404. */
+export const dynamicParams = false;
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -15,7 +19,6 @@ export async function generateMetadata({ params }) {
     title,
     description: `${title} for Nautilus WMS warehouse management platform.`,
     alternates: { canonical: `https://nautilusinventory.com/legal/${slug}` },
-    robots: { index: slug !== "status", follow: true },
   };
 }
 

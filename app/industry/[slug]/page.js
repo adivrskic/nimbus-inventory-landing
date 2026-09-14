@@ -5,6 +5,10 @@ import {
 } from "@/components/IndustryPage/industryData";
 import JsonLd, { breadcrumbSchema, faqSchema } from "@/components/SEO/JsonLd";
 
+/* Only the slugs in industryData.js exist. Without this, a removed or
+   mistyped slug rendered a Not Found page with a 200 instead of a 404. */
+export const dynamicParams = false;
+
 /* Per-industry FAQs live on each industry in industryData.js as `faqs`.
    DEFAULT_INDUSTRY_FAQS is the fallback for any industry that omits its
    own. The visible FAQ rendering happens in

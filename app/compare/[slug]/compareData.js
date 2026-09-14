@@ -22,13 +22,13 @@ export const COMPETITORS = {
     headline: ["Modern AI vs", "legacy desktop."],
     accentWord: "legacy",
     heroDesc:
-      "Fishbowl is a classic SMB inventory management product, often paired with QuickBooks Desktop. Nautilus is what teams move to when they need real-time AI, native mobile, and operations that scale beyond a single warehouse.",
+      "Fishbowl is a classic SMB inventory management product, often paired with QuickBooks Desktop. Nautilus is what teams move to when they need real-time AI, a web app that runs on any device, and operations that scale beyond a single warehouse.",
 
     quickCompare: {
       Nautilus: [
         "AI-powered route optimization, built in",
         "Cloud-native, accessible from any device",
-        "iOS + Android apps included with every plan",
+        "Web app on any phone or tablet; native apps coming soon",
         "Per-warehouse pricing, predictable as you grow",
         "Modern dashboard UX, designed in 2025",
       ],
@@ -49,7 +49,7 @@ export const COMPETITORS = {
       },
       {
         feature: "Native iOS + Android apps",
-        Nautilus: "yes",
+        Nautilus: "Coming soon",
         competitor: "partial",
       },
       {
@@ -83,9 +83,8 @@ export const COMPETITORS = {
         Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "SOC 2 Type II certified", Nautilus: "yes", competitor: "no" },
       {
-        feature: "Native ERP integrations (50+)",
+        feature: "Native ERP integrations",
         Nautilus: "yes",
         competitor: "partial",
       },
@@ -102,8 +101,8 @@ export const COMPETITORS = {
         desc: "Route optimization, error flagging, demand forecasting — they're core features, not paid add-ons or roadmap promises.",
       },
       {
-        title: "Mobile-native, no per-user fees",
-        desc: "Every warehouse worker gets a real iOS or Android app. No additional licenses, no separate scanner hardware required.",
+        title: "Any device, no per-user fees",
+        desc: "Every warehouse worker can use the web app in any modern browser on desktop, tablet, or phone, with native iOS and Android apps coming soon. No additional licenses, no separate scanner hardware required.",
       },
       {
         title: "Predictable pricing as you scale",
@@ -138,14 +137,14 @@ export const COMPETITORS = {
         "AI-powered route and replenishment",
         "Multi-warehouse with per-location pricing",
         "Custom workflows configurable per team",
-        "Enterprise security: SOC 2, SSO, RBAC",
+        "Role-based permissions and an audit log of changes",
       ],
       competitor: [
         "Inventory tracking, no workflow engine",
         "Manual quantity adjustments",
         "Single-location focus, limited multi-site",
         "Fixed workflows, light customization",
-        "Basic auth, no SSO on standard plans",
+        "Basic auth on standard plans",
       ],
     },
 
@@ -187,8 +186,6 @@ export const COMPETITORS = {
         Nautilus: "yes",
         competitor: "partial",
       },
-      { feature: "SOC 2 Type II certified", Nautilus: "yes", competitor: "no" },
-      { feature: "SSO + RBAC", Nautilus: "yes", competitor: "partial" },
       {
         feature: "Mobile-first inventory tracking",
         Nautilus: "yes",
@@ -211,7 +208,7 @@ export const COMPETITORS = {
       },
       {
         title: "Enterprise integrations",
-        desc: "Connect to your ERP, your shipping carriers, your e-commerce stack. 50+ native integrations vs. Sortly's CSV-import workflow.",
+        desc: "Connect to your ERP, your shipping carriers, your e-commerce stack. Native integrations vs. Sortly's CSV-import workflow.",
       },
     ],
 
@@ -230,18 +227,18 @@ export const COMPETITORS = {
     headline: ["Lighter than", "enterprise."],
     accentWord: "Lighter",
     heroDesc:
-      "NetSuite WMS is Oracle's warehouse module for teams already running NetSuite ERP. It's powerful but heavy — typically a 6–12 month implementation led by a systems integrator. Nautilus delivers the same core warehouse operations in two weeks, works with any ERP, and costs a fraction of the implementation.",
+      "NetSuite WMS is Oracle's warehouse module for teams already running NetSuite ERP. It's powerful but heavy — typically a months-long implementation led by a systems integrator. Nautilus delivers the same core warehouse operations with self-serve setup, works with any ERP, and costs a fraction of the implementation.",
 
     quickCompare: {
       Nautilus: [
-        "Self-serve setup, live in under 2 weeks",
+        "Self-serve setup, no systems integrator needed",
         "Modern AI-first architecture",
         "Works with any ERP (NetSuite, SAP, QuickBooks, etc.)",
         "Predictable per-warehouse pricing",
         "Modern UI, designed in 2025",
       ],
       competitor: [
-        "SI-led implementation, 6–12 months typical",
+        "SI-led implementation, typically months-long",
         "Legacy Oracle architecture",
         "Requires NetSuite ERP as the foundation",
         "Enterprise contracts, custom pricing per user",
@@ -251,7 +248,7 @@ export const COMPETITORS = {
 
     matrix: [
       {
-        feature: "Self-serve setup (< 2 weeks)",
+        feature: "Self-serve setup",
         Nautilus: "yes",
         competitor: "no",
       },
@@ -268,11 +265,11 @@ export const COMPETITORS = {
       },
       {
         feature: "Native iOS + Android apps",
-        Nautilus: "yes",
+        Nautilus: "Coming soon",
         competitor: "partial",
       },
       {
-        feature: "Real-time updates (sub-30s sync)",
+        feature: "Real-time updates",
         Nautilus: "yes",
         competitor: "partial",
       },
@@ -288,12 +285,6 @@ export const COMPETITORS = {
         competitor: "yes",
       },
       {
-        feature: "SOC 2 Type II certified",
-        Nautilus: "yes",
-        competitor: "yes",
-      },
-      { feature: "SSO + SAML", Nautilus: "yes", competitor: "yes" },
-      {
         feature: "Multi-tenant for 3PL operators",
         Nautilus: "yes",
         competitor: "no",
@@ -302,27 +293,27 @@ export const COMPETITORS = {
 
     reasons: [
       {
-        title: "Weeks instead of quarters",
-        desc: "Most Nautilus deployments are live in under 2 weeks. NetSuite WMS implementations typically run 6 to 12 months and require a systems integrator.",
+        title: "Self-serve instead of SI-led",
+        desc: "Nautilus setup is self-serve, with no systems integrator to hire. NetSuite WMS implementations typically run for months and require a systems integrator.",
       },
       {
         title: "ERP-agnostic",
-        desc: "You don't have to be on NetSuite. Nautilus connects to NetSuite, SAP, QuickBooks, Sage, and dozens of others as a first-class integration.",
+        desc: "You don't have to be on NetSuite. Nautilus connects to NetSuite, SAP, QuickBooks, Sage, and others as a first-class integration.",
       },
       {
         title: "Predictable pricing",
-        desc: "Per-warehouse pricing means no surprises. NetSuite's per-user model plus implementation costs can run 5–10x what Nautilus charges.",
+        desc: "Per-warehouse pricing means no surprises. NetSuite's per-user model plus implementation costs can run far above what Nautilus charges.",
       },
       {
         title: "Modern AI, not legacy rules",
-        desc: "Route optimization, demand forecasting, error flagging — all powered by ML models trained on real warehouse data. Not rule-based scripts.",
+        desc: "Plain-English search, demand forecasts that draft purchase orders, and anomaly alerts that explain themselves. Built into the core product, not sold as an add-on.",
       },
     ],
 
     competitorStrengths: [
       "You're already running NetSuite ERP across the entire enterprise",
       "You need very deep ERP-level workflow integration with NetSuite's records and approval chains",
-      "You have a dedicated IT implementation team and a 6–12 month deploy is acceptable",
+      "You have a dedicated IT implementation team and a months-long deploy is acceptable",
       "Your finance team requires consolidated reporting within the NetSuite environment",
     ],
   },

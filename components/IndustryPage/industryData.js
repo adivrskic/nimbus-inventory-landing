@@ -69,14 +69,14 @@ export const INDUSTRIES = [
       {
         title: "Multi-unit inventory",
         desc: "Track the same product in square feet, cases, and pallets simultaneously. Nautilus converts between units automatically based on each SKU's setup.",
-        stat: "12+",
-        statLabel: "Unit types",
+        stat: "Auto",
+        statLabel: "Unit conversion",
       },
       {
         title: "Condition grading",
         desc: "Scan and tag items by condition (A-grade, B-grade, damaged). Separate stock levels let the sales team quote honestly and document credits cleanly.",
-        stat: "100%",
-        statLabel: "Graded stock",
+        stat: "Per-grade",
+        statLabel: "Stock levels",
       },
       {
         title: "Job-site tracking",
@@ -86,9 +86,9 @@ export const INDUSTRIES = [
       },
     ],
     stats: [
-      { val: "40%", label: "Less shrinkage" },
-      { val: "3x", label: "Faster receiving" },
-      { val: "99.5%", label: "Order accuracy" },
+      { val: "Units", label: "Sq ft, cases, pallets" },
+      { val: "Grade", label: "A-grade, B-grade, damaged" },
+      { val: "Jobs", label: "Job-site delivery tracking" },
     ],
     cta: "See how Nautilus handles building materials",
     workflow: [
@@ -124,7 +124,7 @@ export const INDUSTRIES = [
       },
       {
         q: "Can we attach photos to damaged receiving items?",
-        a: "Yes. The scanner app lets the receiver photograph damage at the moment of receipt. Photos attach to that specific lot and travel with it through quarantine, supplier-credit, or sell-as-B-grade workflows. Useful for documenting credits with suppliers and for showing customers what 'B-grade' actually means before they buy.",
+        a: "Yes. The receiver can photograph damage at the moment of receipt. Photos attach to that specific lot and travel with it through quarantine, supplier-credit, or sell-as-B-grade workflows. Useful for documenting credits with suppliers and for showing customers what 'B-grade' actually means before they buy.",
       },
     ],
   },
@@ -160,20 +160,20 @@ export const INDUSTRIES = [
       {
         title: "WIP visibility",
         desc: "Track items through every production stage. Scan at each station to move inventory from raw to WIP to finished, with dwell time recorded.",
-        stat: "100%",
-        statLabel: "Stage visibility",
+        stat: "Per-station",
+        statLabel: "Stage scans",
       },
       {
         title: "Predictive reordering",
         desc: "AI analyzes production schedules and component burn rates to flag shortages days before they hit. Reorder draft POs are ready for buyer review.",
-        stat: "3 days",
-        statLabel: "Early warning",
+        stat: "Draft POs",
+        statLabel: "Ready for review",
       },
     ],
     stats: [
-      { val: "60%", label: "Less downtime" },
-      { val: "2x", label: "Throughput" },
-      { val: "98%", label: "On-time delivery" },
+      { val: "BOM", label: "Auto component deductions" },
+      { val: "WIP", label: "Stage-by-stage visibility" },
+      { val: "Lots", label: "Component traceability" },
     ],
     cta: "See how Nautilus supports manufacturing",
     workflow: [
@@ -197,7 +197,7 @@ export const INDUSTRIES = [
     faqs: [
       {
         q: "Does Nautilus integrate with our MRP?",
-        a: "Direct integrations to SAP Business One and NetSuite are first-party. For other MRPs (Microsoft Dynamics, Epicor Kinetic, Infor, custom-built), we use a webhook-and-API bridge that takes 1-2 weeks of mapping work during initial setup. Component issues, finished-goods receipts, and inventory adjustments sync both directions; production orders and BOMs originate in the MRP and read into Nautilus.",
+        a: "Direct integrations to SAP Business One and NetSuite are first-party. For other MRPs (Microsoft Dynamics, Epicor Kinetic, Infor, custom-built), we use a webhook-and-API bridge that needs some mapping work during initial setup. Component issues, finished-goods receipts, and inventory adjustments sync both directions; production orders and BOMs originate in the MRP and read into Nautilus.",
       },
       {
         q: "Can it track work-in-progress between stations?",
@@ -239,14 +239,14 @@ export const INDUSTRIES = [
       {
         title: "Expiration alerts",
         desc: "Nautilus tracks best-by, sell-by, and use-by dates for every item. Alerts fire days before anything expires, with quantities flagged for promotion or write-off.",
-        stat: "5 days",
-        statLabel: "Advance notice",
+        stat: "Per-item",
+        statLabel: "Date tracking",
       },
       {
         title: "Automated FIFO",
         desc: "Pick lists are automatically ordered by receipt date. The oldest stock always ships first, with supervisor override logged for any exception.",
-        stat: "100%",
-        statLabel: "FIFO compliance",
+        stat: "Logged",
+        statLabel: "Supervisor overrides",
       },
       {
         title: "Zone mapping",
@@ -256,9 +256,9 @@ export const INDUSTRIES = [
       },
     ],
     stats: [
-      { val: "80%", label: "Less spoilage" },
-      { val: "100%", label: "FIFO compliance" },
-      { val: "0", label: "Recall incidents" },
+      { val: "FEFO", label: "Expiry-first picking" },
+      { val: "Zones", label: "Wrong-zone putaways blocked" },
+      { val: "Lots", label: "Recall tracing" },
     ],
     cta: "See how Nautilus handles food safety",
     workflow: [
@@ -282,15 +282,15 @@ export const INDUSTRIES = [
     faqs: [
       {
         q: "Does Nautilus enforce FIFO or FEFO?",
-        a: "Both, configurable per product. FIFO (first-in-first-out) drives pick order by receipt date; FEFO (first-expired-first-out) drives by expiration date. Most food customers run FEFO for date-sensitive products and FIFO for shelf-stable. The pick app sorts the list automatically; a supervisor override leaves an audit trail with the reason for the override.",
+        a: "Both, configurable per product. FIFO (first-in-first-out) drives pick order by receipt date; FEFO (first-expired-first-out) drives by expiration date. Food operations typically run FEFO for date-sensitive products and FIFO for shelf-stable. The pick app sorts the list automatically; a supervisor override leaves an audit trail with the reason for the override.",
       },
       {
         q: "How are temperature excursions logged and reported?",
         a: "Nautilus integrates with continuous temperature monitors (DeltaTrak, MadgeTech, Sensitech, or our own paired sensor). Excursions outside the configured range alert immediately to a configured pager list. The excursion report exports with timestamps, duration, and which lots were in the affected zone, ready to attach to a credit request or an FDA submission.",
       },
       {
-        q: "Can we recall an entire lot in under an hour?",
-        a: "Yes. The recall query takes a lot number and returns every receipt, transfer, pick, ship, and current location for any unit from that lot. On the customer side, it returns every order that includes a unit from that lot, including customer contact information. Most recalls execute in under 5 minutes; the bottleneck becomes reaching out to affected customers, not finding them.",
+        q: "Can we trace an entire lot for a recall?",
+        a: "Yes. The recall query takes a lot number and returns every receipt, transfer, pick, ship, and current location for any unit from that lot. On the customer side, it returns every order that includes a unit from that lot, including customer contact information, so the work becomes reaching out to affected customers, not finding them.",
       },
       {
         q: "How does it handle co-products and weighted-average costing?",
@@ -309,7 +309,7 @@ export const INDUSTRIES = [
     challenges: [
       {
         title: "SKU explosion",
-        desc: "The same brake pad comes in 40 variants across different makes, models, and years. Picking the wrong one is costly and embarrassing.",
+        desc: "The same brake pad comes in many variants across different makes, models, and years. Picking the wrong one is costly and embarrassing.",
       },
       {
         title: "Cross-referencing",
@@ -324,8 +324,8 @@ export const INDUSTRIES = [
       {
         title: "AI part matching",
         desc: "Describe what you need in plain language. Nautilus finds the right SKU across all numbering systems instantly, with vehicle-fit filtering applied where available.",
-        stat: "<200ms",
-        statLabel: "Search speed",
+        stat: "AI",
+        statLabel: "Plain-language search",
       },
       {
         title: "Cross-reference database",
@@ -341,9 +341,9 @@ export const INDUSTRIES = [
       },
     ],
     stats: [
-      { val: "95%", label: "First-pick accuracy" },
-      { val: "70%", label: "Faster lookups" },
-      { val: "50%", label: "Less dead stock" },
+      { val: "AI", label: "Part matching" },
+      { val: "X-ref", label: "OEM & aftermarket numbers" },
+      { val: "Cores", label: "Credit tracking" },
     ],
     cta: "See how Nautilus handles auto parts",
     workflow: [
@@ -379,7 +379,7 @@ export const INDUSTRIES = [
       },
       {
         q: "Will it integrate with our parts catalog software?",
-        a: "Yes. Direct integrations to PartsTech, WHI Solutions, and PartsAuthority are first-party. The catalog provides the make/model/year fitment data; Nautilus provides the inventory and pricing layer. For other catalog software, we have a webhook-and-API bridge with about a week of mapping work during setup.",
+        a: "Yes. Direct integrations to PartsTech, WHI Solutions, and PartsAuthority are first-party. The catalog provides the make/model/year fitment data; Nautilus provides the inventory and pricing layer. For other catalog software, we have a webhook-and-API bridge that needs some mapping work during setup.",
       },
     ],
   },
@@ -387,10 +387,13 @@ export const INDUSTRIES = [
   {
     slug: "pharmaceuticals-medical",
     title: "Pharmaceuticals & Medical",
-    headline: ["Compliance at", "every shelf."],
+    headline: ["Traceable at", "every shelf."],
     accentWord: "every",
+    /* Only what the app does. This page used to claim DSCSA compliance,
+       EPCIS file generation, temperature-monitor integration, and testing
+       with McKesson, Cardinal and AmerisourceBergen; none of that exists. */
     heroDesc:
-      "Serialized DSCSA tracking, cold-chain logging with excursion alerts, and audit trails ready for FDA, DEA, or state-board review. Every scan timestamps and attributes to a named operator.",
+      "Serial numbers, lots, and expiration dates on record, earliest-expiring stock picked first, and QC quarantine for anything that needs inspection. Every scan is timestamped and attributed to a named operator.",
     challenges: [
       {
         title: "Serialization mandates",
@@ -398,7 +401,7 @@ export const INDUSTRIES = [
       },
       {
         title: "Cold chain integrity",
-        desc: "Temperature excursions can destroy millions in inventory. You need proof that storage conditions were maintained, not just a claim.",
+        desc: "Temperature excursions can destroy high-value inventory. You need proof that storage conditions were maintained, not just a claim.",
       },
       {
         title: "Regulatory audits",
@@ -408,63 +411,63 @@ export const INDUSTRIES = [
     solutions: [
       {
         title: "Serial number tracking",
-        desc: "Scan and verify individual serial numbers. Nautilus maintains the complete chain of custody for every unit, with EPCIS file generation for outbound shipments.",
-        stat: "100%",
-        statLabel: "Serialized",
+        desc: "Record serial numbers for serialized units, alongside each unit's lot and expiration date.",
+        stat: "Per-unit",
+        statLabel: "Serial records",
       },
       {
-        title: "Cold chain logging",
-        desc: "Integrate with temperature monitors. Nautilus logs conditions continuously and alerts immediately on excursions, with reports ready for credit conversations.",
-        stat: "Continuous",
-        statLabel: "Monitoring",
+        title: "Lots, expiry, and quarantine",
+        desc: "Track lots and expiration dates, pick the earliest-expiring stock first, and hold anything that needs inspection in QC quarantine until someone releases it.",
+        stat: "FEFO",
+        statLabel: "Expiry-first picking",
       },
       {
-        title: "Audit-ready reports",
-        desc: "Generate complete audit trails in seconds. Every scan, movement, and adjustment is timestamped and attributed to a named operator, with the retention period the regulator requires.",
-        stat: "<30s",
-        statLabel: "Report generation",
+        title: "Audit trail",
+        desc: "Every scan, movement, and adjustment is timestamped and attributed to a named operator in the audit log, so you can show who handled what, and when.",
+        stat: "Named",
+        statLabel: "Operator on every scan",
       },
     ],
     stats: [
-      { val: "100%", label: "Audit compliance" },
-      { val: "0", label: "Excursion losses" },
-      { val: "99.99%", label: "Tracking accuracy" },
+      { val: "Serial", label: "Unit-level serial numbers" },
+      { val: "FEFO", label: "Expiry-first picking" },
+      { val: "Audit", label: "Named-operator trails" },
     ],
-    cta: "See how Nautilus handles pharma compliance",
+    cta: "See how Nautilus handles pharma inventory",
     workflow: [
       {
-        label: "Serial receipt",
-        desc: "Each unit's serial number scans and reconciles against the supplier's EPCIS file. DSCSA chain of custody begins at the receiving dock.",
+        label: "Receive",
+        desc: "Stock is received against its lot and expiration date, and serial numbers are recorded for serialized units.",
       },
       {
-        label: "Cold-zone putaway",
-        desc: "Temperature-monitored zones with continuous logging. Excursions alert before product damage occurs, not after.",
+        label: "Quarantine hold",
+        desc: "Anything that needs inspection goes to QC quarantine and can't be picked until it's released.",
       },
       {
-        label: "Chain-of-custody pick",
-        desc: "Pick lists honor lot, expiration, and custody requirements. Substitutions block unless explicitly authorized by a named approver.",
+        label: "Expiry-first pick",
+        desc: "Pick lists send the earliest-expiring lot first, and every pick is recorded against the operator who made it.",
       },
       {
-        label: "Verified pack & manifest",
-        desc: "Second scanner verifies the pack. EPCIS outbound file generates; tamper-evident seals apply with audit log entry.",
+        label: "Verified pack",
+        desc: "Picks are scanned to verify them before they ship, and the check lands in the audit log.",
       },
     ],
     faqs: [
       {
         q: "Is Nautilus DSCSA compliant?",
-        a: "Yes. Nautilus handles DSCSA serialized product tracking, lot/batch verification, EPCIS file generation for outbound shipments, and the 6-year transaction history retention requirement. We also handle the November 2023 DSCSA enhanced drug distribution security (Phase II) requirements including verification-on-receipt for suspect product. Customers can self-attest using our DSCSA report; for FDA inspections, we generate the trace audit on demand.",
+        a: "Nautilus covers the inventory side: serial numbers, lots, expiration dates, and an audit log of every movement. It doesn't generate EPCIS files or exchange transaction data with trading partners today, and DSCSA compliance also depends on your own processes. If you need those pieces, talk to us before you commit.",
       },
       {
-        q: "How is HIPAA handled for medical-device customers?",
-        a: "Nautilus is HIPAA compliant and signs a BAA. Inventory data for medical devices doesn't typically contain PHI directly, but customer order data sometimes does (patient name, procedure, facility). We treat order data as PHI by default for medical-device customers: encrypted at rest, role-based access, and audit log of every read.",
+        q: "How is patient information in order data protected?",
+        a: "Inventory data for medical devices doesn't typically contain PHI directly, but customer order data sometimes does (patient name, procedure, facility). Data in Nautilus is encrypted in transit and at rest, each organization's data is isolated at the database level with row-level security, access is controlled by role-based permissions, and changes are recorded in an audit log. Nautilus isn't HIPAA certified and doesn't sign BAAs, so keep patient details out of order records. See /legal/security for details.",
       },
       {
         q: "Can we generate EPCIS files for outbound shipments?",
-        a: "Yes. EPCIS 1.2 and 2.0 file generation is built in. Outbound shipments to wholesalers and dispensers include the full ASN/EPCIS payload with serial numbers, lot information, and chain of custody. We've tested compatibility with the major DSCSA-compliant trading partners (McKesson, Cardinal, AmerisourceBergen) and the smaller regional wholesalers.",
+        a: "Not today. Nautilus doesn't produce EPCIS files. If your trading partners require them, tell us before you commit.",
       },
       {
-        q: "What about temperature-excursion proof for high-value cold-chain shipments?",
-        a: "Each cold-chain shipment carries continuous temperature data from the in-package data logger, stored against the shipment record. Excursion alerts fire to a configured pager list at the moment they happen. If a wholesaler or hospital pharmacy claims an excursion on receipt, Nautilus can produce the in-transit temperature history within seconds, usually settling the credit conversation before it becomes a dispute.",
+        q: "Does Nautilus log temperatures for cold-chain products?",
+        a: "No. Nautilus doesn't connect to temperature monitors or data loggers. It handles the inventory side (lots, expiration dates, and quarantine holds) alongside whatever monitoring you already use.",
       },
     ],
   },
@@ -487,15 +490,15 @@ export const INDUSTRIES = [
       },
       {
         title: "Peak season scaling",
-        desc: "Black Friday traffic can 10x your daily order volume. Your warehouse process needs to scale instantly, not after a one-week procurement cycle.",
+        desc: "Black Friday traffic can multiply your daily order volume. Your warehouse process needs to scale instantly, not after a one-week procurement cycle.",
       },
     ],
     solutions: [
       {
         title: "Real-time channel sync",
         desc: "Every scan updates stock levels across all connected channels within seconds. Overselling becomes impossible once allocation rules are in place.",
-        stat: "<5s",
-        statLabel: "Sync delay",
+        stat: "All",
+        statLabel: "Connected channels",
       },
       {
         title: "Client isolation",
@@ -505,15 +508,15 @@ export const INDUSTRIES = [
       },
       {
         title: "Wave picking",
-        desc: "AI groups orders into optimal pick waves. Multiple pickers work simultaneously without path conflicts, doubling throughput per picker.",
-        stat: "3x",
-        statLabel: "Pick throughput",
+        desc: "AI groups orders into optimal pick waves. Multiple pickers work simultaneously without path conflicts.",
+        stat: "Parallel",
+        statLabel: "Picking",
       },
     ],
     stats: [
-      { val: "99.9%", label: "Order accuracy" },
-      { val: "3x", label: "Peak capacity" },
-      { val: "0", label: "Oversells" },
+      { val: "Client", label: "Inventory isolation" },
+      { val: "Sync", label: "Across every sales channel" },
+      { val: "Waves", label: "Pick batching by zone" },
     ],
     cta: "See how Nautilus handles e-commerce fulfillment",
     workflow: [
@@ -549,7 +552,7 @@ export const INDUSTRIES = [
       },
       {
         q: "What about peak-season scaling for Black Friday-style spikes?",
-        a: "Nautilus is designed for variable scale. The API handles peaks of 10,000+ orders per minute; the picking floor's bottleneck is staffing, not software. For very large peaks (200,000+ orders in a 24-hour window), we recommend a 72-hour pre-coordination conversation so we can monitor your tenant closely and pre-position any infrastructure adjustments. We have not had a customer's Black Friday fail because of Nautilus.",
+        a: "Nautilus is designed for variable scale, and the picking floor's bottleneck is staffing, not software. For very large peaks, we recommend a 72-hour pre-coordination conversation so we can monitor your tenant closely and pre-position any infrastructure adjustments.",
       },
     ],
   },
@@ -585,8 +588,8 @@ export const INDUSTRIES = [
       {
         title: "Bin location mapping",
         desc: "Every bin, drawer, and shelf position is mapped. Scan a part number and Nautilus tells you exactly where to look, with photo confirmation where useful.",
-        stat: "<3s",
-        statLabel: "Location time",
+        stat: "Bin-level",
+        statLabel: "Part lookup",
       },
       {
         title: "Seasonal forecasting",
@@ -596,9 +599,9 @@ export const INDUSTRIES = [
       },
     ],
     stats: [
-      { val: "60%", label: "Less searching" },
-      { val: "45%", label: "Less overstock" },
-      { val: "99%", label: "Bin accuracy" },
+      { val: "Bins", label: "Every drawer & shelf mapped" },
+      { val: "Dual", label: "Bulk + unit tracking" },
+      { val: "AI", label: "Seasonal reorder points" },
     ],
     cta: "See how Nautilus handles supply distribution",
     workflow: [
@@ -626,11 +629,11 @@ export const INDUSTRIES = [
       },
       {
         q: "Can counter staff use Nautilus directly during transactions?",
-        a: "Yes. The web dashboard and tablet app are designed for counter use: bin location lookup, stock check, price quote, and sale processing in a single workflow. If counter staff use a separate POS, Nautilus integrates with Lightspeed Retail, Square, and the major distribution-specific POS systems. Sales decrement inventory in real time.",
+        a: "Yes. The web app runs in any modern browser on desktop, tablet, or phone, and it's designed for counter use: bin location lookup, stock check, price quote, and sale processing in a single workflow. If counter staff use a separate POS, Nautilus integrates with Lightspeed Retail, Square, and the major distribution-specific POS systems. Sales decrement inventory in real time.",
       },
       {
         q: "How are seasonal reorder points handled?",
-        a: "Nautilus's reorder logic uses seasonal pattern analysis from your historical data. A water-heater SKU with strong winter demand and weak summer demand will get different reorder points by month, automatically. The seasonal model needs about 18 months of historical data to calibrate; before that, it falls back to a 30-day rolling average.",
+        a: "Nautilus forecasts each product from its own sales history, accounting for trend and day-of-week patterns, and sets reorder points with safety stock. It doesn't model month-by-month seasonality, so for strongly seasonal SKUs like water heaters, review reorder points before the season turns.",
       },
       {
         q: "Will it integrate with our distributor management system?",
@@ -664,8 +667,8 @@ export const INDUSTRIES = [
       {
         title: "Full lot traceability",
         desc: "Track every lot from harvest through processing, storage, treatment, and shipping. Instant recall capability with regulator-ready exports.",
-        stat: "<1hr",
-        statLabel: "Recall time",
+        stat: "Recall",
+        statLabel: "Regulator-ready exports",
       },
       {
         title: "Bulk inventory",
@@ -676,14 +679,14 @@ export const INDUSTRIES = [
       {
         title: "Treatment records",
         desc: "Attach treatment data, certificates, and test results to inventory lots. Everything travels with the product through transfers, sales, and shipments.",
-        stat: "100%",
-        statLabel: "Documentation",
+        stat: "Per-lot",
+        statLabel: "Certificates & test results",
       },
     ],
     stats: [
-      { val: "100%", label: "Lot traceability" },
-      { val: "50%", label: "Faster audits" },
-      { val: "0", label: "Compliance gaps" },
+      { val: "Lots", label: "Field-to-customer trace" },
+      { val: "Scale", label: "Integrated receipts" },
+      { val: "Certs", label: "Travel with each lot" },
     ],
     cta: "See how Nautilus handles agriculture",
     workflow: [
@@ -701,7 +704,7 @@ export const INDUSTRIES = [
       },
       {
         label: "Scaled load & trace",
-        desc: "Customer load weighs out. The BOL stamps with lot number; recall query returns the chain from field to customer in under an hour.",
+        desc: "Customer load weighs out. The BOL stamps with lot number; recall query returns the chain from field to customer.",
       },
     ],
     faqs: [
@@ -714,12 +717,12 @@ export const INDUSTRIES = [
         a: "Each lot carries an attached document set: treatment dates, products used (with EPA registration numbers for chemicals), certificates from third-party labs (germination tests, contamination screens, organic certifications), and operator IDs for who applied each treatment. The document set travels with the lot through every transfer; when a customer asks for the certificate, it generates from the lot record.",
       },
       {
-        q: "What about lot recall — how fast and how complete?",
-        a: "Recall queries return the full lot history (inputs, treatments, storage locations, transfers, and outbound customers) in under a minute for any lot in the system. The recall report exports to the format the FDA, USDA, or state department of agriculture requires. We've had customers run recalls in production for actual incidents (one was an organic-certification verification, not a contamination) and the recall data was in the regulator's hands within 90 minutes of the query starting.",
+        q: "What about lot recall — how complete is it?",
+        a: "Recall queries return the full lot history (inputs, treatments, storage locations, transfers, and outbound customers) for any lot in the system. The recall report exports to the format the FDA, USDA, or state department of agriculture requires.",
       },
       {
         q: "Does it handle the seasonality of harvest vs. distribution?",
-        a: "Yes. Inventory peaks at harvest and depletes through the distribution season; Nautilus's reorder logic accounts for the cyclical pattern. Storage costs (silo dwell time, treatment costs by month) post to the lot record so you see the true cost basis on each lot as it moves to customers. The agriculture and seed customers we work with use the model heavily for pricing decisions in the off-season.",
+        a: "Yes. Inventory peaks at harvest and depletes through the distribution season; Nautilus's reorder logic accounts for the cyclical pattern. Storage costs (silo dwell time, treatment costs by month) post to the lot record so you see the true cost basis on each lot as it moves to customers.",
       },
     ],
   },
@@ -739,18 +742,18 @@ export const INDUSTRIES = [
 export const DEFAULT_INDUSTRY_FAQS = [
   {
     q: "What kind of warehouse size is Nautilus designed for?",
-    a: "Operations from 2,000 sq ft up to 500,000+ sq ft are running on Nautilus today. Pricing is per warehouse, not per square foot or per user, so small operations pay the same as large ones. The platform scales horizontally; we have customers running 12 warehouses on one Nautilus tenant.",
+    a: "Nautilus isn't tied to a particular building size. Pricing is per warehouse, not per square foot or per user, so small operations pay the same as large ones. The platform scales horizontally, and an Enterprise account can run multiple warehouses on one Nautilus tenant.",
   },
   {
     q: "How long does implementation take?",
-    a: "Most operations are live within 2-4 weeks. The bulk of that time is data import (product catalog, locations, opening stock counts) and team training. The software itself takes about a day to configure. Enterprise environments with heavy customization run 6-8 weeks.",
+    a: "Most of the time goes into data import (product catalog, locations, opening stock counts) and team training; configuring the software itself is the quick part. Enterprise environments with heavy customization take longer.",
   },
   {
     q: "What hardware do I need?",
-    a: "iOS or Android phones or tablets with cameras work out of the box. For higher-throughput operations, we recommend dedicated barcode scanners from Zebra, Honeywell, or Socket Mobile — supported natively. Printers (Zebra, Brother, Dymo) work for label printing through standard drivers.",
+    a: "The Nautilus web app runs in any modern browser on desktop, tablet, or phone; native iOS and Android apps are coming soon. For higher-throughput operations, we recommend dedicated barcode scanners from Zebra, Honeywell, or Socket Mobile — supported natively. Printers (Zebra, Brother, Dymo) work for label printing through standard drivers.",
   },
   {
     q: "Can we try Nautilus before committing to a contract?",
-    a: "Yes. We offer a 30-day pilot at no charge for operations that book a discovery call first. Pilots run on your actual inventory data so you can evaluate against your real workflow. If you decide to move forward, the pilot data carries over into your production tenant; if you don't, we delete it.",
+    a: "Yes. Pro comes with a 7-day free trial, no credit card required, so you can evaluate Nautilus against your real workflow before committing. Enterprise customers get a tailored proof-of-concept period, typically 30 days, with hands-on support from our team.",
   },
 ];

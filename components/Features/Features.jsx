@@ -14,14 +14,17 @@ import styles from "./Features.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* Stat slots carry short true phrases, not figures. The old ones ("<200ms",
+   "99.7% accuracy", "70% faster counts", "3 days early warning") had no
+   measurements behind them. */
 const FEATURES = [
   {
     num: "01",
-    title: "Instant barcode scanning",
-    desc: "AI-enhanced recognition on iOS and Android, identifying products in under 200ms — even damaged or partial barcodes. Register new items or locate existing inventory without typing a character.",
+    title: "Barcode scanning",
+    desc: "Scan to register a new item or find existing stock without typing a character. Every scan is recorded in the audit log.",
     stats: [
-      { val: "<200ms", label: "Recognition" },
-      { val: "99.7%", label: "Accuracy" },
+      { val: "Register", label: "New items" },
+      { val: "Locate", label: "Existing stock" },
     ],
     Visual: ScannerSVG,
   },
@@ -38,30 +41,30 @@ const FEATURES = [
   {
     num: "03",
     title: "AI analytics & alerts",
-    desc: "Dashboards that recommend, not just report. AI flags anomalies instantly. Low stock alerts fire days before you run out.",
+    desc: "Dashboards that recommend, not just report. Anomalies are flagged with a plain-English explanation, and demand forecasts warn you before stock runs out.",
     stats: [
-      { val: "3 days", label: "Early warning" },
-      { val: "24/7", label: "Monitoring" },
+      { val: "Forecast", label: "Stockout warnings" },
+      { val: "Explained", label: "Anomaly alerts" },
     ],
     Visual: AnalyticsSVG,
   },
   {
     num: "04",
     title: "Inventory & team management",
-    desc: "Full product catalog with search, filter, sort, and CSV export. Role-based access, activity logging, and eight scan actions from pick to cycle count.",
+    desc: "Full product catalog with search, filter, sort, and spreadsheet import and export. Roles with granular permissions, an audit log, and scanning from receiving to cycle counts.",
     stats: [
-      { val: "8", label: "Scan actions" },
-      { val: "100%", label: "Audit trail" },
+      { val: "CSV", label: "Import & export" },
+      { val: "Roles", label: "Granular permissions" },
     ],
     Visual: InventorySVG,
   },
   {
     num: "05",
     title: "Smart cycle counting",
-    desc: "AI prioritizes which sections to count based on discrepancy risk. Scan at your pace — Nautilus handles reconciliation.",
+    desc: "Nautilus ranks which locations to count first by discrepancy risk. Scan at your pace — Nautilus handles reconciliation.",
     stats: [
-      { val: "70%", label: "Faster counts" },
-      { val: "AI", label: "Prioritized" },
+      { val: "Ranked", label: "By discrepancy risk" },
+      { val: "Guided", label: "Reconciliation" },
     ],
     Visual: CycleCountSVG,
   },

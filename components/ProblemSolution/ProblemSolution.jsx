@@ -54,6 +54,10 @@ import CornerButton from "@/components/shared/CornerButton";
 import useGlowCards from "@/lib/useGlowCards";
 import styles from "./ProblemSolution.module.css";
 
+/* The "stats" slots hold short words, not numbers. These cards used to show
+   figures like "92% accuracy improvement" and "$300K annual shrinkage" with
+   no source behind them — Nautilus has no measured customer results yet.
+   Every phrase below describes something the product actually does. */
 const COLUMNS = [
   {
     key: "overview",
@@ -61,31 +65,31 @@ const COLUMNS = [
     headline: "From clipboard to command center",
     body: "Nautilus replaces guesswork with intelligence. Three layers of transformation — from identifying the problem, to understanding the cost, to deploying the solution.",
     stats: [
-      { value: "92%", label: "Accuracy improvement" },
-      { value: "3x", label: "Faster operations" },
-      { value: "40%", label: "Cost reduction" },
+      { value: "Scan", label: "Moves recorded as they happen" },
+      { value: "Map", label: "Every bay and level located" },
+      { value: "Forecast", label: "Reorders planned ahead" },
     ],
   },
   {
     key: "problem",
     label: "Problem",
     headline: "The hidden cost of manual operations",
-    body: "Spreadsheets, clipboards, and tribal knowledge. The average warehouse loses $300K annually to misplaced inventory, manual counting errors, and inefficient routing.",
+    body: "Spreadsheets, clipboards, and tribal knowledge. Stock goes missing, counts drift between audits, and pickers walk routes nobody planned.",
     stats: [
-      { value: "$300K", label: "Annual shrinkage cost" },
-      { value: "23%", label: "Inventory inaccuracy" },
-      { value: "4.2hrs", label: "Daily time wasted" },
+      { value: "Missing", label: "Stock nobody can find" },
+      { value: "Drift", label: "Counts that go stale" },
+      { value: "Detours", label: "Pick paths nobody planned" },
     ],
   },
   {
     key: "solution",
     label: "Solution",
     headline: "Intelligence at every shelf",
-    body: "Nautilus deploys AI across scanning, spatial mapping, and predictive analytics. Every scan teaches the system. Every movement optimizes the next.",
+    body: "Nautilus puts scanning, a live map of your floor, and forecasting in one system. Every scan updates the count, the location, and what gets reordered next.",
     stats: [
-      { value: "99.7%", label: "Inventory accuracy" },
-      { value: "<200ms", label: "AI scan speed" },
-      { value: "41%", label: "Less walking distance" },
+      { value: "Live", label: "Stock by bay and level" },
+      { value: "Ranked", label: "Cycle counts by risk" },
+      { value: "Sequenced", label: "Picks in walk order" },
     ],
   },
 ];
