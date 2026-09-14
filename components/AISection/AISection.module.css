@@ -344,3 +344,182 @@
     font-size: clamp(32px, 9vw, 44px);
   }
 }
+
+/* ── HUD right group + skip ────────────────────────────────────────── */
+
+.hudRight {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 22px;
+}
+.skip {
+  font: inherit;
+  letter-spacing: inherit;
+  color: rgba(185, 208, 226, 0.6);
+  background: rgba(4, 16, 31, 0.4);
+  border: 1px solid rgba(185, 208, 226, 0.22);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s;
+}
+.skip:hover {
+  color: #edf3f8;
+  border-color: var(--beat-accent, var(--accent));
+}
+.skip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ── Worked-example readout (under the HUD) ────────────────────────── */
+
+.readout {
+  position: absolute;
+  top: calc(clamp(84px, 10vh, 120px) + 34px);
+  left: clamp(24px, 6vw, 96px);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-left: 14px;
+  border-left: 1px solid
+    color-mix(in srgb, var(--beat-accent, var(--accent)) 55%, transparent);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  color: rgba(233, 240, 246, 0.78);
+  pointer-events: none;
+}
+/* Each line types itself in: a stepped clip reveal, delayed per line
+   inline from the JSX. */
+.readoutLine {
+  display: block;
+  white-space: nowrap;
+  animation: readoutType 0.7s steps(28, end) both;
+}
+.readoutLine:first-child {
+  color: var(--beat-accent, var(--accent));
+}
+@keyframes readoutType {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ── Terrain labels ────────────────────────────────────────────────── */
+
+/* The render loop moves each .mark to its projected surface point (its
+   0×0 origin), so the dot, leader, and text all hang off that point. */
+.marks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.mark::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--beat-accent, var(--accent));
+  box-shadow: 0 0 10px
+    color-mix(in srgb, var(--beat-accent, var(--accent)) 70%, transparent);
+}
+.mark::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--beat-accent, var(--accent)) 75%, transparent),
+    transparent
+  );
+}
+.markText {
+  position: absolute;
+  left: 0;
+  bottom: 36px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(233, 240, 246, 0.92);
+  background: rgba(4, 16, 31, 0.62);
+  border: 1px solid
+    color-mix(in srgb, var(--beat-accent, var(--accent)) 45%, transparent);
+}
+
+/* ── End-of-ride CTA (in the caption) ──────────────────────────────── */
+
+.cta {
+  margin-top: 22px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--beat-accent, var(--accent));
+  background: rgba(4, 16, 31, 0.5);
+  border: 1px solid
+    color-mix(in srgb, var(--beat-accent, var(--accent)) 50%, transparent);
+  padding: 12px 18px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease,
+    background 0.25s;
+}
+.ctaOn {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.cta:hover {
+  background: rgba(4, 16, 31, 0.85);
+}
+.cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .readout {
+    top: 116px;
+    left: 20px;
+    right: 20px;
+    font-size: 9.5px;
+    letter-spacing: 1px;
+  }
+  .readoutLine {
+    white-space: normal;
+  }
+  .markText {
+    font-size: 9px;
+    letter-spacing: 1.4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .readoutLine {
+    animation: none;
+  }
+}

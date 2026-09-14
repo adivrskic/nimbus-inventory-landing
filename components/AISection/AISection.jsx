@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./AISection.module.css";
 import { useAnimationPaused } from "@/lib/AnimationContext";
+import { track } from "@/lib/analytics";
 
 /* ═══════════════════════════════════════════════════════════════════════
    AISection — "SOUNDINGS"
@@ -12,8 +13,8 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
    itself for each capability as you scroll. No particles, no icons —
    the same seafloor becomes:
 
-     01 VOICE     interfering acoustic ripple fields (three sources,
-                  breathing with a speech envelope)
+     01 SCAN      interfering ripple fields (three sources) — a scan's
+                  update spreading out, breathing slowly
      02 SPATIAL   a rectilinear rack-city of plateaus — the warehouse
                   as terrain
      03 SEARCH    a single seamount spiking out of a calm floor, with
@@ -44,15 +45,25 @@ import { useAnimationPaused } from "@/lib/AnimationContext";
    - cam / look: camera framing preset (blended with the terrain morph)
    All three interpolate through the same uBlend window as the
    heightfield, so shape, color, line-weight and viewpoint move as one. */
+/* Copy describes only what the app actually does. Beat 01 used to be "Voice
+   commands", and Nautilus has no voice feature — it's scanning now, which
+   the ripple field reads just as well (one scan's update spreading out).
+
+   `readout` is a worked example shown in the HUD strip; its numbers are
+   illustrative data, like the Chart Room's bay counts, not claims. `marks`
+   pin labels to the terrain: a point in the plane coordinates the shaders
+   take (p = position.xy) plus its text — see surfaceHeight() for the surface. */
 const BEATS = [
   {
-    key: "voice",
+    key: "scan",
     num: "01",
-    label: "VOICE",
-    hud: "ACOUSTIC FIELD · LISTENING",
-    title: "Voice commands",
-    desc: "Nautilus processes natural speech and executes warehouse actions hands-free.",
-    accent: 0x7fc9e4, // acoustic ice-blue
+    label: "SCAN",
+    hud: "SCAN FEED · LIVE",
+    title: "Scan once, done",
+    desc: "One scan updates the item's count, its location, and the audit log together.",
+    readout: ["RECEIVE · SKU 2210 · +24", "BAY B-2 · ON HAND 33 · LOGGED"],
+    marks: [{ x: 2, y: -10, text: "SCAN · BAY B-2" }],
+    accent: 0x7fc9e4, // sonar ice-blue — a scan's update rippling out
     contour: 0.9,
     cam: { x: 0, y: 30, z: 98 }, // wide, level — watching ripples arrive
     look: { x: 0, y: 2, z: -6 },
@@ -62,8 +73,10 @@ const BEATS = [
     num: "02",
     label: "SPATIAL",
     hud: "RACK TOPOGRAPHY · LIVE",
-    title: "Spatial intelligence",
-    desc: "A living model of your warehouse. Every section, bay, and level mapped in real time.",
+    title: "Your floor, modeled",
+    desc: "Draw your layout — or import it from a floor plan image — and see every section, bay, and level in 2D or 3D.",
+    readout: ["FLOOR PLAN IMPORTED · 6 SECTIONS", "ZONE C · AISLE 04 · 3 LEVELS"],
+    marks: [{ x: 18, y: 1, h: 13, text: "ZONE C" }],
     accent: 0xd4a853, // brand gold — the warehouse beat
     contour: 1.35,
     cam: { x: -10, y: 54, z: 72 }, // high survey angle over the rack city
@@ -74,8 +87,13 @@ const BEATS = [
     num: "03",
     label: "SEARCH",
     hud: "SOUNDING · ONE RESULT",
-    title: "Intelligent search",
-    desc: "Ask anything in plain language. Searches products, locations, and history.",
+    title: "Ask in plain English",
+    desc: "Type it the way you'd say it and get the products, locations, or scans that match.",
+    readout: [
+      "Q: “PRODUCTS LOW ON STOCK IN AISLE 3”",
+      "4 PRODUCTS · AT OR BELOW REORDER POINT",
+    ],
+    marks: [{ x: 24, y: -6, text: "RESULT" }],
     accent: 0x8fe3b0, // sonar green
     contour: 0.65,
     cam: { x: 12, y: 22, z: 86 }, // low drift toward the lone seamount
@@ -85,9 +103,14 @@ const BEATS = [
     key: "forecast",
     num: "04",
     label: "FORECAST",
-    hud: "SWELL MODEL · 14-DAY HORIZON",
-    title: "Predictive analytics",
-    desc: "Nautilus doesn't just report what happened — it forecasts what's next.",
+    hud: "SWELL MODEL · DEMAND FORECAST",
+    title: "See demand coming",
+    desc: "Forecasts that account for trend and seasonality, reorder points with safety stock, and purchase orders drafted for your review.",
+    readout: ["SKU 0087 · REORDER POINT IN ~5 DAYS", "PURCHASE ORDER DRAFTED · READY FOR REVIEW"],
+    marks: [
+      { x: 0, y: -40, text: "TODAY" },
+      { x: 0, y: 55, text: "AHEAD" },
+    ],
     accent: 0xe09a5f, // storm-warning amber
     contour: 1.1,
     cam: { x: 0, y: 13, z: 106 }, // down at the waterline, facing the swell
@@ -96,6 +119,45 @@ const BEATS = [
 ];
 
 const N = BEATS.length;
+
+/* Every terrain label, flattened and tagged with the beat it belongs to. */
+const MARKS = BEATS.flatMap((b, beat) =>
+  (b.marks || []).map((m) => ({ ...m, beat }))
+);
+
+/* JS twins of the vertex shader's heightfields (below), used only to
+   stand the terrain labels on the surface. The spatial scene's plateau
+   heights come from a per-cell hash that GPU and JS floats don't agree
+   on, so marks on that beat carry an explicit `h` instead, and this
+   returns only its shared basin. */
+function surfaceHeight(scene, x, y, t) {
+  if (scene === 0) {
+    const d0 = Math.hypot(x + 34, y - 6);
+    const d1 = Math.hypot(x - 2, y + 10);
+    const d2 = Math.hypot(x - 40, y - 12);
+    let h =
+      Math.sin(d0 * 0.4 - t * 1.5) * Math.exp(-d0 * 0.03) * 7 +
+      Math.sin(d1 * 0.46 - t * 1.9 + 1.7) * Math.exp(-d1 * 0.026) * 7.5 +
+      Math.sin(d2 * 0.36 - t * 1.3 + 3.1) * Math.exp(-d2 * 0.032) * 6;
+    h *= 0.72 + 0.28 * Math.sin(t * 0.6);
+    return h + 1.5;
+  }
+  if (scene === 1) {
+    return 0.6 * Math.sin(x * 0.05) * Math.sin(y * 0.06);
+  }
+  if (scene === 2) {
+    const d = Math.hypot(x - 24, y + 6);
+    const spike = Math.exp(-d * d * 0.01) * 16;
+    const ring = Math.sin(d * 0.5 - t * 2) * Math.exp(-d * 0.045) * 1.8;
+    const calm = Math.sin(x * 0.09 + t * 0.2) * Math.cos(y * 0.08) * 0.7;
+    return calm + spike + ring;
+  }
+  const z01 = Math.min(1, Math.max(0, (y + 80) / 160));
+  const amp = 0.6 + 9.4 * z01 * z01;
+  let h = Math.sin(x * 0.1 + y * 0.05 + t * 0.45) * amp * 0.7;
+  h += Math.sin(x * 0.21 - y * 0.11 - t * 0.3 + 1.3) * amp * 0.3;
+  return h + z01 * 5 - 1;
+}
 
 /* Palette (kept in one place so the shader and CSS agree). Deep-ocean
    navy ground, pale chart ink; the crest color is per-beat (see BEATS,
@@ -121,9 +183,9 @@ const vertexShader = /* glsl */ `
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
   }
 
-  /* 01 — acoustic interference: three ring-wave sources along a rough
+  /* 01 — scan ripples: three ring-wave sources along a rough
      line, each damped with radius, the whole field breathing slowly
-     like a speech envelope. */
+     like a slow pulse. */
   float hVoice(vec2 p, float t) {
     float h = 0.0;
     float d0 = length(p - vec2(-34.0, 6.0));
@@ -238,7 +300,7 @@ const fragmentShader = /* glsl */ `
     col = mix(col, uInkLow, grat * 0.22);
 
     // Contour ink: pale in the deeps, igniting to the beat accent at
-    // the crests — ice for voice, gold for spatial, sonar green for
+    // the crests — ice for scan, gold for spatial, sonar green for
     // search, storm amber for forecast.
     vec3 crest = mix(uInkHigh, uAccent, smoothstep(0.52, 0.92, hn));
     col = mix(col, mix(uInkLow, crest, 0.55), minor * 0.65);
@@ -262,6 +324,7 @@ export default function AISection() {
   const stageRef = useRef(null);
   const hostRef = useRef(null);
   const gaugeFillRef = useRef(null);
+  const markRefs = useRef([]);
   const { paused } = useAnimationPaused();
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -282,6 +345,18 @@ export default function AISection() {
       top: top + ((i + 0.04) / N) * range,
       behavior: "smooth",
     });
+  }, []);
+
+  /* Skip past this long pinned ride to Features. Through Lenis when it's
+     running — a native smooth scroll fights Lenis's own position. */
+  const skipPast = useCallback(() => {
+    const target = document.getElementById("features");
+    if (!target) return;
+    const y = target.getBoundingClientRect().top + window.scrollY;
+    track("section_skip", { section: "ai_engine" });
+    const lenis = window.__lenis;
+    if (lenis) lenis.scrollTo(y, { duration: 1.2 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
   }, []);
 
   /* Off-screen parking: flip the visibility flag and wake the render
@@ -351,6 +426,7 @@ export default function AISection() {
       /* Per-beat blend sources, built once. */
       const ACCENTS = BEATS.map((b) => new THREE.Color(b.accent));
       const lookT = new THREE.Vector3();
+      const markVec = new THREE.Vector3();
       let lastAccent = "";
 
       const geo = new THREE.PlaneGeometry(
@@ -512,6 +588,45 @@ export default function AISection() {
         look.lerp(lookT, 0.04);
         camera.lookAt(look);
 
+        /* Terrain labels: stand each mark on the blended surface, project
+           it to the screen, and fade it with its beat. */
+        camera.updateMatrixWorld();
+        const hostW = host.clientWidth;
+        const hostH = host.clientHeight;
+        const reveal = uniforms.uReveal.value;
+        MARKS.forEach((m, i) => {
+          const el = markRefs.current[i];
+          if (!el) return;
+          const weight =
+            m.beat === idx && m.beat === nidx
+              ? 1
+              : m.beat === idx
+                ? 1 - eb
+                : m.beat === nidx
+                  ? eb
+                  : 0;
+          let alpha = 0;
+          if (weight > 0.001) {
+            const hOf = (s) =>
+              s === m.beat && m.h !== undefined
+                ? m.h
+                : surfaceHeight(s, m.x, m.y, t);
+            const h = (hOf(idx) + (hOf(nidx) - hOf(idx)) * eb) * reveal;
+            markVec.set(m.x, h, -m.y).project(camera);
+            if (
+              markVec.z < 1 &&
+              Math.abs(markVec.x) < 1.05 &&
+              Math.abs(markVec.y) < 1.05
+            ) {
+              alpha = weight * reveal;
+              const sx = (markVec.x * 0.5 + 0.5) * hostW;
+              const sy = (-markVec.y * 0.5 + 0.5) * hostH;
+              el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
+            }
+          }
+          el.style.opacity = alpha.toFixed(3);
+        });
+
         renderer.render(scene, camera);
       };
 
@@ -576,6 +691,19 @@ export default function AISection() {
           <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
           <div className={styles.vignette} aria-hidden="true" />
 
+          {/* Terrain labels — positioned every frame by the render loop. */}
+          <div className={styles.marks} aria-hidden="true">
+            {MARKS.map((m, i) => (
+              <span
+                key={`${m.beat}-${m.text}`}
+                ref={(el) => (markRefs.current[i] = el)}
+                className={styles.mark}
+              >
+                <span className={styles.markText}>{m.text}</span>
+              </span>
+            ))}
+          </div>
+
           {/* HUD strip — chart-instrument header. The live label is the
               section's h2; without one, the beat titles below were h3s
               sitting straight under the hero's h1. */}
@@ -584,9 +712,37 @@ export default function AISection() {
               <span className={styles.hudDot} />
               The intelligence engine
             </h2>
-            <span className={styles.hudReadout} key={beat.key}>
-              {beat.hud}
+            <span className={styles.hudRight}>
+              <span className={styles.hudReadout} key={beat.key}>
+                {beat.hud}
+              </span>
+              <button
+                type="button"
+                className={styles.skip}
+                onClick={skipPast}
+              >
+                Skip <span aria-hidden="true">↓</span>
+              </button>
             </span>
+          </div>
+
+          {/* A worked example for the active beat. Its numbers are
+              illustrative, like the Chart Room's bay counts; decorative,
+              because the caption below says the same thing in words. */}
+          <div
+            className={styles.readout}
+            key={`readout-${beat.key}`}
+            aria-hidden="true"
+          >
+            {beat.readout.map((line, i) => (
+              <span
+                key={line}
+                className={styles.readoutLine}
+                style={{ animationDelay: `${0.1 + i * 0.4}s` }}
+              >
+                {line}
+              </span>
+            ))}
           </div>
 
           {/* Caption stack — one layer per beat, crossfaded */}
@@ -616,6 +772,21 @@ export default function AISection() {
                 </div>
               ))}
             </div>
+
+            {/* End of the ride — hand off to the assistant. Always laid out
+                (invisible until the last beat) so the caption never jumps. */}
+            <button
+              type="button"
+              className={`${styles.cta} ${active === N - 1 ? styles.ctaOn : ""}`}
+              tabIndex={active === N - 1 ? 0 : -1}
+              aria-hidden={active === N - 1 ? undefined : "true"}
+              onClick={() => {
+                track("chat_open_cta", { cta_source: "ai_engine" });
+                window.dispatchEvent(new Event("open-chat"));
+              }}
+            >
+              Ask Nautilus anything <span aria-hidden="true">→</span>
+            </button>
           </div>
 
           {/* Depth gauge — progress + beat jump */}
