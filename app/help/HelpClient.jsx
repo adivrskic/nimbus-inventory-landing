@@ -4,7 +4,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useCallback,
   useMemo,
 } from "react";
 import {
@@ -21,7 +20,6 @@ import {
 } from "@/components/ResourceShell";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
-import DemoModal from "@/components/DemoModal/DemoModal";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Help.module.css";
 
@@ -37,9 +35,8 @@ const useIsoLayoutEffect =
 export default function HelpClient({ categories }) {
   const groupsRef = useRef(null);
 
-  const [demoOpen, setDemoOpen] = useState(false);
-  const openDemo = useCallback(() => setDemoOpen(true), []);
-
+  /* No local DemoModal: the global one in app/layout.js (DemoHost) serves
+     every page, and ResourceShell no longer forwards an onDemo anyway. */
   const [query, setQuery] = useState("");
 
   /* Filter categories + articles by query. A match in the title is kept;
@@ -115,7 +112,6 @@ export default function HelpClient({ categories }) {
         eyebrow="Help Center"
         title="How can we help?"
         subtitle="Setup guides, troubleshooting, and answers to common questions. Search above or browse by category."
-        onDemo={openDemo}
       >
         {/* Search bar */}
         <div className={pageStyles.searchWrap}>
@@ -222,14 +218,9 @@ export default function HelpClient({ categories }) {
           label="Can't find it?"
           title="Talk to a human."
           desc="Our team responds within 4 hours during business hours. Tell us what you're stuck on and we'll get back to you."
-          primaryAction={{
-            onClick: () => (window.location.href = "/contact"),
-            label: "Contact support",
-          }}
+          primaryAction={{ href: "/contact", label: "Contact support" }}
         />
       </ResourceShell>
-
-      <DemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import {
   DEFAULT_INDUSTRY_FAQS,
 } from "@/components/IndustryPage/industryData";
 import JsonLd, { breadcrumbSchema, faqSchema } from "@/components/SEO/JsonLd";
+import { truncateDescription, OG_IMAGE } from "@/lib/site";
 
 /* Only the slugs in industryData.js exist. Without this, a removed or
    mistyped slug rendered a Not Found page with a 200 instead of a 404. */
@@ -23,13 +24,16 @@ export async function generateMetadata({ params }) {
   if (!industry) return { title: "Industry Not Found" };
   return {
     title: `${industry.title} Warehouse Management`,
-    description: `Nautilus for ${industry.title.toLowerCase()} operations. ${
-      industry.heroDesc
-    }`,
+    description: truncateDescription(
+      `Nautilus for ${industry.title.toLowerCase()} operations. ${industry.heroDesc}`
+    ),
     alternates: { canonical: `https://nautilusinventory.com/industry/${slug}` },
     openGraph: {
+      type: "website",
+      siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
       title: `${industry.title} Warehouse Management | Nautilus`,
-      description: industry.heroDesc,
+      description: truncateDescription(industry.heroDesc, 200),
       url: `https://nautilusinventory.com/industry/${slug}`,
     },
   };

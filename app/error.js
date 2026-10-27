@@ -1,6 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function Error({ error, reset }) {
+  /* The detail goes to the console (and any error reporter reading it),
+     never to the page: error.message can carry internal paths, env names
+     or upstream response bodies. */
+  useEffect(() => {
+    console.error("[error boundary]", error);
+  }, [error]);
+
   return (
     <div
       style={{
@@ -41,14 +50,15 @@ export default function Error({ error, reset }) {
         style={{
           fontFamily: "var(--display)",
           fontSize: 14,
-          color: "rgba(255,255,255,0.3)",
+          color: "rgba(255,255,255,0.6)",
           textAlign: "center",
           maxWidth: 400,
           lineHeight: 1.8,
           marginBottom: 32,
         }}
       >
-        {error?.message || "An unexpected error occurred."}
+        Something on this page failed to load. Try again, or email
+        sales@nautilusinventory.com if it keeps happening.
       </p>
       <button
         onClick={reset}

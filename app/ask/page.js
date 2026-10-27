@@ -14,7 +14,7 @@
 import AskClient from "./AskClient";
 
 export const metadata = {
-  title: "Ask Nautilus — get instant answers about Nautilus WMS",
+  title: "Ask Nautilus",
   description:
     "Pricing, features, integrations, comparisons. Ask Nautilus anything — answers stream in, sources cited.",
   alternates: { canonical: "https://nautilusinventory.com/ask" },

@@ -1,13 +1,12 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { useAnimationPaused } from "@/lib/AnimationContext";
+import { PREFS_EVENT, applyConsent, clearConsent } from "@/lib/consent";
 import Logo from "@/components/shared/Logo";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import NotifyForm from "./NotifyForm";
 import styles from "./Footer.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const COLUMNS = [
   {
@@ -35,15 +34,12 @@ const COLUMNS = [
       { text: "Ask Nautilus", href: "/ask" },
       { text: "Blog", href: "/blog" },
       { text: "Help Center", href: "/help" },
-      // { text: "API Docs", href: "/api-docs" },
     ],
   },
   {
     title: "Company",
     links: [
       { text: "Contact", href: "/contact" },
-      // { text: "Trust", href: "/trust" },
-      // { text: "Status", href: "/status" },
     ],
   },
 ];
@@ -57,9 +53,30 @@ const LEGAL_LINKS = [
   { text: "Security", href: "/legal/security" },
 ];
 
-const HELIX_COUNT = 4500;
+/* The analytics cookie banner only exists when GA is configured, so the
+   "Cookie preferences" control is only offered then. Inlined at build. */
+const HAS_ANALYTICS = !!process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
+/* Forget the stored consent (analytics back to denied) and ask the
+   banner to re-open so the visitor can choose again. */
+function reopenCookiePrefs() {
+  clearConsent();
+  applyConsent("denied");
+  window.dispatchEvent(new CustomEvent(PREFS_EVENT));
+}
+
+/* 1500 particles read the same as the old 4500 at this band height and
+   cost a third of the per-frame math. */
+const HELIX_COUNT = 1500;
+/* Particle alpha is quantised into this many buckets so each frame is
+   ALPHA_STEPS fills (one Path2D per bucket) instead of one fill per dot. */
+const ALPHA_STEPS = 6;
+const GOLD = "231, 192, 116"; // #e7c074
 
 export default function Footer() {
+  const { paused } = useAnimationPaused();
+  const pausedRef = useRef(paused);
+  const helixControls = useRef(null);
   const footerRef = useRef(null);
   const brandRef = useRef(null);
   const colRefs = useRef([]);
@@ -91,12 +108,24 @@ export default function Footer() {
     };
   }, []);
 
+  /* The in-app pause toggle: stop the loop (last frame stays on the
+     canvas) and restart it on resume. */
+  useEffect(() => {
+    pausedRef.current = paused;
+    const c = helixControls.current;
+    if (!c) return;
+    if (paused) c.stop();
+    else c.start();
+  }, [paused]);
+
   useEffect(() => {
     const canvas = helixRef.current;
     const wrap = helixWrapRef.current;
     if (!canvas || !wrap) return;
     const ctx = canvas.getContext("2d");
-    let frameId;
+    let frameId = 0;
+    let running = false;
+    const reduced = prefersReducedMotion();
 
     const dpr = Math.min(window.devicePixelRatio, 2);
     const resize = () => {
@@ -107,9 +136,9 @@ export default function Footer() {
       canvas.style.width = w + "px";
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      /* Static modes keep nothing in flight, so repaint on resize. */
+      if (reduced || pausedRef.current) draw(0);
     };
-    resize();
-    window.addEventListener("resize", resize);
 
     // Pre-compute scattered + helix target positions
     const particles = [];
@@ -143,23 +172,9 @@ export default function Footer() {
       );
       helixFormation.current = f;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    // Only animate when near viewport
-    const visibleRef = { current: false };
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        visibleRef.current = e.isIntersecting;
-      },
-      { rootMargin: "200px" }
-    );
-    obs.observe(wrap);
-
-    function animate() {
-      frameId = requestAnimationFrame(animate);
-      if (!visibleRef.current) return;
-      const time = performance.now() * 0.001;
+    /* One frame. Particles are bucketed by alpha into ALPHA_STEPS Path2D
+       objects and each bucket is filled once: 1500 arcs, 6 fills. */
+    function draw(time) {
       const w = canvas.width / dpr;
       const h = canvas.height / dpr;
       const cy = h / 2;
@@ -168,6 +183,8 @@ export default function Footer() {
       const smoothF = f * f * (3 - 2 * f); // smoothstep
 
       ctx.clearRect(0, 0, w, h);
+      const paths = [];
+      for (let b = 0; b < ALPHA_STEPS; b++) paths.push(new Path2D());
 
       for (let i = 0; i < HELIX_COUNT; i++) {
         const p = particles[i];
@@ -193,17 +210,68 @@ export default function Footer() {
         const depthFactor = 0.4 + depth * 0.3 + 0.3; // brighter baseline
         const finalAlpha = p.alpha * (0.35 + smoothF * depthFactor * 0.75);
         const finalSize = p.size * (0.5 + smoothF * depthFactor * 0.7);
+        const r = Math.max(0.4, finalSize);
+        const bucket = Math.min(
+          ALPHA_STEPS - 1,
+          Math.max(0, Math.floor(finalAlpha * ALPHA_STEPS))
+        );
+        paths[bucket].moveTo(x + r, y);
+        paths[bucket].arc(x, y, r, 0, Math.PI * 2);
+      }
 
-        ctx.beginPath();
-        ctx.arc(x, y, Math.max(0.4, finalSize), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(231, 192, 116, ${finalAlpha})`; // brighter gold (#e7c074)
-        ctx.fill();
+      for (let b = 0; b < ALPHA_STEPS; b++) {
+        ctx.fillStyle = `rgba(${GOLD}, ${(b + 0.5) / ALPHA_STEPS})`;
+        ctx.fill(paths[b]);
       }
     }
-    animate();
+
+    function loop() {
+      frameId = requestAnimationFrame(loop);
+      draw(performance.now() * 0.001);
+    }
+    const start = () => {
+      if (running || reduced || pausedRef.current) return;
+      running = true;
+      frameId = requestAnimationFrame(loop);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    };
+    helixControls.current = { start, stop };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    /* Reduced motion: the settled helix, drawn once. No scroll listener,
+       no rAF loop. */
+    if (reduced) {
+      helixFormation.current = 1;
+      draw(0);
+      return () => {
+        helixControls.current = null;
+        window.removeEventListener("resize", resize);
+      };
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    /* The loop only runs while the band is near the viewport. Off-screen
+       it is stopped outright rather than ticking an empty frame. */
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) start();
+        else stop();
+      },
+      { rootMargin: "200px" }
+    );
+    obs.observe(wrap);
 
     return () => {
-      cancelAnimationFrame(frameId);
+      stop();
+      helixControls.current = null;
       obs.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", onScroll);
@@ -296,6 +364,15 @@ export default function Footer() {
                 {link.text}
               </TransitionLink>
             ))}
+            {HAS_ANALYTICS && (
+              <button
+                type="button"
+                className={`${styles.legalLink} ${styles.legalButton}`}
+                onClick={reopenCookiePrefs}
+              >
+                Cookie preferences
+              </button>
+            )}
           </div>
         </div>
       </footer>

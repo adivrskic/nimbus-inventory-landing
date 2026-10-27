@@ -1,0 +1,106 @@
+/* Cookie consent card — bottom-left on desktop, full-width bottom sheet on
+   phones. Sits under the Nav (z 100) and the mega menu (z 99) so it never
+   covers navigation. Colours come from the ocean theme tokens. */
+
+.banner {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 98;
+  width: calc(100% - 48px);
+  max-width: 420px;
+  padding: 20px 22px 18px;
+  background: var(--twilight-solid, #061a32);
+  border: 1px solid rgba(212, 168, 83, 0.28);
+  box-shadow: inset 0 1px 0 0 rgba(212, 168, 83, 0.08),
+    0 24px 48px -16px rgba(0, 0, 0, 0.6);
+  color: var(--white);
+  animation: cookie-rise 0.4s var(--ease-smooth, ease-out) both;
+}
+
+@keyframes cookie-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* No slide for reduced-motion users — the card simply appears. */
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}
+
+.text {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray-2, #b8c8d8);
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(212, 168, 83, 0.5);
+  transition: text-decoration-color 0.2s;
+}
+.link:hover {
+  text-decoration-color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border: 1px solid rgba(242, 240, 239, 0.28);
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.btn:hover {
+  border-color: var(--accent);
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink, #02060f);
+}
+.primary:hover {
+  background: var(--accent-bright, #e7c074);
+  border-color: var(--accent-bright, #e7c074);
+}
+
+@media (max-width: 640px) {
+  .banner {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}

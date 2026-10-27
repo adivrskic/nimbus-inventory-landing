@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
@@ -12,8 +11,6 @@ import Accordion from "@/components/shared/Accordion";
 import { useDemo } from "@/lib/DemoContext";
 import { resetScroll } from "@/lib/resetScroll";
 import styles from "./IndustryPage.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* Generic fallback workflow. Used when an industry in industryData.js
    doesn't supply its own per-industry `workflow`. All 8 current
@@ -68,7 +65,7 @@ export default function IndustryPage({
 
   useEffect(() => {
     resetScroll();
-    if (!industry || !heroRef.current) return;
+    if (!heroRef.current) return;
 
     /* Hoisted above the gsap.context — referenced by both the intro
        timeline's onComplete (inside) and the cleanup closure (outside). */
@@ -220,20 +217,8 @@ export default function IndustryPage({
     };
   }, [industry]);
 
-  if (!industry) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.notFound}>
-          <div className={styles.notFoundLabel}>404</div>
-          <h1>Industry not found.</h1>
-          <TransitionLink href="/" className={styles.backLink}>
-            ← Back to home
-          </TransitionLink>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  /* No not-found branch: app/industry/[slug]/page.js only builds the slugs
+     in industryData.js (dynamicParams = false), so `industry` is always set. */
 
   /* Pair challenges with solutions by index */
   const pairs = industry.challenges.map((ch, i) => ({
@@ -379,7 +364,7 @@ export default function IndustryPage({
                   <div className={styles.workflowStepNum}>
                     {String(i + 1).padStart(2, "0")}
                   </div>
-                  <h4 className={styles.workflowStepTitle}>{w.label}</h4>
+                  <h3 className={styles.workflowStepTitle}>{w.label}</h3>
                   <p className={styles.workflowStepDesc}>{w.desc}</p>
                 </div>
               </div>

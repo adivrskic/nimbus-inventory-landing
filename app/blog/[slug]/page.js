@@ -4,6 +4,7 @@ import JsonLd, {
   articleSchema,
   breadcrumbSchema,
 } from "@/components/SEO/JsonLd";
+import { toIsoDate, truncateDescription, OG_IMAGE } from "@/lib/site";
 
 /* Only the slugs in lib/blogData.js exist. Without this, a removed or
    mistyped slug rendered a Not Found page with a 200 instead of a 404. */
@@ -15,14 +16,18 @@ export async function generateMetadata({ params }) {
   if (!post) return { title: "Post Not Found" };
   return {
     title: post.title,
-    description: post.desc,
+    description: truncateDescription(post.desc),
     alternates: { canonical: `https://nautilusinventory.com/blog/${slug}` },
     openGraph: {
       type: "article",
+      siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
       title: post.title,
-      description: post.desc,
+      description: truncateDescription(post.desc, 200),
       url: `https://nautilusinventory.com/blog/${slug}`,
-      publishedTime: post.date,
+      /* article:published_time must be ISO 8601; post.date is editorial
+         ("May 20, 2026"). */
+      publishedTime: toIsoDate(post.date),
     },
   };
 }

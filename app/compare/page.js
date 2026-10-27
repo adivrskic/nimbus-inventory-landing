@@ -1,5 +1,6 @@
 import CompareIndexClient from "./CompareIndexClient";
 import { COMPETITORS, COMPARE_SLUGS } from "./[slug]/compareData";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata = {
   title: "Compare Nautilus",
@@ -8,6 +9,8 @@ export const metadata = {
   alternates: { canonical: "https://nautilusinventory.com/compare" },
   openGraph: {
     type: "website",
+    siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
     title: "Compare Nautilus to other WMS platforms",
     description:
       "Side-by-side comparisons with Fishbowl, Sortly, and NetSuite WMS.",

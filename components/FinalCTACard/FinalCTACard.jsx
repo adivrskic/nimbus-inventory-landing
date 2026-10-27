@@ -34,6 +34,10 @@
 //     secondaryAction={{ href: "/pricing", label: "Or see pricing →" }}
 //   />
 //
+// `primaryAction` is `{ onClick, label }` for an action button, or
+// `{ href, label }` for a navigation: a real <a> (CornerButton's link form)
+// whose plain left click goes through the page transition.
+//
 // `secondaryAction` is optional. Pass `{ href, label }` for a navigation
 // link (rendered with TransitionLink — the original behavior) or
 // `{ onClick, label }` for an action button (e.g. opening the demo modal).
@@ -45,6 +49,7 @@
 import { useEffect, useRef } from "react";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
+import { usePageTransition } from "@/components/TransitionProvider/TransitionProvider";
 import {
   gsap,
   useGsap,
@@ -64,6 +69,24 @@ export default function FinalCTACard({
   secondaryAction,
 }) {
   const fillRef = useRef(null);
+  const navigateTo = usePageTransition();
+
+  /* href primaries: keep the anchor semantics (crawlable, open-in-new-tab
+     works) and route a plain left click through the fade transition. */
+  const onPrimaryLinkClick = (e) => {
+    if (
+      !navigateTo ||
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    )
+      return;
+    e.preventDefault();
+    navigateTo(primaryAction.href);
+  };
 
   /* Make the fill layer `inert` via the DOM property. Doing it via a
      ref-effect (rather than the `inert=""` JSX attribute) sidesteps
@@ -131,6 +154,14 @@ export default function FinalCTACard({
              clicked; it exists purely so the fill layer's layout matches
              the base layer pixel-for-pixel. */
           <CornerButton variant="primary">{primaryAction.label}</CornerButton>
+        ) : primaryAction.href ? (
+          <CornerButton
+            variant="primary"
+            href={primaryAction.href}
+            onClick={onPrimaryLinkClick}
+          >
+            {primaryAction.label}
+          </CornerButton>
         ) : (
           <CornerButton variant="primary" onClick={primaryAction.onClick}>
             {primaryAction.label}

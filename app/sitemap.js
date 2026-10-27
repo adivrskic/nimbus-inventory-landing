@@ -25,16 +25,14 @@ import { INDUSTRIES } from "@/components/IndustryPage/industryData";
 import { BLOG_POSTS } from "@/lib/blogData";
 import { HELP_CATEGORIES } from "@/lib/helpData";
 import { COMPARE_SLUGS } from "@/app/compare/[slug]/compareData";
-import { SITE_URL } from "@/lib/site";
+import { LEGAL_PAGES } from "@/components/LegalPage/legalData";
+import { SITE_URL, toIsoDate } from "@/lib/site";
 
-/* Legal slugs are intentionally hardcoded — the legal-data module's
-   shape isn't a slug list, and there are only three of them. If you
-   add a fourth, update both here and the LegalPage data module. */
-const LEGAL_SLUGS = ["privacy", "terms", "security"];
+/* lastModified is only emitted where the data module carries a real date
+   (blog posts, legal documents). Stamping the build time on every URL
+   told crawlers all 95 pages changed on every deploy, which is noise. */
 
 export default function sitemap() {
-  const now = new Date().toISOString();
-
   /* Top-level routes that ARE in the user-facing nav/footer.
      If you re-enable /trust, /api-docs, or /status in Nav/Footer,
      add them back to this array (with the appropriate priority +
@@ -42,67 +40,56 @@ export default function sitemap() {
   const staticPages = [
     {
       url: SITE_URL,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
       url: `${SITE_URL}/pricing`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/calculator`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/compare`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/industry`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/integration`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/blog`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/help`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${SITE_URL}/ask`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${SITE_URL}/contact`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${SITE_URL}/floor-plan`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
     },
@@ -110,28 +97,25 @@ export default function sitemap() {
 
   const integrations = Object.keys(INTEGRATIONS).map((slug) => ({
     url: `${SITE_URL}/integration/${slug}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.7,
   }));
 
   const industries = INDUSTRIES.map((i) => ({
     url: `${SITE_URL}/industry/${i.slug}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.7,
   }));
 
   const compares = COMPARE_SLUGS.map((slug) => ({
     url: `${SITE_URL}/compare/${slug}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.7,
   }));
 
   const blogs = BLOG_POSTS.map((p) => ({
     url: `${SITE_URL}/blog/${p.slug}`,
-    lastModified: now,
+    lastModified: toIsoDate(p.date),
     changeFrequency: "monthly",
     priority: 0.6,
   }));
@@ -139,15 +123,14 @@ export default function sitemap() {
   const helpArticles = HELP_CATEGORIES.flatMap((cat) =>
     cat.articles.map((a) => ({
       url: `${SITE_URL}/help/${a.slug}`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     }))
   );
 
-  const legal = LEGAL_SLUGS.map((slug) => ({
+  const legal = Object.entries(LEGAL_PAGES).map(([slug, page]) => ({
     url: `${SITE_URL}/legal/${slug}`,
-    lastModified: now,
+    lastModified: toIsoDate(page.updated),
     changeFrequency: "yearly",
     priority: 0.3,
   }));

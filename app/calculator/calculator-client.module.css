@@ -271,7 +271,6 @@
   color: var(--accent);
   background: transparent;
   border: none;
-  outline: none;
   padding: 0 6px 4px;
   margin: 0;
   border-bottom: 1.5px dotted rgb(var(--accent-rgb) / 0.55);
@@ -288,6 +287,9 @@
   -webkit-appearance: none;
   appearance: none;
   font-variant-numeric: tabular-nums;
+}
+.editableInput:focus:not(:focus-visible) {
+  outline: none;
 }
 .editableInput::-webkit-inner-spin-button,
 .editableInput::-webkit-outer-spin-button {

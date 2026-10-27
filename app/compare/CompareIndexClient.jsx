@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
@@ -12,8 +10,6 @@ import useGlowCards from "@/lib/useGlowCards";
 import SplitText from "@/components/shared/SplitText";
 import CheckList from "@/components/shared/CheckList";
 import styles from "./CompareIndex.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* `competitors` arrives pre-trimmed from the server page
    (app/compare/page.js): slug/name/category/heroDesc plus the first 3

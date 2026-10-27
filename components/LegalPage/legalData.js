@@ -41,9 +41,9 @@ export const LEGAL_PAGES = {
       {
         heading: "Cookies and tracking",
         summary:
-          "Essential cookies for login. Analytics cookies to improve the product. No advertising cookies, no ad-network tracking.",
+          "Essential cookies for login. Analytics cookies to improve the product — on this website only after you accept them in the cookie banner. No advertising cookies, no ad-network tracking.",
         content:
-          "The Nautilus web application uses essential cookies for authentication and session management. We use analytics cookies to understand how users interact with the platform, which helps us prioritize feature development. We do not use advertising cookies or share browsing data with ad networks. You can disable non-essential cookies through your browser settings without affecting core functionality.",
+          "The Nautilus web application uses essential cookies for authentication and session management. We use analytics cookies to understand how users interact with the platform, which helps us prioritize feature development. On nautilusinventory.com, the single analytics cookie (Google Analytics) is set only after you choose “Accept analytics” in the cookie banner; your choice is stored for 12 months and can be changed at any time via “Cookie preferences” in the footer. We do not use advertising cookies or share browsing data with ad networks. You can disable non-essential cookies through your browser settings without affecting core functionality.",
       },
       {
         heading: "Data retention",

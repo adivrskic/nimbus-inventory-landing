@@ -428,9 +428,11 @@
   color: var(--white);
   font-family: var(--mono);
   font-size: 13px;
-  outline: none;
   caret-color: var(--accent);
   box-sizing: border-box;
+}
+.fieldInput:focus:not(:focus-visible) {
+  outline: none;
 }
 .fieldInput:disabled {
   opacity: 0.5;
@@ -536,7 +538,7 @@
 .charCount {
   font-family: var(--mono);
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--mk-text-muted);
   flex-shrink: 0;
 }
 .fieldError {

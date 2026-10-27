@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
-import { useAnimationPaused } from "@/lib/AnimationContext";
 import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
 import { signupUrl } from "@/lib/site";
-import gsap from "gsap";
+import { gsap } from "@/lib/gsap";
 import Logo from "@/components/shared/Logo";
 import styles from "./Nav.module.css";
 
@@ -129,15 +128,12 @@ const MORE_GROUPS = [
       },
       { title: "Blog", desc: "Operations insights & updates", href: "/blog" },
       { title: "Help Center", desc: "Guides and FAQs", href: "/help" },
-      // { title: "API Docs", desc: "Developer reference", href: "/api-docs" },
     ],
   },
   {
     label: "Company",
     items: [
       { title: "Contact", desc: "Talk to our team", href: "/contact" },
-      // { title: "Trust", desc: "Security & SOC 2", href: "/trust" },
-      // { title: "Status", desc: "Live system health", href: "/status" },
     ],
   },
   {
@@ -168,15 +164,58 @@ const EXTRA_LINKS = [
   { text: "Compare", href: "/compare" },
   { text: "Blog", href: "/blog" },
   { text: "Help Center", href: "/help" },
-  // { text: "API Docs", href: "/api-docs" },
-  // { text: "Trust", href: "/trust" },
   { text: "Contact", href: "/contact" },
-  // { text: "Status", href: "/status" },
 ];
 
-function MobileMenu({ open, links, onClose, onDemo }) {
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+/* `onEscape` closes AND hands focus back to the hamburger; `onClose` is the
+   plain close used when a link inside the menu is followed (focus then
+   moves to the new page's main content via RouteAnnouncer). */
+function MobileMenu({ open, links, onClose, onEscape, onDemo }) {
   const menuRef = useRef(null);
   const tlRef = useRef(null);
+
+  /* Keyboard: Escape closes; Tab is trapped inside the sheet while it is
+     open (it covers the page, so focus must not wander behind it). Focus
+     moves to the first link on open. */
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!open || !el) return;
+
+    const focusables = () =>
+      Array.from(el.querySelectorAll(FOCUSABLE)).filter(
+        (n) => n.offsetParent !== null || n === document.activeElement
+      );
+    const t = setTimeout(() => focusables()[0]?.focus(), 50);
+
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onEscape();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (!list.length) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !el.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !el.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onEscape]);
 
   useEffect(() => {
     const el = menuRef.current;
@@ -245,6 +284,10 @@ function MobileMenu({ open, links, onClose, onDemo }) {
   return (
     <div
       ref={menuRef}
+      id="mobile-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu"
       className={styles.mobileMenu}
       style={{ display: "none" }}
     >
@@ -335,7 +378,6 @@ function MobileMenu({ open, links, onClose, onDemo }) {
 
 export default function Nav({ onDemo, dark }) {
   const [scrolled, setScrolled] = useState(false);
-  const { paused, togglePaused } = useAnimationPaused();
   /* Pull openDemo from the DemoContext. Nav is mounted in app/layout.js
      without any props, so without this the Request-a-Demo button would
      silently no-op (onDemo would be undefined, ?.() would swallow the
@@ -347,14 +389,24 @@ export default function Nav({ onDemo, dark }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeTimer = useRef(null);
   const megaRef = useRef(null);
+  const navRef = useRef(null);
   const scrimRef = useRef(null);
   const prevMenu = useRef(null);
+  const hamburgerRef = useRef(null);
+  /* Trigger links keyed by mega name, so Escape can hand focus back. */
+  const triggerRefs = useRef({});
+  /* Set by a touch pointerdown on a trigger whose menu is closed: the
+     click that follows should open the panel, not navigate. */
+  const touchOpen = useRef(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  /* A pending hover-close must not fire into an unmounted component. */
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   const handleEnter = (menu) => {
     clearTimeout(closeTimer.current);
@@ -365,6 +417,34 @@ export default function Nav({ onDemo, dark }) {
   };
   const cancelClose = () => {
     clearTimeout(closeTimer.current);
+  };
+
+  const closeMega = (returnFocus = false) => {
+    clearTimeout(closeTimer.current);
+    if (returnFocus && openMenu) triggerRefs.current[openMenu]?.focus();
+    setOpenMenu(null);
+  };
+
+  /* Keyboard + focus handling shared by the nav bar and the mega panel
+     (they are siblings in the DOM, so each needs the handlers). */
+  const onMegaKeyDown = (e) => {
+    if (e.key === "Escape" && openMenu) {
+      e.preventDefault();
+      closeMega(true);
+    }
+  };
+  const onMegaBlur = (e) => {
+    const next = e.relatedTarget;
+    if (!next) return; // focus went to body (a click) — the scrim handles it
+    if (navRef.current?.contains(next) || megaRef.current?.contains(next))
+      return;
+    closeMega();
+  };
+
+  const closeMobile = () => setMobileOpen(false);
+  const escapeMobile = () => {
+    setMobileOpen(false);
+    hamburgerRef.current?.focus();
   };
 
   // GSAP open/close
@@ -503,12 +583,15 @@ export default function Nav({ onDemo, dark }) {
   return (
     <>
       <nav
+        ref={navRef}
         aria-label="Main navigation"
         className={`${styles.nav} ${
           scrolled || megaActive ? styles.scrolled : ""
         } ${dark ? styles.dark : ""}`}
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
+        onKeyDown={onMegaKeyDown}
+        onBlur={onMegaBlur}
       >
         <TransitionLink
           href="/"
@@ -534,8 +617,43 @@ export default function Nav({ onDemo, dark }) {
                 className={styles.linkWrap}
                 onMouseEnter={() => handleEnter(l.mega)}
               >
+                {/* The trigger is still a real link to the index page.
+                    Hover opens the panel for mouse users; focus opens it
+                    for keyboard users (Enter then follows the link,
+                    ArrowDown/Space move into the panel); a first tap
+                    opens it for touch users and a second tap follows. */}
                 <TransitionLink
+                  ref={(el) => {
+                    triggerRefs.current[l.mega] = el;
+                  }}
                   href={l.href}
+                  aria-haspopup="true"
+                  aria-expanded={openMenu === l.mega}
+                  aria-controls={`mega-${l.mega}`}
+                  onFocus={() => handleEnter(l.mega)}
+                  onPointerDown={(e) => {
+                    if (e.pointerType === "touch" && openMenu !== l.mega) {
+                      touchOpen.current = true;
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (touchOpen.current) {
+                      touchOpen.current = false;
+                      e.preventDefault();
+                      handleEnter(l.mega);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown" || e.key === " ") {
+                      e.preventDefault();
+                      handleEnter(l.mega);
+                      setTimeout(() => {
+                        megaRef.current
+                          ?.querySelector(`#mega-${l.mega} a`)
+                          ?.focus();
+                      }, 0);
+                    }
+                  }}
                   className={`bracket-hover bracket-hover--sm ${
                     openMenu === l.mega ? styles.linkActive : ""
                   }`}
@@ -573,36 +691,6 @@ export default function Nav({ onDemo, dark }) {
         </div>
 
         <div className={styles.rightGroup}>
-          {/* <button
-            className={`bracket-hover ${styles.stopBtn} hide-mobile`}
-            onClick={togglePaused}
-            title={paused ? "Resume animations" : "Pause animations"}
-          >
-            {paused ? (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 1L12 7L3 13V1Z" fill="currentColor" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect
-                  x="1"
-                  y="1"
-                  width="4"
-                  height="12"
-                  rx="1"
-                  fill="currentColor"
-                />
-                <rect
-                  x="9"
-                  y="1"
-                  width="4"
-                  height="12"
-                  rx="1"
-                  fill="currentColor"
-                />
-              </svg>
-            )}
-          </button> */}
           <a
             href={signupUrl("nav")}
             className={`bracket-hover ${styles.cta} hide-mobile`}
@@ -620,9 +708,13 @@ export default function Nav({ onDemo, dark }) {
 
           {/* Hamburger */}
           <button
+            ref={hamburgerRef}
+            type="button"
             className={styles.hamburger}
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
+            aria-label="Menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
           >
             <span
               className={`${styles.hamburgerLine} ${
@@ -642,7 +734,8 @@ export default function Nav({ onDemo, dark }) {
       <MobileMenu
         open={mobileOpen}
         links={links.filter((l) => l.mega !== "more")}
-        onClose={() => setMobileOpen(false)}
+        onClose={closeMobile}
+        onEscape={escapeMobile}
         onDemo={(topic, opts) => {
           setMobileOpen(false);
           fireDemo(topic, opts);
@@ -650,14 +743,24 @@ export default function Nav({ onDemo, dark }) {
       />
 
       {/* Full-width mega panel */}
+      {/* `inert` while closed takes the ~34 panel links out of the Tab
+          order and the accessibility tree; .megaWrapClosed adds
+          visibility: hidden after the close transition for the same
+          reason (and so nothing behind the fixed layer is obscured). */}
       <div
         ref={megaRef}
-        className={`${styles.megaWrap} ${dark ? styles.megaWrapDark : ""}`}
+        className={`${styles.megaWrap} ${dark ? styles.megaWrapDark : ""} ${
+          megaActive ? "" : styles.megaWrapClosed
+        }`}
+        inert={!megaActive}
         onMouseEnter={cancelClose}
         onMouseLeave={handleLeave}
+        onKeyDown={onMegaKeyDown}
+        onBlur={onMegaBlur}
       >
         {/* Integrations — 3 category columns with rich items */}
         <div
+          id="mega-integrations"
           data-menu="integrations"
           className={`${styles.megaPanel} ${
             openMenu === "integrations" ? styles.megaPanelActive : ""
@@ -715,6 +818,7 @@ export default function Nav({ onDemo, dark }) {
 
         {/* Industries — 4-col rich grid, no category labels */}
         <div
+          id="mega-industries"
           data-menu="industries"
           className={`${styles.megaPanel} ${
             openMenu === "industries" ? styles.megaPanelActive : ""
@@ -767,6 +871,7 @@ export default function Nav({ onDemo, dark }) {
 
         {/* More — surfaces all secondary site pages */}
         <div
+          id="mega-more"
           data-menu="more"
           className={`${styles.megaPanel} ${
             openMenu === "more" ? styles.megaPanelActive : ""
@@ -829,7 +934,8 @@ export default function Nav({ onDemo, dark }) {
       <div
         ref={scrimRef}
         className={styles.scrim}
-        onClick={() => setOpenMenu(null)}
+        aria-hidden="true"
+        onClick={() => closeMega()}
       />
     </>
   );

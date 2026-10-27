@@ -11,6 +11,7 @@ import PageviewTracker from "@/components/Analytics/PageviewTracker";
 import SkipLink from "@/components/SkipLink/SkipLink";
 import RouteAnnouncer from "@/components/RouteAnnouncer/RouteAnnouncer";
 import RevealGuarantee from "@/components/RevealGuarantee/RevealGuarantee";
+import CookieBanner from "@/components/CookieBanner/CookieBanner";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 import "./globals.ocean-theme.css";
@@ -64,7 +65,7 @@ export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: "Nautilus Inventory — AI-Powered Warehouse Management",
-    template: "%s | Nautilus Inventory",
+    template: "%s | Nautilus",
   },
   description:
     "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
@@ -84,6 +85,12 @@ export const metadata = {
   creator: "Nautilus",
   publisher: "Nautilus",
   formatDetection: { email: false, telephone: false, address: false },
+  /* og:image / twitter:image come from the file convention
+     (app/opengraph-image.png + app/twitter-image.png), which Next merges
+     into EVERY route's metadata. They used to live here as `images`, but a
+     page that defines its own `openGraph` replaces this whole object, so
+     ~47 pages shipped without any social image. Likewise no twitter
+     title/description here: each page's own title + description are used. */
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -92,21 +99,9 @@ export const metadata = {
     title: "Nautilus Inventory — AI-Powered Warehouse Management",
     description:
       "AI-powered warehouse intelligence for modern operations teams. Scanning, spatial mapping, pick optimization, and predictive analytics in a single platform.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Nautilus Inventory — AI-Powered Warehouse Management",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nautilus Inventory — AI-Powered Warehouse Management",
-    description:
-      "AI-powered warehouse intelligence for modern operations teams.",
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -195,6 +190,11 @@ export default function RootLayout({ children }) {
                   setup don't ship in the main bundle. */}
               <DemoHost>
                 <Nav />
+                {/* Cookie consent — outside <main data-page-content> so
+                    the page-transition fade never touches it. Renders
+                    nothing until mounted, and only when GA is configured
+                    and no choice is stored yet. */}
+                <CookieBanner measurementId={GA_MEASUREMENT_ID} />
                 {/* id + tabIndex make this the skip-link target and let
                     RouteAnnouncer move focus here on client-side
                     navigation (WCAG 2.4.3 Focus Order). data-page-content

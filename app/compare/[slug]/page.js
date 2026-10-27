@@ -1,6 +1,7 @@
 import CompareClient from "./CompareClient";
 import { COMPETITORS, COMPARE_SLUGS } from "./compareData";
 import { notFound } from "next/navigation";
+import { truncateDescription, OG_IMAGE } from "@/lib/site";
 
 export async function generateStaticParams() {
   return COMPARE_SLUGS.map((slug) => ({ slug }));
@@ -13,12 +14,14 @@ export async function generateMetadata({ params }) {
 
   return {
     title: `Nautilus vs ${c.name}`,
-    description: `Detailed comparison: ${c.heroDesc}`,
+    description: truncateDescription(`Detailed comparison: ${c.heroDesc}`),
     alternates: { canonical: `https://nautilusinventory.com/compare/${slug}` },
     openGraph: {
       type: "website",
+      siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
       title: `Nautilus vs ${c.name} — Warehouse Management Compared`,
-      description: c.heroDesc,
+      description: truncateDescription(c.heroDesc, 200),
       url: `https://nautilusinventory.com/compare/${slug}`,
     },
   };

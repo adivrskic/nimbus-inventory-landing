@@ -64,13 +64,15 @@
   font-family: var(--display);
   font-size: 14px;
   line-height: 1.6;
-  outline: none;
   resize: vertical;
   min-height: 80px;
   border-radius: 0;
   -webkit-appearance: none;
   appearance: none;
   transition: border-color 0.2s, background 0.2s;
+}
+.feedbackReasonInput:focus:not(:focus-visible) {
+  outline: none;
 }
 .feedbackReasonInput::placeholder {
   color: rgba(242, 240, 239, 0.3);

@@ -1,10 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
@@ -16,8 +13,6 @@ import FeatureMatrix from "@/components/shared/FeatureMatrix";
 import CheckList from "@/components/shared/CheckList";
 import NumberedList from "@/components/shared/NumberedList";
 import styles from "./Compare.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* `competitor` (the single matched entry, full object) and `others`
    (cross-link list trimmed to slug/name/category) are resolved
@@ -50,7 +45,7 @@ export default function CompareClient({ competitor, others }) {
     resetScroll();
     const rafId = requestAnimationFrame(resetScroll);
 
-    if (!competitor || !pageRef.current) {
+    if (!pageRef.current) {
       return () => cancelAnimationFrame(rafId);
     }
 
@@ -231,21 +226,8 @@ export default function CompareClient({ competitor, others }) {
     };
   }, [competitor]);
 
-  if (!competitor) {
-    return (
-      <div className={styles.page}>
-        {/* No <Nav /> — app/layout.js renders one for every route. */}
-        <div className={styles.notFound}>
-          <div className={styles.notFoundLabel}>404</div>
-          <h1>Comparison not found.</h1>
-          <TransitionLink href="/" className={styles.backLink}>
-            ← Back to home
-          </TransitionLink>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  /* No not-found branch: app/compare/[slug]/page.js calls notFound() for
+     an unknown slug, so `competitor` is always set here. */
 
   /* Build the quick-compare pairs (Nautilus side, competitor side, matched
      by index for visual alignment) */

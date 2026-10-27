@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Nav from "@/components/Nav/Nav";
 import Footer from "@/components/Footer/Footer";
 import SplitText from "@/components/shared/SplitText";
+import { resetScroll } from "@/lib/resetScroll";
 import {
   gsap,
+  ScrollTrigger,
   useGsap,
   DURATION,
   EASE,
@@ -119,9 +119,12 @@ export default function ResourceShell({
   onDemo,
   children,
 }) {
-  /* Scroll reset is page logic, not animation. */
+  /* Scroll reset is page logic, not animation. Lenis-aware (a bare
+     window.scrollTo gets eased back by Lenis), and skipped when the URL
+     carries a hash so a deep link to a section is not yanked to the top. */
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (window.location.hash) return;
+    resetScroll();
   }, []);
 
   /* Mount intro timeline. Scoped to the PAGE wrapper (not the inner shell)

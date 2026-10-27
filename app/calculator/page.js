@@ -1,4 +1,5 @@
 import CalculatorClient from "./CalculatorClient";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata = {
   title: "ROI Calculator",
@@ -7,6 +8,8 @@ export const metadata = {
   alternates: { canonical: "https://nautilusinventory.com/calculator" },
   openGraph: {
     type: "website",
+    siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
     title: "Nautilus ROI Calculator",
     description:
       "Estimate your annual savings in 10 seconds. Editable inline calculator.",

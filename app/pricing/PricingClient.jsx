@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -16,8 +14,6 @@ import { track } from "@/lib/analytics";
 import { signupUrl } from "@/lib/site";
 import { PRICING_FAQS } from "./pricingFaqs";
 import styles from "./Pricing.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ── Pricing config — edit prices here ── */
 const PRICING = {
@@ -340,15 +336,29 @@ export default function PricingClient() {
     if (!wrap) return;
     const cards = wrap.querySelectorAll(`.${styles.tier}`);
     if (!cards.length) return;
-    const onMove = (e) => {
-      cards.forEach((card) => {
-        const r = card.getBoundingClientRect();
-        card.style.setProperty("--mouse-x", `${e.clientX - r.left}px`);
-        card.style.setProperty("--mouse-y", `${e.clientY - r.top}px`);
+    /* One rAF per frame; all rect reads before any style write, so the
+       browser lays out once per frame instead of once per card per event. */
+    let rafId = 0;
+    let lastX = 0;
+    let lastY = 0;
+    const paint = () => {
+      rafId = 0;
+      const rects = Array.from(cards, (card) => card.getBoundingClientRect());
+      cards.forEach((card, i) => {
+        card.style.setProperty("--mouse-x", `${lastX - rects[i].left}px`);
+        card.style.setProperty("--mouse-y", `${lastY - rects[i].top}px`);
       });
     };
+    const onMove = (e) => {
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if (!rafId) rafId = requestAnimationFrame(paint);
+    };
     wrap.addEventListener("mousemove", onMove);
-    return () => wrap.removeEventListener("mousemove", onMove);
+    return () => {
+      cancelAnimationFrame(rafId);
+      wrap.removeEventListener("mousemove", onMove);
+    };
   }, []);
 
   const proPrice =
@@ -381,9 +391,11 @@ export default function PricingClient() {
             BILLING SELECTOR — pill toggle with sliding gold pill
         ───────────────────────────────────────────────────── */}
         <div className={styles.toggleWrap}>
+          {/* Plain toggle buttons in a group (not tabs: nothing is a tab
+              panel, and the selection only re-prices the tiers below). */}
           <div
             className={styles.pillToggle}
-            role="tablist"
+            role="group"
             aria-label="Billing period"
           >
             <div
@@ -394,8 +406,8 @@ export default function PricingClient() {
               }}
             />
             <button
-              role="tab"
-              aria-selected={billing === "monthly"}
+              type="button"
+              aria-pressed={billing === "monthly"}
               className={`${styles.pillBtn} ${
                 billing === "monthly" ? styles.pillBtnActive : ""
               }`}
@@ -404,8 +416,8 @@ export default function PricingClient() {
               Monthly
             </button>
             <button
-              role="tab"
-              aria-selected={billing === "annual"}
+              type="button"
+              aria-pressed={billing === "annual"}
               className={`${styles.pillBtn} ${
                 billing === "annual" ? styles.pillBtnActive : ""
               }`}
@@ -554,7 +566,6 @@ export default function PricingClient() {
             values: [row.pro, row.enterprise],
           }))}
           headerRule="neutral"
-          columnLayout="even"
           initiallyHidden
         />
       </section>

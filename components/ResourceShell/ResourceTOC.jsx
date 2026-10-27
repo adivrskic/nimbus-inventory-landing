@@ -65,7 +65,11 @@ export default function ResourceTOC({
       if (!el) return;
       const top =
         el.getBoundingClientRect().top + window.scrollY - scrollOffset;
-      window.scrollTo({ top, behavior: "smooth" });
+      /* Through Lenis when it's running — a native smooth scroll fights
+         Lenis's own position (it eases the page back to where it was). */
+      const lenis = window.__lenis;
+      if (lenis) lenis.scrollTo(top, { duration: 1 });
+      else window.scrollTo({ top, behavior: "smooth" });
       history.replaceState(null, "", `#${id}`);
     },
     [scrollOffset]

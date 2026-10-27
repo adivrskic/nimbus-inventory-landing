@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { INDUSTRIES_INDEX } from "./industriesIndex";
 import useGlowCards from "@/lib/useGlowCards";
-import { usePageTransition } from "@/components/TransitionProvider/TransitionProvider";
+import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import { useReveal, useHeadlineReveal } from "@/lib/gsap";
 import SplitText from "@/components/shared/SplitText";
 import styles from "./Industries.module.css";
@@ -31,7 +31,6 @@ const H_LINES = [
 export default function Industries({ as: Heading = "h2" }) {
   const [active, setActive] = useState(null);
   const isMobileRef = useRef(false);
-  const navigateTo = usePageTransition();
 
   /* Glow-card hover context for the list. */
   const glowRef = useGlowCards();
@@ -86,27 +85,32 @@ export default function Industries({ as: Heading = "h2" }) {
           data-reveal="stagger"
           className={`${styles.list} glow-cards`}
         >
+          {/* Real links (crawlable, keyboard-reachable, open-in-new-tab
+              works) — every selector in Industries.module.css is
+              class-based, so the <a> keeps the grid/hover styling. Focus
+              expands the card the same way hover does. */}
           {INDUSTRIES.map((ind, i) => (
-            <div
-              key={i}
+            <TransitionLink
+              key={ind.slug}
+              href={`/industry/${ind.slug}`}
               className={`${styles.item} glow-card ${
                 active === i ? styles.active : ""
               }`}
               onMouseEnter={() => handleEnter(i)}
               onMouseLeave={handleLeave}
-              onClick={() => {
-                navigateTo(`/industry/${ind.slug}`);
-              }}
-              style={{ cursor: "pointer" }}
+              onFocus={() => handleEnter(i)}
+              onBlur={handleLeave}
             >
               <div className={styles.titleWrap}>
                 <div className={styles.title}>{ind.title}</div>
-                <div className={styles.titleGhost}>{ind.title}</div>
+                <div className={styles.titleGhost} aria-hidden="true">
+                  {ind.title}
+                </div>
               </div>
               <div className={styles.descWrap}>
                 <p className={styles.desc}>{ind.desc}</p>
               </div>
-            </div>
+            </TransitionLink>
           ))}
         </div>
       </div>

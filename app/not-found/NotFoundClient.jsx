@@ -53,7 +53,7 @@ export default function NotFoundClient() {
         style={{
           fontFamily: "var(--display)",
           fontSize: 15,
-          color: "rgba(255,255,255,0.3)",
+          color: "rgba(255,255,255,0.6)",
           textAlign: "center",
           maxWidth: 400,
           lineHeight: 1.8,

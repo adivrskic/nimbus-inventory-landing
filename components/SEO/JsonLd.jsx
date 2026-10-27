@@ -11,10 +11,15 @@
 // in the metadata, and no hardcoded https://nautilusinventory.com copies).
 // ──────────────────────────────────────────────────────────────────────────
 
-import { SITE_URL, SALES_EMAIL } from "@/lib/site";
+import { SITE_URL, SALES_EMAIL, toIsoDate } from "@/lib/site";
 
 const BRAND = "Nautilus Inventory";
+/* public/logo.png is a 180×180 copy of the apple-touch-icon (Google wants
+   ≥112×112 for the Organization logo). */
 const LOGO = `${SITE_URL}/logo.png`;
+/* Social image — the same file app/opengraph-image.png serves as og:image. */
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+const ORG = { "@type": "Organization", name: BRAND };
 
 export default function JsonLd({ data }) {
   // Escape "<" so a value can never close the <script> tag early
@@ -63,7 +68,7 @@ export function softwareSchema({ offers } = {}) {
     "@type": "SoftwareApplication",
     name: BRAND,
     applicationCategory: "BusinessApplication",
-    operatingSystem: "Web, iOS, Android",
+    operatingSystem: "Web",
     description:
       "AI-powered warehouse management system with barcode scanning, spatial mapping, pick optimization, and predictive analytics.",
   };
@@ -117,48 +122,36 @@ export function faqSchema(items) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// articleSchema — Blog post Article. Auto-converts loose date strings like
-// "Feb 18, 2026" to ISO 8601 for Google's parser.
+// articleSchema — Blog post Article. Loose date strings like "Feb 18, 2026"
+// are converted to ISO 8601 by lib/site's toIsoDate (shared with the OG
+// article:published_time and the sitemap). Posts are unsigned, so the
+// author is the Organization, not a placeholder Person.
 // ──────────────────────────────────────────────────────────────────────────
-
-function toISO(date) {
-  if (!date) return undefined;
-  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) return date;
-  try {
-    const d = new Date(date);
-    if (!isNaN(d.getTime())) return d.toISOString();
-  } catch {
-    /* fall through */
-  }
-  return date;
-}
 
 export function articleSchema({
   title,
   description,
   slug,
   date,
-  author = "Nautilus Team",
-  image,
+  image = OG_IMAGE,
 }) {
-  const iso = toISO(date);
-  const schema = {
+  const iso = toIsoDate(date);
+  return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: title,
     description,
     url: `${SITE_URL}/blog/${slug}`,
+    image,
     datePublished: iso,
     dateModified: iso,
-    author: { "@type": "Person", name: author },
+    author: ORG,
     publisher: {
       "@type": "Organization",
       name: BRAND,
       logo: { "@type": "ImageObject", url: LOGO },
     },
   };
-  if (image) schema.image = image;
-  return schema;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -172,7 +165,8 @@ export function helpArticleSchema({ title, description, slug }) {
     headline: title,
     description,
     url: `${SITE_URL}/help/${slug}`,
-    author: { "@type": "Organization", name: BRAND },
+    image: OG_IMAGE,
+    author: ORG,
     publisher: {
       "@type": "Organization",
       name: BRAND,

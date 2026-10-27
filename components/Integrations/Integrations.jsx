@@ -50,15 +50,19 @@ const CATEGORIES = [
 ];
 
 const PLATFORMS = [
+  /* Product claims here must match lib/chat/knowledge-base.js: the web app
+     runs in any browser (phones and tablets included) and scans with the
+     device camera; native apps are not released. No RFID, offline mode or
+     named hardware vendors — none of that is in the knowledge base. */
   {
     label: "Mobile",
-    title: "iOS & Android",
-    desc: "Native barcode scanning, offline mode, and real-time sync across unlimited devices.",
+    title: "Any phone or tablet",
+    desc: "Scan with the camera from the web app on any modern browser — no app store install, unlimited scanner users.",
   },
   {
     label: "Hardware",
-    title: "Barcode & RFID",
-    desc: "Compatible with Zebra, Honeywell, and Socket Mobile scanners out of the box.",
+    title: "Barcode scanners",
+    desc: "USB and Bluetooth keyboard-wedge scanners work as they do with any web form — plug in and scan.",
   },
   {
     label: "API",

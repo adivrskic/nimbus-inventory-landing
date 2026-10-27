@@ -6,13 +6,10 @@ export default function robots() {
       {
         userAgent: "*",
         allow: "/",
-        /* /trust, /status, /api-docs are built but not live yet — they
-           ship placeholder content and are unlinked from Nav/Footer/
-           sitemap. Disallow so crawlers don't discover + index the
-           placeholders via a stray/external link. Re-enable (remove from
-           this list) when those pages are real. Pair with a noindex in
-           each page's metadata for belt-and-suspenders. */
-        disallow: ["/api/", "/_next/", "/trust", "/status", "/api-docs"],
+        /* Only real non-page paths. /trust, /status and /api-docs used to
+           be listed here but those routes no longer exist (they 404), and
+           disallowing a 404 just adds noise to Search Console. */
+        disallow: ["/api/", "/_next/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

@@ -2,16 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import SplitText from "@/components/shared/SplitText";
 import { resetScroll } from "@/lib/resetScroll";
 
-import { LEGAL_PAGES } from "./legalData";
 import styles from "./LegalPage.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* Nav removed — it lives in app/layout.js now. Nav auto-applies the
    `dark` variant via usePathname() for /legal/* paths, so this
@@ -50,8 +46,10 @@ function toRoman(n) {
   return out;
 }
 
-export default function LegalPage({ slug }) {
-  const page = LEGAL_PAGES[slug];
+/* `page` is the matched LEGAL_PAGES entry, resolved server-side in
+   app/legal/[slug]/page.js (which 404s on an unknown slug), so the data
+   module never ships in the client chunk and no not-found branch is needed. */
+export default function LegalPage({ slug, page }) {
   const shellRef = useRef(null);
   const headerRef = useRef(null);
 
@@ -200,25 +198,6 @@ export default function LegalPage({ slug }) {
       ctx.revert();
     };
   }, [slug, page]);
-
-  /* ─── 404 STATE ─── matches the .notFound / .notFoundInner /
-     .eyebrow / .notFoundTitle / .backLink CSS classes. */
-  if (!page) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.notFound}>
-          <div className={styles.notFoundInner}>
-            <div className={styles.eyebrow}>Document not found</div>
-            <h1 className={styles.notFoundTitle}>404</h1>
-            <Link href="/" className={styles.backLink}>
-              ← Back to home
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   /* Per-page recital. Optional `page.recital` overrides the default;
      otherwise we synthesize a generic line that fits any legal doc. */

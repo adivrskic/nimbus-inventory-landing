@@ -5,7 +5,6 @@ import {
   ResourceTOC,
   useResourceSectionAnimations,
 } from "@/components/ResourceShell";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   gsap,
   DURATION,
@@ -19,14 +18,7 @@ import TransitionLink from "@/components/TransitionLink/TransitionLink";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./Blog.module.css";
 import { useDemo } from "@/lib/DemoContext";
-
-gsap.registerPlugin(ScrollTrigger);
-
-const slugify = (s) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+import { slugify } from "@/lib/site";
 
 /* `post` (the single matched post, full content blocks included) and
    `related` (same-tag posts trimmed to slug/title/date/readTime) are
@@ -94,22 +86,8 @@ export default function BlogClient({ post, related }) {
     return () => ctx.revert();
   }, [post]);
 
-  if (!post) {
-    return (
-      <ResourceShell
-        eyebrow="Blog"
-        title="Post not found."
-        subtitle="The article you're looking for may have moved or been removed."
-        onDemo={openDemo}
-      >
-        <div className={pageStyles.notFoundCta}>
-          <TransitionLink href="/blog" className={shellStyles.link}>
-            ← Back to all posts
-          </TransitionLink>
-        </div>
-      </ResourceShell>
-    );
-  }
+  /* No not-found branch: app/blog/[slug]/page.js only builds the slugs in
+     lib/blogData.js (dynamicParams = false), so `post` is always set. */
 
   /* Render the post body — split content into a single intro section and
      one section per h2. This gives the scroll-animation hook discrete

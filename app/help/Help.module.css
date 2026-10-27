@@ -34,6 +34,8 @@
   color: var(--white);
   font-family: var(--mono);
   font-size: 14px;
+}
+.searchInput:focus:not(:focus-visible) {
   outline: none;
 }
 .searchInput::placeholder {

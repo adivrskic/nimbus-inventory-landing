@@ -77,6 +77,8 @@ import { handleTool } from "@/lib/chat/tool-handlers";
 import { getOrCreateVisitor, getIp, hashIp } from "@/lib/chat/visitor";
 import { checkRateLimit } from "@/lib/chat/rate-limit";
 import { matchCanned } from "@/lib/chat/canned-answers";
+import { EMAIL_RE } from "@/lib/validation";
+import { cap, FIELD_CAPS } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -330,8 +332,15 @@ export async function POST(request) {
   const supabase = getSupabaseAdmin();
   const sourceUrl = String(body.source_url || "").slice(0, 500) || null;
   const sourceTopic = String(body.source_topic || "").slice(0, 50) || null;
-  const userEmail = String(body.user_email || "").slice(0, 320) || null;
-  const userName = String(body.user_name || "").slice(0, 200) || null;
+  /* Optional lead fields from the embed. An email that doesn't look like
+     one is dropped rather than stored (it would mark the conversation as
+     lead_captured and go straight into a sales notification). */
+  const rawEmail = String(body.user_email || "").trim();
+  const userEmail =
+    rawEmail && rawEmail.length <= FIELD_CAPS.email && EMAIL_RE.test(rawEmail)
+      ? rawEmail
+      : null;
+  const userName = cap(String(body.user_name || "").trim(), FIELD_CAPS.name) || null;
 
   // ── Resolve or create conversation ─────────────────────────────────────
   // conversationExisted tracks whether this is a continuing conversation (it
@@ -391,15 +400,27 @@ export async function POST(request) {
   // message alone.
   const canned = conversationExisted ? null : matchCanned(message);
 
-  const { data: history } = canned
-    ? { data: null }
+  const { data: history, error: historyError } = canned
+    ? { data: null, error: null }
     : await supabase
         .from("chat_messages")
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
-  const workingHistory = canned ? null : [...(history || [])];
+  if (historyError) {
+    console.error("[chat] Could not load history:", historyError);
+  }
+
+  /* The user turn was inserted above, so a healthy read always has at
+     least one row. If the select failed or came back empty, fall back to
+     the current message alone — the model must never be called with an
+     empty messages array (Anthropic rejects it with a 400). */
+  const workingHistory = canned
+    ? null
+    : history && history.length
+      ? [...history]
+      : [{ role: "user", content: message }];
 
   const encoder = new TextEncoder();
 

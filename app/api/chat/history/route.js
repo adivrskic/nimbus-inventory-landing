@@ -38,6 +38,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getOrCreateVisitor } from "@/lib/chat/visitor";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,20 @@ export async function GET(request) {
 
   if (!conversationId) {
     return NextResponse.json({ messages: [] });
+  }
+
+  /* Each call is two Supabase reads; without a cap a loop on this
+     endpoint could enumerate conversation ids or just burn DB time. 60/h
+     per IP is far above a real visitor's reloads. */
+  const limit = await rateLimit(getClientIp(request), {
+    namespace: "chat_history",
+    max: 60,
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { messages: [], error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } }
+    );
   }
 
   const visitorId = await getOrCreateVisitor();

@@ -7,7 +7,7 @@ import {
   useEffect,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import gsap from "gsap";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import styles from "./TransitionProvider.module.css";
 
@@ -47,13 +47,9 @@ export function usePageTransition() {
        toggle to take effect, which is a worse UX
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Read the OS-level preference each time. Returns false during SSR (no
-   window.matchMedia available); the first navigation post-hydration
-   reads accurately. */
-function prefersReducedMotion() {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+/* prefersReducedMotion (lib/gsap) reads the OS-level preference on each
+   call. It returns false during SSR (no window.matchMedia); the first
+   navigation post-hydration reads accurately. */
 
 export default function TransitionProvider({ children }) {
   const router = useRouter();
@@ -105,7 +101,7 @@ export default function TransitionProvider({ children }) {
 
       /* External / mailto */
       if (href.startsWith("http") || href.startsWith("mailto:")) {
-        window.open(href, "_blank");
+        window.open(href, "_blank", "noopener,noreferrer");
         return;
       }
 

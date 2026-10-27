@@ -50,6 +50,14 @@ export async function POST(req) {
       { status: 400 }
     );
   }
+  /* `null`, an array or a bare string parse as valid JSON; reject them
+     before any field is read. */
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid request." },
+      { status: 400 }
+    );
+  }
 
   // Honeypot
   if (body && typeof body.website === "string" && body.website.trim() !== "") {
@@ -74,7 +82,7 @@ export async function POST(req) {
 
   const meta = {
     sourceUrl: cap(
-      body?.source_url || (list === "api" ? "/api-docs" : "/"),
+      body?.source_url || "/",
       FIELD_CAPS.url
     ),
     userAgent: cap(req.headers.get("user-agent") || "", FIELD_CAPS.userAgent),

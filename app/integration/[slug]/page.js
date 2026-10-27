@@ -4,6 +4,7 @@ import {
   DEFAULT_INTEGRATION_FAQS,
 } from "@/components/IntegrationPage/integrationData";
 import JsonLd, { breadcrumbSchema, faqSchema } from "@/components/SEO/JsonLd";
+import { truncateDescription, OG_IMAGE } from "@/lib/site";
 
 /* Only the slugs in integrationData.js exist. Without this, a removed or
    mistyped slug rendered a Not Found page with a 200 instead of a 404. */
@@ -22,13 +23,18 @@ export async function generateMetadata({ params }) {
   if (!integration) return { title: "Integration Not Found" };
   return {
     title: `${integration.title} Integration`,
-    description: `Connect ${integration.title} to Nautilus. ${integration.tagline}`,
+    description: truncateDescription(
+      `Connect ${integration.title} to Nautilus. ${integration.tagline}`
+    ),
     alternates: {
       canonical: `https://nautilusinventory.com/integration/${slug}`,
     },
     openGraph: {
+      type: "website",
+      siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
       title: `${integration.title} Integration | Nautilus`,
-      description: integration.tagline,
+      description: truncateDescription(integration.tagline, 200),
       url: `https://nautilusinventory.com/integration/${slug}`,
     },
   };
@@ -59,11 +65,35 @@ export default async function IntegrationPage({ params }) {
      duplicate-content signal the shared FAQ used to produce. */
   const faqs = integration?.faqs ?? DEFAULT_INTEGRATION_FAQS;
 
+  /* Everything the client tree needs is resolved HERE (server) and passed
+     as props, so components/IntegrationPage/IntegrationPage.jsx no longer
+     imports the whole integrationData.js module into the client chunk:
+     - integration: the single matched entry (full object)
+     - faqs: resolved with the same fallback that drives the JSON-LD above
+     - siblings: up to 3 same-category cross-links, trimmed to the fields
+       the cards render */
+  const siblings = integration
+    ? Object.entries(INTEGRATIONS)
+        .filter(([s, i]) => s !== slug && i.category === integration.category)
+        .slice(0, 3)
+        .map(([s, i]) => ({
+          slug: s,
+          title: i.title,
+          category: i.category,
+          tagline: i.tagline,
+        }))
+    : [];
+
   return (
     <>
       <JsonLd data={breadcrumbSchema(crumbs)} />
       <JsonLd data={faqSchema(faqs)} />
-      <IntegrationClient slug={slug} />
+      <IntegrationClient
+        slug={slug}
+        integration={integration}
+        faqs={faqs}
+        siblings={siblings}
+      />
     </>
   );
 }

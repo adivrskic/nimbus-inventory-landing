@@ -158,7 +158,16 @@ export default function ProblemSolution({ onDemo }) {
   }, []);
 
   return (
-    <section ref={sectionRef} className={styles.section}>
+    <section
+      ref={sectionRef}
+      className={styles.section}
+      aria-labelledby="problem-solution-heading"
+    >
+      {/* Visually hidden section heading so the three h3 cards do not
+          follow the hero's h1 directly in the outline. */}
+      <h2 id="problem-solution-heading" className="sr-only">
+        Before and after Nautilus
+      </h2>
       <div className={styles.inner}>
         <div ref={glowRef} className={`${styles.grid} glow-cards`}>
           {COLUMNS.map((col) => (

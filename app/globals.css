@@ -46,8 +46,10 @@
   --mk-fg-rgb: 242 240 239; /* warm off-white base channels */
   --mk-text: rgb(var(--mk-fg-rgb) / 0.55); /* body copy, descriptions */
   --mk-text-strong: rgb(var(--mk-fg-rgb) / 0.7); /* list items, emphasis */
-  --mk-text-muted: rgb(var(--mk-fg-rgb) / 0.4); /* labels, captions, icons */
-  --mk-text-faint: rgb(var(--mk-fg-rgb) / 0.3); /* notes, footnotes */
+  /* 0.6 / 0.5 (were 0.4 / 0.3): the lower alphas sat under 3:1 on the
+     navy, failing AA for the small labels and footnotes that use them. */
+  --mk-text-muted: rgb(var(--mk-fg-rgb) / 0.6); /* labels, captions, icons */
+  --mk-text-faint: rgb(var(--mk-fg-rgb) / 0.5); /* notes, footnotes */
   --mk-text-ghost: rgb(var(--mk-fg-rgb) / 0.2); /* disabled marks, dashes */
   --mk-line: rgb(var(--mk-fg-rgb) / 0.08); /* standard hairline */
   --mk-line-soft: rgb(var(--mk-fg-rgb) / 0.06); /* inner divider */
@@ -503,6 +505,12 @@ body::after {
 .glow-card {
   position: relative;
   /* border-radius: 20px; */
+}
+/* Only cards that actually do something on click get the pointer; a
+   hand cursor on an inert card promises an interaction that never comes. */
+a.glow-card,
+button.glow-card,
+.glow-card[role="button"] {
   cursor: pointer;
 }
 .glow-card:hover::before {
@@ -545,6 +553,30 @@ body::after {
   position: relative;
   width: calc(100% - 2px);
   z-index: 2;
+}
+
+/* ═══ FOCUS ═══
+   One visible keyboard focus ring for every control. The per-component
+   modules that used to set `outline: none` on inputs now only do so for
+   :focus:not(:focus-visible) (mouse focus), so this rule is what keyboard
+   users see everywhere. */
+:focus-visible {
+  outline: 2px solid var(--accent, #d4a949);
+  outline-offset: 2px;
+}
+
+/* Visually hidden, still read by assistive tech (section headings that
+   the design has no room for). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ═══ STATIC MODE — reveals all animated content ═══ */

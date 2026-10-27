@@ -183,16 +183,18 @@
   font-family: var(--mono);
   font-size: 13px;
   letter-spacing: -0.1px;
-  outline: none;
   transition: border-color 0.25s, background 0.25s;
   width: 100%;
   border-radius: 0;
   -webkit-appearance: none;
   appearance: none;
 }
+.fieldInput:focus:not(:focus-visible), .fieldTextarea:focus:not(:focus-visible) {
+  outline: none;
+}
 .fieldInput::placeholder,
 .fieldTextarea::placeholder {
-  color: rgba(242, 240, 239, 0.3);
+  color: rgba(242, 240, 239, 0.6);
 }
 .fieldInput:focus,
 .fieldTextarea:focus {
@@ -247,12 +249,14 @@
   font-size: 13px;
   letter-spacing: -0.1px;
   cursor: pointer;
-  outline: none;
   text-align: left;
   border-radius: 0;
   -webkit-appearance: none;
   appearance: none;
   transition: border-color 0.25s, background 0.25s;
+}
+.selectButton:focus:not(:focus-visible) {
+  outline: none;
 }
 .selectButton:hover:not(:disabled) {
   border-color: rgba(242, 240, 239, 0.25);
@@ -271,7 +275,7 @@
 }
 
 .selectPlaceholder {
-  color: rgba(242, 240, 239, 0.3);
+  color: rgba(242, 240, 239, 0.6);
 }
 .selectValue {
   color: var(--white);

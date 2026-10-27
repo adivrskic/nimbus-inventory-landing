@@ -40,6 +40,14 @@ export async function POST(req) {
       { status: 400 }
     );
   }
+  /* `null`, an array or a bare string parse as valid JSON; reject them
+     before any field is read. */
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid request." },
+      { status: 400 }
+    );
+  }
 
   // ── Honeypot ── silently accept-and-drop so bots don't retry.
   if (body && typeof body.website === "string" && body.website.trim() !== "") {

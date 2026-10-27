@@ -341,10 +341,12 @@ export default function AISection() {
     if (!space) return;
     const top = space.getBoundingClientRect().top + window.scrollY;
     const range = space.offsetHeight - window.innerHeight;
-    window.scrollTo({
-      top: top + ((i + 0.04) / N) * range,
-      behavior: "smooth",
-    });
+    const y = top + ((i + 0.04) / N) * range;
+    /* Through Lenis when it's running — a native smooth scroll fights
+       Lenis's own position (it eases the page back to where it was). */
+    const lenis = window.__lenis;
+    if (lenis) lenis.scrollTo(y, { duration: 1 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
   }, []);
 
   /* Skip past this long pinned ride to Features. Through Lenis when it's

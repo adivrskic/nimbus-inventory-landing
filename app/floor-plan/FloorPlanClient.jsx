@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -14,8 +12,6 @@ import { trackLead, trackLeadError } from "@/lib/analytics";
    the same; FloorPlan.module.css adds only the file picker and the list. */
 import styles from "@/app/contact/Contact.module.css";
 import fp from "./FloorPlan.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* Mirrors the API's limit (app/api/floor-plan/route.js). */
 const MAX_BYTES = 4 * 1024 * 1024;

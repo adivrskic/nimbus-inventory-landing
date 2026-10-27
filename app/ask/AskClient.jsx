@@ -71,8 +71,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import gsap from "gsap";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { resetScroll } from "@/lib/resetScroll";
 import { useChatStream } from "@/components/Chat/useChatStream";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -89,8 +89,10 @@ const STARTERS = [
   "Draft an email to my ops team",
 ];
 
+/* Only the routes that exist. The old list linkified /features, /api-docs,
+   /status, /signup and /login, none of which are pages on this site. */
 const LINK_RE =
-  /(https?:\/\/[^\s<>"']+|(?<![a-z0-9])\/(?:blog|help|compare|integration|industry|ask|contact|pricing|features|api-docs|status|legal|signup|login)(?:\/[a-z0-9\-]+)*\/?)/gi;
+  /(https?:\/\/[^\s<>"']+|(?<![a-z0-9])\/(?:ask|blog|calculator|compare|contact|floor-plan|help|industry|integration|pricing|legal)(?:\/[a-z0-9\-]+)*\/?)/gi;
 
 function linkify(text) {
   if (!text) return [];
@@ -165,7 +167,8 @@ export default function AskClient({ userEmail, userName } = {}) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    window.scrollTo(0, 0);
+    /* Lenis-aware — a bare window.scrollTo gets eased back by Lenis. */
+    resetScroll();
 
     if (messages.length > 0) {
       focusNoScroll(inputRef.current);
@@ -379,6 +382,7 @@ export default function AskClient({ userEmail, userName } = {}) {
                 placeholder={
                   streaming ? "Waiting…" : "Ask anything about Nautilus…"
                 }
+                aria-label="Ask a question about Nautilus"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={streaming}

@@ -520,9 +520,11 @@
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--white);
-  outline: none;
   transition: border-color 0.25s var(--ease-smooth),
     background 0.25s var(--ease-smooth);
+}
+.input:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .input::placeholder {

@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useMemo } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import FinalCTACard from "@/components/FinalCTACard/FinalCTACard";
@@ -13,8 +11,6 @@ import { RANGES, calculate } from "@/lib/roi";
 import EstimateEmail from "./EstimateEmail";
 import { track } from "@/lib/analytics";
 import styles from "./calculator-client.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ─────────────────────────────────────────────────────
    FORMATTING + INPUT HELPERS
@@ -72,6 +68,7 @@ function InlineNumber({
   value,
   onChange,
   range,
+  label,
   prefix = "",
   suffix = "",
   formatFn = formatNumber,
@@ -148,7 +145,7 @@ function InlineNumber({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        aria-label={`Edit value (range ${range.min} to ${range.max})`}
+        aria-label={`${label} (${range.min} to ${range.max})`}
         className={`${styles.editableInput} ${
           focused ? styles.editableInputFocused : ""
         }`}
@@ -479,6 +476,7 @@ export default function CalculatorClient() {
             value={size}
             onChange={setSize}
             range={RANGES.size}
+            label="Warehouse size in square feet"
             suffix=" sq ft"
           />{" "}
           warehouse with{" "}
@@ -486,12 +484,14 @@ export default function CalculatorClient() {
             value={pickers}
             onChange={setPickers}
             range={RANGES.pickers}
+            label="Number of pickers"
           />{" "}
           pickers,{" "}
           <InlineNumber
             value={accuracy}
             onChange={setAccuracy}
             range={RANGES.accuracy}
+            label="Inventory accuracy percent"
             suffix="%"
           />{" "}
           inventory accuracy, and{" "}
@@ -499,6 +499,7 @@ export default function CalculatorClient() {
             value={wage}
             onChange={setWage}
             range={RANGES.wage}
+            label="Average hourly labor cost in dollars"
             prefix="$"
             suffix="/hr"
           />{" "}

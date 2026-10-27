@@ -10,12 +10,7 @@ import { useDemo } from "@/lib/DemoContext";
 import { track } from "@/lib/analytics";
 import shellStyles from "@/components/ResourceShell/ResourceShell.module.css";
 import pageStyles from "./HelpArticle.module.css";
-
-const slugify = (s) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+import { slugify } from "@/lib/site";
 
 /* ── Feedback localStorage helpers ──
    - feedback:<resource> stores "yes" | "no" per-article so a returning
@@ -185,22 +180,8 @@ export default function HelpArticleClient({ article, category }) {
     setFeedbackError("");
   };
 
-  if (!post) {
-    return (
-      <ResourceShell
-        eyebrow="Help Center"
-        title="Article not found."
-        subtitle="The article you're looking for may have moved or been renamed."
-        onDemo={openDemo}
-      >
-        <div className={pageStyles.notFoundCta}>
-          <TransitionLink href="/help" className={shellStyles.link}>
-            ← Back to all articles
-          </TransitionLink>
-        </div>
-      </ResourceShell>
-    );
-  }
+  /* No not-found branch: app/help/[slug]/page.js only builds the slugs in
+     lib/helpData.js (dynamicParams = false), so `post` is always set. */
 
   /* Group content blocks into sections (intro + one per h2) */
   const grouped = [];

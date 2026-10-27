@@ -321,7 +321,7 @@ const TOPICS = [
     agenda: [
       "30-min live walkthrough",
       "Data import from your current system",
-      "Mobile scanner app demo",
+      "Mobile scanning demo",
       "Q&A on rollout & timeline",
     ],
   },
@@ -849,7 +849,16 @@ export default function DemoModal({ isOpen, onClose, initialTopic, source }) {
                 />
               </svg>
             </div>
-            <div className={styles.successTitle} data-success-item>
+            {/* Carries the dialog's aria-labelledby target while the form
+                (and its h2#demo-modal-title) is unmounted, so the dialog
+                keeps an accessible name in the success state. */}
+            <div
+              id="demo-modal-title"
+              role="heading"
+              aria-level="2"
+              className={styles.successTitle}
+              data-success-item
+            >
               Thanks{form.name ? `, ${form.name.split(" ")[0]}` : ""}.
             </div>
             <p className={styles.successDesc} data-success-item>

@@ -53,8 +53,10 @@ const STARTERS = [
 // Match http(s) URLs and absolute site paths starting with a known top-level
 // section. The negative lookbehind keeps "$1,497/mo" or similar from
 // matching as a path.
+/* Only the routes that exist. The old list linkified /features, /api-docs,
+   /status, /signup and /login, none of which are pages on this site. */
 const LINK_RE =
-  /(https?:\/\/[^\s<>"']+|(?<![a-z0-9])\/(?:blog|help|compare|integration|industry|ask|contact|pricing|features|api-docs|status|legal|signup|login)(?:\/[a-z0-9\-]+)*\/?)/gi;
+  /(https?:\/\/[^\s<>"']+|(?<![a-z0-9])\/(?:ask|blog|calculator|compare|contact|floor-plan|help|industry|integration|pricing|legal)(?:\/[a-z0-9\-]+)*\/?)/gi;
 
 function linkify(text) {
   if (!text) return [];
@@ -239,6 +241,7 @@ export default function ChatDrawer({ onClose, pathname, chat }) {
             placeholder={
               streaming ? "Waiting…" : "Ask anything about Nautilus…"
             }
+            aria-label="Ask a question about Nautilus"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={streaming}

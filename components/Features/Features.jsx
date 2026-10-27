@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import {
   ScannerSVG,
   FloorPlanSVG,
@@ -11,8 +10,6 @@ import {
   LabelSVG,
 } from "./visuals";
 import styles from "./Features.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* Stat slots carry short true phrases, not figures. The old ones ("<200ms",
    "99.7% accuracy", "70% faster counts", "3 days early warning") had no

@@ -37,7 +37,11 @@ import styles from "./FeatureMatrix.module.css";
 function Mark({ value, markClass }) {
   if (value === true || value === "yes") {
     return (
-      <span className={`${styles.mark} ${markClass}`} aria-label="Supported">
+      <span
+        className={`${styles.mark} ${markClass}`}
+        role="img"
+        aria-label="Supported"
+      >
         ✓
       </span>
     );
@@ -46,6 +50,7 @@ function Mark({ value, markClass }) {
     return (
       <span
         className={`${styles.mark} ${styles.markPartial}`}
+        role="img"
         aria-label="Partial"
       >
         ◐
@@ -56,6 +61,7 @@ function Mark({ value, markClass }) {
     return (
       <span
         className={`${styles.mark} ${styles.markNo}`}
+        role="img"
         aria-label="Not supported"
       >
         —

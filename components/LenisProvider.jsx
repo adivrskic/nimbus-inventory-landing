@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import Lenis from "lenis";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export default function LenisProvider({ children }) {
   /* Keep ScrollTrigger positions honest as the document changes height.
@@ -56,9 +53,12 @@ export default function LenisProvider({ children }) {
     window.__lenis = lenis;
 
     lenis.on("scroll", ScrollTrigger.update);
-    gsap.ticker.add((time) => {
+    /* Kept in a variable so cleanup can remove exactly this callback —
+       an anonymous one leaked a ticker entry (and a dead Lenis) per mount. */
+    const tick = (time) => {
       lenis.raf(time * 1000);
-    });
+    };
+    gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
 
     /* Back/forward navigation bypasses TransitionProvider: the browser
@@ -76,6 +76,7 @@ export default function LenisProvider({ children }) {
 
     return () => {
       window.removeEventListener("popstate", onPopState);
+      gsap.ticker.remove(tick);
       lenis.destroy();
       window.__lenis = null;
     };

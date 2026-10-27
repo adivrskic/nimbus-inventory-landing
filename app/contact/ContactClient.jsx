@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { resetScroll } from "@/lib/resetScroll";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
@@ -10,8 +8,6 @@ import SplitText from "@/components/shared/SplitText";
 import { validateContact } from "@/lib/validation";
 import { trackLead, trackLeadError } from "@/lib/analytics";
 import styles from "./Contact.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const INITIAL_FORM = {
   name: "",
@@ -527,8 +523,8 @@ export default function ContactClient() {
               </div>
               <p className={styles.successText}>
                 Thanks — we&apos;ve got it. You&apos;ll hear back within 4
-                business hours. Check spam if you don&apos;t see us — we send
-                from <strong>hello@nautilusinventory.com</strong>.
+                business hours. Check spam if you don&apos;t see us — the
+                reply comes from our sales team.
               </p>
               <button
                 type="button"
@@ -663,14 +659,22 @@ export default function ContactClient() {
               </div>
 
               <div className={styles.field}>
-                <label htmlFor="c-usage" className={styles.fieldLabel}>
+                {/* A set of toggle buttons, not a form control — so a
+                    labelled group with aria-pressed, not a <label for>
+                    pointing at nothing. */}
+                <div id="c-usage-label" className={styles.fieldLabel}>
                   Where are you in the process?
-                </label>
-                <div className={styles.usageRow}>
+                </div>
+                <div
+                  className={styles.usageRow}
+                  role="group"
+                  aria-labelledby="c-usage-label"
+                >
                   {USAGE_OPTIONS.map((u) => (
                     <button
                       key={u}
                       type="button"
+                      aria-pressed={form.usage === u}
                       onClick={() => updateField("usage", u)}
                       className={`${styles.usageChip} ${
                         form.usage === u ? styles.usageChipActive : ""

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import Footer from "@/components/Footer/Footer";
 import CornerButton from "@/components/shared/CornerButton";
 import TransitionLink from "@/components/TransitionLink/TransitionLink";
@@ -13,10 +12,7 @@ import useGlowCards from "@/lib/useGlowCards";
 import { useDemo } from "@/lib/DemoContext";
 import { resetScroll } from "@/lib/resetScroll";
 import SplitText from "@/components/shared/SplitText";
-import { INTEGRATIONS, DEFAULT_INTEGRATION_FAQS } from "./integrationData";
 import styles from "./IntegrationPage.module.css";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* Setup steps are shared across every integration — the actual flow
    doesn't differ by platform, since OAuth + field-mapping + sync + verify
@@ -89,12 +85,20 @@ const FLOW_DATA = {
   },
 };
 
-export default function IntegrationPage({ slug }) {
+/* `integration`, `faqs` and `siblings` are resolved server-side in
+   app/integration/[slug]/page.js (which only builds the slugs in
+   integrationData.js — dynamicParams = false), so the data module never
+   ships in the client chunk and there is no not-found branch here. */
+export default function IntegrationPage({
+  slug,
+  integration,
+  faqs,
+  siblings = [],
+}) {
   /* Demo modal lives in app/layout.js via DemoHost — pull the opener
      from context instead of expecting a prop the wrapper never passes. */
   const { openDemo } = useDemo();
 
-  const integration = INTEGRATIONS[slug];
   const pageRef = useRef(null);
   const heroRef = useRef(null);
 
@@ -107,32 +111,14 @@ export default function IntegrationPage({ slug }) {
   const stepsGlowRef = useGlowCards();
   const crossGlowRef = useGlowCards();
 
-  /* Sibling integrations in the same category (excluding current) — up to 3 */
-  const siblings = integration
-    ? Object.entries(INTEGRATIONS)
-        .filter(([s, i]) => s !== slug && i.category === integration.category)
-        .slice(0, 3)
-        .map(([s, i]) => ({ slug: s, ...i }))
-    : [];
-
   /* Data-flow content. Prefer the per-integration `flow` field for
      specificity; fall back to the category-level FLOW_DATA only if the
      integration didn't ship its own. */
-  const flow = integration
-    ? integration.flow ?? FLOW_DATA[integration.category]
-    : null;
-
-  /* FAQ content. Same fallback pattern as flow — per-integration FAQs
-     when present (which is the case for all 18 current integrations),
-     DEFAULT_INTEGRATION_FAQS otherwise. The fallback also drives the
-     JSON-LD FAQ schema in app/integration/[slug]/page.js. */
-  const faqs = integration
-    ? integration.faqs ?? DEFAULT_INTEGRATION_FAQS
-    : DEFAULT_INTEGRATION_FAQS;
+  const flow = integration.flow ?? FLOW_DATA[integration.category];
 
   useEffect(() => {
     resetScroll();
-    if (!integration || !heroRef.current) return;
+    if (!heroRef.current) return;
 
     /* Hoisted above the gsap.context — referenced by both the intro
        timeline's onComplete (inside) and the cleanup closure (outside). */
@@ -299,21 +285,6 @@ export default function IntegrationPage({ slug }) {
     };
   }, [slug, integration]);
 
-  if (!integration) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.notFound}>
-          <div className={styles.notFoundLabel}>404</div>
-          <h1>Integration not found.</h1>
-          <TransitionLink href="/" className={styles.backLink}>
-            ← Back to home
-          </TransitionLink>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div ref={pageRef} className={styles.page}>
       {/* ── HERO with CONNECTION MARK ── */}
@@ -460,7 +431,7 @@ export default function IntegrationPage({ slug }) {
                 <div className="glow-card-border" />
                 <div className={`${styles.stepInner} glow-card-content`}>
                   <div className={styles.stepNum}>{s.num}</div>
-                  <h4 className={styles.stepTitle}>{s.title}</h4>
+                  <h3 className={styles.stepTitle}>{s.title}</h3>
                   <p className={styles.stepDesc}>{s.desc}</p>
                 </div>
               </div>

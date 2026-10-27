@@ -106,6 +106,7 @@ export default function BlogListClient({ posts }) {
               <button
                 key={tag}
                 type="button"
+                aria-pressed={activeTag === tag}
                 onClick={() => setActiveTag(tag)}
                 className={`${shellStyles.browseFilter} ${
                   activeTag === tag ? shellStyles.browseFilterActive : ""

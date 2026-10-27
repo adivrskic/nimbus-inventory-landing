@@ -621,6 +621,8 @@
   background: transparent;
   border: 0;
   color: var(--white);
+}
+.input:focus:not(:focus-visible) {
   outline: none;
 }
 

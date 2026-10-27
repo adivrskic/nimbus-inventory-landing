@@ -7,7 +7,6 @@ import {
   useEffect,
   useRef,
 } from "react";
-import gsap from "gsap";
 
 const AnimationContext = createContext({
   paused: false,
@@ -46,14 +45,14 @@ export function AnimationProvider({ children }) {
     return () => mq.removeListener(onChange);
   }, []);
 
+  /* Only the body class. The old gsap.globalTimeline.pause() froze EVERY
+     tween mid-flight under reduced motion — including the matchMedia
+     reduced branches in lib/gsap that already render final state with
+     duration 0 — and the page-transition fades, so content stuck at
+     opacity 0. The CSS `.animations-paused` rules in globals.css plus
+     the per-hook reduced branches cover motion suppression. */
   useEffect(() => {
-    if (paused) {
-      document.body.classList.add("animations-paused");
-      gsap.globalTimeline.pause();
-    } else {
-      document.body.classList.remove("animations-paused");
-      gsap.globalTimeline.resume();
-    }
+    document.body.classList.toggle("animations-paused", paused);
   }, [paused]);
 
   return (

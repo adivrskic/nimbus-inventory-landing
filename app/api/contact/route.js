@@ -45,6 +45,14 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    /* `null`, an array or a bare string parse as valid JSON; reading
+       fields off them throws (or silently validates an empty form). */
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid request body." },
+        { status: 400 }
+      );
+    }
 
     // ── Honeypot ── hidden "website" field; real users never fill it.
     // Return 200 so bots get no retry signal, but skip sending.

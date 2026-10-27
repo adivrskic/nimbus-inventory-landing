@@ -219,6 +219,17 @@
 .megaWrapDark {
   background: rgba(4, 9, 28, 0.88);
 }
+/* Closed state: GSAP animates height/opacity to 0, then visibility flips
+   after the 0.3s close so the panel (and its ~34 links) leaves the
+   accessibility tree; it flips back instantly on open. */
+.megaWrap {
+  visibility: visible;
+  transition: visibility 0s;
+}
+.megaWrapClosed {
+  visibility: hidden;
+  transition: visibility 0s linear 0.35s;
+}
 .megaPanel {
   position: absolute;
   top: 0;

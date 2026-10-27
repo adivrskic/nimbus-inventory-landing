@@ -97,13 +97,25 @@ function isPureTranslate(transform) {
   return a === 1 && b === 0 && c === 0 && d === 1;
 }
 
+/* Only elements a reveal can have hidden. Every GSAP reveal (useReveal,
+   useHeadlineReveal, the gatedReveal fromTo's) writes an INLINE opacity
+   the moment the tween is created — even paused — so a stuck reveal
+   always carries style="opacity: …". The data-* markers cover the case
+   where the reveal never created a tween at all (component threw, a
+   reduced-motion branch missed a selector) and the element is still at
+   its CSS resting opacity. Sweeping every element under main/footer
+   (thousands of getComputedStyle calls per sweep) was the cost. */
+const CANDIDATES =
+  '[style*="opacity"],[data-reveal],[data-reveal] > *,[data-letter],' +
+  "[data-list-item],[data-stat],[data-accordion-item],[data-matrix-row]";
+
 function findHidden() {
   const found = [];
   const vh = window.innerHeight;
   const vw = window.innerWidth;
 
   for (const root of document.querySelectorAll("main, footer")) {
-    for (const el of root.querySelectorAll("*")) {
+    for (const el of root.querySelectorAll(CANDIDATES)) {
       const cs = getComputedStyle(el);
       if (cs.opacity !== "0" && cs.visibility !== "hidden") continue;
 

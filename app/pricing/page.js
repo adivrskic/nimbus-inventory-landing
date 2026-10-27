@@ -1,6 +1,7 @@
 import PricingClient from "./PricingClient";
 import JsonLd, { faqSchema, softwareSchema } from "@/components/SEO/JsonLd";
 import { PRICING_FAQS } from "./pricingFaqs";
+import { OG_IMAGE } from "@/lib/site";
 
 export const metadata = {
   title: "Pricing",
@@ -9,6 +10,8 @@ export const metadata = {
   alternates: { canonical: "https://nautilusinventory.com/pricing" },
   openGraph: {
     type: "website",
+    siteName: "Nautilus Inventory",
+      images: [OG_IMAGE],
     title: "Pricing — Nautilus WMS",
     description:
       "Per-warehouse pricing. Pro from $239/warehouse/month. Enterprise custom.",

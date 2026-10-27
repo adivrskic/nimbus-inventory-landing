@@ -68,6 +68,13 @@ const STATS = [
 ];
 
 const statText = (stat, v) => stat.text ?? `${stat.prefix}${v}${stat.suffix}`;
+/* The settled value — what the server HTML (and any no-JS / reduced-motion
+   reader) shows. The count-up only runs after mount, from 0 to this. */
+const statFinal = (stat) =>
+  statText(
+    stat,
+    stat.decimals ? Number(stat.end).toFixed(stat.decimals) : stat.end
+  );
 
 export default function Hero({ onDemo }) {
   const videoRef = useRef(null);
@@ -384,7 +391,7 @@ export default function Hero({ onDemo }) {
               ref={(el) => (valRefs.current[i] = el)}
               className={styles.dataVal}
             >
-              {statText(stat, 0)}
+              {statFinal(stat)}
             </div>
             <div className={styles.dataLabel}>{stat.label}</div>
           </div>
